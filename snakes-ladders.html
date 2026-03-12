@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1B1F2E">
+<title>סולמות וגנבים</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Heebo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+:root {
+  --bg:       #1B1F2E;
+  --surface:  #252A3A;
+  --surface2: #2E3447;
+  --border:   #3A4055;
+  --p1:       #FF5C7A;
+  --p1-dim:   rgba(255,92,122,0.15);
+  --p2:       #4DB8FF;
+  --p2-dim:   rgba(77,184,255,0.15);
+  --gold:     #F5C842;
+  --gold-dim: rgba(245,200,66,0.15);
+  --green:    #3DD68C;
+  --text:     #F0F2FF;
+  --text-dim: #7B82A0;
+  --cell-a:   #252A3A;
+  --cell-b:   #2E3447;
+  --safe-b:   env(safe-area-inset-bottom, 0px);
+}
+
+html, body {
+  height: 100%; width: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: 'Heebo', sans-serif;
+  color: var(--text);
+  overscroll-behavior: none;
+}
+
+.screen { display:none; width:100%; height:100%; }
+.screen.active { display:flex; flex-direction:column; }
+
+/* ===================== INTRO ===================== */
+#intro-screen {
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255,92,122,0.1) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 80%, rgba(77,184,255,0.08) 0%, transparent 55%),
+    var(--bg);
+  overflow-y: auto;
+}
+
+.intro-inner {
+  width: 100%; max-width: 360px;
+  display: flex; flex-direction: column;
+  gap: 24px;
+}
+
+.title-block { text-align: center; }
+
+.game-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(2.4rem, 10vw, 3.2rem);
+  line-height: 1;
+  background: linear-gradient(135deg, var(--p1) 0%, var(--gold) 50%, var(--p2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 1px;
+}
+.title-icons { font-size: 1.5rem; margin-top: 6px; letter-spacing: 8px; }
+
+.form-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 22px 18px;
+  display: flex; flex-direction: column;
+  gap: 14px;
+}
+
+.input-row { display:flex; flex-direction:column; gap:6px; }
+
+.input-label {
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 1.2px;
+  display: flex; align-items: center; gap: 7px;
+}
+
+.pip { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.pip-1 { background: var(--p1); box-shadow: 0 0 5px var(--p1); }
+.pip-2 { background: var(--p2); box-shadow: 0 0 5px var(--p2); }
+
+.name-input {
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 11px;
+  padding: 13px 14px;
+  font-family: 'Heebo', sans-serif;
+  font-size: 1rem; font-weight: 700;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%; -webkit-appearance: none;
+}
+.name-input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-dim);
+}
+
+.divider { height:1px; background: var(--border); }
+
+.btn-start {
+  padding: 15px;
+  background: linear-gradient(135deg, var(--p1), #ff8aa0);
+  color: white; border: none;
+  border-radius: 13px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.15rem; letter-spacing: 0.8px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(255,92,122,0.38);
+  transition: transform 0.1s, box-shadow 0.1s;
+  -webkit-appearance: none;
+}
+.btn-start:active { transform: scale(0.96); box-shadow: 0 2px 10px rgba(255,92,122,0.25); }
+
+/* ===================== GAME ===================== */
+#game-screen { height: 100dvh; overflow: hidden; }
+
+/* Status bar */
+.status-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px 8px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.player-chip {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 10px;
+  border-radius: 40px;
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  transition: border-color 0.22s, background 0.22s, box-shadow 0.22s;
+}
+.player-chip.on-p1 { border-color: var(--p1); background: var(--p1-dim); box-shadow: 0 0 10px rgba(255,92,122,0.18); }
+.player-chip.on-p2 { border-color: var(--p2); background: var(--p2-dim); box-shadow: 0 0 10px rgba(77,184,255,0.18); }
+
+.chip-emoji { font-size: 1.1rem; flex-shrink:0; }
+.chip-info  { min-width:0; flex:1; }
+.chip-name  { font-size:0.82rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.3; }
+.chip-pos   { font-size:0.66rem; color: var(--text-dim); line-height:1.2; }
+.chip-pos .pn { font-weight:900; color: var(--text); }
+
+.vs-dot {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; font-weight: 900;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+/* Board area */
+.board-area {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  padding: 8px 8px 6px;
+  overflow: hidden; min-height: 0;
+}
+
+.board-container {
+  position: relative;
+  width: min(100%, calc(100dvh - 195px));
+  aspect-ratio: 1 / 1;
+}
+
+#board {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 1.5px;
+  background: var(--border);
+  border: 2px solid var(--border);
+  border-radius: 11px;
+  overflow: hidden;
+  width: 100%; height: 100%;
+  box-shadow: 0 6px 28px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.03);
+}
+
+.cell {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  overflow: visible;
+}
+.cell.ca { background: var(--cell-a); }
+.cell.cb { background: var(--cell-b); }
+.cell.snake-h { background: rgba(255,92,122,0.16); }
+.cell.ladder-b { background: rgba(61,214,140,0.12); }
+
+.cell-num {
+  position: absolute; top: 1px; right: 2px;
+  font-size: clamp(0.3rem, 0.82vw, 0.5rem);
+  color: rgba(123,130,160,0.65); font-weight:600; line-height:1;
+  pointer-events: none;
+}
+
+.cell-icon {
+  font-size: clamp(0.65rem, 1.6vw, 0.95rem);
+  pointer-events: none; line-height:1;
+}
+
+.tokens-layer {
+  position: absolute; inset:0;
+  display: flex; align-items: center; justify-content: center;
+  gap: 1px; padding: 2px;
+  pointer-events: none;
+}
+
+.token {
+  font-size: clamp(0.68rem, 1.5vw, 0.95rem);
+  line-height: 1; z-index: 20;
+  flex-shrink:0;
+  animation: tokPop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.55));
+}
+@keyframes tokPop {
+  0%  { transform: scale(0) translateY(-5px); opacity:0; }
+  100%{ transform: scale(1) translateY(0);    opacity:1; }
+}
+
+/* Floating token */
+#floating-token {
+  position: absolute;
+  pointer-events: none; z-index: 50;
+  font-size: clamp(0.95rem, 2.1vw, 1.3rem);
+  line-height: 1; display: none;
+  transform: translate(-50%,-50%);
+  transition: left 0.16s cubic-bezier(0.4,0,0.2,1), top 0.16s cubic-bezier(0.4,0,0.2,1);
+  filter: drop-shadow(0 3px 7px rgba(0,0,0,0.55));
+}
+#floating-token.jumping {
+  animation: ftJ 0.16s ease;
+}
+@keyframes ftJ {
+  0%   { transform: translate(-50%,-50%) scale(1); }
+  45%  { transform: translate(-50%,calc(-50% - 9px)) scale(1.28); }
+  100% { transform: translate(-50%,-50%) scale(1); }
+}
+#floating-token.sliding-down {
+  transition: left 0.6s cubic-bezier(0.25,0.46,0.45,0.94), top 0.6s cubic-bezier(0.25,0.46,0.45,0.94);
+  animation: ftWig 0.6s ease;
+}
+#floating-token.sliding-up {
+  transition: left 0.5s cubic-bezier(0.25,0.46,0.45,0.94), top 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
+  animation: ftClimb 0.5s ease;
+}
+@keyframes ftWig {
+  0%,100%{ transform:translate(-50%,-50%) rotate(0)    scale(1)   }
+  30%    { transform:translate(-50%,-50%) rotate(-14deg) scale(1.2) }
+  70%    { transform:translate(-50%,-50%) rotate(14deg)  scale(1.2) }
+}
+@keyframes ftClimb {
+  0%   { transform:translate(-50%,-50%) scale(1) }
+  38%  { transform:translate(-50%,calc(-50% - 15px)) scale(1.3) }
+  68%  { transform:translate(-50%,calc(-50% + 4px))  scale(0.92) }
+  100% { transform:translate(-50%,-50%) scale(1) }
+}
+
+#svg-overlay {
+  position:absolute; inset:0; pointer-events:none; z-index:5;
+  width:100%; height:100%; border-radius:9px; overflow:visible;
+}
+
+/* Control bar */
+.control-bar {
+  flex-shrink: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 11px 14px calc(11px + var(--safe-b));
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+#dice {
+  width: 56px; height: 56px;
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 13px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  padding: 8px; gap: 3px;
+  cursor: pointer; user-select: none; flex-shrink:0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+#dice.rollable {
+  border-color: var(--gold);
+  box-shadow: 0 0 14px rgba(245,200,66,0.28), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+#dice:active { transform: scale(0.88); }
+#dice.rolling { animation: dRoll 0.48s ease; pointer-events:none; }
+@keyframes dRoll {
+  0%  {transform:rotate(0)    scale(1)}
+  20% {transform:rotate(18deg) scale(1.1)}
+  40% {transform:rotate(-11deg) scale(0.93)}
+  60% {transform:rotate(8deg)  scale(1.07)}
+  80% {transform:rotate(-3deg) scale(0.98)}
+  100%{transform:rotate(0)    scale(1)}
+}
+
+.dot { width:100%; height:100%; border-radius:50%; background:var(--text); visibility:hidden; }
+.dot.on { visibility:visible; }
+
+.roll-section {
+  flex: 1;
+  display: flex; flex-direction: column;
+  gap: 5px;
+}
+
+.turn-info {
+  font-size: 0.73rem; font-weight: 700;
+  color: var(--text-dim); text-align: center; letter-spacing: 0.2px;
+}
+.turn-info .tn { color: var(--text); font-weight: 900; }
+
+#roll-btn {
+  padding: 13px;
+  background: linear-gradient(135deg, var(--gold), #e8a500);
+  color: #1B1F2E;
+  border: none; border-radius: 12px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.05rem; letter-spacing: 0.4px;
+  cursor: pointer; width: 100%;
+  box-shadow: 0 4px 16px rgba(245,200,66,0.32);
+  transition: transform 0.1s, opacity 0.2s;
+  -webkit-appearance: none;
+}
+#roll-btn:active { transform: scale(0.95); }
+#roll-btn:disabled { opacity: 0.3; pointer-events:none; }
+
+.last-move {
+  font-size: 0.7rem; font-weight: 600;
+  color: var(--text-dim); text-align: center;
+  min-height: 13px; line-height: 1.2;
+}
+
+/* Banner */
+#banner {
+  position: fixed;
+  top: 14px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--gold);
+  font-family: 'Fredoka One', cursive;
+  font-size: 0.95rem;
+  padding: 9px 20px;
+  border-radius: 40px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+  z-index: 200; display: none;
+  white-space: nowrap; max-width: 88vw; text-align: center;
+  animation: bnIn 0.32s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes bnIn {
+  from { transform: translateX(-50%) translateY(-22px) scale(0.82); opacity:0; }
+  to   { transform: translateX(-50%) translateY(0)      scale(1);    opacity:1; }
+}
+
+/* Win screen */
+#win-screen {
+  align-items: center; justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(245,200,66,0.08) 0%, transparent 60%),
+    var(--bg);
+}
+
+.win-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 26px;
+  padding: 38px 28px;
+  width: 100%; max-width: 320px;
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.45);
+  animation: wPop 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes wPop {
+  from { transform: scale(0.62) rotate(-4deg); opacity:0; }
+  to   { transform: scale(1)    rotate(0);     opacity:1; }
+}
+
+.win-trophy { font-size: 4.2rem; animation: wTrophy 0.8s ease 0.35s both; }
+@keyframes wTrophy {
+  0%  { transform:rotate(-18deg) scale(0.7) }
+  55% { transform:rotate(10deg)  scale(1.22) }
+  100%{ transform:rotate(0)      scale(1) }
+}
+
+.win-label {
+  font-size: 0.7rem; font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 2.5px;
+}
+
+.win-name {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2.3rem;
+  background: linear-gradient(135deg, var(--gold), var(--p1));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+}
+
+.win-msg { font-size: 0.88rem; color: var(--text-dim); font-weight: 600; }
+
+.btn-new-game {
+  margin-top: 10px;
+  padding: 14px 34px;
+  background: linear-gradient(135deg, var(--p1), #ff8fa3);
+  color: white; border: none;
+  border-radius: 13px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.1rem; letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(255,92,122,0.38);
+  transition: transform 0.1s;
+  -webkit-appearance: none;
+}
+.btn-new-game:active { transform: scale(0.96); }
+</style>
+</head>
+<body>
+
+<!-- GAME -->
+<div id="game-screen" class="screen">
+  <div class="status-bar">
+    <div class="player-chip" id="chip-1">
+      <span class="chip-emoji">👧</span>
+      <div class="chip-info">
+        <div class="chip-name" id="cname1">אמה</div>
+        <div class="chip-pos">משבצת <span class="pn" id="pos1">—</span></div>
+      </div>
+    </div>
+    <div class="vs-dot">VS</div>
+    <div class="player-chip" id="chip-2">
+      <span class="chip-emoji">👦</span>
+      <div class="chip-info">
+        <div class="chip-name" id="cname2">ריף</div>
+        <div class="chip-pos">משבצת <span class="pn" id="pos2">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="board-area">
+    <div class="board-container">
+      <div id="board"></div>
+      <svg id="svg-overlay" viewBox="0 0 500 500" preserveAspectRatio="none"></svg>
+      <div id="floating-token"></div>
+    </div>
+  </div>
+
+  <div class="control-bar">
+    <div id="dice" onclick="rollDice()">
+      <div class="dot" id="d0"></div><div class="dot" id="d1"></div><div class="dot" id="d2"></div>
+      <div class="dot" id="d3"></div><div class="dot" id="d4"></div><div class="dot" id="d5"></div>
+      <div class="dot" id="d6"></div><div class="dot" id="d7"></div><div class="dot" id="d8"></div>
+    </div>
+    <div class="roll-section">
+      <div class="turn-info">תור <span class="tn" id="turn-name">אמה</span></div>
+      <button id="roll-btn" onclick="rollDice()">הטל קוביה!</button>
+      <div class="last-move" id="last-move"></div>
+    </div>
+  </div>
+</div>
+
+<!-- WIN -->
+<div id="win-screen" class="screen">
+  <div class="win-card">
+    <div class="win-trophy">🏆</div>
+    <div class="win-label">המנצח</div>
+    <div class="win-name" id="win-name">אמה</div>
+    <div class="win-msg" id="win-msg"></div>
+    <button class="btn-new-game" onclick="newGame()">🎲  משחק חדש</button>
+    <button class="btn-new-game" style="background:var(--surface2);color:var(--text-dim);box-shadow:none;margin-top:0;font-size:0.9rem;padding:11px 28px;" onclick="window.location.href='index.html'">🏠 דף הבית</button>
+  </div>
+</div>
+
+<div id="banner"></div>
+
+<script>
+const SNAKES  = {17:7, 54:34, 62:19, 64:60, 87:24, 93:73, 95:75, 99:78};
+const LADDERS = {4:14, 9:31, 20:38, 28:84, 40:59, 51:67, 63:81, 71:91};
+const DICE_DOTS = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+
+let players, cur, rolling, gameOver;
+
+function initGame(n1, n2) {
+  players = [{name:n1,pos:0},{name:n2,pos:0}];
+  cur = 0; rolling = false; gameOver = false;
+  document.getElementById('cname1').textContent = n1;
+  document.getElementById('cname2').textContent = n2;
+  document.getElementById('last-move').textContent = '';
+  showScreen('game-screen');
+  buildBoard();
+  renderTokens();
+  updateUI();
+  setTimeout(drawLines, 60);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ---- BOARD ---- */
+function buildBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  for (let r = 0; r < 10; r++) {
+    for (let c = 0; c < 10; c++) {
+      const row = 9 - r;
+      const col = row % 2 === 0 ? c : 9 - c;
+      const num = row * 10 + col + 1;
+
+      const div = document.createElement('div');
+      div.className = 'cell ' + ((row + col) % 2 === 0 ? 'ca' : 'cb');
+      div.id = 'cell-' + num;
+
+      const n = document.createElement('div');
+      n.className = 'cell-num'; n.textContent = num;
+      div.appendChild(n);
+
+      if (SNAKES[num]) {
+        const e = document.createElement('div');
+        e.className = 'cell-icon'; e.textContent = '🐍';
+        div.appendChild(e); div.classList.add('snake-h');
+      } else if (LADDERS[num]) {
+        const e = document.createElement('div');
+        e.className = 'cell-icon'; e.textContent = '🪜';
+        div.appendChild(e); div.classList.add('ladder-b');
+      }
+
+      const tl = document.createElement('div');
+      tl.className = 'tokens-layer'; tl.id = 'tokens-' + num;
+      div.appendChild(tl);
+      board.appendChild(div);
+    }
+  }
+  drawLines();
+}
+
+function cellCenter(num) {
+  const board = document.getElementById('board');
+  const cell  = document.getElementById('cell-' + num);
+  if (!cell) return null;
+  const br = board.getBoundingClientRect(), cr = cell.getBoundingClientRect();
+  return {
+    x: ((cr.left + cr.width/2)  - br.left) / br.width  * 500,
+    y: ((cr.top  + cr.height/2) - br.top)  / br.height * 500
+  };
+}
+
+function drawLines() {
+  const svg = document.getElementById('svg-overlay');
+  svg.innerHTML = '';
+
+  Object.entries(SNAKES).forEach(([f,t]) => {
+    const a = cellCenter(+f), b = cellCenter(+t); if (!a||!b) return;
+    const dx=b.x-a.x, dy=b.y-a.y;
+    const mx=a.x+dx*0.4+dy*0.18, my=a.y+dy*0.4-dx*0.18;
+    svgEl(svg,'path',{d:`M${a.x},${a.y} Q${mx},${my} ${b.x},${b.y}`,
+      stroke:'#FF5C7A','stroke-width':2.5,fill:'none','stroke-dasharray':'5,3',opacity:0.6});
+    svgEl(svg,'circle',{cx:a.x,cy:a.y,r:4,fill:'#FF5C7A',opacity:0.8});
+    svgEl(svg,'circle',{cx:b.x,cy:b.y,r:2.5,fill:'#FF5C7A',opacity:0.45});
+  });
+
+  Object.entries(LADDERS).forEach(([f,t]) => {
+    const a = cellCenter(+f), b = cellCenter(+t); if (!a||!b) return;
+    svgEl(svg,'line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#3DD68C','stroke-width':2.8,opacity:0.65});
+    for (let i=1;i<=4;i++) {
+      const tt=i/5, mx=a.x+(b.x-a.x)*tt, my=a.y+(b.y-a.y)*tt;
+      const ang=Math.atan2(b.y-a.y,b.x-a.x)+Math.PI/2, rl=6;
+      svgEl(svg,'line',{x1:mx-Math.cos(ang)*rl,y1:my-Math.sin(ang)*rl,
+        x2:mx+Math.cos(ang)*rl,y2:my+Math.sin(ang)*rl,stroke:'#3DD68C','stroke-width':1.7,opacity:0.5});
+    }
+    svgEl(svg,'circle',{cx:a.x,cy:a.y,r:4,fill:'#3DD68C',opacity:0.8});
+    svgEl(svg,'circle',{cx:b.x,cy:b.y,r:2.5,fill:'#3DD68C',opacity:0.45});
+  });
+}
+
+function svgEl(parent, tag, attrs) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k, v));
+  parent.appendChild(el); return el;
+}
+
+/* ---- TOKENS ---- */
+function renderTokens() {
+  document.querySelectorAll('.tokens-layer').forEach(el => el.innerHTML = '');
+  players.forEach((p,i) => {
+    if (!p.pos) return;
+    const layer = document.getElementById('tokens-' + p.pos); if (!layer) return;
+    const tok = document.createElement('div');
+    tok.className = 'token'; tok.textContent = i === 0 ? '👧' : '👦';
+    layer.appendChild(tok);
+  });
+}
+
+/* ---- FLOATING TOKEN ---- */
+function cellPos(num) {
+  const cont = document.querySelector('.board-container');
+  const cell = document.getElementById('cell-' + num);
+  if (!cell || !cont) return null;
+  const br = cont.getBoundingClientRect(), cr = cell.getBoundingClientRect();
+  return {x: cr.left-br.left+cr.width/2, y: cr.top-br.top+cr.height/2};
+}
+
+function placeFloat(pos, emoji) {
+  const ft = document.getElementById('floating-token');
+  const p = cellPos(pos); if (!p) return;
+  ft.textContent = emoji;
+  ft.style.transition = 'none';
+  ft.style.left = p.x+'px'; ft.style.top = p.y+'px';
+  ft.style.display = 'block';
+}
+
+function moveFloat(pos) {
+  const ft = document.getElementById('floating-token');
+  const p = cellPos(pos); if (!p) return;
+  ft.style.left = p.x+'px'; ft.style.top = p.y+'px';
+}
+
+function hideFloat() { document.getElementById('floating-token').style.display = 'none'; }
+
+function hideRealToken(emoji) {
+  document.querySelectorAll('.token').forEach(t => {
+    if (t.textContent === emoji) t.style.visibility = 'hidden';
+  });
+}
+
+function animateSteps(emoji, from, to, done) {
+  const ft = document.getElementById('floating-token');
+  ft.className = ''; ft.id = 'floating-token';
+  placeFloat(from, emoji); hideRealToken(emoji);
+
+  const dir = to > from ? 1 : -1;
+  const steps = [];
+  for (let p = from+dir; dir>0 ? p<=to : p>=to; p+=dir) steps.push(p);
+
+  const STEP = 155; let i = 0;
+  function tick() {
+    if (i >= steps.length) { done(); return; }
+    ft.style.transition = `left ${STEP*0.9}ms cubic-bezier(0.4,0,0.2,1), top ${STEP*0.9}ms cubic-bezier(0.4,0,0.2,1)`;
+    moveFloat(steps[i]);
+    ft.classList.remove('jumping'); void ft.offsetWidth; ft.classList.add('jumping');
+    i++; setTimeout(tick, STEP);
+  }
+  setTimeout(tick, 55);
+}
+
+function animateSlide(emoji, from, to, type, done) {
+  const ft = document.getElementById('floating-token');
+  ft.className = ''; ft.id = 'floating-token';
+  placeFloat(from, emoji); hideRealToken(emoji);
+  const dur = type==='snake' ? 640 : 520;
+  const cls = type==='snake' ? 'sliding-down' : 'sliding-up';
+  setTimeout(() => { ft.classList.add(cls); moveFloat(to); setTimeout(done, dur+80); }, 80);
+}
+
+/* ---- UI ---- */
+function updateUI() {
+  const cp = players[cur];
+  document.getElementById('pos1').textContent = players[0].pos || '—';
+  document.getElementById('pos2').textContent = players[1].pos || '—';
+  document.getElementById('chip-1').className = 'player-chip' + (cur===0 ? ' on-p1' : '');
+  document.getElementById('chip-2').className = 'player-chip' + (cur===1 ? ' on-p2' : '');
+  document.getElementById('turn-name').textContent = cp.name;
+  document.getElementById('roll-btn').disabled = rolling || gameOver;
+  document.getElementById('dice').classList.toggle('rollable', !rolling && !gameOver);
+  if (!gameOver && cp.pos >= 94 && cp.pos < 100)
+    showBanner(`🎯 ${cp.name} צריך ${100 - cp.pos} כדי לנצח!`, 2500);
+}
+
+function setLast(msg) { document.getElementById('last-move').textContent = msg; }
+
+function showBanner(msg, ms=2000) {
+  const b = document.getElementById('banner');
+  b.textContent = msg; b.style.display = 'block';
+  clearTimeout(b._t); b._t = setTimeout(() => b.style.display = 'none', ms);
+}
+
+/* ---- DICE ---- */
+function setDice(v) {
+  const p = DICE_DOTS[v]||[];
+  for (let i=0;i<9;i++) document.getElementById('d'+i).classList.toggle('on', p.includes(i));
+}
+
+function rollDice() {
+  if (rolling || gameOver) return;
+  rolling = true;
+  document.getElementById('roll-btn').disabled = true;
+  document.getElementById('dice').classList.remove('rollable');
+  const dice = document.getElementById('dice');
+  dice.classList.add('rolling');
+  let f = 0;
+  const iv = setInterval(() => {
+    setDice(Math.floor(Math.random()*6)+1);
+    if (++f >= 8) {
+      clearInterval(iv);
+      const res = Math.floor(Math.random()*6)+1;
+      setDice(res); dice.classList.remove('rolling');
+      setTimeout(() => processMove(res), 270);
+    }
+  }, 65);
+}
+
+/* ---- MOVE ---- */
+function processMove(roll) {
+  const cp = players[cur];
+  const emoji = cur===0 ? '👧' : '👦';
+  const from = cp.pos || 1;
+  let to = cp.pos + roll;
+  let bounced = false;
+  if (to > 100) { to = 100-(to-100); bounced = true; }
+  setLast(`הטיל ${roll}`);
+  animateSteps(emoji, from, bounced ? 100 : to, () => {
+    if (bounced) {
+      setLast(`↩️ חוזר אחורה ל-${to}`);
+      animateSteps(emoji, 100, to, () => { cp.pos=to; hideFloat(); renderTokens(); updateUI(); checkSL(cp,emoji,to); });
+      return;
+    }
+    cp.pos = to; hideFloat(); renderTokens(); updateUI(); checkSL(cp, emoji, to);
+  });
+}
+
+function checkSL(cp, emoji, pos) {
+  if (SNAKES[pos]) {
+    const d = SNAKES[pos];
+    showBanner(`🐍 נחש! ${cp.name} יורד מ-${pos} ל-${d}`, 2500);
+    setLast(`🐍 נחש מ-${pos} ל-${d}`);
+    setTimeout(() => animateSlide(emoji, pos, d, 'snake', () => { cp.pos=d; hideFloat(); renderTokens(); updateUI(); endTurn(); }), 300);
+  } else if (LADDERS[pos]) {
+    const d = LADDERS[pos];
+    showBanner(`🪜 סולם! ${cp.name} עולה מ-${pos} ל-${d}`, 2500);
+    setLast(`🪜 סולם מ-${pos} ל-${d}`);
+    setTimeout(() => animateSlide(emoji, pos, d, 'ladder', () => { cp.pos=d; hideFloat(); renderTokens(); updateUI(); endTurn(); }), 300);
+  } else {
+    endTurn();
+  }
+}
+
+function endTurn() {
+  const cp = players[cur];
+  if (cp.pos === 100) {
+    gameOver = true;
+    setTimeout(() => {
+      document.getElementById('win-name').textContent = cp.name;
+      document.getElementById('win-msg').textContent = (cur===0?'👧':'👦') + ' הגיע/ה למשבצת 100!';
+      showScreen('win-screen');
+    }, 450);
+    return;
+  }
+  cur = 1 - cur; rolling = false; updateUI();
+}
+
+function newGame() {
+  // חזרה לדף הבית אם הגענו משם
+  if (document.referrer.includes('index.html') || new URLSearchParams(location.search).get('player')) {
+    window.location.href = 'index.html';
+  } else {
+    showScreen('intro-screen');
+  }
+}
+
+// ===== INIT =====
+(function init() {
+  initGame('אמה', 'ריף');
+})();
+</script>
+</body>
+</html>
