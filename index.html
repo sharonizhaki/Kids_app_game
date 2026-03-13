@@ -500,15 +500,6 @@ html, body {
   </div>
 
   <div class="games-list">
-    <div class="game-card coming-soon fade-in">
-      <div class="game-icon">🏠</div>
-      <div class="game-info">
-        <div class="game-name">מטלות בית</div>
-        <div class="game-desc">תחרות — מי מסיים קודם?</div>
-      </div>
-      <div class="game-badge badge-soon">בקרוב</div>
-    </div>
-
     <div class="game-card fade-in" onclick="openGame('snakes-ladders')">
       <div class="game-icon">🐍</div>
       <div class="game-info">
@@ -518,13 +509,31 @@ html, body {
       <div class="game-badge badge-ready">מוכן</div>
     </div>
 
-    <div class="game-card coming-soon fade-in">
-      <div class="game-icon">❓</div>
+    <div class="game-card fade-in" onclick="openGame('xo')">
+      <div class="game-icon">✖️</div>
       <div class="game-info">
-        <div class="game-name">משחק הבא...</div>
-        <div class="game-desc">עוד מפתיעים</div>
+        <div class="game-name">איקס עיגול</div>
+        <div class="game-desc">3×3 · 2 שחקנים · ניקוד</div>
       </div>
-      <div class="game-badge badge-soon">בקרוב</div>
+      <div class="game-badge badge-ready">מוכן</div>
+    </div>
+
+    <div class="game-card fade-in" onclick="openGame('mavoch')">
+      <div class="game-icon">🌀</div>
+      <div class="game-info">
+        <div class="game-name">מבוך</div>
+        <div class="game-desc">13×13 · שחקן נגד מחשב · טיימר</div>
+      </div>
+      <div class="game-badge badge-ready">מוכן</div>
+    </div>
+
+    <div class="game-card fade-in" onclick="openGame('matalot')">
+      <div class="game-icon">🏠</div>
+      <div class="game-info">
+        <div class="game-name">מטלות בית</div>
+        <div class="game-desc">תחרות — מי מסיים קודם?</div>
+      </div>
+      <div class="game-badge badge-ready">מוכן</div>
     </div>
   </div>
 </div>
@@ -571,6 +580,21 @@ const GAMES = {
     name: 'סולמות וגנבים',
     icon: '🐍',
     url:  'snakes-ladders.html'
+  },
+  'xo': {
+    name: 'איקס עיגול',
+    icon: '✖️',
+    url:  'X_O.html'
+  },
+  'mavoch': {
+    name: 'מבוך',
+    icon: '🌀',
+    url:  'mavoch.html'
+  },
+  'matalot': {
+    name: 'מטלות בית',
+    icon: '🏠',
+    url:  'matalot.html'
   }
 };
 
