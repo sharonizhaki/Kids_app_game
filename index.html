@@ -535,6 +535,15 @@ html, body {
       </div>
       <div class="game-badge badge-ready">מוכן</div>
     </div>
+
+    <div class="game-card fade-in" onclick="openGame('draw')">
+      <div class="game-icon">🎨</div>
+      <div class="game-info">
+        <div class="game-name">ציור משותף</div>
+        <div class="game-desc">קנבס משותף · ציור בזמן אמת</div>
+      </div>
+      <div class="game-badge badge-ready">מוכן</div>
+    </div>
   </div>
 </div>
 
@@ -594,10 +603,11 @@ let currentGame   = null;
 let roomListener  = null;
 
 const GAMES = {
-  'snakes-ladders': { name: 'סולמות ונחשים', icon: '🐍', url: 'snakes-ladders.html' },
-  'xo':             { name: 'איקס עיגול',    icon: '✖️', url: 'X_O.html' },
-  'mavoch':         { name: 'מבוך',           icon: '🌀', url: 'mavoch.html' },
-  'matalot':        { name: 'מטלות בית',      icon: '🏠', url: 'matalot.html' }
+  'snakes-ladders': { name: 'סולמות ונחשים', icon: '🐍', url: 'snakes-ladders.html', needsWaiting: true  },
+  'xo':             { name: 'איקס עיגול',    icon: '❌', url: 'X_O.html',            needsWaiting: true  },
+  'mavoch':         { name: 'מבוך',           icon: '🌀', url: 'mavoch.html',         needsWaiting: false },
+  'matalot':        { name: 'מטלות בית',      icon: '🏠', url: 'matalot.html',        needsWaiting: false },
+  'draw':           { name: 'ציור משותף',     icon: '🎨', url: 'draw.html',           needsWaiting: false },
 };
 
 const PLAYERS = {
@@ -637,6 +647,12 @@ window.openGame = function(gameId) {
   currentGame = gameId;
   const game = GAMES[gameId];
 
+  // משחקים שלא צריכים חדר המתנה — נכנסים ישירות
+  if (!game.needsWaiting) {
+    window.location.href = `${game.url}?player=${currentPlayer}`;
+    return;
+  }
+
   document.getElementById('waiting-icon').textContent      = game.icon;
   document.getElementById('waiting-game-name').textContent = game.name;
 
@@ -662,19 +678,16 @@ window.openGame = function(gameId) {
   // כתוב ל-Firebase שאני נכנסתי
   const roomRef = ref(db, `rooms/${gameId}/${currentPlayer}`);
   set(roomRef, true);
-
-  // כשמתנתקים — מחק אוטומטית
   onDisconnect(roomRef).remove();
 
   // האזן לשינויים בחדר
   const gameRoomRef = ref(db, `rooms/${gameId}`);
-  if (roomListener) roomListener(); // נקה listener קודם
+  if (roomListener) roomListener();
   roomListener = onValue(gameRoomRef, (snap) => {
     const room = snap.val() || {};
     const emmaIn = !!room.emma;
     const rifIn  = !!room.rif;
 
-    // עדכן UI של השחקן השני
     const otherInNow = currentPlayer === 'emma' ? rifIn : emmaIn;
     if (otherInNow) {
       const oCard = document.getElementById(`psc-${otherId}`);
@@ -683,14 +696,13 @@ window.openGame = function(gameId) {
       document.getElementById(`psc-${otherId}-status`).className = 'psc-status ready';
     }
 
-    // שניהם כאן — מתחילים!
     if (emmaIn && rifIn) {
       if (roomListener) { roomListener(); roomListener = null; }
       const msgEl = document.getElementById('waiting-msg');
       msgEl.className = 'waiting-msg both-ready';
       msgEl.innerHTML = '🎮 שניכם כאן! מתחילים...';
       setTimeout(() => {
-        window.location.href = `${GAMES[gameId].url}?player=${currentPlayer}`;
+        window.location.href = `${game.url}?player=${currentPlayer}`;
       }, 1200);
     }
   });

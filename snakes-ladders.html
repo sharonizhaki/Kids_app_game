@@ -556,13 +556,15 @@ function showScreen(id) {
 
 // ===== FIREBASE SYNC =====
 function pushState(extra = {}) {
-  if (solo) return; // במצב סולו אין Firebase
+  if (solo) return;
+  const ts = Date.now();
+  lastState = ts; // סמן שזה ה-update שלנו
   const state = {
     pos0: players[0].pos,
     pos1: players[1].pos,
     cur,
     gameOver,
-    ts: Date.now(),
+    ts,
     ...extra
   };
   set(gameRef, state);
@@ -573,23 +575,26 @@ function listenToState() {
   onValue(gameRef, (snap) => {
     const s = snap.val();
     if (!s) return;
-    // אל תעדכן אם זה אותו state שדחפנו
-    if (s.ts === lastState) return;
+    if (s.ts === lastState) return; // זה ה-update שלנו, דלג
     lastState = s.ts;
+
+    // אם אנחנו באמצע אנימציה — דלג
+    if (rolling) return;
 
     players[0].pos = s.pos0 || 0;
     players[1].pos = s.pos1 || 0;
-    cur     = s.cur ?? 0;
+    cur      = s.cur ?? 0;
     gameOver = !!s.gameOver;
 
     renderTokens();
     updateUI();
 
-    if (s.gameOver) {
-      const winner = players[s.cur]; // cur לפני השינוי = המנצח
+    if (s.gameOver && !document.getElementById('win-screen').classList.contains('active')) {
+      const winnerIdx = s.winnerIdx ?? 0;
+      const winner = players[winnerIdx];
       setTimeout(() => {
         document.getElementById('win-name').textContent = winner.name;
-        document.getElementById('win-msg').textContent = (s.cur===0?'👧':'👦') + ' הגיע/ה למשבצת 100!';
+        document.getElementById('win-msg').textContent = (winnerIdx===0?'👧':'👦') + ' הגיע/ה למשבצת 100!';
         showScreen('win-screen');
       }, 450);
     }
@@ -847,7 +852,7 @@ function endTurn() {
   const cp = players[cur];
   if (cp.pos === 100) {
     gameOver = true;
-    pushState({ gameOver: true });
+    pushState({ gameOver: true, winnerIdx: cur });
     setTimeout(() => {
       document.getElementById('win-name').textContent = cp.name;
       document.getElementById('win-msg').textContent = (cur===0?'👧':'👦') + ' הגיע/ה למשבצת 100!';
@@ -856,6 +861,7 @@ function endTurn() {
     return;
   }
   cur = 1 - cur; rolling = false;
+  lastState = Date.now();
   pushState();
   updateUI();
 }
@@ -868,9 +874,14 @@ function newGame() {
 // ===== INIT =====
 (function init() {
   initGame('אמה', 'ריף');
-  if (!solo) {
-    // נקה state ישן ב-Firebase בהתחלה
-    set(gameRef, { pos0:0, pos1:0, cur:0, gameOver:false, ts: Date.now() });
+  if (solo) return;
+
+  if (myPlayer === 'emma') {
+    // אמה מאתחלת את ה-state
+    set(gameRef, { pos0:0, pos1:0, cur:0, gameOver:false, ts: Date.now() })
+      .then(() => listenToState());
+  } else {
+    // ריף רק מאזין
     listenToState();
   }
 })();
