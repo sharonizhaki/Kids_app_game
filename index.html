@@ -498,7 +498,7 @@ html, body {
     </div>
     <div class="header-title">בחר/י משחק</div>
   </div>
-
+  
   <div class="games-list">
     <div class="game-card fade-in" onclick="openGame('snakes-ladders')">
       <div class="game-icon">🐍</div>
@@ -569,33 +569,34 @@ html, body {
   <button class="btn-cancel fade-in" onclick="cancelWaiting()">← ביטול</button>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// ===== FIREBASE =====
+const firebaseConfig = {
+  apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
+  authDomain: "kidssapp-izhaki.firebaseapp.com",
+  databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kidssapp-izhaki",
+  storageBucket: "kidssapp-izhaki.firebasestorage.app",
+  messagingSenderId: "663906163746",
+  appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
 // ===== STATE =====
-let currentPlayer = null; // 'emma' | 'rif'
+let currentPlayer = null;
 let currentGame   = null;
-let waitingTimer  = null;
+let roomListener  = null;
 
 const GAMES = {
-  'snakes-ladders': {
-    name: 'סולמות וגנבים',
-    icon: '🐍',
-    url:  'snakes-ladders.html'
-  },
-  'xo': {
-    name: 'איקס עיגול',
-    icon: '✖️',
-    url:  'X_O.html'
-  },
-  'mavoch': {
-    name: 'מבוך',
-    icon: '🌀',
-    url:  'mavoch.html'
-  },
-  'matalot': {
-    name: 'מטלות בית',
-    icon: '🏠',
-    url:  'matalot.html'
-  }
+  'snakes-ladders': { name: 'סולמות וגנבים', icon: '🐍', url: 'snakes-ladders.html' },
+  'xo':             { name: 'איקס עיגול',    icon: '✖️', url: 'X_O.html' },
+  'mavoch':         { name: 'מבוך',           icon: '🌀', url: 'mavoch.html' },
+  'matalot':        { name: 'מטלות בית',      icon: '🏠', url: 'matalot.html' }
 };
 
 const PLAYERS = {
@@ -608,7 +609,6 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const screen = document.getElementById(id);
   screen.classList.add('active');
-  // Re-trigger fade-in animations
   screen.querySelectorAll('.fade-in').forEach(el => {
     el.style.animation = 'none';
     void el.offsetWidth;
@@ -616,115 +616,93 @@ function showScreen(id) {
   });
 }
 
-function goBack(to) {
-  showScreen(to);
-}
-
 // ===== PLAYER SELECT =====
-function selectPlayer(player) {
-  currentPlayer = player;
+window.goBack = function(to) { showScreen(to); };
 
-  // Visual feedback
+window.selectPlayer = function(player) {
+  currentPlayer = player;
   document.querySelectorAll('.btn-player').forEach(b => b.classList.remove('selected'));
   document.querySelector(`.btn-player.${player}`).classList.add('selected');
-
-  // Update header chip
   const p = PLAYERS[player];
   document.getElementById('header-chip').className = `header-player-chip ${p.cls}`;
   document.getElementById('header-emoji').textContent = p.emoji;
   document.getElementById('header-name').textContent  = p.name;
-
   setTimeout(() => showScreen('screen-games'), 180);
-}
+};
 
 // ===== GAME SELECT =====
-function openGame(gameId) {
+window.openGame = function(gameId) {
   if (!currentPlayer) return;
   currentGame = gameId;
+  const game = GAMES[gameId];
 
-  const game   = GAMES[gameId];
-  const player = PLAYERS[currentPlayer];
-  const other  = currentPlayer === 'emma' ? PLAYERS.rif : PLAYERS.emma;
-
-  // Set up waiting room
   document.getElementById('waiting-icon').textContent      = game.icon;
   document.getElementById('waiting-game-name').textContent = game.name;
 
-  // Reset both status cards
-  resetWaitingRoom(player, other);
-
-  showScreen('screen-waiting');
-  startWaiting(game, player, other);
-}
-
-function resetWaitingRoom(player, other) {
-  // Current player = joined immediately
+  // סמן שחקן נוכחי כמוכן
   const myCard = document.getElementById(`psc-${currentPlayer}`);
   myCard.classList.add('joined');
   document.getElementById(`psc-${currentPlayer}-status`).textContent = '✓ מוכן';
   document.getElementById(`psc-${currentPlayer}-status`).className = 'psc-status ready';
 
-  // Other player = waiting
+  // סמן שחקן שני כממתין
   const otherId = currentPlayer === 'emma' ? 'rif' : 'emma';
   const otherCard = document.getElementById(`psc-${otherId}`);
   otherCard.classList.remove('joined');
   document.getElementById(`psc-${otherId}-status`).textContent = 'ממתין...';
   document.getElementById(`psc-${otherId}-status`).className = 'psc-status waiting';
 
-  // Reset message
   document.getElementById('waiting-msg').className = 'waiting-msg';
   document.getElementById('waiting-msg').innerHTML =
-    `<div class="spinner"></div><span id="waiting-text">ממתין לשחקן השני...</span>`;
-}
+    `<div class="spinner"></div><span>ממתין לשחקן השני...</span>`;
 
-// ===== WAITING LOGIC =====
-// כרגע: סימולציה של חיבור. אחרי Firebase — זה יהפוך ל-realtime listener
-function startWaiting(game, player, other) {
-  clearTimeout(waitingTimer);
+  showScreen('screen-waiting');
 
-  // TODO: Firebase — כתוב לנתיב games/{gameId}/room ש-{currentPlayer} נכנס
-  // db.ref(`games/${currentGame}/room/${currentPlayer}`).set(true);
-  // db.ref(`games/${currentGame}/room`).on('value', snap => { ... });
+  // כתוב ל-Firebase שאני נכנסתי
+  const roomRef = ref(db, `rooms/${gameId}/${currentPlayer}`);
+  set(roomRef, true);
 
-  // סימולציה זמנית — מדמה שהשני מצטרף אחרי 2 שניות
-  // להסרה כשמוסיפים Firebase!
-  waitingTimer = setTimeout(() => {
-    simulateOtherPlayerJoined();
-  }, 2000);
-}
+  // כשמתנתקים — מחק אוטומטית
+  onDisconnect(roomRef).remove();
 
-function simulateOtherPlayerJoined() {
-  const otherId = currentPlayer === 'emma' ? 'rif' : 'emma';
+  // האזן לשינויים בחדר
+  const gameRoomRef = ref(db, `rooms/${gameId}`);
+  if (roomListener) roomListener(); // נקה listener קודם
+  roomListener = onValue(gameRoomRef, (snap) => {
+    const room = snap.val() || {};
+    const emmaIn = !!room.emma;
+    const rifIn  = !!room.rif;
 
-  // Mark other player as joined
-  const otherCard = document.getElementById(`psc-${otherId}`);
-  otherCard.classList.add('joined');
-  document.getElementById(`psc-${otherId}-status`).textContent = '✓ מוכן';
-  document.getElementById(`psc-${otherId}-status`).className = 'psc-status ready';
+    // עדכן UI של השחקן השני
+    const otherInNow = currentPlayer === 'emma' ? rifIn : emmaIn;
+    if (otherInNow) {
+      const oCard = document.getElementById(`psc-${otherId}`);
+      oCard.classList.add('joined');
+      document.getElementById(`psc-${otherId}-status`).textContent = '✓ מוכן';
+      document.getElementById(`psc-${otherId}-status`).className = 'psc-status ready';
+    }
 
-  // Update message
-  const msgEl = document.getElementById('waiting-msg');
-  msgEl.className = 'waiting-msg both-ready';
-  msgEl.innerHTML = '🎮 שניכם כאן! מתחילים...';
+    // שניהם כאן — מתחילים!
+    if (emmaIn && rifIn) {
+      if (roomListener) { roomListener(); roomListener = null; }
+      const msgEl = document.getElementById('waiting-msg');
+      msgEl.className = 'waiting-msg both-ready';
+      msgEl.innerHTML = '🎮 שניכם כאן! מתחילים...';
+      setTimeout(() => {
+        window.location.href = `${GAMES[gameId].url}?player=${currentPlayer}`;
+      }, 1200);
+    }
+  });
+};
 
-  // Launch game after short delay
-  setTimeout(() => launchGame(), 1200);
-}
-
-function launchGame() {
-  const game   = GAMES[currentGame];
-  const player = PLAYERS[currentPlayer];
-  // מעביר את שם השחקן הנוכחי כ-query param
-  // snakes-ladders.html יקרא את זה אחרי Firebase
-  window.location.href = `${game.url}?player=${currentPlayer}`;
-}
-
-function cancelWaiting() {
-  clearTimeout(waitingTimer);
-  // TODO: Firebase — מחק את הנוכחות מה-room
-  // db.ref(`games/${currentGame}/room/${currentPlayer}`).remove();
+// ===== CANCEL =====
+window.cancelWaiting = function() {
+  if (roomListener) { roomListener(); roomListener = null; }
+  if (currentGame && currentPlayer) {
+    remove(ref(db, `rooms/${currentGame}/${currentPlayer}`));
+  }
   showScreen('screen-games');
-}
+};
 </script>
 </body>
 </html>
