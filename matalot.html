@@ -251,7 +251,23 @@
 
 <div class="success-toast" id="toast"></div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
+  authDomain: "kidssapp-izhaki.firebaseapp.com",
+  databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kidssapp-izhaki",
+  storageBucket: "kidssapp-izhaki.firebasestorage.app",
+  messagingSenderId: "663906163746",
+  appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+};
+
+const fbApp  = initializeApp(firebaseConfig);
+const db     = getDatabase(fbApp);
+const stateRef = ref(db, 'matalot/state');
 const TASKS = [
   {id:"e_bm",  user:"אמה", cat:"היגיינה",     emojis:"🌞🪥🦷",    task:"צחצוח שיניים בוקר",      pts:5,  freq:"daily",          desc:"צחצוח שיניים בבוקר עוזר להוריד חיידקים שהצטברו בלילה. צחצחי 2 דקות לפחות, אל תשכחי את הלשון!"},
   {id:"e_be",  user:"אמה", cat:"היגיינה",     emojis:"🌙🪥✨",    task:"צחצוח שיניים ערב",       pts:5,  freq:"daily",          desc:"צחצוח לפני השינה חשוב אפילו יותר! הוא מגן על השיניים בזמן שאת ישנה. 2 דקות בסבלנות!"},
@@ -345,19 +361,26 @@ function defaultState() {
 }
 
 function loadState() {
-  try {
-    const s=JSON.parse(localStorage.getItem("fam_v5")||"null");
-    if(!s) return defaultState();
-    if(s.wk!==weekKey()){
-      const winner=["אמה","ריף"].sort((a,b)=>(s.pts[b]||0)-(s.pts[a]||0))[0];
-      const lastWinner=(s.pts[winner]||0)>0?winner:(s.lastWinner||null);
-      const lastWinnerPts=lastWinner?s.pts[lastWinner]||0:null;
-      return {...defaultState(),streaks:s.streaks||{"אמה":0,"ריף":0},lastActive:s.lastActive||{"אמה":"","ריף":""},lastWinner,lastWinnerPts};
-    }
-    return s;
-  } catch { return defaultState(); }
+  // Firebase — נטען async, מחזיר defaultState עד שמגיע
+  return defaultState();
 }
-function save() { localStorage.setItem("fam_v5",JSON.stringify(state)); }
+
+function save() {
+  remoteUpdatePending = true;
+  set(stateRef, JSON.parse(JSON.stringify(state)));
+}
+
+// האזן ל-Firebase — עדכן state כשמשתנה ממכשיר אחר
+let remoteUpdatePending = false;
+onValue(stateRef, (snap) => {
+  const s = snap.val();
+  if (!s) return;
+  if (remoteUpdatePending) { remoteUpdatePending = false; return; }
+  state = s;
+  checkStreaks();
+  renderMain();
+  if (currentUser) renderUser(currentUser);
+});
 
 function isDone(t) {
   const c=state.comp[t.id]; if(!c) return false;
@@ -680,9 +703,35 @@ document.getElementById("reset-btn").onclick=()=>{
   }
 };
 
-state=loadState();
-checkStreaks();
-renderMain();
+// כפתור דף הבית
+document.querySelectorAll(".back-btn").forEach(btn => {
+  const homeBtn = document.createElement('button');
+  homeBtn.textContent = '🏠';
+  homeBtn.style.cssText = 'background:none;border:none;font-size:1.2rem;cursor:pointer;margin-right:8px;';
+  homeBtn.onclick = () => window.location.href = 'index.html';
+});
+
+// הוסף כפתור בית למסך הראשי
+const mainHeader = document.querySelector('#screen-main');
+if (mainHeader) {
+  const homeBtn = document.createElement('button');
+  homeBtn.textContent = '🏠 דף הבית';
+  homeBtn.style.cssText = 'position:fixed;top:12px;left:12px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.2);color:white;padding:6px 12px;border-radius:20px;font-size:0.8rem;cursor:pointer;z-index:100;';
+  homeBtn.onclick = () => window.location.href = 'index.html';
+  mainHeader.appendChild(homeBtn);
+}
+
+// טעינה ראשונית מ-Firebase
+state = defaultState();
+import { get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+get(stateRef).then(snap => {
+  if (snap.val()) state = snap.val();
+  checkStreaks();
+  renderMain();
+}).catch(() => {
+  renderMain();
+});
+
 setInterval(()=>{
   if(state.wk!==weekKey()){
     const winner=["אמה","ריף"].sort((a,b)=>(state.pts[b]||0)-(state.pts[a]||0))[0];

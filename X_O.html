@@ -444,235 +444,310 @@
   </div>
 </div>
 
-<script>
-  const WINNING_COMBOS = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
-  ];
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-  let board = Array(9).fill(null);
-  let currentPlayer = 'X';
-  let gameOver = false;
-  let scores = { X: 0, O: 0, draw: 0 };
+const firebaseConfig = {
+  apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
+  authDomain: "kidssapp-izhaki.firebaseapp.com",
+  databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kidssapp-izhaki",
+  storageBucket: "kidssapp-izhaki.firebasestorage.app",
+  messagingSenderId: "663906163746",
+  appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+};
 
-  const cells = document.querySelectorAll('.cell');
-  const boardEl = document.getElementById('board');
-  const turnDot = document.getElementById('turn-dot');
-  const turnText = document.getElementById('turn-text');
-  const turnName = document.getElementById('turn-name');
-  const cardX = document.getElementById('card-x');
-  const cardO = document.getElementById('card-o');
-  const nameX = document.getElementById('name-x');
-  const nameO = document.getElementById('name-o');
+const app   = initializeApp(firebaseConfig);
+const db    = getDatabase(app);
+const gameRef = ref(db, 'game/xo');
 
-  // Audio context for sounds
-  const AudioCtx = window.AudioContext || window.webkitAudioContext;
-  let audioCtx = null;
+const params   = new URLSearchParams(location.search);
+const myPlayer = params.get('player') || 'emma';
+const solo     = params.get('solo') === 'true';
+// אמה = X, ריף = O
+const mySymbol = myPlayer === 'emma' ? 'X' : 'O';
 
-  function getAudioCtx() {
-    if (!audioCtx) audioCtx = new AudioCtx();
-    return audioCtx;
-  }
+let lastTs = null;
 
-  function playSound(type) {
-    try {
-      const ctx = getAudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+const WINNING_COMBOS = [
+  [0,1,2],[3,4,5],[6,7,8],
+  [0,3,6],[1,4,7],[2,5,8],
+  [0,4,8],[2,4,6]
+];
 
-      if (type === 'place') {
-        osc.frequency.setValueAtTime(currentPlayer === 'X' ? 440 : 523, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(currentPlayer === 'X' ? 330 : 660, ctx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0.15, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.15);
-      } else if (type === 'win') {
-        const notes = [523, 659, 784, 1047];
-        notes.forEach((freq, i) => {
-          const o2 = ctx.createOscillator();
-          const g2 = ctx.createGain();
-          o2.connect(g2); g2.connect(ctx.destination);
-          o2.frequency.value = freq;
-          o2.type = 'sine';
-          g2.gain.setValueAtTime(0.18, ctx.currentTime + i * 0.1);
-          g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.1 + 0.25);
-          o2.start(ctx.currentTime + i * 0.1);
-          o2.stop(ctx.currentTime + i * 0.1 + 0.25);
-        });
-      } else if (type === 'draw') {
-        osc.frequency.setValueAtTime(300, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.4);
-        gain.gain.setValueAtTime(0.12, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.4);
-      }
-    } catch(e) {}
-  }
+let board = Array(9).fill(null);
+let currentPlayer = 'X';
+let gameOver = false;
+let scores = { X: 0, O: 0, draw: 0 };
 
-  // Hover preview
-  cells.forEach(cell => {
-    cell.addEventListener('mouseenter', () => {
-      if (gameOver || cell.classList.contains('taken')) return;
-      cell.innerHTML = makeSvg(currentPlayer, true);
-    });
-    cell.addEventListener('mouseleave', () => {
-      if (!cell.classList.contains('taken')) cell.innerHTML = '';
-    });
-    cell.addEventListener('click', handleClick);
-  });
+const cells   = document.querySelectorAll('.cell');
+const boardEl = document.getElementById('board');
+const turnDot  = document.getElementById('turn-dot');
+const turnText = document.getElementById('turn-text');
+const cardX   = document.getElementById('card-x');
+const cardO   = document.getElementById('card-o');
+const nameX   = document.getElementById('name-x');
+const nameO   = document.getElementById('name-o');
 
-  function makeSvg(player, preview = false) {
-    const cls = preview ? 'cell-preview' : '';
-    if (player === 'X') {
-      return `<svg viewBox="0 0 60 60" class="${cls}">
-        <line class="x-path" x1="14" y1="14" x2="46" y2="46"/>
-        <line class="x-path" x1="46" y1="14" x2="14" y2="46"/>
-      </svg>`;
+// שמות קבועים
+nameX.value = 'אמה';
+nameO.value = 'ריף';
+
+// ===== AUDIO =====
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getAudioCtx() { if (!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+function playSound(type) {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    if (type === 'place') {
+      osc.frequency.setValueAtTime(currentPlayer==='X'?440:523, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(currentPlayer==='X'?330:660, ctx.currentTime+0.1);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.15);
+      osc.start(); osc.stop(ctx.currentTime+0.15);
+    } else if (type === 'win') {
+      [523,659,784,1047].forEach((freq,i) => {
+        const o2=ctx.createOscillator(), g2=ctx.createGain();
+        o2.connect(g2); g2.connect(ctx.destination);
+        o2.frequency.value=freq; o2.type='sine';
+        g2.gain.setValueAtTime(0.18, ctx.currentTime+i*0.1);
+        g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+i*0.1+0.25);
+        o2.start(ctx.currentTime+i*0.1); o2.stop(ctx.currentTime+i*0.1+0.25);
+      });
+    } else if (type === 'draw') {
+      osc.frequency.setValueAtTime(300, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime+0.4);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.4);
+      osc.start(); osc.stop(ctx.currentTime+0.4);
+    }
+  } catch(e) {}
+}
+
+// ===== SVG =====
+function makeSvg(player, preview=false) {
+  const cls = preview ? 'cell-preview' : '';
+  if (player==='X') return `<svg viewBox="0 0 60 60" class="${cls}"><line class="x-path" x1="14" y1="14" x2="46" y2="46"/><line class="x-path" x1="46" y1="14" x2="14" y2="46"/></svg>`;
+  return `<svg viewBox="0 0 60 60" class="${cls}"><circle class="o-circle" cx="30" cy="30" r="18"/></svg>`;
+}
+
+// ===== RENDER BOARD =====
+function renderBoard() {
+  cells.forEach((cell, i) => {
+    if (board[i]) {
+      cell.innerHTML = makeSvg(board[i]);
+      cell.classList.add('taken', 'drawn', board[i].toLowerCase());
     } else {
-      return `<svg viewBox="0 0 60 60" class="${cls}">
-        <circle class="o-circle" cx="30" cy="30" r="18"/>
-      </svg>`;
-    }
-  }
-
-  function handleClick(e) {
-    const cell = e.currentTarget;
-    const idx = parseInt(cell.dataset.index);
-    if (gameOver || board[idx]) return;
-
-    board[idx] = currentPlayer;
-    cell.innerHTML = makeSvg(currentPlayer);
-    cell.classList.add('taken', 'drawn', currentPlayer.toLowerCase());
-    playSound('place');
-
-    const win = checkWin();
-    if (win) {
-      highlightWin(win);
-      scores[currentPlayer]++;
-      updateScores();
-      const winner = currentPlayer === 'X' ? nameX.value : nameO.value;
-      setStatus('winner', `🏆 ${winner} ניצח!`);
-      gameOver = true;
-      playSound('win');
-      spawnConfetti();
-      return;
-    }
-
-    if (board.every(v => v)) {
-      scores.draw++;
-      updateScores();
-      setStatus('draw', '🤝 תיקו!');
-      boardEl.classList.add('shake');
-      setTimeout(() => boardEl.classList.remove('shake'), 500);
-      gameOver = true;
-      playSound('draw');
-      return;
-    }
-
-    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-    updateTurnUI();
-  }
-
-  function setStatus(type, text) {
-    const arrow = type === 'winner' || type === 'draw' ? '' : '<span class="turn-arrow">▸</span> ';
-    turnText.innerHTML = arrow + text;
-    turnText.className = `turn-text ${type}`;
-    turnDot.className = `turn-dot ${type}`;
-    turnName.textContent = '';
-  }
-
-  function updateTurnUI() {
-    const name = currentPlayer === 'X' ? nameX.value : nameO.value;
-    const cls = currentPlayer === 'X' ? 'x-turn' : 'o-turn';
-    turnDot.className = `turn-dot ${cls}`;
-    turnText.className = `turn-text ${cls}`;
-    turnText.innerHTML = `<span class="turn-arrow">▸</span> תור <span id="turn-name">${name}</span>`;
-
-    cardX.classList.toggle('active', currentPlayer === 'X');
-    cardO.classList.toggle('active', currentPlayer === 'O');
-  }
-
-  function checkWin() {
-    for (const combo of WINNING_COMBOS) {
-      const [a, b, c] = combo;
-      if (board[a] && board[a] === board[b] && board[a] === board[c]) return combo;
-    }
-    return null;
-  }
-
-  function highlightWin(combo) {
-    combo.forEach(i => cells[i].classList.add('winning'));
-  }
-
-  function updateScores() {
-    document.getElementById('score-x').textContent = scores.X;
-    document.getElementById('score-o').textContent = scores.O;
-    document.getElementById('score-draw').textContent = scores.draw;
-  }
-
-  function restartGame() {
-    board = Array(9).fill(null);
-    currentPlayer = 'X';
-    gameOver = false;
-    cells.forEach(cell => {
       cell.innerHTML = '';
       cell.className = 'cell';
-      cell.dataset.index && true;
-    });
-    // Re-attach correct data-index
-    cells.forEach((cell, i) => cell.dataset.index = i);
-    cardX.classList.add('active');
-    cardO.classList.remove('active');
-    const cls = 'x-turn';
-    turnDot.className = `turn-dot ${cls}`;
-    turnText.className = `turn-text ${cls}`;
-    turnText.innerHTML = `<span class="turn-arrow">▸</span> תור <span id="turn-name">${nameX.value}</span>`;
-  }
-
-  function resetAll() {
-    scores = { X: 0, O: 0, draw: 0 };
-    updateScores();
-    restartGame();
-  }
-
-  // Confetti
-  const colors = ['#ff6b6b','#4ecdc4','#ffd700','#667eea','#a78bfa','#34d399'];
-  function spawnConfetti() {
-    const container = document.getElementById('confetti');
-    container.innerHTML = '';
-    for (let i = 0; i < 80; i++) {
-      const piece = document.createElement('div');
-      piece.className = 'confetti-piece';
-      piece.style.left = Math.random() * 100 + 'vw';
-      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-      piece.style.animationDuration = (1.5 + Math.random() * 2) + 's';
-      piece.style.animationDelay = (Math.random() * 0.8) + 's';
-      piece.style.width = (6 + Math.random() * 6) + 'px';
-      piece.style.height = (6 + Math.random() * 10) + 'px';
-      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
-      container.appendChild(piece);
+      cell.dataset.index = i;
     }
-    setTimeout(() => container.innerHTML = '', 4000);
+  });
+}
+
+// ===== HOVER =====
+cells.forEach(cell => {
+  cell.addEventListener('mouseenter', () => {
+    if (gameOver || cell.classList.contains('taken')) return;
+    if (!solo && currentPlayer !== mySymbol) return;
+    cell.innerHTML = makeSvg(currentPlayer, true);
+  });
+  cell.addEventListener('mouseleave', () => {
+    if (!cell.classList.contains('taken')) cell.innerHTML = '';
+  });
+  cell.addEventListener('click', handleClick);
+});
+
+// ===== CLICK =====
+function handleClick(e) {
+  const cell = e.currentTarget;
+  const idx  = parseInt(cell.dataset.index);
+  if (gameOver || board[idx]) return;
+  if (!solo && currentPlayer !== mySymbol) return; // לא התורך
+
+  board[idx] = currentPlayer;
+  playSound('place');
+
+  const win = checkWin();
+  const isDraw = !win && board.every(v => v);
+
+  if (!solo) {
+    const ts = Date.now();
+    lastTs = ts;
+    set(gameRef, {
+      board: board.map(v => v||''),
+      currentPlayer: win||isDraw ? currentPlayer : (currentPlayer==='X'?'O':'X'),
+      gameOver: !!(win||isDraw),
+      winCombo: win || null,
+      isDraw: !!isDraw,
+      scores,
+      ts
+    });
   }
 
-  // Name editing clears hint
-  [nameX, nameO].forEach(input => {
-    input.addEventListener('focus', () => {
-      input.select();
-      input.closest('.score-card').querySelector('.name-hint').style.display = 'none';
-    });
-    input.addEventListener('blur', () => {
-      if (!input.value.trim()) input.value = input === nameX ? 'שחקן X' : 'שחקן O';
-      input.closest('.score-card').querySelector('.name-hint').style.display = '';
+  applyMove(win, isDraw);
+}
+
+function applyMove(win, isDraw) {
+  renderBoard();
+
+  if (win) {
+    highlightWin(win);
+    scores[currentPlayer]++;
+    updateScores();
+    const winner = currentPlayer==='X' ? nameX.value : nameO.value;
+    setStatus('winner', `🏆 ${winner} ניצח!`);
+    gameOver = true;
+    playSound('win');
+    spawnConfetti();
+    return;
+  }
+  if (isDraw) {
+    scores.draw++;
+    updateScores();
+    setStatus('draw', '🤝 תיקו!');
+    boardEl.classList.add('shake');
+    setTimeout(() => boardEl.classList.remove('shake'), 500);
+    gameOver = true;
+    playSound('draw');
+    return;
+  }
+
+  currentPlayer = currentPlayer==='X' ? 'O' : 'X';
+  updateTurnUI();
+}
+
+// ===== FIREBASE LISTEN =====
+function listenToGame() {
+  if (solo) return;
+  onValue(gameRef, (snap) => {
+    const s = snap.val();
+    if (!s) return;
+    if (s.ts === lastTs) return;
+    lastTs = s.ts;
+
+    board = s.board.map(v => v||null);
+    currentPlayer = s.currentPlayer;
+    gameOver = s.gameOver;
+    if (s.scores) scores = s.scores;
+
+    renderBoard();
+    updateScores();
+
+    if (s.winCombo) highlightWin(s.winCombo);
+
+    if (s.gameOver) {
+      if (s.isDraw) {
+        setStatus('draw', '🤝 תיקו!');
+      } else {
+        const prev = currentPlayer==='X' ? 'O' : 'X'; // מי שניצח
+        const winner = prev==='X' ? nameX.value : nameO.value;
+        setStatus('winner', `🏆 ${winner} ניצח!`);
+        spawnConfetti();
+      }
+    } else {
       updateTurnUI();
-    });
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') input.blur(); });
+    }
   });
+}
+
+// ===== UI =====
+function setStatus(type, text) {
+  turnText.innerHTML = text;
+  turnText.className = `turn-text ${type}`;
+  turnDot.className  = `turn-dot ${type}`;
+}
+
+function updateTurnUI() {
+  const name = currentPlayer==='X' ? nameX.value : nameO.value;
+  const cls  = currentPlayer==='X' ? 'x-turn' : 'o-turn';
+  turnDot.className  = `turn-dot ${cls}`;
+  turnText.className = `turn-text ${cls}`;
+  turnText.innerHTML = `<span class="turn-arrow">▸</span> תור <span>${name}</span>`;
+  cardX.classList.toggle('active', currentPlayer==='X');
+  cardO.classList.toggle('active', currentPlayer==='O');
+
+  // הודעה כשממתינים
+  if (!solo && !gameOver && currentPlayer !== mySymbol) {
+    const other = currentPlayer==='X' ? nameX.value : nameO.value;
+    turnText.innerHTML += ` <small style="opacity:0.5">(⏳)</small>`;
+  }
+}
+
+function checkWin() {
+  for (const [a,b,c] of WINNING_COMBOS)
+    if (board[a] && board[a]===board[b] && board[a]===board[c]) return [a,b,c];
+  return null;
+}
+
+function highlightWin(combo) {
+  combo.forEach(i => cells[i].classList.add('winning'));
+}
+
+function updateScores() {
+  document.getElementById('score-x').textContent    = scores.X;
+  document.getElementById('score-o').textContent    = scores.O;
+  document.getElementById('score-draw').textContent = scores.draw;
+}
+
+// ===== RESTART =====
+function restartGame() {
+  board = Array(9).fill(null);
+  currentPlayer = 'X'; gameOver = false;
+  renderBoard();
+  cardX.classList.add('active'); cardO.classList.remove('active');
+  updateTurnUI();
+  if (!solo) {
+    const ts = Date.now(); lastTs = ts;
+    set(gameRef, { board: Array(9).fill(''), currentPlayer:'X', gameOver:false, winCombo:null, isDraw:false, scores, ts });
+  }
+}
+
+function resetAll() {
+  scores = { X:0, O:0, draw:0 };
+  restartGame();
+}
+
+window.restartGame = restartGame;
+window.resetAll    = resetAll;
+
+// ===== CONFETTI =====
+const colors = ['#ff6b6b','#4ecdc4','#ffd700','#667eea','#a78bfa','#34d399'];
+function spawnConfetti() {
+  const container = document.getElementById('confetti');
+  container.innerHTML = '';
+  for (let i=0; i<80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random()*100+'vw';
+    piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+    piece.style.animationDuration = (1.5+Math.random()*2)+'s';
+    piece.style.animationDelay = (Math.random()*0.8)+'s';
+    piece.style.width  = (6+Math.random()*6)+'px';
+    piece.style.height = (6+Math.random()*10)+'px';
+    piece.style.borderRadius = Math.random()>0.5?'50%':'2px';
+    container.appendChild(piece);
+  }
+  setTimeout(() => container.innerHTML='', 4000);
+}
+
+// ===== INIT =====
+(function init() {
+  updateTurnUI();
+  if (solo) return;
+  if (myPlayer === 'emma') {
+    // אמה מאתחלת
+    const ts = Date.now(); lastTs = ts;
+    set(gameRef, { board: Array(9).fill(''), currentPlayer:'X', gameOver:false, winCombo:null, isDraw:false, scores, ts })
+      .then(() => listenToGame());
+  } else {
+    listenToGame();
+  }
+})();
 </script>
 </body>
 </html>
