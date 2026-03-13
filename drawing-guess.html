@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>DrawMoji Live: Co-op</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <style>
+    :root { --neon: #3b82f6; --danger: #ef4444; --success: #22c55e; --gold: #fbbf24; }
+    body { background: #020617; color: #f8fafc; height: 100dvh; margin: 0; overflow: hidden; font-family: system-ui; display: flex; flex-direction: column; }
+    .game-container { flex: 1; display: flex; flex-direction: column; padding: 4px; max-width: 500px; margin: 0 auto; width: 100%; height: 100%; }
+    #canvas-container { position: relative; width: 92vw; height: 92vw; max-width: 350px; max-height: 350px; background: #000; border-radius: 16px; border: 2px solid #1e293b; margin: 0 auto; }
+    canvas { width: 100%; height: 100%; border-radius: 14px; touch-action: none; }
+    .color-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; padding: 6px; background: rgba(15, 23, 42, 0.6); border-radius: 12px; }
+    .color-dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; margin: 0 auto; }
+    .color-dot.active { border-color: white; transform: scale(1.1); box-shadow: 0 0 8px currentColor; }
+    .sidebar-right { display: flex; flex-direction: column; gap: 12px; background: rgba(15, 23, 42, 0.8); padding: 8px; border-radius: 16px; }
+    .size-dot { background: #475569; border-radius: 50%; transition: 0.2s; border: 1px solid transparent; margin: 0 auto; width: 14px; height: 14px; }
+    .size-dot.active { background: var(--success); border-color: white; }
+    .bar-bg { width: 92vw; max-width: 350px; height: 6px; background: #1e293b; margin: 4px auto; border-radius: 10px; overflow: hidden; }
+    #inkLevel { height: 100%; width: 100%; background: #3b82f6; transition: width 0.2s; }
+    .timer-text { font-size: 1.8rem; font-weight: 900; color: var(--gold); }
+    #guesserActions { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; padding: 4px; width: 100%; }
+    .emoji-item { aspect-ratio: 1; background: #1e293b; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border: 1px solid rgba(255,255,255,0.05); }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div class="game-container">
+  <div class="flex justify-between items-center px-4 pt-2">
+    <div>
+        <div class="text-[10px] font-bold text-amber-400 uppercase">Score</div>
+        <div id="scoreDisp" class="font-black text-blue-400 text-2xl">0</div>
+    </div>
+    <div id="timer" class="timer-text">60</div>
+    <div class="text-right">
+        <div id="roleIndicator" class="text-[10px] font-bold uppercase py-1 px-2 rounded bg-slate-800">Artist View</div>
+        <div id="roundLabel" class="font-black text-lg">R1</div>
+    </div>
+  </div>
+
+  <div id="infoBar" class="bg-slate-900 border border-blue-500/30 p-2 rounded-xl text-center mx-2 my-1">
+    <div id="artistInstruction">
+        <span class="text-[10px] opacity-60 uppercase font-bold">צייר:</span>
+        <div id="targetEmoji" class="text-5xl"></div>
+    </div>
+    <div id="guesserInstruction" class="hidden">
+        <div class="text-lg font-bold text-blue-300">מה מופיע בציור?</div>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-center gap-2 px-1">
+    <div id="canvas-container">
+        <canvas id="canvas" width="350" height="350"></canvas>
+    </div>
+    <div id="sizeSidebar" class="sidebar-right">
+        <div class="size-dot" style="width:6px; height:6px;" onclick="setSize(4, this)"></div>
+        <div class="size-dot active" onclick="setSize(14, this)"></div>
+        <div class="size-dot" style="width:24px; height:24px;" onclick="setSize(28, this)"></div>
+    </div>
+  </div>
+
+  <div id="inkBar" class="bar-bg"><div id="inkLevel"></div></div>
+
+  <div class="px-2 flex-1 flex flex-col justify-center">
+    <div id="artistControls">
+        <div id="colorSidebar" class="color-grid mb-2"></div>
+        <button onclick="clearAll()" class="w-full bg-red-900/40 py-2 rounded-xl font-bold text-red-200">נקה הכל</button>
+    </div>
+    <div id="guesserControls" class="hidden">
+        <div id="guesserActions"></div>
+    </div>
+    <button onclick="toggleRole()" class="mt-4 text-[9px] opacity-20 font-bold uppercase underline">Switch to Guesser Mode</button>
+  </div>
+</div>
+
+<script>
+// --- Firebase Config ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
+  authDomain: "kidssapp-izhaki.firebaseapp.com",
+  databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kidssapp-izhaki",
+  storageBucket: "kidssapp-izhaki.firebasestorage.app",
+  messagingSenderId: "663906163746",
+  appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const gameRef = db.ref('game_state');
+
+let canvas, ctx, isDrawing = false;
+let currentColor = '#ffffff', currentSize = 14, ink = 100;
+let score = 0, round = 1, timeLeft = 60, secretEmoji = '', isDrawerMode = true;
+
+const emojis = ['🐼','🍕','🚀','🎸','🦁','🍦','⚽','🌵','🚗','🌈','🍩','🥑','👾','🏀','🔥','💎','🦖','🍣','🚲','🏰','🎭','🍟','🧠','🍓','🍄','🏠','👑','🍎','🎈','🚢','✈️','⏰','💡','🔑','🎁','🦢','🦋','🌻','🍉','🍔','🛹','⚓','🏹','🚜','🌋','🥨','🦒','🎨','🎤'];
+const colors = ['#ffffff','#ef4444','#f97316','#facc15','#22c55e','#3b82f6','#a855f7','#ec4899','#94a3b8','#000000'];
+
+window.onload = () => {
+    initCanvas();
+    initPickers();
+    setupSync();
+    if(isDrawerMode) startNewOnlineRound();
+    updateUIVisibility();
+    setInterval(tick, 1000);
+};
+
+function initCanvas() {
+    canvas = document.getElementById('canvas');
+    ctx = canvas.getContext('2d');
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const getP = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const ev = e.touches ? e.touches[0] : e;
+        return { x: (ev.clientX - rect.left) * (canvas.width/rect.width), y: (ev.clientY - rect.top) * (canvas.height/rect.height) };
+    };
+    canvas.addEventListener('touchstart', (e) => {
+        if(!isDrawerMode || ink <= 0) return;
+        isDrawing = true;
+        const p = getP(e); ctx.beginPath(); ctx.moveTo(p.x, p.y);
+        ctx.strokeStyle = currentColor; ctx.lineWidth = currentSize;
+        e.preventDefault();
+    });
+    canvas.addEventListener('touchmove', (e) => {
+        if(!isDrawing || ink <= 0) return;
+        const p = getP(e); ctx.lineTo(p.x, p.y); ctx.stroke();
+        ink -= (currentSize / 350); updateInkUI();
+        e.preventDefault();
+    });
+    canvas.addEventListener('touchend', () => { 
+        if(isDrawing) { isDrawing = false; syncCanvas(); } 
+    });
+}
+
+// סנכרון בזמן אמת
+function setupSync() {
+    gameRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if(!data) return;
+        
+        score = data.score;
+        round = data.round;
+        secretEmoji = data.secretEmoji;
+        document.getElementById('scoreDisp').textContent = score;
+        document.getElementById('roundLabel').textContent = `R${round}`;
+        document.getElementById('targetEmoji').textContent = secretEmoji;
+
+        if(!isDrawerMode) {
+            const img = new Image();
+            img.src = data.canvasData;
+            img.onload = () => { ctx.clearRect(0,0,350,350); ctx.drawImage(img,0,0); };
+            if(data.lastRound !== round) buildGuesserGrid();
+        }
+    });
+}
+
+function syncCanvas() {
+    if(isDrawerMode) {
+        gameRef.update({ canvasData: canvas.toDataURL('image/webp', 0.3) });
+    }
+}
+
+function startNewOnlineRound() {
+    const newEmoji = emojis[Math.floor(Math.random()*emojis.length)];
+    gameRef.update({
+        secretEmoji: newEmoji,
+        lastRound: round,
+        canvasData: "" 
+    });
+    clearAll();
+}
+
+function buildGuesserGrid() {
+    const grid = document.getElementById('guesserActions');
+    grid.innerHTML = '';
+    let pool = [secretEmoji, ...emojis.filter(e => e !== secretEmoji).sort(() => 0.5 - Math.random()).slice(0, 17)].sort(() => 0.5 - Math.random());
+    pool.forEach(emoji => {
+        const d = document.createElement('div');
+        d.className = "emoji-item active:bg-blue-600";
+        d.textContent = emoji;
+        d.onclick = () => {
+            if(emoji === secretEmoji) {
+                confetti({ particleCount: 100 });
+                gameRef.update({ 
+                    score: score + 50, 
+                    round: round + 1 
+                });
+                if(isDrawerMode) startNewOnlineRound();
+            }
+        };
+        grid.appendChild(d);
+    });
+}
+
+function tick() { if(timeLeft > 0) timeLeft--; document.getElementById('timer').textContent = timeLeft; }
+
+function updateUIVisibility() {
+    document.getElementById('artistInstruction').classList.toggle('hidden', !isDrawerMode);
+    document.getElementById('artistControls').classList.toggle('hidden', !isDrawerMode);
+    document.getElementById('sizeSidebar').classList.toggle('hidden', !isDrawerMode);
+    document.getElementById('inkBar').classList.toggle('hidden', !isDrawerMode);
+    document.getElementById('guesserInstruction').classList.toggle('hidden', isDrawerMode);
+    document.getElementById('guesserControls').classList.toggle('hidden', isDrawerMode);
+    document.getElementById('roleIndicator').textContent = isDrawerMode ? "Artist View" : "Guesser View";
+}
+
+function toggleRole() { isDrawerMode = !isDrawerMode; updateUIVisibility(); if(!isDrawerMode) buildGuesserGrid(); }
+function updateInkUI() { document.getElementById('inkLevel').style.width = ink + "%"; }
+function clearAll() { ctx.fillStyle = '#000'; ctx.fillRect(0,0,350,350); ink = 100; updateInkUI(); if(isDrawerMode) syncCanvas(); }
+function setSize(s, el) { currentSize = s; document.querySelectorAll('.size-dot').forEach(d => d.classList.remove('active')); el.classList.add('active'); }
+function initPickers() {
+    const cp = document.getElementById('colorSidebar');
+    colors.forEach(c => {
+        const d = document.createElement('button');
+        d.className = "color-dot"; d.style.backgroundColor = c;
+        d.onclick = () => { currentColor = c; };
+        cp.appendChild(d);
+    });
+}
+</script>
+</body>
+</html>

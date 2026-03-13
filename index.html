@@ -536,11 +536,29 @@ html, body {
       <div class="game-badge badge-ready">מוכן</div>
     </div>
 
+    <div class="game-card fade-in" onclick="openGame('bingo')">
+      <div class="game-icon">🎉</div>
+      <div class="game-info">
+        <div class="game-name">בינגו!</div>
+        <div class="game-desc">לוח אימוג'י · הגרלה · מי ראשון?</div>
+      </div>
+      <div class="game-badge badge-ready">מוכן</div>
+    </div>
+
     <div class="game-card fade-in" onclick="openGame('draw')">
       <div class="game-icon">🎨</div>
       <div class="game-info">
         <div class="game-name">ציור משותף</div>
         <div class="game-desc">קנבס משותף · ציור בזמן אמת</div>
+      </div>
+      <div class="game-badge badge-ready">מוכן</div>
+    </div>
+
+    <div class="game-card fade-in" onclick="openGame('drawing-guess')">
+      <div class="game-icon">✏️</div>
+      <div class="game-info">
+        <div class="game-name">ציור וניחוש</div>
+        <div class="game-desc">אחד מצייר · השני מנחש · ניקוד</div>
       </div>
       <div class="game-badge badge-ready">מוכן</div>
     </div>
@@ -607,7 +625,9 @@ const GAMES = {
   'xo':             { name: 'איקס עיגול',    icon: '❌', url: 'X_O.html',            needsWaiting: true  },
   'mavoch':         { name: 'מבוך',           icon: '🌀', url: 'mavoch.html',         needsWaiting: false },
   'matalot':        { name: 'מטלות בית',      icon: '🏠', url: 'matalot.html',        needsWaiting: false },
+  'bingo':          { name: 'בינגו!',          icon: '🎉', url: 'bingo.html',          needsWaiting: false },
   'draw':           { name: 'ציור משותף',     icon: '🎨', url: 'draw.html',           needsWaiting: false },
+  'drawing-guess':  { name: 'ציור וניחוש',    icon: '✏️', url: 'drawing-guess.html',  needsWaiting: false },
 };
 
 const PLAYERS = {
