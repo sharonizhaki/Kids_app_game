@@ -792,6 +792,17 @@
 </head>
 <body>
 
+  <!-- WAITING OVERLAY -->
+  <div id="bingo-waiting" style="display:none;position:fixed;inset:0;background:#000e;z-index:100;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;padding:24px;">
+    <div style="font-size:3.5rem">🎉</div>
+    <div style="font-size:1.4rem;font-weight:900;color:#fff">בינגו!</div>
+    <div style="font-size:0.85rem;color:#94a3b8">ממתין לשחקן השני...</div>
+    <div style="width:40px;height:40px;border:3px solid rgba(245,200,66,0.2);border-top-color:#F5C842;border-radius:50%;animation:bspin 0.8s linear infinite"></div>
+    <style>@keyframes bspin{to{transform:rotate(360deg)}}</style>
+    <button onclick="startBingoSolo()" style="background:none;border:1px solid #334155;color:#94a3b8;padding:10px 24px;border-radius:20px;font-size:0.8rem;cursor:pointer;margin-top:4px;">🎮 שחק לבד</button>
+    <button onclick="window.location.href='index.html'" style="background:none;border:1px solid #1e293b;color:#475569;padding:8px 18px;border-radius:20px;font-size:0.7rem;cursor:pointer;">🏠 חזרה</button>
+  </div>
+
   <!-- Background glow dots -->
   <div class="glow-dot glow-dot-1"></div>
   <div class="glow-dot glow-dot-2"></div>
@@ -826,18 +837,17 @@
     <div class="lottery-controls">
       <button class="draw-btn" id="drawBtn" onclick="drawEmoji()">הגרל!</button>
       <div class="draw-count" id="drawCount">נותרו 50 אימוג'ים בכד</div>
+      <button onclick="goHome()" style="margin-top:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:#94a3b8;padding:6px 16px;border-radius:20px;font-size:0.75rem;cursor:pointer;">🏠 דף הבית</button>
     </div>
   </div>
 
   <!-- GAME AREA -->
   <div class="game-area">
-    <!-- Player 1 -->
+    <!-- הלוח שלי -->
     <div class="player-card p1" id="card-p1">
       <div class="player-header">
-        <div class="player-name">
-          🟣 שחקן 1
-        </div>
-        <div class="player-badge">PLAYER 1</div>
+        <div class="player-name" id="name-p1">👧 אמה</div>
+        <div class="player-badge" id="badge-p1">הלוח שלי</div>
       </div>
       <div class="emoji-grid" id="grid-p1"></div>
       <div class="progress-section">
@@ -853,18 +863,15 @@
       </div>
     </div>
 
-    <!-- Player 2 -->
-    <div class="player-card p2" id="card-p2">
+    <!-- ניקוד יריב בלבד -->
+    <div class="player-card p2" id="card-p2" style="min-height:auto; padding:12px 16px;">
       <div class="player-header">
-        <div class="player-name">
-          🟠 שחקן 2
-        </div>
-        <div class="player-badge">PLAYER 2</div>
+        <div class="player-name" id="name-p2">👦 ריף</div>
+        <div class="player-badge" id="badge-p2">יריב</div>
       </div>
-      <div class="emoji-grid" id="grid-p2"></div>
-      <div class="progress-section">
+      <div class="progress-section" style="margin-top:8px;">
         <div class="progress-header">
-          <span class="progress-label">התקדמות ל-10</span>
+          <span class="progress-label">התקדמות</span>
           <span class="progress-count" id="score-p2">0 / 10</span>
         </div>
         <div class="progress-track">
@@ -883,13 +890,47 @@
       <div class="win-title">BINGO!</div>
       <div class="win-player-name" id="winPlayerName"></div>
       <button class="restart-btn" onclick="restartGame()">🔄 משחק חדש</button>
+      <button class="restart-btn" onclick="goHome()" style="background:rgba(255,255,255,0.08);box-shadow:none;margin-top:8px;">🏠 דף הבית</button>
     </div>
   </div>
 
   <!-- CONFETTI CONTAINER -->
   <div class="confetti-container" id="confettiContainer"></div>
 
-  <script>
+  <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
+  authDomain: "kidssapp-izhaki.firebaseapp.com",
+  databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kidssapp-izhaki",
+  storageBucket: "kidssapp-izhaki.firebasestorage.app",
+  messagingSenderId: "663906163746",
+  appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+};
+const fbApp   = initializeApp(firebaseConfig);
+const db      = getDatabase(fbApp);
+const gameRef = ref(db, 'game/bingo');
+
+const params   = new URLSearchParams(location.search);
+const myPlayer = params.get('player') || 'emma';
+const solo     = params.get('solo') === 'true';
+const myKey    = myPlayer === 'emma' ? 'p1' : 'p2';
+const oppKey   = myKey === 'p1' ? 'p2' : 'p1';
+const canDraw  = solo || myPlayer === 'emma'; // רק אמה מגרילה
+let lastTs     = null;
+
+// עדכן שמות לפי שחקן
+(function setPlayerNames() {
+  const myName  = myPlayer==='emma' ? '👧 אמה' : '👦 ריף';
+  const oppName = myPlayer==='emma' ? '👦 ריף'  : '👧 אמה';
+  document.getElementById('name-p1').textContent  = myName;
+  document.getElementById('badge-p1').textContent = 'הלוח שלי';
+  document.getElementById('name-p2').textContent  = oppName;
+  document.getElementById('badge-p2').textContent = 'יריב';
+})();
     // ─── EMOJI POOL (50 unique emojis) ───────────────────────────────────────
     const EMOJI_POOL = [
       '🦊','🐼','🦁','🐯','🦋','🦄','🐉','🦅','🐬','🦜',
@@ -928,33 +969,75 @@
       gameOver = false;
       isDrawing = false;
 
-      // Render grids
-      renderGrid('p1');
-      renderGrid('p2');
-
-      // Render milestones
+      // כל שחקן רואה את הלוח שלו ב-grid-p1 (הלוח שלי)
+      renderGridInSlot(myKey, 'p1');
       renderMilestones('p1');
       renderMilestones('p2');
-
-      // Update UI
       updateScore('p1');
       updateScore('p2');
       document.getElementById('historyEmojis').innerHTML = '';
       document.getElementById('historyEmpty').style.display = '';
       document.getElementById('machineEmoji').textContent = '🎱';
       document.getElementById('drawCount').textContent = `נותרו ${pool.length} אימוג'ים בכד`;
-      document.getElementById('drawBtn').disabled = false;
+      document.getElementById('drawBtn').disabled = !canDraw;
       document.getElementById('drawBtn').classList.remove('drawing');
-      document.getElementById('drawBtn').textContent = 'הגרל!';
+      document.getElementById('drawBtn').textContent = canDraw ? 'הגרל!' : '⏳ ממתין לאמה...';
       document.getElementById('card-p1').classList.remove('winner');
       document.getElementById('card-p2').classList.remove('winner');
       document.getElementById('winOverlay').classList.remove('show');
       document.getElementById('confettiContainer').innerHTML = '';
-      setStatus('לחץ על "הגרל!" כדי להתחיל');
+      setStatus(canDraw ? 'לחץ על "הגרל!" כדי להתחיל' : 'ממתין לאמה שתגריל...');
+
+      if (!solo && myPlayer === 'emma') {
+        const ts = Date.now(); lastTs = ts;
+        set(gameRef, { pool, boards, drawn: [], scores: {p1:0,p2:0}, gameOver: false, ts });
+      }
     }
 
-    function renderGrid(player) {
-      const grid = document.getElementById(`grid-${player}`);
+    // ─── FIREBASE LISTEN ─────────────────────────────────────────────────────
+    function listenToState() {
+      if (solo) return;
+      onValue(gameRef, snap => {
+        const s = snap.val(); if (!s) return;
+        if (s.ts === lastTs) return;
+        lastTs = s.ts;
+
+        // קבל boards מאמה
+        if (s.boards) {
+          boards.p1 = s.boards.p1;
+          boards.p2 = s.boards.p2;
+          renderGrid('p1');
+          renderGrid('p2');
+        }
+        pool = s.pool || [];
+        document.getElementById('drawCount').textContent = `נותרו ${pool.length} אימוג'ים בכד`;
+
+        // אם יש drawn חדש — הרץ אנימציה
+        if (s.lastDrawn && !isDrawing) {
+          isDrawing = true;
+          const drawn = s.lastDrawn;
+          const machineEmoji = document.getElementById('machineEmoji');
+          const machine = document.getElementById('machine');
+          spinMachine(machineEmoji, drawn).then(() => {
+            machine.classList.add('flash');
+            setTimeout(() => machine.classList.remove('flash'), 500);
+            addToHistory(drawn);
+            processMatch(drawn);
+            isDrawing = false;
+            document.getElementById('drawBtn').textContent = canDraw ? 'הגרל!' : '⏳ ממתין לאמה...';
+          });
+        }
+
+        if (s.gameOver && s.winner) {
+          triggerWin(s.winner);
+        }
+      });
+    }
+
+    // מרנדר לוח של שחקן `player` לתוך slot בממשק (`slot`)
+    function renderGridInSlot(player, slot) {
+      const grid = document.getElementById(`grid-${slot}`);
+      if (!grid) return;
       grid.innerHTML = '';
       boards[player].forEach((emoji, i) => {
         const cell = document.createElement('div');
@@ -967,6 +1050,11 @@
         `;
         grid.appendChild(cell);
       });
+    }
+
+    function renderGrid(player) {
+      // legacy — renders into its own slot (used for solo)
+      renderGridInSlot(player, player);
     }
 
     function renderMilestones(player) {
@@ -1024,8 +1112,22 @@
     }
 
     // ─── DRAW ─────────────────────────────────────────────────────────────────
+    function processMatch(drawn) {
+      const p1Match = boards.p1.includes(drawn) && !matched.p1.has(drawn);
+      const p2Match = boards.p2.includes(drawn) && !matched.p2.has(drawn);
+      let statusText = `הוגרל: ${drawn}`;
+      if (p1Match) { matched.p1.add(drawn); scores.p1++; markCell('p1', drawn); updateScore('p1'); statusText += ` — שחקן 1 סימן! 🟣`; }
+      if (p2Match) { matched.p2.add(drawn); scores.p2++; markCell('p2', drawn); updateScore('p2'); statusText += ` — שחקן 2 סימן! 🟠`; }
+      if (!p1Match && !p2Match) statusText += ` — אף שחקן לא מחזיק אותו`;
+      setStatus(statusText);
+      if (scores.p1 >= WIN_TARGET && scores.p2 >= WIN_TARGET) { triggerWin('tie'); return; }
+      else if (scores.p1 >= WIN_TARGET) { triggerWin('p1'); return; }
+      else if (scores.p2 >= WIN_TARGET) { triggerWin('p2'); return; }
+      if (pool.length === 0) { setStatus("כל האימוג'ים הוגרלו!"); gameOver=true; }
+    }
+
     async function drawEmoji() {
-      if (isDrawing || gameOver || pool.length === 0) return;
+      if (isDrawing || gameOver || pool.length === 0 || !canDraw) return;
       isDrawing = true;
 
       const btn = document.getElementById('drawBtn');
@@ -1036,7 +1138,6 @@
       const drawn = pool.pop();
       document.getElementById('drawCount').textContent = `נותרו ${pool.length} אימוג'ים בכד`;
 
-      // Animate machine: spin through random emojis
       const machineEmoji = document.getElementById('machineEmoji');
       const machine = document.getElementById('machine');
 
@@ -1044,66 +1145,29 @@
       machine.classList.add('flash');
       setTimeout(() => machine.classList.remove('flash'), 500);
 
-      // Add to history
       addToHistory(drawn);
-
-      // Check boards
-      const p1Match = boards.p1.includes(drawn) && !matched.p1.has(drawn);
-      const p2Match = boards.p2.includes(drawn) && !matched.p2.has(drawn);
-
-      let statusText = `הוגרל: ${drawn}`;
-
-      if (p1Match || p2Match) {
-        await new Promise(r => setTimeout(r, 200));
-      }
-
-      if (p1Match) {
-        matched.p1.add(drawn);
-        scores.p1++;
-        markCell('p1', drawn);
-        updateScore('p1');
-        statusText += ` — שחקן 1 סימן! 🟣`;
-      }
-
-      if (p2Match) {
-        matched.p2.add(drawn);
-        scores.p2++;
-        markCell('p2', drawn);
-        updateScore('p2');
-        statusText += ` — שחקן 2 סימן! 🟠`;
-      }
-
-      if (!p1Match && !p2Match) {
-        statusText += ` — אף שחקן לא מחזיק אותו`;
-      }
-
-      setStatus(statusText);
-
-      // Check win
+      await new Promise(r => setTimeout(r, 200));
+      processMatch(drawn);
       await new Promise(r => setTimeout(r, 600));
 
-      if (scores.p1 >= WIN_TARGET && scores.p2 >= WIN_TARGET) {
-        triggerWin('tie');
-        return;
-      } else if (scores.p1 >= WIN_TARGET) {
-        triggerWin('p1');
-        return;
-      } else if (scores.p2 >= WIN_TARGET) {
-        triggerWin('p2');
-        return;
+      // דחוף ל-Firebase
+      if (!solo) {
+        const ts = Date.now(); lastTs = ts;
+        set(gameRef, {
+          pool, boards,
+          lastDrawn: drawn,
+          scores, gameOver,
+          winner: scores.p1 >= WIN_TARGET && scores.p2 >= WIN_TARGET ? 'tie' : scores.p1 >= WIN_TARGET ? 'p1' : scores.p2 >= WIN_TARGET ? 'p2' : null,
+          ts
+        });
       }
 
-      if (pool.length === 0) {
-        setStatus('כל האימוג\'ים הוגרלו! המשחק הסתיים.');
-        gameOver = true;
-        btn.textContent = '✓ הוגרל הכל';
-        return;
+      if (!gameOver) {
+        btn.disabled = false;
+        btn.classList.remove('drawing');
+        btn.textContent = 'הגרל!';
+        isDrawing = false;
       }
-
-      btn.disabled = false;
-      btn.classList.remove('drawing');
-      btn.textContent = 'הגרל!';
-      isDrawing = false;
     }
 
     function spinMachine(el, finalEmoji) {
@@ -1276,11 +1340,39 @@
     // ─── RESTART ─────────────────────────────────────────────────────────────
     function restartGame() {
       document.getElementById('winOverlay').classList.remove('show');
+      if (!solo) remove(gameRef);
       setTimeout(initGame, 300);
     }
 
+    window.goHome = function() { if (!solo) remove(gameRef); window.location.href='index.html'; };
+
+    // ─── WAITING ROOM ─────────────────────────────────────────────────────────
+    window.startBingoSolo = function() {
+      document.getElementById('bingo-waiting').style.display = 'none';
+      initGame();
+    };
+
+    function initWaiting() {
+      if (solo) { initGame(); listenToState(); return; }
+      // הצג overlay
+      const overlay = document.getElementById('bingo-waiting');
+      overlay.style.display = 'flex';
+      // כתוב נוכחות
+      import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js").then(({ update, onValue: ov }) => {
+        update(gameRef, { [`ready_${myPlayer}`]: true });
+        ov(gameRef, snap => {
+          const s = snap.val(); if (!s) return;
+          if (s.ready_emma && s.ready_rif) {
+            overlay.style.display = 'none';
+            initGame();
+            listenToState();
+          }
+        });
+      });
+    }
+
     // ─── START ────────────────────────────────────────────────────────────────
-    initGame();
+    initWaiting();
   </script>
 </body>
 </html>

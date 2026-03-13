@@ -480,6 +480,7 @@ let board = Array(9).fill(null);
 let currentPlayer = 'X';
 let gameOver = false;
 let scores = { X: 0, O: 0, draw: 0 };
+let lastStarter = 'X'; // מי התחיל את המשחק האחרון
 
 const cells   = document.querySelectorAll('.cell');
 const boardEl = document.getElementById('board');
@@ -634,6 +635,7 @@ function listenToGame() {
     currentPlayer = s.currentPlayer;
     gameOver = s.gameOver;
     if (s.scores) scores = s.scores;
+    if (s.lastStarter) lastStarter = s.lastStarter;
 
     renderBoard();
     updateScores();
@@ -696,14 +698,18 @@ function updateScores() {
 
 // ===== RESTART =====
 function restartGame() {
+  // מי שלא התחיל את המשחק הקודם — מתחיל עכשיו
+  const nextStarter = lastStarter === 'X' ? 'O' : 'X';
+  lastStarter = nextStarter;
   board = Array(9).fill(null);
-  currentPlayer = 'X'; gameOver = false;
+  currentPlayer = nextStarter; gameOver = false;
   renderBoard();
-  cardX.classList.add('active'); cardO.classList.remove('active');
+  cardX.classList.toggle('active', nextStarter==='X');
+  cardO.classList.toggle('active', nextStarter==='O');
   updateTurnUI();
   if (!solo) {
     const ts = Date.now(); lastTs = ts;
-    set(gameRef, { board: Array(9).fill(''), currentPlayer:'X', gameOver:false, winCombo:null, isDraw:false, scores, ts });
+    set(gameRef, { board: Array(9).fill(''), currentPlayer: nextStarter, gameOver:false, winCombo:null, isDraw:false, scores, lastStarter: nextStarter, ts });
   }
 }
 

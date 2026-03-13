@@ -7,381 +7,260 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-    
-    body {
-      font-family: 'Press Start 2P', system-ui;
-      background: linear-gradient(to bottom, #0a0a0a, #000);
-      color: #e0e0e0;
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-      overflow: hidden;
-    }
-    
-    .hidden { display: none !important; }
-    
-    .maze-container {
-      display: grid;
-      grid-template-columns: repeat(13, 27px);
-      grid-template-rows: repeat(13, 27px);
-      gap: 3px;
-      background: #111;
-      padding: 10px;
-      border: 5px solid #22c55e;
-      border-radius: 12px;
-      box-shadow: 0 0 40px rgba(34,197,94,0.5), inset 0 0 20px #000;
-    }
-    
-    .cell {
-      width: 27px;
-      height: 27px;
-      background: #18181b;
-      position: relative;
-      border-radius: 4px;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.7);
-    }
-    
-    .wall {
-      background: linear-gradient(135deg, #334155, #1e293b);
-      box-shadow: 0 0 10px #475569;
-    }
-    
-    .path {
-      background: #27272a;
-    }
-    
-    .gift {
-      font-size: 22px;
-      line-height: 27px;
-      text-align: center;
-      filter: drop-shadow(0 0 12px #eab308);
-    }
-    
-    .player {
-      position: absolute;
-      inset: 0;
-      font-size: 22px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.18s cubic-bezier(0.34,1.56,0.64,1);
-      z-index: 10;
-    }
-    
-    .player.jump {
-      transform: scale(1.45) translateY(-8px);
-      filter: drop-shadow(0 0 12px #a78bfa);
-    }
-    
-    #timer {
-      font-size: 3rem;
-      font-weight: bold;
-      color: #22c55e;
-      text-shadow: 0 0 20px #22c55e;
-      letter-spacing: 3px;
-    }
-    
-    .neon-btn {
-      background: linear-gradient(90deg, #22c55e, #84cc16);
-      color: #0f0f0f;
-      font-weight: bold;
-      box-shadow: 0 0 20px #22c55e;
-      transition: all 0.2s;
-    }
-    
-    .neon-btn:hover {
-      transform: scale(1.06);
-      box-shadow: 0 0 30px #84cc16;
-    }
-    
-    .arrow-btn {
-      width: 80px;
-      height: 80px;
-      font-size: 44px;
-      background: #1f2937;
-      border: 4px solid #22c55e;
-      border-radius: 16px;
-      color: #22c55e;
-      transition: all 0.15s;
-    }
-    
-    .arrow-btn:active {
-      transform: scale(0.88);
-      background: #22c55e;
-      color: #111;
-    }
+    body { font-family:'Press Start 2P',system-ui; background:linear-gradient(to bottom,#0a0a0a,#000); color:#e0e0e0; margin:0; padding:0; height:100vh; overflow:hidden; }
+    .hidden { display:none !important; }
+    .maze-container { display:grid; grid-template-columns:repeat(13,27px); grid-template-rows:repeat(13,27px); gap:3px; background:#111; padding:10px; border:5px solid #22c55e; border-radius:12px; box-shadow:0 0 40px rgba(34,197,94,0.5),inset 0 0 20px #000; }
+    .cell { width:27px; height:27px; background:#18181b; position:relative; border-radius:4px; box-shadow:inset 0 2px 4px rgba(0,0,0,0.7); }
+    .wall { background:linear-gradient(135deg,#334155,#1e293b); box-shadow:0 0 10px #475569; }
+    .path { background:#27272a; }
+    .gift { font-size:22px; line-height:27px; text-align:center; filter:drop-shadow(0 0 12px #eab308); }
+    .player { position:absolute; inset:0; font-size:20px; display:flex; align-items:center; justify-content:center; transition:all 0.18s cubic-bezier(0.34,1.56,0.64,1); z-index:10; }
+    .player.me { transform:scale(1.35); filter:drop-shadow(0 0 8px #a78bfa); }
+    #timer { font-size:2rem; font-weight:bold; color:#22c55e; text-shadow:0 0 20px #22c55e; letter-spacing:3px; }
+    .neon-btn { background:linear-gradient(90deg,#22c55e,#84cc16); color:#0f0f0f; font-weight:bold; box-shadow:0 0 20px #22c55e; transition:all 0.2s; }
+    .arrow-btn { width:70px; height:70px; font-size:38px; background:#1f2937; border:4px solid #22c55e; border-radius:16px; color:#22c55e; transition:all 0.15s; }
+    .arrow-btn:active { transform:scale(0.88); background:#22c55e; color:#111; }
+    .p-chip { display:inline-flex; align-items:center; gap:6px; font-size:0.55rem; padding:4px 10px; border-radius:20px; border:1.5px solid; }
+    .p-chip.emma { border-color:#FF5C7A; color:#FF5C7A; background:rgba(255,92,122,0.1); }
+    .p-chip.rif  { border-color:#4DB8FF; color:#4DB8FF; background:rgba(77,184,255,0.1); }
+    .spinner { width:44px; height:44px; border:4px solid #22c55e33; border-top-color:#22c55e; border-radius:50%; animation:spin 0.8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
   </style>
 </head>
-<body class="flex items-center justify-center p-4">
+<body class="flex items-center justify-center p-2">
 
-  <!-- מסך לובי -->
-  <div id="lobby" class="flex flex-col items-center gap-8 text-center max-w-md w-full">
-    <div class="text-6xl mb-2">🌀</div>
-    <h1 class="text-5xl font-bold tracking-wider text-lime-400">מבוך פרו</h1>
-    <p class="text-zinc-400 text-base">13×13 • מבוך אמיתי • נגישות מלאה</p>
-    
-    <button onclick="startVsAI()"
-            class="neon-btn w-full max-w-xs py-6 text-2xl rounded-2xl shadow-2xl">
-      שחק נגד מחשב
-    </button>
-  </div>
+<!-- ניצחון -->
+<div id="win" class="hidden fixed inset-0 flex flex-col items-center justify-center gap-8 bg-black/90 z-50">
+  <div id="winEmoji" class="text-9xl animate-bounce"></div>
+  <h1 id="winText" class="text-4xl font-bold text-lime-400 tracking-widest text-center px-4"></h1>
+  <button onclick="goHome()" class="neon-btn px-12 py-5 text-xl rounded-3xl">🎮 משחק חדש</button>
+  <button onclick="window.location.href='index.html'" class="neon-btn px-12 py-5 text-xl rounded-3xl" style="background:linear-gradient(90deg,#334155,#1e293b);color:#e0e0e0;box-shadow:none;">🏠 דף הבית</button>
+</div>
 
-  <!-- מסך משחק -->
-  <div id="game" class="hidden flex flex-col items-center gap-6 w-full max-w-[420px]">
+<!-- המתנה -->
+<div id="waiting-overlay" class="hidden fixed inset-0 flex flex-col items-center justify-center gap-5 bg-black/95 z-40">
+  <div class="text-5xl">🌀</div>
+  <div class="text-lime-400 text-sm">ממתין לשחקן השני...</div>
+  <div class="spinner"></div>
+  <button onclick="window.location.href='index.html'" style="background:none;border:1px solid #334155;color:#94a3b8;padding:8px 20px;border-radius:20px;font-size:0.6rem;cursor:pointer;margin-top:8px;">← חזרה</button>
+</div>
+
+<!-- משחק -->
+<div id="game" class="flex flex-col items-center gap-3 w-full max-w-[420px]">
+
+  <div class="flex justify-between items-center w-full px-1">
+    <button onclick="window.location.href='index.html'" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;padding:5px 10px;border-radius:20px;font-size:0.6rem;cursor:pointer;">🏠</button>
     <div id="timer" class="font-mono">00:00</div>
-    
-    <div id="maze" class="maze-container"></div>
-    
-    <div class="grid grid-cols-3 gap-4 mt-6">
-      <div></div>
-      <button onclick="moveDir('up')" class="arrow-btn">↑</button>
-      <div></div>
-      <button onclick="moveDir('left')" class="arrow-btn">←</button>
-      <button onclick="moveDir('down')" class="arrow-btn">↓</button>
-      <button onclick="moveDir('right')" class="arrow-btn">→</button>
-    </div>
-    
-    <div class="flex gap-4 w-full mt-4">
-      <button onclick="resetGame()" class="neon-btn flex-1 py-5 text-xl rounded-2xl">
-        משחק חדש
-      </button>
-      <button onclick="window.location.href='index.html'" class="neon-btn flex-1 py-5 text-xl rounded-2xl" style="background:linear-gradient(90deg,#334155,#1e293b);color:#e0e0e0;box-shadow:none;">
-        🏠 דף הבית
-      </button>
-    </div>
+    <div style="width:48px"></div>
   </div>
 
-  <!-- מסך ניצחון -->
-  <div id="win" class="hidden flex flex-col items-center gap-10 bg-black/80 backdrop-blur-lg p-12 rounded-3xl border border-lime-500/30">
-    <div id="winEmoji" class="text-9xl animate-bounce"></div>
-    <h1 id="winText" class="text-6xl font-bold text-lime-400 tracking-widest"></h1>
-    <button onclick="restartAfterWin()" class="neon-btn px-16 py-6 text-3xl rounded-3xl">
-      משחק חדש
-    </button>
-    <button onclick="window.location.href='index.html'" class="neon-btn px-16 py-6 text-3xl rounded-3xl" style="background:linear-gradient(90deg,#334155,#1e293b);color:#e0e0e0;box-shadow:none;">
-      🏠 דף הבית
-    </button>
+  <div class="flex gap-3 w-full justify-center">
+    <div class="p-chip emma" id="chip-emma">👧 אמה</div>
+    <div style="color:#555;font-size:0.6rem;align-self:center;">VS</div>
+    <div class="p-chip rif" id="chip-rif">👦 ריף</div>
   </div>
 
-<script>
-// ==================== משתנים גלובליים ====================
-let isVsAI = false;
-let mazeData = [];
-let p1 = {x: 1, y: 1};
-let p2 = {x: 11, y: 11};
-let startTime = null;
-let timerInterval = null;
+  <div id="maze" class="maze-container"></div>
 
-// ==================== יצירת מבוך ====================
-function generateComplexMaze() {
-  let maze = Array(13).fill().map(() => Array(13).fill(1));
-  
-  function shuffle(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-      let j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
+  <div class="grid grid-cols-3 gap-3 mt-1">
+    <div></div>
+    <button onclick="movePlayer('up')" class="arrow-btn">↑</button>
+    <div></div>
+    <button onclick="movePlayer('left')" class="arrow-btn">←</button>
+    <button onclick="movePlayer('down')" class="arrow-btn">↓</button>
+    <button onclick="movePlayer('right')" class="arrow-btn">→</button>
+  </div>
+
+  <div class="flex gap-3 w-full mt-1">
+    <button onclick="goHome()" class="neon-btn flex-1 py-4 text-sm rounded-2xl">משחק חדש</button>
+    <button onclick="window.location.href='index.html'" class="neon-btn flex-1 py-4 text-sm rounded-2xl" style="background:linear-gradient(90deg,#334155,#1e293b);color:#e0e0e0;box-shadow:none;">🏠 בית</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
+  authDomain: "kidssapp-izhaki.firebaseapp.com",
+  databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kidssapp-izhaki",
+  storageBucket: "kidssapp-izhaki.firebasestorage.app",
+  messagingSenderId: "663906163746",
+  appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+const gameRef = ref(db, 'game/mavoch');
+
+const params   = new URLSearchParams(location.search);
+const myPlayer = params.get('player') || 'emma';
+const solo     = params.get('solo') === 'true';
+const myKey    = myPlayer === 'emma' ? 'p1' : 'p2';
+
+let mazeData  = [];
+let positions = { p1:{x:1,y:1}, p2:{x:11,y:11} };
+let startTime = null, timerInterval = null;
+let gameOver  = false, lastTs = null;
+
+// ===== מבוך דטרמיניסטי =====
+function generateMaze(seed) {
+  function rnd(n) { let x=Math.sin(seed+n)*10000; return x-Math.floor(x); }
+  function shuffle(arr, off) {
+    for (let i=arr.length-1;i>0;i--) {
+      let j=Math.floor(rnd(i+off)*(i+1));
+      [arr[i],arr[j]]=[arr[j],arr[i]];
     }
   }
-  
-  function carve(cx, cy) {
-    maze[cy][cx] = 0;
-    
-    let dirs = [[0, -2], [2, 0], [0, 2], [-2, 0]];
-    shuffle(dirs);
-    
-    for (let [dx, dy] of dirs) {
-      let nx = cx + dx;
-      let ny = cy + dy;
-      if (nx <= 0 || nx >= 12 || ny <= 0 || ny >= 12) continue;
-      if (maze[ny][nx] === 1) {
-        maze[cy + dy/2][cx + dx/2] = 0;
-        carve(nx, ny);
-      }
+  let maze=Array(13).fill(null).map(()=>Array(13).fill(1));
+  function carve(cx,cy,d) {
+    maze[cy][cx]=0;
+    let dirs=[[0,-2],[2,0],[0,2],[-2,0]]; shuffle(dirs,d*4);
+    for (let [dx,dy] of dirs) {
+      let nx=cx+dx,ny=cy+dy;
+      if (nx<=0||nx>=12||ny<=0||ny>=12) continue;
+      if (maze[ny][nx]===1) { maze[cy+dy/2][cx+dx/2]=0; carve(nx,ny,d+1); }
     }
   }
-  
-  carve(1, 1);
-  
-  // מבטיח שהמרכז פתוח ולעולם לא חסום
-  maze[6][6] = 0;
-  maze[5][6] = 0;
-  maze[6][5] = 0;
-  maze[6][7] = 0;
-  maze[7][6] = 0;
-  
+  carve(1,1,0);
+  maze[6][6]=0;maze[5][6]=0;maze[6][5]=0;maze[6][7]=0;maze[7][6]=0;
   return maze;
 }
 
-// ==================== רינדור ====================
+// ===== רינדור =====
 function renderMaze() {
-  const container = document.getElementById("maze");
-  container.innerHTML = "";
-  
-  for (let y = 0; y < 13; y++) {
-    for (let x = 0; x < 13; x++) {
-      const cell = document.createElement("div");
-      cell.className = mazeData[y][x] === 1 ? "cell wall" : "cell path";
-      
-      if (x === 6 && y === 6) {
-        cell.innerHTML = '<span class="gift">🎁</span>';
+  const c=document.getElementById('maze'); c.innerHTML='';
+  for (let y=0;y<13;y++) {
+    for (let x=0;x<13;x++) {
+      const cell=document.createElement('div');
+      cell.className=mazeData[y][x]===1?'cell wall':'cell path';
+      if (x===6&&y===6) cell.innerHTML='<span class="gift">🎁</span>';
+      if (x===positions.p1.x&&y===positions.p1.y) {
+        const p=document.createElement('span');
+        p.className='player'+(myKey==='p1'?' me':'');
+        p.textContent='👧'; cell.appendChild(p);
       }
-      
-      if (x === p1.x && y === p1.y) {
-        const player = document.createElement("span");
-        player.className = "player jump";
-        player.textContent = "👧";
-        cell.appendChild(player);
+      if (x===positions.p2.x&&y===positions.p2.y) {
+        const p=document.createElement('span');
+        p.className='player'+(myKey==='p2'?' me':'');
+        p.textContent='👦'; cell.appendChild(p);
       }
-      
-      if (x === p2.x && y === p2.y) {
-        const ai = document.createElement("span");
-        ai.className = "player";
-        ai.textContent = "🤖";
-        cell.appendChild(ai);
-      }
-      
-      container.appendChild(cell);
+      c.appendChild(cell);
     }
   }
+  const p1=positions.p1, p2=positions.p2;
+  document.getElementById('chip-emma').textContent=`👧 אמה (${p1.x},${p1.y})`;
+  document.getElementById('chip-rif').textContent =`👦 ריף (${p2.x},${p2.y})`;
 }
 
-// ==================== תזוזה ====================
-function moveDir(dir) {
-  let nx = p1.x;
-  let ny = p1.y;
-  
-  if (dir === "up")    ny--;
-  if (dir === "down")  ny++;
-  if (dir === "left")  nx--;
-  if (dir === "right") nx++;
-  
-  if (nx < 0 || nx > 12 || ny < 0 || ny > 12 || mazeData[ny][nx] === 1) return;
-  
-  p1.x = nx;
-  p1.y = ny;
-  
+// ===== תזוזה =====
+window.movePlayer = function(dir) {
+  if (gameOver) return;
+  const pos={...positions[myKey]};
+  if (dir==='up')    pos.y--;
+  if (dir==='down')  pos.y++;
+  if (dir==='left')  pos.x--;
+  if (dir==='right') pos.x++;
+  if (pos.x<0||pos.x>12||pos.y<0||pos.y>12||mazeData[pos.y][pos.x]===1) return;
+  positions[myKey]=pos;
   renderMaze();
-  
-  if (nx === 6 && ny === 6) {
-    showWin("👧");
-  }
-  
-  if (isVsAI) {
-    setTimeout(aiMove, 600);
-  }
+  if (pos.x===6&&pos.y===6) { handleWin(myKey); return; }
+  if (!solo) pushState();
+};
+
+// ===== FIREBASE =====
+function pushState(extra={}) {
+  const ts=Date.now(); lastTs=ts;
+  set(gameRef,{ maze:mazeData.map(r=>r.join('')).join('|'), p1:positions.p1, p2:positions.p2, gameOver, ts, ...extra });
 }
 
-// ==================== AI ====================
-function aiMove() {
-  if (!isVsAI) return;
-  
-  const dirs = [[0,-1], [0,1], [-1,0], [1,0]];
-  let best = null;
-  let bestDist = Infinity;
-  
-  for (let [dx, dy] of dirs) {
-    let nx = p2.x + dx;
-    let ny = p2.y + dy;
-    if (nx < 0 || nx > 12 || ny < 0 || ny > 12 || mazeData[ny][nx] === 1) continue;
-    let dist = Math.abs(nx - 6) + Math.abs(ny - 6);
-    if (dist < bestDist) {
-      bestDist = dist;
-      best = [nx, ny];
+function listenToState() {
+  onValue(gameRef, snap => {
+    const s=snap.val(); if (!s) return;
+    if (s.ts===lastTs) return;
+    lastTs=s.ts;
+
+    // קבל מבוך מאמה
+    if (!mazeData.length && s.maze) {
+      mazeData=s.maze.split('|').map(r=>r.split('').map(Number));
+      startTimer();
+      document.getElementById('waiting-overlay').classList.add('hidden');
     }
-  }
-  
-  if (best) {
-    p2.x = best[0];
-    p2.y = best[1];
-  }
-  
-  renderMaze();
-  
-  if (p2.x === 6 && p2.y === 6) {
-    showWin("🤖");
-  }
+
+    positions.p1=s.p1||{x:1,y:1};
+    positions.p2=s.p2||{x:11,y:11};
+
+    if (!gameOver) renderMaze();
+
+    if (s.gameOver && s.winner && !gameOver) {
+      gameOver=true;
+      showWinScreen(s.winner);
+    }
+  });
 }
 
-// ==================== ניצחון ====================
-function showWin(winner) {
+// ===== ניצחון =====
+function handleWin(winner) {
+  gameOver=true;
+  if (!solo) pushState({gameOver:true, winner});
+  showWinScreen(winner);
+}
+
+function showWinScreen(winner) {
   clearInterval(timerInterval);
-  document.getElementById("game").classList.add("hidden");
-  const winScreen = document.getElementById("win");
-  winScreen.classList.remove("hidden");
-  document.getElementById("winEmoji").textContent = winner;
-  document.getElementById("winText").textContent = "ניצח!";
+  const emoji=winner==='p1'?'👧':'👦';
+  const name =winner==='p1'?'אמה':'ריף';
+  document.getElementById('winEmoji').textContent=emoji;
+  document.getElementById('winText').textContent=`${name} ניצח/ה! 🏆`;
+  document.getElementById('win').classList.remove('hidden');
 }
 
-// ==================== אתחול / משחק חדש ====================
-function resetGame() {
-  mazeData = generateComplexMaze();
-  p1 = {x: 1, y: 1};
-  p2 = {x: 11, y: 11};
-  startTime = Date.now();
-  
-  document.getElementById("win").classList.add("hidden");
-  
-  renderMaze();
-  updateTimer();
-  
-  if (isVsAI) {
-    setTimeout(aiMove, 800);
-  }
-}
-
-function updateTimer() {
+// ===== טיימר =====
+function startTimer() {
+  startTime=Date.now();
   if (timerInterval) clearInterval(timerInterval);
-  
-  timerInterval = setInterval(() => {
-    let elapsed = Math.floor((Date.now() - startTime) / 1000);
-    let m = String(Math.floor(elapsed / 60)).padStart(2, '0');
-    let s = String(elapsed % 60).padStart(2, '0');
-    document.getElementById("timer").textContent = `\( {m}: \){s}`;
-  }, 200);
+  timerInterval=setInterval(()=>{
+    const e=Math.floor((Date.now()-startTime)/1000);
+    document.getElementById('timer').textContent=`${String(Math.floor(e/60)).padStart(2,'0')}:${String(e%60).padStart(2,'0')}`;
+  },200);
 }
 
-function startVsAI() {
-  isVsAI = true;
-  document.getElementById("lobby").classList.add("hidden");
-  document.getElementById("game").classList.remove("hidden");
-  resetGame();
-}
+window.goHome=function() {
+  if (!solo) remove(gameRef);
+  window.location.href='index.html';
+};
 
-function restartAfterWin() {
-  document.getElementById("win").classList.add("hidden");
-  document.getElementById("game").classList.remove("hidden");
-  resetGame();
-}
-
-// ==================== swipe ====================
-let touchStartX = 0;
-let touchStartY = 0;
-
-document.addEventListener("touchstart", e => {
-  touchStartX = e.touches[0].clientX;
-  touchStartY = e.touches[0].clientY;
-}, { passive: false });
-
-document.addEventListener("touchmove", e => {
-  if (e.touches.length !== 1) return;
-  const dx = e.touches[0].clientX - touchStartX;
-  const dy = e.touches[0].clientY - touchStartY;
-  
-  if (Math.abs(dx) > 50 || Math.abs(dy) > 50) {
-    let dir = "";
-    if (Math.abs(dx) > Math.abs(dy)) {
-      dir = dx > 0 ? "right" : "left";
-    } else {
-      dir = dy > 0 ? "down" : "up";
-    }
-    moveDir(dir);
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
+// ===== SWIPE =====
+let tx=0,ty=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;},{passive:true});
+document.addEventListener('touchmove',e=>{
+  const dx=e.touches[0].clientX-tx, dy=e.touches[0].clientY-ty;
+  if (Math.abs(dx)>45||Math.abs(dy)>45) {
+    window.movePlayer(Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up'));
+    tx=e.touches[0].clientX; ty=e.touches[0].clientY;
   }
-}, { passive: false });
+},{passive:false});
 
-// ==================== אתחול ====================
-document.getElementById("lobby").classList.remove("hidden");
+// ===== INIT =====
+(function init() {
+  if (solo) {
+    mazeData=generateMaze(Math.floor(Math.random()*9999));
+    positions={p1:{x:1,y:1},p2:{x:11,y:11}};
+    renderMaze(); startTimer(); return;
+  }
+  if (myPlayer==='emma') {
+    mazeData=generateMaze(Math.floor(Math.random()*9999));
+    positions={p1:{x:1,y:1},p2:{x:11,y:11}};
+    renderMaze(); startTimer();
+    pushState();
+    listenToState();
+  } else {
+    document.getElementById('waiting-overlay').classList.remove('hidden');
+    listenToState();
+  }
+})();
 </script>
 </body>
 </html>
