@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#1B1F2E">
-<title>סולמות וגנבים</title>
+<title>סולמות ונחשים</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Heebo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -449,6 +449,7 @@ html, body {
 <!-- GAME -->
 <div id="game-screen" class="screen">
   <div class="status-bar">
+    <button onclick="window.location.href='index.html'" style="width:32px;height:32px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:0.85rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">🏠</button>
     <div class="player-chip" id="chip-1">
       <span class="chip-emoji">👧</span>
       <div class="chip-info">
@@ -502,12 +503,38 @@ html, body {
 
 <div id="banner"></div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, update, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
+  authDomain: "kidssapp-izhaki.firebaseapp.com",
+  databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kidssapp-izhaki",
+  storageBucket: "kidssapp-izhaki.firebasestorage.app",
+  messagingSenderId: "663906163746",
+  appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
 const SNAKES  = {17:7, 54:34, 62:19, 64:60, 87:24, 93:73, 95:75, 99:78};
 const LADDERS = {4:14, 9:31, 20:38, 28:84, 40:59, 51:67, 63:81, 71:91};
 const DICE_DOTS = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
 
+// ===== STATE =====
+const params      = new URLSearchParams(location.search);
+const myPlayer    = params.get('player') || 'emma'; // 'emma' | 'rif'
+const solo        = params.get('solo') === 'true';
+const gameRef     = ref(db, 'game/snakes-ladders');
+
 let players, cur, rolling, gameOver;
+let lastState = null; // למניעת לופים
+
+// myPlayer === 'emma' → אני שחקן 0, ריף → שחקן 1
+const myIndex = myPlayer === 'emma' ? 0 : 1;
 
 function initGame(n1, n2) {
   players = [{name:n1,pos:0},{name:n2,pos:0}];
@@ -525,6 +552,48 @@ function initGame(n1, n2) {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+}
+
+// ===== FIREBASE SYNC =====
+function pushState(extra = {}) {
+  if (solo) return; // במצב סולו אין Firebase
+  const state = {
+    pos0: players[0].pos,
+    pos1: players[1].pos,
+    cur,
+    gameOver,
+    ts: Date.now(),
+    ...extra
+  };
+  set(gameRef, state);
+}
+
+function listenToState() {
+  if (solo) return;
+  onValue(gameRef, (snap) => {
+    const s = snap.val();
+    if (!s) return;
+    // אל תעדכן אם זה אותו state שדחפנו
+    if (s.ts === lastState) return;
+    lastState = s.ts;
+
+    players[0].pos = s.pos0 || 0;
+    players[1].pos = s.pos1 || 0;
+    cur     = s.cur ?? 0;
+    gameOver = !!s.gameOver;
+
+    renderTokens();
+    updateUI();
+
+    if (s.gameOver) {
+      const winner = players[s.cur]; // cur לפני השינוי = המנצח
+      setTimeout(() => {
+        document.getElementById('win-name').textContent = winner.name;
+        document.getElementById('win-msg').textContent = (s.cur===0?'👧':'👦') + ' הגיע/ה למשבצת 100!';
+        showScreen('win-screen');
+      }, 450);
+    }
+  });
 }
 
 /* ---- BOARD ---- */
@@ -690,8 +759,16 @@ function updateUI() {
   document.getElementById('chip-1').className = 'player-chip' + (cur===0 ? ' on-p1' : '');
   document.getElementById('chip-2').className = 'player-chip' + (cur===1 ? ' on-p2' : '');
   document.getElementById('turn-name').textContent = cp.name;
-  document.getElementById('roll-btn').disabled = rolling || gameOver;
-  document.getElementById('dice').classList.toggle('rollable', !rolling && !gameOver);
+
+  const myTurn = solo || cur === myIndex;
+  document.getElementById('roll-btn').disabled = rolling || gameOver || !myTurn;
+  document.getElementById('dice').classList.toggle('rollable', !rolling && !gameOver && myTurn);
+
+  // הודעה כשממתינים לשחקן השני
+  if (!solo && !gameOver && !myTurn) {
+    document.getElementById('last-move').textContent = `⏳ ממתין ל${cp.name}...`;
+  }
+
   if (!gameOver && cp.pos >= 94 && cp.pos < 100)
     showBanner(`🎯 ${cp.name} צריך ${100 - cp.pos} כדי לנצח!`, 2500);
 }
@@ -712,6 +789,8 @@ function setDice(v) {
 
 function rollDice() {
   if (rolling || gameOver) return;
+  // במצב מולטיפלייר — רק בתורך
+  if (!solo && cur !== myIndex) return;
   rolling = true;
   document.getElementById('roll-btn').disabled = true;
   document.getElementById('dice').classList.remove('rollable');
@@ -768,6 +847,7 @@ function endTurn() {
   const cp = players[cur];
   if (cp.pos === 100) {
     gameOver = true;
+    pushState({ gameOver: true });
     setTimeout(() => {
       document.getElementById('win-name').textContent = cp.name;
       document.getElementById('win-msg').textContent = (cur===0?'👧':'👦') + ' הגיע/ה למשבצת 100!';
@@ -775,21 +855,24 @@ function endTurn() {
     }, 450);
     return;
   }
-  cur = 1 - cur; rolling = false; updateUI();
+  cur = 1 - cur; rolling = false;
+  pushState();
+  updateUI();
 }
 
 function newGame() {
-  // חזרה לדף הבית אם הגענו משם
-  if (document.referrer.includes('index.html') || new URLSearchParams(location.search).get('player')) {
-    window.location.href = 'index.html';
-  } else {
-    showScreen('intro-screen');
-  }
+  if (!solo) remove(gameRef);
+  window.location.href = 'index.html';
 }
 
 // ===== INIT =====
 (function init() {
   initGame('אמה', 'ריף');
+  if (!solo) {
+    // נקה state ישן ב-Firebase בהתחלה
+    set(gameRef, { pos0:0, pos1:0, cur:0, gameOver:false, ts: Date.now() });
+    listenToState();
+  }
 })();
 </script>
 </body>
