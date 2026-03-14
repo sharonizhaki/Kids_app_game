@@ -40,14 +40,12 @@
 
     .buttons { display: flex; gap: 0.8rem; justify-content: center; }
     .btn { padding: 0.6rem 1.4rem; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 1rem; -webkit-tap-highlight-color: transparent; }
-    .btn:active { transform: scale(0.95); }
     .btn-restart { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
     .btn-reset { background: rgba(255,255,255,0.07); color: #a0aec0; border: 1.5px solid rgba(255,255,255,0.12); }
 
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(5px); }
-    .modal-content { background: #1a1f26; border: 2px solid #ffd700; padding: 2.5rem 2rem; border-radius: 20px; text-align: center; max-width: 300px; width: 90%; box-shadow: 0 0 30px rgba(255,215,0,0.2); transform: scale(0.9); transition: 0.3s; }
+    .modal-content { background: #1a1f26; border: 2px solid #ffd700; padding: 2.5rem 2rem; border-radius: 20px; text-align: center; max-width: 300px; width: 90%; box-shadow: 0 0 30px rgba(255,215,0,0.2); }
     .modal-overlay.active { display: flex; }
-    .modal-overlay.active .modal-content { transform: scale(1); }
     .btn-modal { background: #ffd700; color: #000; width: 100%; padding: 0.8rem; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; font-size: 1.1rem; }
   </style>
 </head>
@@ -56,7 +54,7 @@
 <div class="modal-overlay" id="exit-modal">
   <div class="modal-content">
     <h2 style="color: #ffd700; margin-bottom: 1rem;">המשחק הסתיים</h2>
-    <p id="exit-msg" style="color: #e2e8f0; margin-bottom: 2rem;">השחקן השני עזב.</p>
+    <p id="exit-msg" style="color: #e2e8f0; margin-bottom: 2rem;">השחקן השני עזב את החדר.</p>
     <button class="btn-modal" onclick="location.href='index.html?screen=games'">חזרה ללובי</button>
   </div>
 </div>
@@ -111,7 +109,7 @@ const gameRef = ref(db, 'game/xo');
 const roomRef = ref(db, 'rooms_v3/xo');
 
 const params = new URLSearchParams(location.search);
-const myId = params.get('player') || 'local_' + Math.random().toString(16).slice(2, 6);
+const myId = params.get('player') || 'guest_' + Math.floor(Math.random()*1000);
 
 let mySymbol = null;
 let board = Array(9).fill('');
@@ -119,31 +117,41 @@ let currentPlayer = 'X';
 let scores = { X: 0, O: 0, draw: 0 };
 let gameOver = false;
 let players = { X: 'ממתין...', O: 'ממתין...' };
+let gameStarted = false;
 
-// האזנה לשחקנים בחדר
+// 1. ניקוי ראשוני של מצב עזיבה במידה וקיים (רק אם אני הראשון בחדר)
+async function checkInit() {
+    const roomSnap = await get(roomRef);
+    if (!roomSnap.exists()) {
+        await update(gameRef, { exitToHome: false });
+    }
+}
+checkInit();
+
+// 2. האזנה לשחקנים
 onValue(roomRef, (snap) => {
     const data = snap.val() || {};
     const ids = Object.keys(data);
     
-    // קביעת הסמל שלי (X לראשון, O לשני)
     if (!mySymbol) {
         if (ids[0] === myId) mySymbol = 'X';
         else if (ids[1] === myId) mySymbol = 'O';
     }
 
-    // עדכון שמות בלוח התוצאות
     players.X = ids[0] ? (data[ids[0]].name || 'שחקן 1') : 'ממתין...';
     players.O = ids[1] ? (data[ids[1]].name || 'שחקן 2') : 'ממתין...';
     
+    if (ids.length >= 2) gameStarted = true;
     updateUI();
 });
 
-// האזנה ללוח המשחק
+// 3. האזנה למצב לוח המשחק
 onValue(gameRef, (snap) => {
     const data = snap.val();
     if (!data) return;
 
-    if (data.exitToHome) {
+    // הצגת הודעת עזיבה רק אם המשחק כבר התחיל פעם אחת
+    if (data.exitToHome && gameStarted) {
         document.getElementById('exit-modal').classList.add('active');
         return;
     }
@@ -155,7 +163,10 @@ onValue(gameRef, (snap) => {
 
     updateUI();
     if (data.winCombo) {
-        data.winCombo.forEach(i => document.querySelectorAll('.cell')[i].classList.add('winning'));
+        data.winCombo.forEach(i => {
+            const cell = document.querySelectorAll('.cell')[i];
+            if(cell) cell.classList.add('winning');
+        });
     }
 });
 
@@ -171,14 +182,16 @@ function updateUI() {
 
     const turnEl = document.getElementById('turn-text');
     if (gameOver) {
-        const winnerName = players[currentPlayer];
-        turnEl.textContent = board.includes('') ? `🏆 ${winnerName} ניצח/ה!` : `🤝 תיקו!`;
+        turnEl.textContent = board.includes('') ? `🏆 ${players[currentPlayer]} ניצח/ה!` : `🤝 תיקו!`;
     } else {
-        turnEl.textContent = (mySymbol === currentPlayer) ? "תורך לשחק!" : `תור ${players[currentPlayer]}...`;
+        if (players.X === 'ממתין...' || players.O === 'ממתין...') {
+            turnEl.textContent = "מחכים לשחקן נוסף...";
+        } else {
+            turnEl.textContent = (mySymbol === currentPlayer) ? "תורך לשחק!" : `תור ${players[currentPlayer]}...`;
+        }
     }
 
-    const cells = document.querySelectorAll('.cell');
-    cells.forEach((cell, i) => {
+    document.querySelectorAll('.cell').forEach((cell, i) => {
         cell.classList.remove('winning');
         if (board[i] === 'X') {
             cell.innerHTML = `<svg viewBox="0 0 60 60"><line class="x-path" x1="14" y1="14" x2="46" y2="46"/><line class="x-path" x1="46" y1="14" x2="14" y2="46"/></svg>`;
@@ -192,21 +205,22 @@ function updateUI() {
 
 async function handleCellClick(e) {
     const idx = e.currentTarget.dataset.index;
-    if (gameOver || board[idx] !== '' || currentPlayer !== mySymbol) return;
+    if (gameOver || board[idx] !== '' || currentPlayer !== mySymbol || !gameStarted) return;
 
     board[idx] = mySymbol;
     const win = checkWin();
     const isDraw = !win && !board.includes('');
     
-    if (win) scores[mySymbol]++;
-    if (isDraw) scores.draw++;
+    const newScores = {...scores};
+    if (win) newScores[mySymbol]++;
+    if (isDraw) newScores.draw++;
 
     await update(gameRef, {
         board: board,
         currentPlayer: (win || isDraw) ? mySymbol : (mySymbol === 'X' ? 'O' : 'X'),
         gameOver: win || isDraw,
         winCombo: win || null,
-        scores: scores,
+        scores: newScores,
         ts: Date.now()
     });
 }
@@ -220,18 +234,23 @@ function checkWin() {
 }
 
 window.restartGame = () => {
+    if (!mySymbol) return;
     update(gameRef, {
         board: Array(9).fill(''),
         currentPlayer: 'X',
         gameOver: false,
         winCombo: null,
+        exitToHome: false, // מוודא שמתחילים נקי
         ts: Date.now()
     });
 };
 
 window.goHome = async () => {
     await update(gameRef, { exitToHome: true });
-    location.href = 'index.html?screen=games';
+    // נותן ל-Firebase רגע לעדכן לפני המעבר
+    setTimeout(() => {
+        location.href = 'index.html?screen=games';
+    }, 100);
 };
 
 document.querySelectorAll('.cell').forEach(c => c.addEventListener('click', handleCellClick));
