@@ -3,33 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>מרוץ אקסטרים v16.6 - שליטה אינטואיטיבית</title>
+    <title>מרוץ אקסטרים v17.0 - מסלול מקצועי</title>
     <style>
         body { margin: 0; background: #000; font-family: sans-serif; overflow: hidden; touch-action: none; color: white; user-select: none; direction: ltr; }
         #game-viewport { width: 100vw; height: 100vh; position: relative; display: flex; justify-content: center; overflow: hidden; background: #222; }
         
+        /* המסלול עם אבני שפה אדום-לבן */
         .track-5-lanes { 
-            width: 90%; max-width: 450px; height: 100%; background: #333; position: relative; 
+            width: 85%; max-width: 400px; height: 100%; background: #333; position: relative; 
             border-left: 15px solid; border-right: 15px solid;
-            border-image: repeating-linear-gradient(-45deg, #f00, #f00 15px, #fff 15px, #fff 30px) 1;
+            border-image: repeating-linear-gradient(to bottom, #f00, #f00 20px, #fff 20px, #fff 40px) 15;
         }
 
+        /* קו זינוק משבצות שחור-לבן */
         .start-line {
             position: absolute; bottom: 10%; width: 100%; height: 40px;
-            background: repeating-linear-gradient(45deg, #eee 25%, #222 25%, #222 50%, #eee 50%, #eee 75%, #222 75%, #222 100%);
-            background-size: 20px 20px; border-top: 3px solid gold; border-bottom: 3px solid gold; z-index: 5;
+            background-color: #eee;
+            background-image: linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000), 
+                              linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            border-top: 3px solid #555; border-bottom: 3px solid #555; z-index: 5;
+        }
+
+        /* נתיבים מקווקווים */
+        .lane-divider {
+            position: absolute; top: 0; bottom: 0; width: 2px;
+            border-left: 2px dashed rgba(255, 255, 255, 0.3);
+            z-index: 2;
         }
 
         .car { 
             position: absolute; width: 55px; height: 75px; font-size: 50px; z-index: 200;
             transition: left 0.12s ease-out; transform: translateX(-50%) rotate(90deg);
-            display: flex; align-items: center; justify-content: center;
+            display: none; align-items: center; justify-content: center;
         }
         
         .game-obj { position: absolute; font-size: 35px; transform: translate(-50%, 50%); z-index: 100; text-shadow: 0 0 10px #000; }
 
+        #progress-container { 
+            position: absolute; right: calc(50% + 215px); top: 20%; height: 60%; width: 10px; 
+            background: rgba(255,255,255,0.1); border-radius: 10px; border: 1px solid #555; z-index: 1000;
+        }
+        @media (max-width: 500px) { #progress-container { left: 5px; right: auto; } }
+
+        .progress-dot { 
+            position: absolute; width: 16px; height: 16px; border-radius: 50%; left: -4px; 
+            border: 2px solid white; transition: bottom 0.2s linear;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .count-anim { animation: pop 0.6s ease-out forwards; display: inline-block; }
+
         #ui { position: fixed; top: 10px; width: 100%; display: flex; justify-content: space-around; z-index: 1000; pointer-events: none; }
-        .stat-box { background: rgba(0,0,0,0.85); padding: 8px 12px; border-radius: 12px; border: 2px solid #555; text-align: center; min-width: 80px; }
+        .stat-box { background: rgba(0,0,0,0.8); padding: 5px 10px; border-radius: 10px; border: 2px solid #555; text-align: center; }
         
         #overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -37,35 +68,44 @@
             align-items: center; justify-content: center; z-index: 3000;
         }
 
-        /* הגדרת אזורי לחיצה פיזיים */
-        #touch-left-side { position: fixed; top: 0; left: 0; width: 50%; height: 100%; z-index: 500; }
-        #touch-right-side { position: fixed; top: 0; right: 0; width: 50%; height: 100%; z-index: 500; }
+        #touch-left { position: fixed; top: 0; left: 0; width: 50%; height: 100%; z-index: 500; }
+        #touch-right { position: fixed; top: 0; right: 0; width: 50%; height: 100%; z-index: 500; }
     </style>
 </head>
 <body>
 
     <div id="overlay">
-        <button id="ready-btn" style="padding:20px 40px; font-size:25px; border-radius:30px; background:lime; font-weight:bold; border:none; cursor:pointer;">START!</button>
-        <div id="countdown-txt" style="font-size:100px; color:gold;"></div>
+        <button id="ready-btn" style="padding:15px 35px; font-size:22px; border-radius:30px; background:lime; border:none; font-weight:bold;">START</button>
+        <div id="countdown-txt" style="font-size:100px; color:gold; font-weight:bold;"></div>
+    </div>
+
+    <div id="progress-container">
+        <div id="dot-p1" class="progress-dot" style="background: #00ff00; bottom: 0%;"></div>
+        <div id="dot-p2" class="progress-dot" style="background: #0088ff; bottom: 0%;"></div>
     </div>
 
     <div id="ui">
-        <div class="stat-box" style="border-color: #00ff00;">P1<br><span id="p1-s">💎 0</span></div>
-        <div id="stage-txt" style="font-size: 22px; font-weight: bold; color: gold;">STAGE 1</div>
-        <div class="stat-box" style="border-color: #cc00ff;">P2<br><span id="p2-s">💎 0</span></div>
+        <div class="stat-box" style="border-color: #00ff00; color: #00ff00;">P1: <span id="p1-s">0</span></div>
+        <div id="stage-txt" style="font-size: 20px; font-weight: bold; color: gold;">STAGE 1</div>
+        <div class="stat-box" style="border-color: #0088ff; color: #0088ff;">P2: <span id="p2-s">0</span></div>
     </div>
 
     <div id="game-viewport">
         <div class="track-5-lanes">
+            <div class="lane-divider" style="left: 20%;"></div>
+            <div class="lane-divider" style="left: 40%;"></div>
+            <div class="lane-divider" style="left: 60%;"></div>
+            <div class="lane-divider" style="left: 80%;"></div>
+
             <div id="start-line-el" class="start-line"></div>
-            <div id="p1-car" class="car" style="display:none; color: #00ff00;">🏎️</div>
-            <div id="p2-car" class="car" style="display:none; color: #cc00ff;">🏎️</div>
+            <div id="p1-car" class="car">🏎️</div>
+            <div id="p2-car" class="car">🏎️</div>
             <div id="obj-layer"></div>
         </div>
     </div>
 
-    <div id="touch-left-side"></div>
-    <div id="touch-right-side"></div>
+    <div id="touch-left"></div>
+    <div id="touch-right"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -83,8 +123,8 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const roomId = new URLSearchParams(window.location.search).get('room') || 'race_fix_v16_6';
-        const gameRef = ref(db, `race_v16_6/${roomId}`);
+        const roomId = new URLSearchParams(window.location.search).get('room') || 'race_v17_0';
+        const gameRef = ref(db, `race_v17_0/${roomId}`);
 
         let myId = null;
         let localData = { pos: 5, lane: 2, stage: 1, score: 0, speed: 1, isRacing: false };
@@ -94,8 +134,8 @@
             const snap = await get(gameRef);
             const data = snap.val() || {};
             myId = (!data.p1) ? 'p1' : 'p2';
-            await set(ref(db, `race_v16_6/${roomId}/${myId}`), localData);
-            onDisconnect(ref(db, `race_v16_6/${roomId}/${myId}`)).remove();
+            await set(ref(db, `race_v17_0/${roomId}/${myId}`), localData);
+            onDisconnect(ref(db, `race_v17_0/${roomId}/${myId}`)).remove();
             if (myId === 'p1') setupGlobalMap();
             onValue(gameRef, (s) => render(s.val() || {}));
             startEngine();
@@ -104,11 +144,21 @@
         function render(data) {
             ['p1', 'p2'].forEach(p => {
                 const el = document.getElementById(`${p}-car`);
-                if (data[p]) {
-                    el.style.display = 'flex';
-                    el.style.bottom = data[p].pos + "%";
-                    el.style.left = lanesX[data[p].lane] + "%";
-                    document.getElementById(`${p}-s`).innerText = `💎 ${data[p].score}`;
+                const dot = document.getElementById(`dot-${p}`);
+                const player = data[p];
+                if (player) {
+                    const totalProgress = ((player.stage - 1) * 100 + player.pos) / 5;
+                    dot.style.bottom = totalProgress + "%";
+                    document.getElementById(`${p}-s`).innerText = player.score;
+
+                    if (p === myId || player.stage === localData.stage) {
+                        el.style.display = 'flex';
+                        el.style.color = (p === 'p1') ? '#00ff00' : '#0088ff';
+                        el.style.bottom = player.pos + "%";
+                        el.style.left = lanesX[player.lane] + "%";
+                    } else {
+                        el.style.display = 'none';
+                    }
                 }
             });
             document.getElementById('stage-txt').innerText = `STAGE ${localData.stage}`;
@@ -136,50 +186,41 @@
                     else { alert("🏁 FINISH!"); localData.stage = 1; localData.pos = 5; localData.isRacing = false; }
                 }
                 checkCollisions();
-                update(ref(db, `race_v16_6/${roomId}/${myId}`), localData);
+                update(ref(db, `race_v17_0/${roomId}/${myId}`), localData);
             }, 40);
         }
 
         async function checkCollisions() {
-            const snap = await get(ref(db, `race_v16_6/${roomId}/objects`));
+            const snap = await get(ref(db, `race_v17_0/${roomId}/objects`));
             const objs = snap.val(); if (!objs) return;
             Object.entries(objs).forEach(([id, o]) => {
                 if (o.stage === localData.stage && o.lane === localData.lane && Math.abs(o.pos - localData.pos) < 3.5) {
                     if (o.type === 'coin') localData.score += 10;
                     if (o.type === 'boost') localData.speed = Math.min(3.0, localData.speed + 0.3);
                     if (o.type === 'trap') { localData.stage = 1; localData.pos = 5; localData.speed = 1; }
-                    update(ref(db, `race_v16_6/${roomId}/objects`), { [id]: null });
+                    update(ref(db, `race_v17_0/${roomId}/objects`), { [id]: null });
                 }
             });
         }
 
-        // לוגיקת כפתורי START
         document.getElementById('ready-btn').addEventListener('click', () => {
             document.getElementById('ready-btn').style.display = 'none';
             let c = 3;
             const t = document.getElementById('countdown-txt');
             const iv = setInterval(() => {
-                if (c > 0) { t.innerText = c; c--; }
-                else { t.innerText = "GO!"; clearInterval(iv);
-                    setTimeout(() => { document.getElementById('overlay').style.display = 'none'; localData.isRacing = true; }, 500);
-                }
-            }, 800);
+                if (c > 0) { t.innerHTML = `<span class="count-anim">${c}</span>`; c--; }
+                else if (c === 0) { t.innerHTML = `<span class="count-anim">GO!</span>`; c--; }
+                else { clearInterval(iv); document.getElementById('overlay').style.display = 'none'; localData.isRacing = true; }
+            }, 1000);
         });
 
-        // --- תיקון השליטה: לכיוון האצבע ---
-
-        // צד שמאל של המסך מושך שמאלה (נתיב קטן יותר)
-        document.getElementById('touch-left-side').addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            if (localData.lane > 0) localData.lane--;
-            update(ref(db, `race_v16_6/${roomId}/${myId}`), { lane: localData.lane });
+        document.getElementById('touch-left').addEventListener('pointerdown', (e) => {
+            e.preventDefault(); if (localData.lane > 0) localData.lane--;
+            update(ref(db, `race_v17_0/${roomId}/${myId}`), { lane: localData.lane });
         });
-
-        // צד ימין של המסך מושך ימינה (נתיב גדול יותר)
-        document.getElementById('touch-right-side').addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            if (localData.lane < 4) localData.lane++;
-            update(ref(db, `race_v16_6/${roomId}/${myId}`), { lane: localData.lane });
+        document.getElementById('touch-right').addEventListener('pointerdown', (e) => {
+            e.preventDefault(); if (localData.lane < 4) localData.lane++;
+            update(ref(db, `race_v17_0/${roomId}/${myId}`), { lane: localData.lane });
         });
 
         function setupGlobalMap() {
@@ -193,7 +234,7 @@
                     obs[`s${s}_b${i}`] = { char:'⚡', type:'boost', stage:s, lane:Math.floor(Math.random()*5), pos:Math.floor(Math.random()*65)+20 };
                 }
             }
-            set(ref(db, `race_v16_6/${roomId}/objects`), obs);
+            set(ref(db, `race_v17_0/${roomId}/objects`), obs);
         }
         joinGame();
     </script>
