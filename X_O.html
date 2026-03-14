@@ -25,7 +25,7 @@
     .turn-bar { display: flex; align-items: center; justify-content: center; gap: 10px; height: 2.4rem; margin-bottom: 1.2rem; }
     .turn-text { font-size: 1.1rem; font-weight: 700; color: #e2e8f0; }
     .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 312px; height: 312px; margin: 0 auto 1.4rem; }
-    .cell { background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; height: 100px; width: 100px; }
+    .cell { background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; height: 100px; }
     .cell svg { width: 52px; height: 52px; pointer-events: none; }
     .x-path { stroke: #ff6b6b; stroke-width: 5; stroke-linecap: round; fill: none; stroke-dasharray: 60; stroke-dashoffset: 60; animation: drawStroke 0.25s ease-out forwards; }
     .o-circle { stroke: #4ecdc4; stroke-width: 5; stroke-linecap: round; fill: none; stroke-dasharray: 163; stroke-dashoffset: 163; animation: drawStroke 0.35s ease-out forwards; }
@@ -72,7 +72,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, get, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, get, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
@@ -103,15 +103,14 @@ const cells = document.querySelectorAll('.cell');
 const turnText = document.getElementById('turn-text');
 
 async function initGame() {
+    // ניקוי דגלי יציאה ישנים מיד עם הכניסה
+    await update(gameRef, { exitToHome: false });
+    
     const snap = await get(gameRef);
     const data = snap.val();
 
-    // ניקוי מצב עזיבה קודם ב-Database מיד עם הכניסה
-    await update(gameRef, { playerLeft: null, exitToHome: false });
-
-    onDisconnect(gameRef).update({ playerLeft: mySymbol, ts: Date.now() });
-
-    if (!data || !Array.isArray(data.board) || (Date.now() - data.ts > 300000)) {
+    // אתחול משחק רק אם המידע לא תקין או ישן מאוד
+    if (!data || !Array.isArray(data.board) || (Date.now() - data.ts > 600000)) {
         await resetGameState('X');
     } else {
         updateLocalState(data);
@@ -126,20 +125,14 @@ function listenToGame() {
         const data = snap.val();
         if (!data || isExiting) return;
 
-        // אם זה עדכון ישן, התעלם
+        // אם בוצע עדכון עם חותמת זמן ישנה יותר, התעלם ממנו
         if (lastTs && data.ts <= lastTs) return;
         lastTs = data.ts;
 
+        // בדיקה אם מישהו לחץ על כפתור הבית
         if (data.exitToHome) {
             isExiting = true;
             window.location.href = 'index.html';
-            return;
-        }
-
-        if (data.playerLeft && data.playerLeft !== mySymbol) {
-            turnText.style.color = "#ff6b6b";
-            turnText.innerHTML = "⚠️ השחקן השני עזב...";
-            setTimeout(() => { if(!isExiting) window.location.href = 'index.html'; }, 3000);
             return;
         }
 
@@ -151,7 +144,7 @@ function listenToGame() {
 
 function updateLocalState(data) {
     if (data.board && Array.isArray(data.board)) {
-        board = data.board.map(v => v === '' ? null : v);
+        board = data.board.map(v => (v === '' || v === null) ? null : v);
     }
     currentPlayer = data.currentPlayer || 'X';
     gameOver = !!data.gameOver;
@@ -166,7 +159,6 @@ async function resetGameState(starter) {
         winCombo: null,
         scores: scores,
         exitToHome: false,
-        playerLeft: null,
         ts: Date.now()
     };
     await set(gameRef, initialState);
@@ -237,6 +229,7 @@ function highlightWin(combo) {
 
 window.goHome = async () => {
     isExiting = true;
+    // מעדכן את ה-Database שכולם צריכים לצאת
     await update(gameRef, { exitToHome: true, ts: Date.now() });
     window.location.href = 'index.html';
 };
