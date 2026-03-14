@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>מרוץ קליקים - Multiplayer</title>
+    <style>
+        :root { --road-color: #333; }
+        body { 
+            margin: 0; background: #1a1a1a; font-family: 'Segoe UI', system-ui, sans-serif; 
+            overflow: hidden; color: white; touch-action: none;
+            user-select: none; -webkit-user-select: none;
+        }
+        
+        #ui-top { 
+            position: fixed; top: 0; width: 100%; z-index: 100; 
+            background: rgba(0,0,0,0.8); padding: 10px 0;
+            border-bottom: 2px solid #444; text-align: center;
+        }
+
+        .game-area { 
+            display: flex; justify-content: center; align-items: flex-end;
+            height: 100vh; width: 100vw; background: #111; padding-bottom: 20px;
+        }
+        
+        .track { 
+            flex: 1; max-width: 170px; height: 85vh; background: var(--road-color); 
+            position: relative; border: 2px solid #555; border-bottom: none;
+            box-shadow: inset 0 0 40px #000; margin: 0 5px;
+        }
+
+        .finish-line { 
+            position: absolute; top: 5%; width: 100%; height: 25px; 
+            background: repeating-linear-gradient(45deg, #eee, #eee 10px, #111 10px, #111 20px); 
+            border-top: 3px solid #ffd700; border-bottom: 3px solid #ffd700;
+        }
+
+        .lane-mark {
+            position: absolute; top: 0; bottom: 0; width: 2px;
+            background: rgba(255,255,255,0.2); border-left: 1px dashed rgba(255,255,255,0.4);
+        }
+
+        .car { 
+            position: absolute; width: 60px; height: 60px; 
+            font-size: 50px; transition: left 0.2s ease-out, bottom 0.1s linear; 
+            transform: translateX(-50%); z-index: 50;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        #controls {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: grid; grid-template-columns: 1fr 2fr 1fr; z-index: 80;
+        }
+        .btn-zone { background: transparent; }
+
+        #room-id-display { color: #00ffcc; font-weight: bold; }
+        .status-msg { font-size: 14px; color: #ccc; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-top">
+        <div class="status-msg">חדר: <span id="room-id-display">טוען...</span></div>
+        <div id="player-status">מתחבר לשרת...</div>
+    </div>
+
+    <div class="game-area">
+        <div class="track" id="track-p1">
+            <div class="finish-line"></div>
+            <div class="lane-mark" style="left: 33.3%"></div>
+            <div class="lane-mark" style="left: 66.6%"></div>
+            <div id="car-p1" class="car">🏎️</div>
+        </div>
+        <div class="track" id="track-p2">
+            <div class="finish-line"></div>
+            <div class="lane-mark" style="left: 33.3%"></div>
+            <div class="lane-mark" style="left: 66.6%"></div>
+            <div id="car-p2" class="car" style="filter: hue-rotate(140deg);">🏎️</div>
+        </div>
+    </div>
+
+    <div id="controls">
+        <div class="btn-zone" id="btn-left"></div>
+        <div class="btn-zone" id="btn-center"></div>
+        <div class="btn-zone" id="btn-right"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
+            authDomain: "kidssapp-izhaki.firebaseapp.com",
+            databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "kidssapp-izhaki",
+            storageBucket: "kidssapp-izhaki.firebasestorage.app",
+            messagingSenderId: "663906163746",
+            appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // ניהול חדרים דרך ה-URL
+        const urlParams = new URLSearchParams(window.location.search);
+        let roomId = urlParams.get('room') || 'game1';
+        if (!urlParams.get('room')) {
+            window.history.pushState({}, '', `?room=${roomId}`);
+        }
+        
+        const gameRef = ref(db, `race_v1/${roomId}`);
+        document.getElementById('room-id-display').innerText = roomId;
+        
+        let myId = null;
+        let gameState = {};
+        const laneX = [16.6, 50, 83.3];
+
+        // האזנה לשינויים ב-Firebase
+        onValue(gameRef, (snapshot) => {
+            const data = snapshot.val();
+            
+            if (!myId) {
+                if (!data || !data.p1) myId = 'p1';
+                else if (!data.p2) myId = 'p2';
+                else myId = 'p1'; // צופה
+                
+                // יצירת שחקן ראשוני אם אין דאטה
+                if (!data || !data[myId]) {
+                    update(gameRef, { [myId]: { pos: 5, lane: 1 } });
+                }
+            }
+
+            gameState = data || {};
+            document.getElementById('player-status').innerText = `אתה שחקן: ${myId === 'p1' ? 'ירוק' : 'סגול'}`;
+            render();
+        });
+
+        function render() {
+            if (gameState.p1) {
+                const p1 = document.getElementById('car-p1');
+                p1.style.bottom = gameState.p1.pos + "%";
+                p1.style.left = laneX[gameState.p1.lane] + "%";
+            }
+            if (gameState.p2) {
+                const p2 = document.getElementById('car-p2');
+                p2.style.bottom = gameState.p2.pos + "%";
+                p2.style.left = laneX[gameState.p2.lane] + "%";
+            }
+        }
+
+        // לוגיקת משחק ולחיצות
+        const handleDrive = () => {
+            if (!myId || !gameState[myId]) return;
+            const currentPos = gameState[myId].pos || 5;
+            if (currentPos >= 85) {
+                alert("ניצחון!");
+                update(gameRef, { [`${myId}/pos`]: 5 }); // איפוס
+                return;
+            }
+            update(gameRef, { [`${myId}/pos`]: currentPos + 2 });
+        };
+
+        const handleLane = (dir) => {
+            if (!myId || !gameState[myId]) return;
+            let currentLane = gameState[myId].lane;
+            let newLane = Math.max(0, Math.min(2, currentLane + dir));
+            update(gameRef, { [`${myId}/lane`]: newLane });
+        };
+
+        // חיבור כפתורים (עובד גם ב-Touch וגם ב-Click)
+        document.getElementById('btn-center').addEventListener('pointerdown', (e) => { e.preventDefault(); handleDrive(); });
+        document.getElementById('btn-left').addEventListener('pointerdown', (e) => { e.preventDefault(); handleLane(-1); });
+        document.getElementById('btn-right').addEventListener('pointerdown', (e) => { e.preventDefault(); handleLane(1); });
+
+    </script>
+</body>
+</html>
