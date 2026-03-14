@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>איקס עיגול - אמה וריף</title>
+  <title>איקס עיגול - משחק רשת</title>
   <style>
-    /* ... ה-CSS נשאר זהה ... */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0d1117; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
     body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 80% 60% at 20% 20%, rgba(255,107,107,0.12) 0%, transparent 60%), radial-gradient(ellipse 80% 60% at 80% 80%, rgba(78,205,196,0.12) 0%, transparent 60%); pointer-events: none; z-index: 0; }
@@ -45,7 +44,7 @@
   <h1>✕ ◯</h1>
   <div class="scoreboard">
     <div class="score-card x-card" id="card-x">
-      <div class="player-name">אמה (X)</div>
+      <div class="player-name" id="name-x">טוען...</div>
       <div class="score-value" id="score-x">0</div>
     </div>
     <div class="draw-card">
@@ -53,7 +52,7 @@
       <div class="draw-value" id="score-draw">0</div>
     </div>
     <div class="score-card o-card" id="card-o">
-      <div class="player-name">ריף (O)</div>
+      <div class="player-name" id="name-o">טוען...</div>
       <div class="score-value" id="score-o">0</div>
     </div>
   </div>
@@ -88,10 +87,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const gameRef = ref(db, 'game/xo');
+const roomRef = ref(db, 'rooms_v3/xo');
 
 const params = new URLSearchParams(location.search);
-const myPlayer = params.get('player') || 'emma';
-const mySymbol = myPlayer === 'emma' ? 'X' : 'O';
+const myPlayerId = params.get('player') || 'emma';
+const myName = decodeURIComponent(params.get('name') || (myPlayerId === 'emma' ? 'אמה' : 'ריף'));
+const mySymbol = myPlayerId === 'emma' ? 'X' : 'O';
 
 let board = Array(9).fill(null);
 let currentPlayer = 'X';
@@ -99,16 +100,30 @@ let gameOver = false;
 let scores = { X: 0, O: 0, draw: 0 };
 let lastTs = null;
 let isExiting = false;
+let playersNames = { X: 'אמה', O: 'ריף' };
 
 const cells = document.querySelectorAll('.cell');
 const turnText = document.getElementById('turn-text');
 
 async function initGame() {
     await update(gameRef, { exitToHome: false });
+    
+    // קבלת שמות השחקנים מהחדר ב-Firebase
+    const roomSnap = await get(roomRef);
+    const roomData = roomSnap.val() || {};
+    const playersArr = Object.values(roomData);
+    
+    // אם יש שחקנים בחדר, נעדכן את השמות לפי הסדר (הראשון X, השני O)
+    if (playersArr.length > 0) {
+        playersNames.X = playersArr[0].name || 'אמה';
+        if (playersArr.length > 1) {
+            playersNames.O = playersArr[1].name || 'ריף';
+        }
+    }
+
     const snap = await get(gameRef);
     const data = snap.val();
 
-    // אם המשחק ישן (מעל 10 דקות) או לא קיים - מאפסים הכל כולל ניקוד
     if (!data || !Array.isArray(data.board) || (Date.now() - data.ts > 600000)) {
         scores = { X: 0, O: 0, draw: 0 };
         await resetGameState('X');
@@ -206,20 +221,24 @@ function renderUI() {
         cell.classList.remove('winning');
     });
 
+    // עדכון שמות בלוח התוצאות
+    document.getElementById('name-x').textContent = `${playersNames.X} (X)`;
+    document.getElementById('name-o').textContent = `${playersNames.O} (O)`;
+    
     document.getElementById('score-x').textContent = scores.X;
     document.getElementById('score-o').textContent = scores.O;
     document.getElementById('score-draw').textContent = scores.draw;
 
-    const currentLabel = currentPlayer === 'X' ? 'אמה' : 'ריף';
+    const currentName = playersNames[currentPlayer];
     document.getElementById('card-x').classList.toggle('active', currentPlayer === 'X');
     document.getElementById('card-o').classList.toggle('active', currentPlayer === 'O');
 
     if (gameOver) {
         const win = checkWin();
-        turnText.innerHTML = win ? `🏆 ${currentLabel} ניצח/ה!` : `🤝 תיקו!`;
+        turnText.innerHTML = win ? `🏆 ${currentName} ניצח/ה!` : `🤝 תיקו!`;
     } else {
         turnText.style.color = "#e2e8f0";
-        turnText.innerHTML = currentPlayer === mySymbol ? "תורך לשחק!" : `תור ${currentLabel}...`;
+        turnText.innerHTML = currentPlayer === mySymbol ? "תורך לשחק!" : `תור ${currentName}...`;
     }
 }
 
@@ -229,7 +248,6 @@ function highlightWin(combo) {
 
 window.goHome = async () => {
     isExiting = true;
-    // איפוס הניקוד ב-Firebase לפני היציאה כדי שהמשחק הבא יתחיל נקי
     await update(gameRef, { 
         exitToHome: true, 
         ts: Date.now(),
