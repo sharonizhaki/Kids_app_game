@@ -3,35 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>מרוץ אקסטרים v17.0 - מסלול מקצועי</title>
+    <title>מרוץ אקסטרים v17.1 - זינוק משותף</title>
     <style>
         body { margin: 0; background: #000; font-family: sans-serif; overflow: hidden; touch-action: none; color: white; user-select: none; direction: ltr; }
         #game-viewport { width: 100vw; height: 100vh; position: relative; display: flex; justify-content: center; overflow: hidden; background: #222; }
         
-        /* המסלול עם אבני שפה אדום-לבן */
         .track-5-lanes { 
             width: 85%; max-width: 400px; height: 100%; background: #333; position: relative; 
             border-left: 15px solid; border-right: 15px solid;
             border-image: repeating-linear-gradient(to bottom, #f00, #f00 20px, #fff 20px, #fff 40px) 15;
         }
 
-        /* קו זינוק משבצות שחור-לבן */
         .start-line {
             position: absolute; bottom: 10%; width: 100%; height: 40px;
             background-color: #eee;
             background-image: linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000), 
                               linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000);
-            background-size: 20px 20px;
-            background-position: 0 0, 10px 10px;
+            background-size: 20px 20px; background-position: 0 0, 10px 10px;
             border-top: 3px solid #555; border-bottom: 3px solid #555; z-index: 5;
         }
 
-        /* נתיבים מקווקווים */
-        .lane-divider {
-            position: absolute; top: 0; bottom: 0; width: 2px;
-            border-left: 2px dashed rgba(255, 255, 255, 0.3);
-            z-index: 2;
-        }
+        .lane-divider { position: absolute; top: 0; bottom: 0; width: 2px; border-left: 2px dashed rgba(255, 255, 255, 0.3); z-index: 2; }
 
         .car { 
             position: absolute; width: 55px; height: 75px; font-size: 50px; z-index: 200;
@@ -47,16 +39,9 @@
         }
         @media (max-width: 500px) { #progress-container { left: 5px; right: auto; } }
 
-        .progress-dot { 
-            position: absolute; width: 16px; height: 16px; border-radius: 50%; left: -4px; 
-            border: 2px solid white; transition: bottom 0.2s linear;
-        }
+        .progress-dot { position: absolute; width: 16px; height: 16px; border-radius: 50%; left: -4px; border: 2px solid white; transition: bottom 0.2s linear; }
 
-        @keyframes pop {
-            0% { transform: scale(0.5); opacity: 0; }
-            50% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
-        }
+        @keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         .count-anim { animation: pop 0.6s ease-out forwards; display: inline-block; }
 
         #ui { position: fixed; top: 10px; width: 100%; display: flex; justify-content: space-around; z-index: 1000; pointer-events: none; }
@@ -64,18 +49,18 @@
         
         #overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); display: flex; flex-direction: column;
+            background: rgba(0,0,0,0.85); display: flex; flex-direction: column;
             align-items: center; justify-content: center; z-index: 3000;
         }
 
-        #touch-left { position: fixed; top: 0; left: 0; width: 50%; height: 100%; z-index: 500; }
-        #touch-right { position: fixed; top: 0; right: 0; width: 50%; height: 100%; z-index: 500; }
+        #status-msg { margin-top: 20px; color: gold; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="overlay">
-        <button id="ready-btn" style="padding:15px 35px; font-size:22px; border-radius:30px; background:lime; border:none; font-weight:bold;">START</button>
+        <button id="ready-btn" style="padding:15px 35px; font-size:22px; border-radius:30px; background:lime; border:none; font-weight:bold; cursor:pointer;">אני מוכן! (START)</button>
+        <div id="status-msg"></div>
         <div id="countdown-txt" style="font-size:100px; color:gold; font-weight:bold;"></div>
     </div>
 
@@ -96,7 +81,6 @@
             <div class="lane-divider" style="left: 40%;"></div>
             <div class="lane-divider" style="left: 60%;"></div>
             <div class="lane-divider" style="left: 80%;"></div>
-
             <div id="start-line-el" class="start-line"></div>
             <div id="p1-car" class="car">🏎️</div>
             <div id="p2-car" class="car">🏎️</div>
@@ -104,8 +88,8 @@
         </div>
     </div>
 
-    <div id="touch-left"></div>
-    <div id="touch-right"></div>
+    <div id="touch-left" style="position:fixed; top:0; left:0; width:50%; height:100%; z-index:500;"></div>
+    <div id="touch-right" style="position:fixed; top:0; right:0; width:50%; height:100%; z-index:500;"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -123,22 +107,60 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const roomId = new URLSearchParams(window.location.search).get('room') || 'race_v17_0';
-        const gameRef = ref(db, `race_v17_0/${roomId}`);
+        const roomId = new URLSearchParams(window.location.search).get('room') || 'race_sync_v17_1';
+        const gameRef = ref(db, `race_v17_1/${roomId}`);
 
         let myId = null;
-        let localData = { pos: 5, lane: 2, stage: 1, score: 0, speed: 1, isRacing: false };
+        let localData = { pos: 5, lane: 2, stage: 1, score: 0, speed: 1, isRacing: false, ready: false };
         const lanesX = [10, 30, 50, 70, 90]; 
+        let countdownStarted = false;
 
         async function joinGame() {
             const snap = await get(gameRef);
             const data = snap.val() || {};
             myId = (!data.p1) ? 'p1' : 'p2';
-            await set(ref(db, `race_v17_0/${roomId}/${myId}`), localData);
-            onDisconnect(ref(db, `race_v17_0/${roomId}/${myId}`)).remove();
+            await set(ref(db, `race_v17_1/${roomId}/${myId}`), localData);
+            onDisconnect(ref(db, `race_v17_1/${roomId}/${myId}`)).remove();
             if (myId === 'p1') setupGlobalMap();
-            onValue(gameRef, (s) => render(s.val() || {}));
+            
+            onValue(gameRef, (s) => {
+                const gameData = s.val() || {};
+                render(gameData);
+                checkStartSync(gameData);
+            });
             startEngine();
+        }
+
+        // בדיקה אם שני השחקנים מוכנים
+        function checkStartSync(data) {
+            if (countdownStarted) return;
+            
+            const p1Ready = data.p1 && data.p1.ready;
+            const p2Ready = data.p2 && data.p2.ready;
+
+            if (p1Ready && p2Ready) {
+                countdownStarted = true;
+                runCountdown();
+            } else if (localData.ready) {
+                document.getElementById('status-msg').innerText = "ממתין ליריב שיתחבר וילחץ START...";
+            }
+        }
+
+        function runCountdown() {
+            document.getElementById('ready-btn').style.display = 'none';
+            document.getElementById('status-msg').style.display = 'none';
+            let c = 3;
+            const t = document.getElementById('countdown-txt');
+            const iv = setInterval(() => {
+                if (c > 0) { t.innerHTML = `<span class="count-anim">${c}</span>`; c--; }
+                else if (c === 0) { t.innerHTML = `<span class="count-anim">GO!</span>`; c--; }
+                else { 
+                    clearInterval(iv); 
+                    document.getElementById('overlay').style.display = 'none'; 
+                    localData.isRacing = true; 
+                    update(ref(db, `race_v17_1/${roomId}/${myId}`), { isRacing: true });
+                }
+            }, 1000);
         }
 
         function render(data) {
@@ -150,15 +172,12 @@
                     const totalProgress = ((player.stage - 1) * 100 + player.pos) / 5;
                     dot.style.bottom = totalProgress + "%";
                     document.getElementById(`${p}-s`).innerText = player.score;
-
                     if (p === myId || player.stage === localData.stage) {
                         el.style.display = 'flex';
                         el.style.color = (p === 'p1') ? '#00ff00' : '#0088ff';
                         el.style.bottom = player.pos + "%";
                         el.style.left = lanesX[player.lane] + "%";
-                    } else {
-                        el.style.display = 'none';
-                    }
+                    } else { el.style.display = 'none'; }
                 }
             });
             document.getElementById('stage-txt').innerText = `STAGE ${localData.stage}`;
@@ -183,44 +202,40 @@
                 localData.pos += (0.5 * localData.speed); 
                 if (localData.pos >= 98) {
                     if (localData.stage < 5) { localData.stage++; localData.pos = 5; } 
-                    else { alert("🏁 FINISH!"); localData.stage = 1; localData.pos = 5; localData.isRacing = false; }
+                    else { alert("🏁 FINISH!"); localData.stage = 1; localData.pos = 5; localData.isRacing = false; countdownStarted = false; localData.ready = false; update(ref(db, `race_v17_1/${roomId}/${myId}`), localData); location.reload(); }
                 }
                 checkCollisions();
-                update(ref(db, `race_v17_0/${roomId}/${myId}`), localData);
+                update(ref(db, `race_v17_1/${roomId}/${myId}`), localData);
             }, 40);
         }
 
         async function checkCollisions() {
-            const snap = await get(ref(db, `race_v17_0/${roomId}/objects`));
+            const snap = await get(ref(db, `race_v17_1/${roomId}/objects`));
             const objs = snap.val(); if (!objs) return;
             Object.entries(objs).forEach(([id, o]) => {
                 if (o.stage === localData.stage && o.lane === localData.lane && Math.abs(o.pos - localData.pos) < 3.5) {
                     if (o.type === 'coin') localData.score += 10;
                     if (o.type === 'boost') localData.speed = Math.min(3.0, localData.speed + 0.3);
                     if (o.type === 'trap') { localData.stage = 1; localData.pos = 5; localData.speed = 1; }
-                    update(ref(db, `race_v17_0/${roomId}/objects`), { [id]: null });
+                    update(ref(db, `race_v17_1/${roomId}/objects`), { [id]: null });
                 }
             });
         }
 
         document.getElementById('ready-btn').addEventListener('click', () => {
-            document.getElementById('ready-btn').style.display = 'none';
-            let c = 3;
-            const t = document.getElementById('countdown-txt');
-            const iv = setInterval(() => {
-                if (c > 0) { t.innerHTML = `<span class="count-anim">${c}</span>`; c--; }
-                else if (c === 0) { t.innerHTML = `<span class="count-anim">GO!</span>`; c--; }
-                else { clearInterval(iv); document.getElementById('overlay').style.display = 'none'; localData.isRacing = true; }
-            }, 1000);
+            localData.ready = true;
+            document.getElementById('ready-btn').innerText = "ממתין...";
+            document.getElementById('ready-btn').style.background = "gray";
+            update(ref(db, `race_v17_1/${roomId}/${myId}`), { ready: true });
         });
 
         document.getElementById('touch-left').addEventListener('pointerdown', (e) => {
             e.preventDefault(); if (localData.lane > 0) localData.lane--;
-            update(ref(db, `race_v17_0/${roomId}/${myId}`), { lane: localData.lane });
+            update(ref(db, `race_v17_1/${roomId}/${myId}`), { lane: localData.lane });
         });
         document.getElementById('touch-right').addEventListener('pointerdown', (e) => {
             e.preventDefault(); if (localData.lane < 4) localData.lane++;
-            update(ref(db, `race_v17_0/${roomId}/${myId}`), { lane: localData.lane });
+            update(ref(db, `race_v17_1/${roomId}/${myId}`), { lane: localData.lane });
         });
 
         function setupGlobalMap() {
@@ -234,7 +249,7 @@
                     obs[`s${s}_b${i}`] = { char:'⚡', type:'boost', stage:s, lane:Math.floor(Math.random()*5), pos:Math.floor(Math.random()*65)+20 };
                 }
             }
-            set(ref(db, `race_v17_0/${roomId}/objects`), obs);
+            set(ref(db, `race_v17_1/${roomId}/objects`), obs);
         }
         joinGame();
     </script>
