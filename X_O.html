@@ -16,10 +16,11 @@
     .score-card.active { border-color: rgba(255,255,255,0.22); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
     .score-card.x-card.active { border-color: rgba(255,107,107,0.5); }
     .score-card.o-card.active { border-color: rgba(78,205,196,0.5); }
-    .player-name { font-size: 0.85rem; font-weight: 700; color: #fff; text-align: center; min-height: 1.2rem; }
+    .player-name { font-size: 0.85rem; font-weight: 700; color: #fff; text-align: center; min-height: 1.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .x-card .player-name { color: #ff6b6b; }
     .o-card .player-name { color: #4ecdc4; }
     .score-value { font-size: 2.2rem; font-weight: 900; color: #e2e8f0; margin-top: 0.3rem; }
+    
     .draw-card { display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); border: 1.5px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 0.5rem; }
     .draw-label { font-size: 0.7rem; color: #4a5568; }
     .draw-value { font-size: 1.5rem; font-weight: 700; color: #718096; }
@@ -133,36 +134,33 @@ const turnText = document.getElementById('turn-text');
 async function initGame() {
     if (isViewer) document.getElementById('viewer-tag').style.display = 'block';
 
-    // 1. האזנה לשמות בחדר (חייב לקרות כל הזמן)
+    // 1. האזנה לחדר - זיהוי שחקנים ושמות
     onValue(roomRef, (snap) => {
         const data = snap.val() || {};
         const ids = Object.keys(data);
         
-        // זיהוי הסמל שלי לפי הסדר בחדר
         if (!isViewer && !mySymbol) {
+            // הקצאת סמלים לפי סדר המפתחות בחדר
             if (ids[0] === myPlayerId) mySymbol = 'X';
             else if (ids[1] === myPlayerId) mySymbol = 'O';
             
-            if (mySymbol) {
-                onDisconnect(ref(db, `rooms_v3/xo/${myPlayerId}`)).remove();
-            }
+            if (mySymbol) onDisconnect(ref(db, `rooms_v3/xo/${myPlayerId}`)).remove();
         }
 
-        // עדכון שמות לתצוגה
+        // עדכון שמות ללוח התוצאות
         if (ids[0]) playersNames.X = data[ids[0]].name + ' ' + (data[ids[0]].emoji || '');
         if (ids[1]) playersNames.O = data[ids[1]].name + ' ' + (data[ids[1]].emoji || '');
         
         renderUI();
     });
 
-    // 2. בדיקה אם אני הראשון בחדר כדי לאפס את המשחק
-    const roomSnap = await get(roomRef);
-    const initialPlayers = Object.keys(roomSnap.val() || {});
-    if (initialPlayers.length <= 1 && !isViewer) {
+    // 2. בדיקה אם המשחק ב-Firebase מאופס
+    const gameSnap = await get(gameRef);
+    if (!gameSnap.exists() || (Object.keys(idsInRoom(await get(roomRef))).length <= 1 && !isViewer)) {
         await resetFullGame();
     }
 
-    // 3. האזנה למצב המשחק ב-Firebase
+    // 3. האזנה ללוח המשחק
     onValue(gameRef, (snap) => {
         const data = snap.val();
         if (!data || isExiting) return;
@@ -183,6 +181,8 @@ async function initGame() {
         if (data.winCombo) highlightWin(data.winCombo);
     });
 }
+
+function idsInRoom(snap) { return Object.keys(snap.val() || {}); }
 
 async function resetFullGame() {
     scores = { X: 0, O: 0, draw: 0 };
@@ -254,7 +254,7 @@ function renderUI() {
     } else {
         const curName = playersNames[currentPlayer].split(' ')[0];
         if (!mySymbol && !isViewer) {
-            turnText.innerHTML = "מתחבר למשחק...";
+            turnText.innerHTML = "מתחבר...";
         } else {
             turnText.innerHTML = (currentPlayer === mySymbol) ? "תורך לשחק!" : `תור ${curName}...`;
         }
