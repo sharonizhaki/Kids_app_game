@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎉 BINGO — משחק אימוג'י</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Heebo:wght@400;600;700;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --p1: #a855f7;
+      --p1-light: #e9d5ff;
+      --p1-glow: #c084fc;
+      --p2: #f97316;
+      --p2-light: #fed7aa;
+      --p2-glow: #fb923c;
+      --bg: #0f0b1e;
+      --surface: #1a1232;
+      --surface2: #241a44;
+      --text: #f1e6ff;
+      --text-muted: #9ca3af;
+      --gold: #ffd700;
+      --gold-glow: #ffb300;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Heebo', sans-serif;
+      overflow-x: hidden;
+    }
+
+    body {
+      background-image:
+        radial-gradient(ellipse at 20% 10%, rgba(168, 85, 247, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 90%, rgba(249, 115, 22, 0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(99, 57, 180, 0.1) 0%, transparent 70%);
+    }
+
+    /* HEADER */
+    .header {
+      text-align: center;
+      padding: 28px 20px 16px;
+      position: relative;
+    }
+
+    .header h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      background: linear-gradient(135deg, var(--p1-glow), var(--gold), var(--p2-glow));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 20px rgba(168,85,247,0.5));
+      letter-spacing: 3px;
+      animation: titlePulse 3s ease-in-out infinite;
+    }
+
+    @keyframes titlePulse {
+      0%, 100% { filter: drop-shadow(0 0 15px rgba(168,85,247,0.5)); }
+      50% { filter: drop-shadow(0 0 35px rgba(249,115,22,0.7)); }
+    }
+
+    .header-sub {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-weight: 600;
+    }
+
+    /* DRAWN HISTORY */
+    .drawn-history {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      min-height: 60px;
+      flex-wrap: wrap;
+    }
+
+    .history-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .history-emojis {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .history-chip {
+      font-size: 1.3rem;
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 3px 6px;
+      border: 1px solid rgba(255,255,255,0.08);
+      animation: chipPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    @keyframes chipPop {
+      from { transform: scale(0) rotate(-20deg); opacity: 0; }
+      to { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    /* LOTTERY ZONE */
+    .lottery-zone {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      padding: 20px;
+      flex-wrap: wrap;
+    }
+
+    .lottery-controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .machine {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .machine-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      background: linear-gradient(var(--surface2), var(--surface2)) padding-box,
+                  linear-gradient(135deg, var(--p1), var(--gold), var(--p2)) border-box;
+      animation: ringRotate 3s linear infinite;
+    }
+
+    .machine-ring::before {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, var(--p1), var(--gold), var(--p2), var(--p1));
+      filter: blur(12px);
+      opacity: 0.4;
+      animation: ringRotate 2s linear infinite reverse;
+    }
+
+    @keyframes ringRotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .machine-inner {
+      position: relative;
+      z-index: 2;
+      width: 140px;
+      height: 140px;
+      background: var(--surface2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4.5rem;
+      box-shadow: 0 0 30px rgba(168,85,247,0.3), inset 0 0 20px rgba(0,0,0,0.4);
+      border: 2px solid rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+
+    .machine-emoji {
+      display: inline-block;
+      transition: none;
+    }
+
+    .machine-emoji.spinning {
+      animation: emojiSpin 0.08s linear infinite;
+    }
+
+    .machine-emoji.landing {
+      animation: emojiLand 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes emojiSpin {
+      0% { transform: translateY(-60px) scale(0.3); opacity: 0; }
+      50% { transform: translateY(0) scale(1.1); opacity: 1; }
+      100% { transform: translateY(60px) scale(0.3); opacity: 0; }
+    }
+
+    @keyframes emojiLand {
+      0% { transform: scale(0.2) rotate(-180deg); opacity: 0; }
+      60% { transform: scale(1.3) rotate(10deg); opacity: 1; }
+      80% { transform: scale(0.95) rotate(-5deg); }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    .draw-btn {
+      position: relative;
+      padding: 14px 48px;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, var(--p1), #7c3aed);
+      color: white;
+      box-shadow: 0 4px 20px rgba(168,85,247,0.5), 0 2px 0 rgba(0,0,0,0.3);
+      transition: transform 0.15s, box-shadow 0.15s;
+      overflow: hidden;
+    }
+
+    .draw-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+      border-radius: inherit;
+    }
+
+    .draw-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(168,85,247,0.6), 0 2px 0 rgba(0,0,0,0.3);
+    }
+
+    .draw-btn:active:not(:disabled) {
+      transform: translateY(1px);
+      box-shadow: 0 2px 10px rgba(168,85,247,0.4), 0 1px 0 rgba(0,0,0,0.3);
+    }
+
+    .draw-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .draw-btn.drawing {
+      background: linear-gradient(135deg, var(--p2), #ea580c);
+      box-shadow: 0 4px 20px rgba(249,115,22,0.5), 0 2px 0 rgba(0,0,0,0.3);
+    }
+
+    .draw-count {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* GAME AREA */
+    .game-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      padding: 10px 20px 30px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 640px) {
+      .game-area {
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
+    }
+
+    /* PLAYER CARD */
+    .player-card {
+      background: var(--surface);
+      border-radius: 24px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.06);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .player-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1.5px;
+      background: linear-gradient(135deg, var(--p1-glow), transparent 60%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .player-card.p2::before {
+      background: linear-gradient(135deg, var(--p2-glow), transparent 60%);
+    }
+
+    .player-card.winner {
+      animation: winnerCard 0.6s ease-out forwards, winnerPulse 1s ease-in-out 0.6s infinite;
+    }
+
+    @keyframes winnerCard {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes winnerPulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.3); }
+      50% { box-shadow: 0 0 50px rgba(255,215,0,0.7); }
+    }
+
+    .player-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 8px;
+    }
+
+    .player-name {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .p1 .player-name { color: var(--p1-glow); }
+    .p2 .player-name { color: var(--p2-glow); }
+
+    .player-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+    }
+
+    .p1 .player-badge { background: rgba(168,85,247,0.2); color: var(--p1-glow); border: 1px solid rgba(168,85,247,0.3); }
+    .p2 .player-badge { background: rgba(249,115,22,0.2); color: var(--p2-glow); border: 1px solid rgba(249,115,22,0.3); }
+
+    /* EMOJI GRID */
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+
+    .emoji-cell {
+      aspect-ratio: 1;
+      background: var(--surface2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.3rem, 3.5vw, 1.8rem);
+      border: 1.5px solid rgba(255,255,255,0.06);
+      position: relative;
+      transition: background 0.3s, border-color 0.3s;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .emoji-cell.matched {
+      animation: cellMatch 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .p1 .emoji-cell.matched {
+      background: rgba(168,85,247,0.25);
+      border-color: var(--p1-glow);
+      box-shadow: 0 0 12px rgba(168,85,247,0.4), inset 0 0 8px rgba(168,85,247,0.15);
+    }
+
+    .p2 .emoji-cell.matched {
+      background: rgba(249,115,22,0.25);
+      border-color: var(--p2-glow);
+      box-shadow: 0 0 12px rgba(249,115,22,0.4), inset 0 0 8px rgba(249,115,22,0.15);
+    }
+
+    @keyframes cellMatch {
+      0% { transform: scale(1); }
+      30% { transform: scale(1.35) rotate(-8deg); }
+      60% { transform: scale(0.9) rotate(4deg); }
+      80% { transform: scale(1.1) rotate(-2deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+
+    .emoji-cell .check-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      padding: 2px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .emoji-cell.matched .check-overlay {
+      opacity: 1;
+    }
+
+    .check-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      font-size: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 900;
+    }
+
+    .p1 .check-dot { background: var(--p1); }
+    .p2 .check-dot { background: var(--p2); }
+
+    /* SPARKLE burst effect */
+    .sparkle-burst {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: inherit;
+    }
+
+    .sparkle-burst::before,
+    .sparkle-burst::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      opacity: 0;
+    }
+
+    .emoji-cell.matching-now .sparkle-burst::before {
+      background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 70%);
+      animation: burst 0.4s ease-out forwards;
+    }
+
+    @keyframes burst {
+      0% { opacity: 0.8; transform: scale(0.5); }
+      100% { opacity: 0; transform: scale(1.8); }
+    }
+
+    /* PROGRESS SECTION */
+    .progress-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .progress-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .progress-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .progress-count {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.2rem;
+    }
+
+    .p1 .progress-count { color: var(--p1-glow); }
+    .p2 .progress-count { color: var(--p2-glow); }
+
+    .progress-track {
+      height: 14px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 100px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: inherit;
+      position: relative;
+      transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      min-width: 0;
+    }
+
+    .p1 .progress-fill {
+      background: linear-gradient(90deg, var(--p1), var(--p1-glow), #e879f9);
+      box-shadow: 0 0 12px rgba(168,85,247,0.6);
+    }
+
+    .p2 .progress-fill {
+      background: linear-gradient(90deg, var(--p2), var(--p2-glow), #fbbf24);
+      box-shadow: 0 0 12px rgba(249,115,22,0.6);
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: rgba(255,255,255,0.25);
+      border-radius: 100px 100px 0 0;
+    }
+
+    .progress-milestones {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 2px;
+    }
+
+    .milestone-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      margin-top: -3px;
+      transition: background 0.3s, transform 0.3s;
+    }
+
+    .milestone-dot.passed {
+      transform: scale(1.3);
+    }
+
+    .p1 .milestone-dot.passed { background: var(--p1-glow); }
+    .p2 .milestone-dot.passed { background: var(--p2-glow); }
+
+    .progress-steps {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 1px;
+    }
+
+    .step-num {
+      font-size: 0.6rem;
+      color: rgba(255,255,255,0.2);
+      font-weight: 700;
+      width: 12px;
+      text-align: center;
+    }
+
+    .step-num.active {
+      color: var(--text-muted);
+    }
+
+    /* WIN OVERLAY */
+    .win-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s;
+      backdrop-filter: blur(8px);
+    }
+
+    .win-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .win-box {
+      text-align: center;
+      padding: 50px 60px;
+      background: var(--surface);
+      border-radius: 32px;
+      max-width: 420px;
+      width: 90%;
+      border: 2px solid var(--gold);
+      box-shadow: 0 0 60px rgba(255,215,0,0.3), 0 20px 60px rgba(0,0,0,0.5);
+      animation: winBoxIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    @keyframes winBoxIn {
+      from { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+      to { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    .win-trophy {
+      font-size: 5rem;
+      display: block;
+      animation: trophyFloat 1s ease-in-out infinite alternate;
+      margin-bottom: 16px;
+    }
+
+    @keyframes trophyFloat {
+      from { transform: translateY(0) rotate(-5deg); }
+      to { transform: translateY(-12px) rotate(5deg); }
+    }
+
+    .win-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, var(--gold), #fff, var(--gold-glow));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .win-player-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 30px;
+    }
+
+    .p1-win { color: var(--p1-glow); }
+    .p2-win { color: var(--p2-glow); }
+
+    .restart-btn {
+      padding: 14px 40px;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.2rem;
+      background: linear-gradient(135deg, var(--gold), var(--gold-glow));
+      color: #1a0a00;
+      box-shadow: 0 4px 20px rgba(255,215,0,0.4);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .restart-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(255,215,0,0.5);
+    }
+
+    .restart-btn:active {
+      transform: translateY(1px);
+    }
+
+    /* CONFETTI */
+    .confetti-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+      overflow: hidden;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      width: 10px;
+      height: 14px;
+      top: -20px;
+      border-radius: 2px;
+      animation: confettiFall linear forwards;
+    }
+
+    @keyframes confettiFall {
+      0% {
+        transform: translateY(0) rotate(0deg) scaleX(1);
+        opacity: 1;
+      }
+      80% { opacity: 1; }
+      100% {
+        transform: translateY(110vh) rotate(720deg) scaleX(-1);
+        opacity: 0;
+      }
+    }
+
+    /* RIPPLE on matched cells */
+    @keyframes rippleOut {
+      0% { box-shadow: 0 0 0 0 rgba(168,85,247,0.6); }
+      100% { box-shadow: 0 0 0 20px rgba(168,85,247,0); }
+    }
+
+    .p1 .emoji-cell.ripple {
+      animation: cellMatch 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+                 rippleOut 0.6s ease-out 0.1s forwards;
+    }
+
+    @keyframes rippleOut2 {
+      0% { box-shadow: 0 0 0 0 rgba(249,115,22,0.6); }
+      100% { box-shadow: 0 0 0 20px rgba(249,115,22,0); }
+    }
+
+    .p2 .emoji-cell.ripple {
+      animation: cellMatch 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+                 rippleOut2 0.6s ease-out 0.1s forwards;
+    }
+
+    /* MACHINE FLASH */
+    .machine.flash .machine-inner {
+      animation: machineFlash 0.4s ease-out;
+    }
+
+    @keyframes machineFlash {
+      0%, 100% { background: var(--surface2); }
+      50% { background: rgba(255,215,0,0.3); box-shadow: 0 0 60px rgba(255,215,0,0.5), inset 0 0 30px rgba(255,215,0,0.2); }
+    }
+
+    /* SCORE ANIMATION */
+    .score-bump {
+      animation: scoreBump 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes scoreBump {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.4); }
+      100% { transform: scale(1); }
+    }
+
+    /* NONE FOUND indicator */
+    .no-match-flash {
+      animation: noMatchFlash 0.3s ease-out;
+    }
+
+    @keyframes noMatchFlash {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* STATUS BAR */
+    .status-bar {
+      text-align: center;
+      padding: 6px 20px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      min-height: 32px;
+    }
+
+    .status-bar span {
+      display: inline-block;
+      animation: statusIn 0.3s ease-out;
+    }
+
+    @keyframes statusIn {
+      from { transform: translateY(-8px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* GLOW DOTS decoration */
+    .glow-dot {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .glow-dot-1 {
+      width: 300px; height: 300px;
+      background: rgba(168,85,247,0.12);
+      top: -100px; left: -100px;
+    }
+
+    .glow-dot-2 {
+      width: 250px; height: 250px;
+      background: rgba(249,115,22,0.10);
+      bottom: -80px; right: -80px;
+    }
+
+    /* MAIN emoji shimmer */
+    .machine-inner .machine-emoji:not(.spinning):not(.landing) {
+      animation: idleFloat 2s ease-in-out infinite;
+    }
+
+    @keyframes idleFloat {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-4px) scale(1.05); }
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .machine { width: 140px; height: 140px; }
+      .machine-inner { width: 108px; height: 108px; font-size: 3.5rem; }
+      .draw-btn { padding: 12px 36px; font-size: 1.1rem; }
+      .emoji-grid { gap: 4px; }
+      .player-card { padding: 14px; }
+      .win-box { padding: 36px 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- WAITING OVERLAY -->
+  <div id="bingo-waiting" style="display:none;position:fixed;inset:0;background:#000e;z-index:100;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;padding:24px;">
+    <div style="font-size:3.5rem">🎉</div>
+    <div style="font-size:1.4rem;font-weight:900;color:#fff">בינגו!</div>
+    <div style="font-size:0.85rem;color:#94a3b8">ממתין לשחקן השני...</div>
+    <div style="width:40px;height:40px;border:3px solid rgba(245,200,66,0.2);border-top-color:#F5C842;border-radius:50%;animation:bspin 0.8s linear infinite"></div>
+    <style>@keyframes bspin{to{transform:rotate(360deg)}}</style>
+    <button onclick="startBingoSolo()" style="background:none;border:1px solid #334155;color:#94a3b8;padding:10px 24px;border-radius:20px;font-size:0.8rem;cursor:pointer;margin-top:4px;">🎮 שחק לבד</button>
+    <button onclick="window.location.href='index.html'" style="background:none;border:1px solid #1e293b;color:#475569;padding:8px 18px;border-radius:20px;font-size:0.7rem;cursor:pointer;">🏠 חזרה</button>
+  </div>
+
+  <!-- Background glow dots -->
+  <div class="glow-dot glow-dot-1"></div>
+  <div class="glow-dot glow-dot-2"></div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>✨ BINGO ✨</h1>
+    <div class="header-sub">ראשון ל-10 אימוג'ים מנצח! 🏆</div>
+  </div>
+
+  <!-- DRAWN HISTORY -->
+  <div class="drawn-history">
+    <span class="history-label">הוגרלו:</span>
+    <div class="history-emojis" id="historyEmojis"></div>
+    <span class="history-label" id="historyEmpty" style="color:rgba(255,255,255,0.2)">אין עדיין...</span>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar" id="statusBar">
+    <span>לחץ על "הגרל!" כדי להתחיל</span>
+  </div>
+
+  <!-- LOTTERY ZONE -->
+  <div class="lottery-zone">
+    <div class="machine" id="machine">
+      <div class="machine-ring"></div>
+      <div class="machine-inner" onclick="drawEmoji()" title="לחץ להגרלה">
+        <span class="machine-emoji" id="machineEmoji">🎱</span>
+      </div>
+    </div>
+
+    <div class="lottery-controls">
+      <button class="draw-btn" id="drawBtn" onclick="drawEmoji()">הגרל!</button>
+      <div class="draw-count" id="drawCount">נותרו 50 אימוג'ים בכד</div>
+      <button onclick="goHome()" style="margin-top:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:#94a3b8;padding:6px 16px;border-radius:20px;font-size:0.75rem;cursor:pointer;">🏠 דף הבית</button>
+    </div>
+  </div>
+
+  <!-- GAME AREA -->
+  <div class="game-area">
+    <!-- הלוח שלי -->
+    <div class="player-card p1" id="card-p1">
+      <div class="player-header">
+        <div class="player-name" id="name-p1">👧 אמה</div>
+        <div class="player-badge" id="badge-p1">הלוח שלי</div>
+      </div>
+      <div class="emoji-grid" id="grid-p1"></div>
+      <div class="progress-section">
+        <div class="progress-header">
+          <span class="progress-label">התקדמות ל-10</span>
+          <span class="progress-count" id="score-p1">0 / 10</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="fill-p1" style="width:0%"></div>
+        </div>
+        <div class="progress-milestones" id="milestones-p1"></div>
+        <div class="progress-steps" id="steps-p1"></div>
+      </div>
+    </div>
+
+    <!-- ניקוד יריב בלבד -->
+    <div class="player-card p2" id="card-p2" style="min-height:auto; padding:12px 16px;">
+      <div class="player-header">
+        <div class="player-name" id="name-p2">👦 ריף</div>
+        <div class="player-badge" id="badge-p2">יריב</div>
+      </div>
+      <div class="progress-section" style="margin-top:8px;">
+        <div class="progress-header">
+          <span class="progress-label">התקדמות</span>
+          <span class="progress-count" id="score-p2">0 / 10</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="fill-p2" style="width:0%"></div>
+        </div>
+        <div class="progress-milestones" id="milestones-p2"></div>
+        <div class="progress-steps" id="steps-p2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WIN OVERLAY -->
+  <div class="win-overlay" id="winOverlay">
+    <div class="win-box">
+      <span class="win-trophy">🏆</span>
+      <div class="win-title">BINGO!</div>
+      <div class="win-player-name" id="winPlayerName"></div>
+      <button class="restart-btn" onclick="restartGame()">🔄 משחק חדש</button>
+      <button class="restart-btn" onclick="goHome()" style="background:rgba(255,255,255,0.08);box-shadow:none;margin-top:8px;">🏠 דף הבית</button>
+    </div>
+  </div>
+
+  <!-- CONFETTI CONTAINER -->
+  <div class="confetti-container" id="confettiContainer"></div>
+
+  <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
+  authDomain: "kidssapp-izhaki.firebaseapp.com",
+  databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kidssapp-izhaki",
+  storageBucket: "kidssapp-izhaki.firebasestorage.app",
+  messagingSenderId: "663906163746",
+  appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+};
+const fbApp   = initializeApp(firebaseConfig);
+const db      = getDatabase(fbApp);
+const gameRef = ref(db, 'game/bingo');
+
+const params   = new URLSearchParams(location.search);
+const myPlayer = params.get('player') || 'emma';
+const solo     = params.get('solo') === 'true';
+const myKey    = myPlayer === 'emma' ? 'p1' : 'p2';
+const oppKey   = myKey === 'p1' ? 'p2' : 'p1';
+const canDraw  = solo || myPlayer === 'emma'; // רק אמה מגרילה
+let lastTs     = null;
+
+// עדכן שמות לפי שחקן
+(function setPlayerNames() {
+  const myName  = myPlayer==='emma' ? '👧 אמה' : '👦 ריף';
+  const oppName = myPlayer==='emma' ? '👦 ריף'  : '👧 אמה';
+  document.getElementById('name-p1').textContent  = myName;
+  document.getElementById('badge-p1').textContent = 'הלוח שלי';
+  document.getElementById('name-p2').textContent  = oppName;
+  document.getElementById('badge-p2').textContent = 'יריב';
+})();
+    // ─── EMOJI POOL (50 unique emojis) ───────────────────────────────────────
+    const EMOJI_POOL = [
+      '🦊','🐼','🦁','🐯','🦋','🦄','🐉','🦅','🐬','🦜',
+      '🌈','🌟','⭐','🌙','☀️','🌸','🌺','🌻','🌵','🍄',
+      '🎯','🎨','🎭','🎸','🎲','🎮','🏆','🎃','🚀','💎',
+      '🍎','🍊','🍋','🍇','🍓','🍕','🍔','🌮','🍦','🍩',
+      '🌊','🏔️','🔥','💫','🎪','🎠','🌍','🦝','🍣','🎂'
+    ];
+
+    // ─── GAME STATE ───────────────────────────────────────────────────────────
+    let pool = [];           // remaining emojis to draw
+    let boards = { p1: [], p2: [] };
+    let matched = { p1: new Set(), p2: new Set() };
+    let scores = { p1: 0, p2: 0 };
+    let isDrawing = false;
+    let gameOver = false;
+    const WIN_TARGET = 10;
+
+    // ─── INIT ─────────────────────────────────────────────────────────────────
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function initGame() {
+      pool = shuffle(EMOJI_POOL);
+      const shuffledForBoards = shuffle(EMOJI_POOL);
+      boards.p1 = shuffledForBoards.slice(0, 20);
+      boards.p2 = shuffledForBoards.slice(20, 40);
+      matched = { p1: new Set(), p2: new Set() };
+      scores = { p1: 0, p2: 0 };
+      gameOver = false;
+      isDrawing = false;
+
+      // כל שחקן רואה את הלוח שלו ב-grid-p1 (הלוח שלי)
+      renderGridInSlot(myKey, 'p1');
+      renderMilestones('p1');
+      renderMilestones('p2');
+      updateScore('p1');
+      updateScore('p2');
+      document.getElementById('historyEmojis').innerHTML = '';
+      document.getElementById('historyEmpty').style.display = '';
+      document.getElementById('machineEmoji').textContent = '🎱';
+      document.getElementById('drawCount').textContent = `נותרו ${pool.length} אימוג'ים בכד`;
+      document.getElementById('drawBtn').disabled = !canDraw;
+      document.getElementById('drawBtn').classList.remove('drawing');
+      document.getElementById('drawBtn').textContent = canDraw ? 'הגרל!' : '⏳ ממתין לאמה...';
+      document.getElementById('card-p1').classList.remove('winner');
+      document.getElementById('card-p2').classList.remove('winner');
+      document.getElementById('winOverlay').classList.remove('show');
+      document.getElementById('confettiContainer').innerHTML = '';
+      setStatus(canDraw ? 'לחץ על "הגרל!" כדי להתחיל' : 'ממתין לאמה שתגריל...');
+
+      if (!solo && myPlayer === 'emma') {
+        const ts = Date.now(); lastTs = ts;
+        set(gameRef, { pool, boards, drawn: [], scores: {p1:0,p2:0}, gameOver: false, ts });
+      }
+    }
+
+    // ─── FIREBASE LISTEN ─────────────────────────────────────────────────────
+    function listenToState() {
+      if (solo) return;
+      onValue(gameRef, snap => {
+        const s = snap.val(); if (!s) return;
+        if (s.ts === lastTs) return;
+        lastTs = s.ts;
+
+        // קבל boards מאמה
+        if (s.boards) {
+          boards.p1 = s.boards.p1;
+          boards.p2 = s.boards.p2;
+          renderGrid('p1');
+          renderGrid('p2');
+        }
+        pool = s.pool || [];
+        document.getElementById('drawCount').textContent = `נותרו ${pool.length} אימוג'ים בכד`;
+
+        // אם יש drawn חדש — הרץ אנימציה
+        if (s.lastDrawn && !isDrawing) {
+          isDrawing = true;
+          const drawn = s.lastDrawn;
+          const machineEmoji = document.getElementById('machineEmoji');
+          const machine = document.getElementById('machine');
+          spinMachine(machineEmoji, drawn).then(() => {
+            machine.classList.add('flash');
+            setTimeout(() => machine.classList.remove('flash'), 500);
+            addToHistory(drawn);
+            processMatch(drawn);
+            isDrawing = false;
+            document.getElementById('drawBtn').textContent = canDraw ? 'הגרל!' : '⏳ ממתין לאמה...';
+          });
+        }
+
+        if (s.gameOver && s.winner) {
+          triggerWin(s.winner);
+        }
+      });
+    }
+
+    // מרנדר לוח של שחקן `player` לתוך slot בממשק (`slot`)
+    function renderGridInSlot(player, slot) {
+      const grid = document.getElementById(`grid-${slot}`);
+      if (!grid) return;
+      grid.innerHTML = '';
+      boards[player].forEach((emoji, i) => {
+        const cell = document.createElement('div');
+        cell.className = 'emoji-cell';
+        cell.id = `cell-${player}-${i}`;
+        cell.innerHTML = `
+          <span>${emoji}</span>
+          <div class="check-overlay"><div class="check-dot">✓</div></div>
+          <div class="sparkle-burst"></div>
+        `;
+        grid.appendChild(cell);
+      });
+    }
+
+    function renderGrid(player) {
+      // legacy — renders into its own slot (used for solo)
+      renderGridInSlot(player, player);
+    }
+
+    function renderMilestones(player) {
+      const container = document.getElementById(`milestones-${player}`);
+      const stepsContainer = document.getElementById(`steps-${player}`);
+      container.innerHTML = '';
+      stepsContainer.innerHTML = '';
+      for (let i = 0; i <= WIN_TARGET; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'milestone-dot';
+        dot.id = `milestone-${player}-${i}`;
+        container.appendChild(dot);
+
+        const num = document.createElement('div');
+        num.className = 'step-num';
+        num.textContent = i;
+        stepsContainer.appendChild(num);
+      }
+    }
+
+    function updateScore(player) {
+      const score = scores[player];
+      document.getElementById(`score-${player}`).textContent = `${score} / ${WIN_TARGET}`;
+      document.getElementById(`fill-${player}`).style.width = `${(score / WIN_TARGET) * 100}%`;
+
+      for (let i = 0; i <= WIN_TARGET; i++) {
+        const dot = document.getElementById(`milestone-${player}-${i}`);
+        const num = document.getElementById(`steps-${player}`)?.children[i];
+        if (dot) {
+          if (i <= score) {
+            dot.classList.add('passed');
+          } else {
+            dot.classList.remove('passed');
+          }
+        }
+        if (num) {
+          if (i <= score) {
+            num.classList.add('active');
+          } else {
+            num.classList.remove('active');
+          }
+        }
+      }
+
+      // Bump animation
+      const scoreEl = document.getElementById(`score-${player}`);
+      scoreEl.classList.remove('score-bump');
+      void scoreEl.offsetWidth;
+      scoreEl.classList.add('score-bump');
+    }
+
+    function setStatus(text) {
+      const bar = document.getElementById('statusBar');
+      bar.innerHTML = `<span>${text}</span>`;
+    }
+
+    // ─── DRAW ─────────────────────────────────────────────────────────────────
+    function processMatch(drawn) {
+      const p1Match = boards.p1.includes(drawn) && !matched.p1.has(drawn);
+      const p2Match = boards.p2.includes(drawn) && !matched.p2.has(drawn);
+      let statusText = `הוגרל: ${drawn}`;
+      if (p1Match) { matched.p1.add(drawn); scores.p1++; markCell('p1', drawn); updateScore('p1'); statusText += ` — שחקן 1 סימן! 🟣`; }
+      if (p2Match) { matched.p2.add(drawn); scores.p2++; markCell('p2', drawn); updateScore('p2'); statusText += ` — שחקן 2 סימן! 🟠`; }
+      if (!p1Match && !p2Match) statusText += ` — אף שחקן לא מחזיק אותו`;
+      setStatus(statusText);
+      if (scores.p1 >= WIN_TARGET && scores.p2 >= WIN_TARGET) { triggerWin('tie'); return; }
+      else if (scores.p1 >= WIN_TARGET) { triggerWin('p1'); return; }
+      else if (scores.p2 >= WIN_TARGET) { triggerWin('p2'); return; }
+      if (pool.length === 0) { setStatus("כל האימוג'ים הוגרלו!"); gameOver=true; }
+    }
+
+    async function drawEmoji() {
+      if (isDrawing || gameOver || pool.length === 0 || !canDraw) return;
+      isDrawing = true;
+
+      const btn = document.getElementById('drawBtn');
+      btn.disabled = true;
+      btn.classList.add('drawing');
+      btn.textContent = '🎰 מגריל...';
+
+      const drawn = pool.pop();
+      document.getElementById('drawCount').textContent = `נותרו ${pool.length} אימוג'ים בכד`;
+
+      const machineEmoji = document.getElementById('machineEmoji');
+      const machine = document.getElementById('machine');
+
+      await spinMachine(machineEmoji, drawn);
+      machine.classList.add('flash');
+      setTimeout(() => machine.classList.remove('flash'), 500);
+
+      addToHistory(drawn);
+      await new Promise(r => setTimeout(r, 200));
+      processMatch(drawn);
+      await new Promise(r => setTimeout(r, 600));
+
+      // דחוף ל-Firebase
+      if (!solo) {
+        const ts = Date.now(); lastTs = ts;
+        set(gameRef, {
+          pool, boards,
+          lastDrawn: drawn,
+          scores, gameOver,
+          winner: scores.p1 >= WIN_TARGET && scores.p2 >= WIN_TARGET ? 'tie' : scores.p1 >= WIN_TARGET ? 'p1' : scores.p2 >= WIN_TARGET ? 'p2' : null,
+          ts
+        });
+      }
+
+      if (!gameOver) {
+        btn.disabled = false;
+        btn.classList.remove('drawing');
+        btn.textContent = 'הגרל!';
+        isDrawing = false;
+      }
+    }
+
+    function spinMachine(el, finalEmoji) {
+      return new Promise(resolve => {
+        let spins = 0;
+        const fastPhase   = 18 + Math.floor(Math.random() * 6);  // rapid spins
+        const slowPhase   = 7;                                    // dramatic crawl
+        const maxSpins    = fastPhase + slowPhase;
+        el.className = 'machine-emoji';
+        el.style.filter = '';
+
+        const doSpin = () => {
+          spins++;
+          const progress = spins / maxSpins;
+
+          if (spins <= fastPhase) {
+            // ── FAST PHASE: flicker rapidly ──────────────────────────────
+            el.textContent = EMOJI_POOL[Math.floor(Math.random() * EMOJI_POOL.length)];
+            const scale = 0.7 + Math.random() * 0.5;
+            el.style.transform = `scale(${scale}) rotate(${(Math.random()-0.5)*20}deg)`;
+            el.style.opacity = Math.random() > 0.25 ? '1' : '0.3';
+            el.style.filter = '';
+            // speed: 30ms → 80ms during fast phase
+            const t = spins / fastPhase;
+            const delay = 30 + t * 50;
+            setTimeout(doSpin, delay);
+
+          } else {
+            // ── SLOW PHASE: dramatic deceleration ────────────────────────
+            const slowStep = spins - fastPhase;           // 1 … slowPhase
+            const slowT    = slowStep / slowPhase;        // 0 → 1
+
+            // Pick emoji: for the very last spin show the real one
+            const isLast = (slowStep === slowPhase);
+            const shown  = isLast
+              ? finalEmoji
+              : EMOJI_POOL[Math.floor(Math.random() * EMOJI_POOL.length)];
+
+            el.textContent = shown;
+
+            // Scale settles toward 1, slight wobble early
+            const wobble = isLast ? 0 : (Math.random() - 0.5) * 6 * (1 - slowT);
+            const scale  = isLast ? 1.15 : (0.85 + slowT * 0.2);
+            el.style.transform = `scale(${scale}) rotate(${wobble}deg)`;
+            el.style.opacity = '1';
+
+            // Glow builds up to a peak then snaps on landing
+            if (!isLast) {
+              const glow = Math.floor(slowT * 40);
+              el.style.filter = `drop-shadow(0 0 ${glow}px rgba(255,215,0,${slowT * 0.8}))`;
+            }
+
+            // Exponential ease-out: 120ms → 480ms
+            const delay = isLast ? 0 : 120 + Math.pow(slowT, 1.8) * 360;
+
+            if (!isLast) {
+              setTimeout(doSpin, delay);
+            } else {
+              // ── LAND ──────────────────────────────────────────────────
+              el.style.filter = 'drop-shadow(0 0 24px rgba(255,215,0,0.9))';
+              el.className = 'machine-emoji landing';
+              setTimeout(() => {
+                el.className = 'machine-emoji';
+                el.style.transform = '';
+                el.style.filter = '';
+                resolve();
+              }, 600);
+            }
+          }
+        };
+
+        doSpin();
+      });
+    }
+
+    function addToHistory(emoji) {
+      const container = document.getElementById('historyEmojis');
+      const empty = document.getElementById('historyEmpty');
+      empty.style.display = 'none';
+
+      const chip = document.createElement('span');
+      chip.className = 'history-chip';
+      chip.textContent = emoji;
+      // Add to beginning (most recent first)
+      container.insertBefore(chip, container.firstChild);
+
+      // Keep max 20 visible
+      while (container.children.length > 20) {
+        container.removeChild(container.lastChild);
+      }
+    }
+
+    function markCell(player, emoji) {
+      const idx = boards[player].indexOf(emoji);
+      if (idx === -1) return;
+
+      const cell = document.getElementById(`cell-${player}-${idx}`);
+      if (!cell) return;
+
+      cell.classList.add('matched', 'ripple', 'matching-now');
+
+      setTimeout(() => {
+        cell.classList.remove('matching-now');
+      }, 500);
+    }
+
+    // ─── WIN ──────────────────────────────────────────────────────────────────
+    function triggerWin(winner) {
+      gameOver = true;
+      isDrawing = false;
+
+      const nameEl = document.getElementById('winPlayerName');
+      const overlay = document.getElementById('winOverlay');
+      const btn = document.getElementById('drawBtn');
+      btn.disabled = true;
+      btn.textContent = '🏆 הסתיים!';
+      btn.classList.remove('drawing');
+
+      if (winner === 'p1') {
+        nameEl.textContent = '🟣 שחקן 1 ניצח!';
+        nameEl.className = 'win-player-name p1-win';
+        document.getElementById('card-p1').classList.add('winner');
+        setStatus('🎉 שחקן 1 ניצח! ✨');
+      } else if (winner === 'p2') {
+        nameEl.textContent = '🟠 שחקן 2 ניצח!';
+        nameEl.className = 'win-player-name p2-win';
+        document.getElementById('card-p2').classList.add('winner');
+        setStatus('🎉 שחקן 2 ניצח! ✨');
+      } else {
+        nameEl.textContent = '🤝 תיקו מדהים!';
+        nameEl.className = 'win-player-name';
+        nameEl.style.color = 'var(--gold)';
+        setStatus('🎉 תיקו! שני השחקנים הגיעו ל-10!');
+      }
+
+      launchConfetti();
+
+      setTimeout(() => {
+        overlay.classList.add('show');
+      }, 800);
+    }
+
+    // ─── CONFETTI ─────────────────────────────────────────────────────────────
+    function launchConfetti() {
+      const colors = [
+        '#a855f7','#f97316','#ffd700','#ec4899','#3b82f6',
+        '#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'
+      ];
+      const container = document.getElementById('confettiContainer');
+      container.innerHTML = '';
+
+      for (let i = 0; i < 120; i++) {
+        setTimeout(() => {
+          const piece = document.createElement('div');
+          piece.className = 'confetti-piece';
+          piece.style.left = Math.random() * 100 + 'vw';
+          piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+          piece.style.width = (6 + Math.random() * 10) + 'px';
+          piece.style.height = (8 + Math.random() * 16) + 'px';
+          piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+          const duration = 2 + Math.random() * 3;
+          piece.style.animationDuration = duration + 's';
+          piece.style.animationDelay = (Math.random() * 1.5) + 's';
+          container.appendChild(piece);
+          setTimeout(() => piece.remove(), (duration + 2) * 1000);
+        }, i * 15);
+      }
+    }
+
+    // ─── RESTART ─────────────────────────────────────────────────────────────
+    function restartGame() {
+      document.getElementById('winOverlay').classList.remove('show');
+      if (!solo) remove(gameRef);
+      setTimeout(initGame, 300);
+    }
+
+    window.goHome = function() { if (!solo) remove(gameRef); window.location.href='index.html'; };
+
+    // ─── WAITING ROOM ─────────────────────────────────────────────────────────
+    window.startBingoSolo = function() {
+      document.getElementById('bingo-waiting').style.display = 'none';
+      initGame();
+    };
+
+    function initWaiting() {
+      if (solo) { initGame(); listenToState(); return; }
+      // הצג overlay
+      const overlay = document.getElementById('bingo-waiting');
+      overlay.style.display = 'flex';
+      // כתוב נוכחות
+      import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js").then(({ update, onValue: ov }) => {
+        update(gameRef, { [`ready_${myPlayer}`]: true });
+        ov(gameRef, snap => {
+          const s = snap.val(); if (!s) return;
+          if (s.ready_emma && s.ready_rif) {
+            overlay.style.display = 'none';
+            initGame();
+            listenToState();
+          }
+        });
+      });
+    }
+
+    // ─── START ────────────────────────────────────────────────────────────────
+    initWaiting();
+  </script>
+</body>
+</html>

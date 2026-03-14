@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>ציור וניחוש</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --emma:#FF5C7A; --rif:#4DB8FF; --gold:#F5C842; --green:#3DD68C; --bg:#020617; }
+    body { background:var(--bg); color:#f8fafc; height:100dvh; overflow:hidden; font-family:system-ui,sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+
+    /* ── WAITING ── */
+    #screen-waiting { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:24px; text-align:center; width:100%; max-width:400px; }
+    .wait-icon { font-size:4rem; }
+    .wait-title { font-size:1.6rem; font-weight:900; }
+    .wait-subtitle { font-size:0.85rem; color:#94a3b8; line-height:1.5; }
+    .players-row { display:flex; gap:24px; justify-content:center; margin-top:8px; }
+    .pcard { display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 20px; border-radius:16px; border:2px solid; min-width:100px; }
+    .pcard.emma { border-color:var(--emma); background:rgba(255,92,122,0.08); }
+    .pcard.rif  { border-color:var(--rif);  background:rgba(77,184,255,0.08); }
+    .pcard-emoji { font-size:2.2rem; }
+    .pcard-name  { font-weight:700; font-size:0.9rem; }
+    .pcard.emma .pcard-name { color:var(--emma); }
+    .pcard.rif  .pcard-name { color:var(--rif); }
+    .pcard-role  { font-size:0.7rem; color:#94a3b8; background:#1e293b; padding:3px 10px; border-radius:20px; }
+    .btn-solo { background:none; border:1px solid #334155; color:#94a3b8; padding:10px 24px; border-radius:20px; font-size:0.75rem; cursor:pointer; margin-top:4px; }
+    .btn-solo:hover { border-color:#64748b; color:#cbd5e1; }
+    .btn-home { background:none; border:1px solid #1e293b; color:#475569; padding:8px 18px; border-radius:20px; font-size:0.7rem; cursor:pointer; }
+    .spinner { width:36px; height:36px; border:3px solid rgba(255,92,122,0.2); border-top-color:var(--emma); border-radius:50%; animation:spin 0.8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── GAME ── */
+    #screen-game { display:none; flex-direction:column; width:100%; max-width:420px; height:100dvh; padding:6px; gap:4px; }
+    .top-bar { display:flex; justify-content:space-between; align-items:center; padding:4px 8px; }
+    .score-area { display:flex; flex-direction:column; }
+    .score-label { font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:700; }
+    .score-val { font-size:1.6rem; font-weight:900; color:var(--rif); }
+    .timer-wrap { display:flex; flex-direction:column; align-items:center; }
+    .timer-num { font-size:2rem; font-weight:900; color:var(--gold); transition:color 0.3s; }
+    .timer-num.urgent { color:#ef4444; animation:pulse 0.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    .round-label { font-size:0.7rem; color:#64748b; font-weight:700; }
+    .hs-area { display:flex; flex-direction:column; align-items:flex-end; }
+    .hs-label { font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:700; }
+    .hs-val { font-size:1.1rem; font-weight:900; color:var(--gold); }
+
+    .role-bar { display:flex; align-items:center; justify-content:center; gap:8px; padding:4px 12px; background:#0f172a; border-radius:20px; margin:0 4px; }
+    .role-chip { font-size:0.65rem; font-weight:700; padding:4px 12px; border-radius:20px; }
+    .role-chip.artist { background:rgba(255,92,122,0.2); color:var(--emma); border:1px solid var(--emma); }
+    .role-chip.guesser { background:rgba(77,184,255,0.2); color:var(--rif); border:1px solid var(--rif); }
+    .role-sep { color:#334155; font-size:0.7rem; }
+
+    .target-box { display:flex; align-items:center; justify-content:center; gap:12px; padding:6px 12px; background:#0f172a; border-radius:12px; margin:0 4px; min-height:52px; }
+    .target-label { font-size:0.6rem; color:#64748b; text-transform:uppercase; font-weight:700; }
+    .target-emoji { font-size:2.8rem; }
+    .target-hint { font-size:0.85rem; color:#cbd5e1; font-weight:600; }
+
+    .canvas-wrap { position:relative; width:calc(100vw - 12px); max-width:408px; aspect-ratio:1; background:#000; border-radius:14px; border:2px solid #1e293b; margin:0 auto; flex-shrink:0; }
+    canvas { width:100%; height:100%; border-radius:12px; touch-action:none; display:block; }
+
+    .ink-bar { width:calc(100vw - 24px); max-width:396px; height:5px; background:#1e293b; border-radius:10px; margin:0 auto; overflow:hidden; }
+    #inkLevel { height:100%; background:var(--rif); transition:width 0.1s; border-radius:10px; }
+
+    .controls-artist { display:flex; flex-direction:column; gap:6px; padding:0 4px; }
+    .color-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:5px; }
+    .cdot { aspect-ratio:1; border-radius:50%; border:2px solid transparent; cursor:pointer; }
+    .cdot.active { border-color:white; transform:scale(1.2); box-shadow:0 0 8px currentColor; }
+    .sizes-row { display:flex; gap:8px; align-items:center; justify-content:center; }
+    .sdot { border-radius:50%; background:#475569; border:2px solid transparent; cursor:pointer; flex-shrink:0; }
+    .sdot.active { background:var(--green); border-color:white; }
+    .btn-clear { background:#7f1d1d; color:#fca5a5; border:none; border-radius:10px; padding:8px; font-size:0.8rem; font-weight:700; cursor:pointer; width:100%; }
+
+    .controls-guesser { display:flex; flex-direction:column; gap:8px; padding:0 4px; }
+    .guess-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:4px; }
+    .gemoji { aspect-ratio:1; background:#1e293b; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.25rem; cursor:pointer; border:1.5px solid transparent; transition:all 0.15s; }
+    .gemoji:active { background:#2563eb; transform:scale(0.9); }
+    .gemoji.correct { background:#14532d; border-color:var(--green); }
+    .gemoji.wrong { background:#3f1f1f; opacity:0.4; }
+
+    /* ── END SCREEN ── */
+    #screen-end { display:none; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:24px; text-align:center; width:100%; max-width:400px; }
+    .end-trophy { font-size:4rem; }
+    .end-score { font-size:3rem; font-weight:900; color:var(--green); }
+    .end-hs { font-size:0.9rem; color:var(--gold); font-weight:700; }
+    .end-btns { display:flex; flex-direction:column; gap:10px; width:100%; }
+    .btn-main { padding:14px; border-radius:14px; font-size:1rem; font-weight:700; cursor:pointer; border:none; }
+    .btn-green { background:linear-gradient(90deg,var(--green),#16a34a); color:#052e16; }
+    .btn-swap  { background:linear-gradient(90deg,var(--emma),#db2777); color:white; }
+    .btn-home2 { background:rgba(255,255,255,0.07); border:1px solid #334155; color:#94a3b8; }
+    .new-hs-badge { background:var(--gold); color:#1a0a00; padding:6px 18px; border-radius:20px; font-weight:900; font-size:0.85rem; animation:pop 0.4s cubic-bezier(0.34,1.56,0.64,1); display:none; }
+    @keyframes pop { from{transform:scale(0)} to{transform:scale(1)} }
+
+    .hidden { display:none !important; }
+  </style>
+</head>
+<body>
+
+<!-- ══ WAITING ══ -->
+<div id="screen-waiting">
+  <div class="wait-icon">✏️</div>
+  <div class="wait-title">ציור וניחוש</div>
+  <div class="wait-subtitle" id="wait-sub">ממתין לשחקן השני...</div>
+  <div class="players-row">
+    <div class="pcard emma">
+      <div class="pcard-emoji">👧</div>
+      <div class="pcard-name">אמה</div>
+      <div class="pcard-role" id="emma-role">🎨 מצייר</div>
+      <div class="spinner" id="emma-spin" style="display:none"></div>
+    </div>
+    <div class="pcard rif">
+      <div class="pcard-emoji">👦</div>
+      <div class="pcard-name">ריף</div>
+      <div class="pcard-role" id="rif-role">🔍 מנחש</div>
+      <div class="spinner" id="rif-spin" style="display:none"></div>
+    </div>
+  </div>
+  <button class="btn-solo" onclick="startSolo()">🎮 שחק לבד</button>
+  <button class="btn-home" onclick="window.location.href='index.html'">🏠 חזרה</button>
+</div>
+
+<!-- ══ GAME ══ -->
+<div id="screen-game">
+  <div class="top-bar">
+    <div class="score-area">
+      <div class="score-label">ניקוד</div>
+      <div class="score-val" id="scoreDisp">0</div>
+    </div>
+    <div class="timer-wrap">
+      <div class="timer-num" id="timerNum">60</div>
+      <div class="round-label" id="roundLabel">סיבוב 1</div>
+    </div>
+    <div class="hs-area">
+      <div class="hs-label">🏆 שיא</div>
+      <div class="hs-val" id="hsDisp">0</div>
+    </div>
+  </div>
+
+  <div class="role-bar">
+    <span class="role-chip artist" id="chip-artist">👧 אמה מצייר</span>
+    <span class="role-sep">·</span>
+    <span class="role-chip guesser" id="chip-guesser">👦 ריף מנחש</span>
+    <button onclick="window.location.href='index.html'" style="margin-right:auto;background:none;border:none;color:#475569;font-size:0.7rem;cursor:pointer;">🏠</button>
+  </div>
+
+  <div class="target-box" id="target-box">
+    <div class="target-label" id="target-label">מה לצייר:</div>
+    <div class="target-emoji" id="targetEmoji">🎯</div>
+    <div class="target-hint hidden" id="target-hint">מה זה?</div>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="400" height="400"></canvas>
+  </div>
+
+  <div class="ink-bar hidden" id="inkBar"><div id="inkLevel" style="width:100%"></div></div>
+
+  <div class="controls-artist hidden" id="artistControls">
+    <div class="color-grid" id="colorGrid"></div>
+    <div class="sizes-row" id="sizesRow"></div>
+    <button class="btn-clear" onclick="clearCanvas()">🗑 נקה</button>
+  </div>
+
+  <div class="controls-guesser hidden" id="guesserControls">
+    <div class="guess-grid" id="guessGrid"></div>
+  </div>
+</div>
+
+<!-- ══ END ══ -->
+<div id="screen-end">
+  <div class="end-trophy">🎨</div>
+  <div id="end-title" style="font-size:1.2rem;font-weight:700;color:#cbd5e1;">סיבוב הסתיים!</div>
+  <div class="end-score" id="endScore">0</div>
+  <div class="new-hs-badge" id="newHsBadge">🏆 שיא חדש!</div>
+  <div class="end-hs" id="endHs">שיא: 0</div>
+  <div class="end-btns">
+    <button class="btn-main btn-green" onclick="startNewGame()">🎮 משחק חדש</button>
+    <button class="btn-main btn-swap"  onclick="swapRoles()">🔄 החלף תפקידים</button>
+    <button class="btn-main btn-home2" onclick="window.location.href='index.html'">🏠 דף הבית</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
+  authDomain: "kidssapp-izhaki.firebaseapp.com",
+  databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kidssapp-izhaki",
+  storageBucket: "kidssapp-izhaki.firebasestorage.app",
+  messagingSenderId: "663906163746",
+  appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+};
+
+const fbApp  = initializeApp(firebaseConfig);
+const db     = getDatabase(fbApp);
+const gameRef = ref(db, 'game/drawing-guess');
+const hsRef   = ref(db, 'highscores/drawing-guess');
+
+// ── params ──
+const params   = new URLSearchParams(location.search);
+const myPlayer = params.get('player') || 'emma';
+let   solo     = params.get('solo') === 'true';
+// תפקיד ראשוני: אמה=צייר, ריף=מנחש. ניתן להחלפה
+let   drawerPlayer  = 'emma';  // מי מצייר עכשיו
+let   myRole; // 'artist' | 'guesser'
+let   lastTs = null;
+
+// ── state ──
+let canvas, ctx;
+let score = 0, round = 1, timeLeft = 60, secretEmoji = '';
+let timerInterval = null;
+let ink = 100;
+let gameRunning = false;
+let currentColor = '#ffffff', currentSize = 14;
+let highScore = 0;
+let swapped = false; // האם הוחלפו תפקידים
+
+const EMOJIS = ['🐼','🍕','🚀','🎸','🦁','🍦','⚽','🌵','🚗','🌈','🍩','🥑','👾','🏀','🔥','💎','🦖','🍣','🚲','🏰','🎭','🍟','🧠','🍓','🍄','🏠','👑','🍎','🎈','🚢','✈️','⏰','💡','🔑','🎁','🦢','🦋','🌻','🍉','🍔','🛹','⚓','🏹','🚜','🌋','🥨','🦒','🎨','🎤','🎯','🐉'];
+const COLORS = ['#ffffff','#ef4444','#f97316','#facc15','#22c55e','#3b82f6','#a855f7','#ec4899','#000000','#94a3b8'];
+const SIZES  = [4, 14, 28];
+
+function computeMyRole() {
+  if (solo) { myRole = 'artist'; return; }
+  myRole = (myPlayer === drawerPlayer) ? 'artist' : 'guesser';
+}
+
+// ── SCREENS ──
+function showScreen(id) {
+  ['screen-waiting','screen-game','screen-end'].forEach(s =>
+    document.getElementById(s).style.display = s===id ? 'flex' : 'none'
+  );
+}
+
+// ── WAITING ROOM ──
+function initWaiting() {
+  computeMyRole();
+  // הצג תפקידים
+  document.getElementById('emma-role').textContent = drawerPlayer==='emma' ? '🎨 מצייר' : '🔍 מנחש';
+  document.getElementById('rif-role').textContent  = drawerPlayer==='rif'  ? '🎨 מצייר' : '🔍 מנחש';
+  // הצג spinner ל-MY player
+  const mySpinId = myPlayer==='emma' ? 'emma-spin' : 'rif-spin';
+  document.getElementById(mySpinId).style.display = 'block';
+  document.getElementById('wait-sub').textContent = 'ממתין לשחקן השני...';
+
+  if (!solo) {
+    // כתוב נוכחות
+    update(gameRef, { [`ready_${myPlayer}`]: true, drawerPlayer });
+    // האזן
+    onValue(gameRef, snap => {
+      const s = snap.val(); if (!s) return;
+      if (s.ready_emma && s.ready_rif) {
+        // שניהם מוכנים
+        document.getElementById(mySpinId).style.display = 'none';
+        if (s.drawerPlayer) drawerPlayer = s.drawerPlayer;
+        computeMyRole();
+        startGame();
+      }
+    });
+  }
+}
+
+window.startSolo = function() {
+  solo = true; drawerPlayer = myPlayer; myRole = 'artist';
+  startGame();
+};
+
+// ── GAME START ──
+function startGame() {
+  showScreen('screen-game');
+  score = 0; round = 1;
+  loadHighScore();
+  initCanvas();
+  buildColorGrid();
+  buildSizeRow();
+  updateRoleUI();
+  if (myRole === 'artist') {
+    if (!solo) setupFirebaseSync();
+    newRound();
+  } else {
+    // guesser — מאזין ל-Firebase
+    setupFirebaseSync();
+    updateGuesserView();
+  }
+}
+
+// ── CANVAS ──
+function initCanvas() {
+  canvas = document.getElementById('canvas');
+  ctx = canvas.getContext('2d');
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  clearCanvas();
+
+  const getP = e => {
+    const r = canvas.getBoundingClientRect();
+    const ev = e.touches ? e.touches[0] : e;
+    return { x:(ev.clientX-r.left)*(canvas.width/r.width), y:(ev.clientY-r.top)*(canvas.height/r.height) };
+  };
+
+  let drawing = false;
+  const start = e => {
+    if (myRole!=='artist' || ink<=0) return;
+    drawing=true;
+    const p=getP(e); ctx.beginPath(); ctx.moveTo(p.x,p.y);
+    ctx.strokeStyle=currentColor; ctx.lineWidth=currentSize;
+    e.preventDefault?.();
+  };
+  const move = e => {
+    if (!drawing || ink<=0) return;
+    const p=getP(e); ctx.lineTo(p.x,p.y); ctx.stroke();
+    ink = Math.max(0, ink - currentSize/500);
+    document.getElementById('inkLevel').style.width = ink+'%';
+    e.preventDefault?.();
+  };
+  const end = () => { if(drawing){drawing=false; syncCanvas();} };
+
+  canvas.addEventListener('mousedown',  start);
+  canvas.addEventListener('mousemove',  move);
+  canvas.addEventListener('mouseup',    end);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove',  move,  {passive:false});
+  canvas.addEventListener('touchend',   end);
+}
+
+window.clearCanvas = function() {
+  if (!ctx) return;
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ink = 100;
+  document.getElementById('inkLevel').style.width = '100%';
+  if (myRole==='artist' && !solo) syncCanvas();
+};
+
+// ── ROLE UI ──
+function updateRoleUI() {
+  const artistName  = drawerPlayer==='emma' ? 'אמה' : 'ריף';
+  const guesserName = drawerPlayer==='emma' ? 'ריף' : 'אמה';
+  document.getElementById('chip-artist').textContent  = `${drawerPlayer==='emma'?'👧':'👦'} ${artistName} מצייר`;
+  document.getElementById('chip-guesser').textContent = `${drawerPlayer==='emma'?'👦':'👧'} ${guesserName} מנחש`;
+
+  const isArtist = myRole==='artist';
+  document.getElementById('artistControls').classList.toggle('hidden', !isArtist);
+  document.getElementById('inkBar').classList.toggle('hidden', !isArtist);
+  document.getElementById('guesserControls').classList.toggle('hidden', isArtist);
+
+  const tLabel = document.getElementById('target-label');
+  const tHint  = document.getElementById('target-hint');
+  const tEmoji = document.getElementById('targetEmoji');
+  if (isArtist) {
+    tLabel.textContent = 'מה לצייר:';
+    tLabel.classList.remove('hidden');
+    tEmoji.classList.remove('hidden');
+    tHint.classList.add('hidden');
+  } else {
+    tLabel.classList.add('hidden');
+    tEmoji.classList.add('hidden');
+    tHint.textContent = '🔍 מה מצוייר?';
+    tHint.classList.remove('hidden');
+  }
+}
+
+// ── NEW ROUND ──
+function newRound() {
+  if (!gameRunning) gameRunning = true;
+  clearCanvas();
+  secretEmoji = EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+  document.getElementById('targetEmoji').textContent = secretEmoji;
+  document.getElementById('roundLabel').textContent = `סיבוב ${round}`;
+  ink = 100;
+  document.getElementById('inkLevel').style.width='100%';
+
+  if (!solo) {
+    const ts = Date.now(); lastTs = ts;
+    set(gameRef, {
+      ready_emma: true, ready_rif: true,
+      drawerPlayer,
+      secretEmoji, score, round,
+      canvasData: '', ts
+    });
+  }
+  buildGuessGrid();
+  startTimer();
+}
+
+// ── TIMER ──
+function startTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  timeLeft = 60;
+  document.getElementById('timerNum').textContent = 60;
+  document.getElementById('timerNum').classList.remove('urgent');
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timerNum').textContent = timeLeft;
+    if (timeLeft <= 10) document.getElementById('timerNum').classList.add('urgent');
+    if (timeLeft <= 0) { clearInterval(timerInterval); endRound(); }
+  }, 1000);
+}
+
+function endRound() {
+  clearInterval(timerInterval);
+  showEndScreen();
+}
+
+// ── GUESS GRID ──
+function buildGuessGrid() {
+  const grid = document.getElementById('guessGrid');
+  grid.innerHTML = '';
+  const pool = [secretEmoji, ...EMOJIS.filter(e=>e!==secretEmoji).sort(()=>Math.random()-0.5).slice(0,17)].sort(()=>Math.random()-0.5);
+  pool.forEach(emoji => {
+    const d = document.createElement('div');
+    d.className = 'gemoji';
+    d.textContent = emoji;
+    d.onclick = () => {
+      if (d.classList.contains('wrong')) return;
+      if (emoji === secretEmoji) {
+        d.classList.add('correct');
+        score += Math.max(10, timeLeft * 5);
+        document.getElementById('scoreDisp').textContent = score;
+        confetti({ particleCount:80, spread:70 });
+        if (!solo) update(gameRef, { score, lastGuessed: secretEmoji });
+        clearInterval(timerInterval);
+        setTimeout(() => { round++; newRound(); }, 800);
+      } else {
+        d.classList.add('wrong');
+        score = Math.max(0, score - 10);
+        document.getElementById('scoreDisp').textContent = score;
+      }
+    };
+    grid.appendChild(d);
+  });
+}
+
+// ── FIREBASE SYNC ──
+function syncCanvas() {
+  if (solo) return;
+  update(gameRef, { canvasData: canvas.toDataURL('image/webp', 0.3) });
+}
+
+function setupFirebaseSync() {
+  onValue(gameRef, snap => {
+    const s = snap.val(); if (!s) return;
+    if (s.ts === lastTs) return;
+    lastTs = s.ts;
+
+    // guesser מקבל canvas ו-state
+    if (myRole === 'guesser') {
+      if (s.secretEmoji) secretEmoji = s.secretEmoji;
+      if (s.score !== undefined) {
+        score = s.score;
+        document.getElementById('scoreDisp').textContent = score;
+      }
+      if (s.round && s.round !== round) {
+        round = s.round;
+        document.getElementById('roundLabel').textContent = `סיבוב ${round}`;
+        buildGuessGrid();
+      }
+      if (s.canvasData) {
+        const img = new Image();
+        img.src = s.canvasData;
+        img.onload = () => { ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0,canvas.width,canvas.height); };
+      }
+    }
+  });
+}
+
+function updateGuesserView() {
+  document.getElementById('targetEmoji').classList.add('hidden');
+  document.getElementById('target-label').classList.add('hidden');
+  document.getElementById('target-hint').classList.remove('hidden');
+  document.getElementById('target-hint').textContent = '🔍 מה מצוייר?';
+  buildGuessGrid();
+  // טיימר גם אצל המנחש
+  startTimer();
+}
+
+// ── HIGH SCORE ──
+async function loadHighScore() {
+  try {
+    const snap = await get(hsRef);
+    highScore = snap.val() || 0;
+    document.getElementById('hsDisp').textContent = highScore;
+    document.getElementById('endHs').textContent = `שיא: ${highScore}`;
+  } catch(e) {}
+}
+
+async function saveHighScore(newScore) {
+  if (newScore > highScore) {
+    highScore = newScore;
+    try { await set(hsRef, highScore); } catch(e) {}
+    return true;
+  }
+  return false;
+}
+
+// ── END SCREEN ──
+async function showEndScreen() {
+  gameRunning = false;
+  document.getElementById('endScore').textContent = score;
+  const isNew = await saveHighScore(score);
+  document.getElementById('endHs').textContent = `שיא: ${highScore}`;
+  document.getElementById('hsDisp').textContent = highScore;
+  if (isNew) {
+    document.getElementById('newHsBadge').style.display = 'block';
+    confetti({ particleCount:150, spread:100 });
+    document.getElementById('end-title').textContent = '🏆 שיא חדש!';
+  } else {
+    document.getElementById('end-title').textContent = 'הסיבוב הסתיים!';
+  }
+  showScreen('screen-end');
+}
+
+// ── BUTTONS ──
+window.startNewGame = function() {
+  score=0; round=1;
+  showScreen('screen-game');
+  document.getElementById('scoreDisp').textContent=0;
+  updateRoleUI();
+  if (myRole==='artist') newRound();
+  else { clearCanvas(); buildGuessGrid(); startTimer(); }
+};
+
+window.swapRoles = function() {
+  swapped = !swapped;
+  drawerPlayer = swapped ? (myPlayer==='emma'?'rif':'emma') : (myPlayer==='emma'?'emma':'rif');
+  computeMyRole();
+  score=0; round=1;
+  document.getElementById('scoreDisp').textContent=0;
+  showScreen('screen-game');
+  updateRoleUI();
+  clearCanvas();
+  if (myRole==='artist') newRound();
+  else { buildGuessGrid(); startTimer(); }
+  if (!solo) update(gameRef, { drawerPlayer, score:0, round:1 });
+};
+
+// ── COLOR/SIZE PICKERS ──
+function buildColorGrid() {
+  const g = document.getElementById('colorGrid');
+  g.innerHTML='';
+  COLORS.forEach((c,i) => {
+    const d=document.createElement('div');
+    d.className='cdot'+(i===0?' active':'');
+    d.style.background=c;
+    d.onclick=()=>{
+      currentColor=c;
+      document.querySelectorAll('.cdot').forEach(x=>x.classList.remove('active'));
+      d.classList.add('active');
+      ctx.strokeStyle=c;
+    };
+    g.appendChild(d);
+  });
+}
+
+function buildSizeRow() {
+  const r=document.getElementById('sizesRow');
+  r.innerHTML='';
+  SIZES.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='sdot'+(i===1?' active':'');
+    d.style.width=d.style.height=(s*1.5)+'px';
+    d.onclick=()=>{
+      currentSize=s;
+      document.querySelectorAll('.sdot').forEach(x=>x.classList.remove('active'));
+      d.classList.add('active');
+    };
+    r.appendChild(d);
+  });
+}
+
+// ── INIT ──
+initWaiting();
+</script>
+</body>
+</html>
