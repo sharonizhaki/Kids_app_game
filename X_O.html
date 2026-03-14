@@ -44,7 +44,7 @@
     .btn-reset { background: rgba(255,255,255,0.07); color: #a0aec0; border: 1.5px solid rgba(255,255,255,0.12); }
 
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(5px); }
-    .modal-content { background: #1a1f26; border: 2px solid #ffd700; padding: 2.5rem 2rem; border-radius: 20px; text-align: center; max-width: 300px; width: 90%; box-shadow: 0 0 30px rgba(255,215,0,0.2); }
+    .modal-content { background: #1a1f26; border: 2px solid #ffd700; padding: 2.5rem 2rem; border-radius: 20px; text-align: center; max-width: 300px; width: 90%; }
     .modal-overlay.active { display: flex; }
     .btn-modal { background: #ffd700; color: #000; width: 100%; padding: 0.8rem; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; font-size: 1.1rem; }
   </style>
@@ -53,8 +53,8 @@
 
 <div class="modal-overlay" id="exit-modal">
   <div class="modal-content">
-    <h2 style="color: #ffd700; margin-bottom: 1rem;">המשחק הסתיים</h2>
-    <p id="exit-msg" style="color: #e2e8f0; margin-bottom: 2rem;">השחקן השני עזב את החדר.</p>
+    <h2 style="color: #ffd700; margin-bottom: 1rem;">המשחק נגמר</h2>
+    <p id="exit-msg" style="color: #e2e8f0; margin-bottom: 2rem;">השחקן השני עזב.</p>
     <button class="btn-modal" onclick="location.href='index.html?screen=games'">חזרה ללובי</button>
   </div>
 </div>
@@ -76,7 +76,7 @@
     </div>
   </div>
   <div class="turn-bar">
-    <div id="turn-text" class="turn-text">מתחבר...</div>
+    <div id="turn-text" class="turn-text">מתחבר למשחק...</div>
   </div>
   <div class="board" id="board">
     <div class="cell" data-index="0"></div><div class="cell" data-index="1"></div><div class="cell" data-index="2"></div>
@@ -84,7 +84,7 @@
     <div class="cell" data-index="6"></div><div class="cell" data-index="7"></div><div class="cell" data-index="8"></div>
   </div>
   <div class="buttons">
-    <button class="btn btn-restart" onclick="restartGame()">▶ משחק חדש</button>
+    <button class="btn btn-restart" onclick="restartGame()">משחק חדש</button>
     <button class="btn btn-reset" onclick="goHome()">🏠 לבית</button>
   </div>
 </div>
@@ -109,49 +109,40 @@ const gameRef = ref(db, 'game/xo');
 const roomRef = ref(db, 'rooms_v3/xo');
 
 const params = new URLSearchParams(location.search);
-const myId = params.get('player') || 'guest_' + Math.floor(Math.random()*1000);
+const myId = params.get('player');
 
 let mySymbol = null;
 let board = Array(9).fill('');
 let currentPlayer = 'X';
 let scores = { X: 0, O: 0, draw: 0 };
-let gameOver = false;
 let players = { X: 'ממתין...', O: 'ממתין...' };
-let gameStarted = false;
+let gameOver = false;
+let canPlay = false;
 
-// 1. ניקוי ראשוני של מצב עזיבה במידה וקיים (רק אם אני הראשון בחדר)
-async function checkInit() {
-    const roomSnap = await get(roomRef);
-    if (!roomSnap.exists()) {
-        await update(gameRef, { exitToHome: false });
-    }
-}
-checkInit();
-
-// 2. האזנה לשחקנים
+// 1. ניהול נוכחות ושמות
 onValue(roomRef, (snap) => {
     const data = snap.val() || {};
     const ids = Object.keys(data);
     
-    if (!mySymbol) {
-        if (ids[0] === myId) mySymbol = 'X';
-        else if (ids[1] === myId) mySymbol = 'O';
-    }
+    // קביעת תפקידים
+    if (ids[0] === myId) mySymbol = 'X';
+    else if (ids[1] === myId) mySymbol = 'O';
 
     players.X = ids[0] ? (data[ids[0]].name || 'שחקן 1') : 'ממתין...';
     players.O = ids[1] ? (data[ids[1]].name || 'שחקן 2') : 'ממתין...';
     
-    if (ids.length >= 2) gameStarted = true;
+    // המשחק יכול להתחיל רק כשיש 2 שחקנים
+    canPlay = (ids.length >= 2);
+    
     updateUI();
 });
 
-// 3. האזנה למצב לוח המשחק
+// 2. האזנה לשינויים בלוח
 onValue(gameRef, (snap) => {
     const data = snap.val();
     if (!data) return;
 
-    // הצגת הודעת עזיבה רק אם המשחק כבר התחיל פעם אחת
-    if (data.exitToHome && gameStarted) {
+    if (data.exitToHome && canPlay) {
         document.getElementById('exit-modal').classList.add('active');
         return;
     }
@@ -162,11 +153,11 @@ onValue(gameRef, (snap) => {
     scores = data.scores || { X: 0, O: 0, draw: 0 };
 
     updateUI();
+    
+    // הדגשת ניצחון
+    document.querySelectorAll('.cell').forEach(c => c.classList.remove('winning'));
     if (data.winCombo) {
-        data.winCombo.forEach(i => {
-            const cell = document.querySelectorAll('.cell')[i];
-            if(cell) cell.classList.add('winning');
-        });
+        data.winCombo.forEach(i => document.querySelectorAll('.cell')[i].classList.add('winning'));
     }
 });
 
@@ -181,18 +172,16 @@ function updateUI() {
     document.getElementById('card-o').classList.toggle('active', currentPlayer === 'O');
 
     const turnEl = document.getElementById('turn-text');
-    if (gameOver) {
-        turnEl.textContent = board.includes('') ? `🏆 ${players[currentPlayer]} ניצח/ה!` : `🤝 תיקו!`;
+    if (!canPlay) {
+        turnEl.textContent = "מחכים למשתתף נוסף...";
+    } else if (gameOver) {
+        const winnerName = players[currentPlayer];
+        turnEl.textContent = board.includes('') ? `🏆 ${winnerName} ניצח/ה!` : `🤝 תיקו!`;
     } else {
-        if (players.X === 'ממתין...' || players.O === 'ממתין...') {
-            turnEl.textContent = "מחכים לשחקן נוסף...";
-        } else {
-            turnEl.textContent = (mySymbol === currentPlayer) ? "תורך לשחק!" : `תור ${players[currentPlayer]}...`;
-        }
+        turnEl.textContent = (mySymbol === currentPlayer) ? "תורך לשחק!" : `תור ${players[currentPlayer]}...`;
     }
 
     document.querySelectorAll('.cell').forEach((cell, i) => {
-        cell.classList.remove('winning');
         if (board[i] === 'X') {
             cell.innerHTML = `<svg viewBox="0 0 60 60"><line class="x-path" x1="14" y1="14" x2="46" y2="46"/><line class="x-path" x1="46" y1="14" x2="14" y2="46"/></svg>`;
         } else if (board[i] === 'O') {
@@ -205,7 +194,9 @@ function updateUI() {
 
 async function handleCellClick(e) {
     const idx = e.currentTarget.dataset.index;
-    if (gameOver || board[idx] !== '' || currentPlayer !== mySymbol || !gameStarted) return;
+    
+    // חסימת לחיצה אם: המשחק נגמר / התא תפוס / לא התור שלי / אין מספיק שחקנים
+    if (gameOver || board[idx] !== '' || currentPlayer !== mySymbol || !canPlay) return;
 
     board[idx] = mySymbol;
     const win = checkWin();
@@ -221,6 +212,7 @@ async function handleCellClick(e) {
         gameOver: win || isDraw,
         winCombo: win || null,
         scores: newScores,
+        exitToHome: false,
         ts: Date.now()
     });
 }
@@ -228,29 +220,27 @@ async function handleCellClick(e) {
 function checkWin() {
     const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
     for (let l of lines) {
-        if (board[l[0]] && board[l[0]] === board[l[1]] && board[l[0]] === board[l[2]]) return l;
+        if (board[l[0]] !== '' && board[l[0]] === board[l[1]] && board[l[0]] === board[l[2]]) return l;
     }
     return null;
 }
 
-window.restartGame = () => {
-    if (!mySymbol) return;
-    update(gameRef, {
+window.restartGame = async () => {
+    if (!canPlay) return;
+    await set(gameRef, {
         board: Array(9).fill(''),
         currentPlayer: 'X',
         gameOver: false,
         winCombo: null,
-        exitToHome: false, // מוודא שמתחילים נקי
+        scores: scores,
+        exitToHome: false,
         ts: Date.now()
     });
 };
 
 window.goHome = async () => {
     await update(gameRef, { exitToHome: true });
-    // נותן ל-Firebase רגע לעדכן לפני המעבר
-    setTimeout(() => {
-        location.href = 'index.html?screen=games';
-    }, 100);
+    setTimeout(() => location.href = 'index.html?screen=games', 150);
 };
 
 document.querySelectorAll('.cell').forEach(c => c.addEventListener('click', handleCellClick));
