@@ -11,9 +11,9 @@
 
 :root {
   --bg:       #0F1320;
-  --surface:  #181D2E;
-  --surface2: #212840;
-  --border:   #2E3450;
+  --surface:  rgba(24, 29, 46, 0.6); /* שקיפות לכרטיסיות */
+  --surface2: rgba(33, 40, 64, 0.7);
+  --border:   rgba(46, 52, 80, 0.5);
   --emma:     #FF5C7A;
   --rif:      #4DB8FF;
   --guest:    #3DD68C;
@@ -30,80 +30,91 @@ html, body {
   overflow: hidden;
 }
 
-/* קנבס לרקע החי */
+/* קנבס לרקע החי - קבוע ברקע */
 #bg-canvas {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  z-index: -1; pointer-events: none;
+  z-index: 0; pointer-events: none;
 }
 
-.screen { display:none; min-height:100dvh; flex-direction:column; position: relative; z-index: 1; }
+.screen { 
+  display:none; min-height:100dvh; flex-direction:column; 
+  position: relative; z-index: 1; 
+}
 .screen.active { display:flex; }
+
+/* אפקט טשטוש זכוכית גלובלי לאלמנטים */
+.glass {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid var(--border);
+}
 
 /* ===== PLAYER SELECT ===== */
 #screen-player {
   align-items: center; justify-content: center; padding: 20px;
 }
 .platform-header { text-align: center; margin-bottom: 40px; }
-.platform-title { font-family: 'Fredoka One', cursive; font-size: 2.8rem; background: linear-gradient(135deg, var(--emma), var(--rif)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.platform-title { 
+  font-family: 'Fredoka One', cursive; font-size: 2.8rem; 
+  background: linear-gradient(135deg, var(--emma), var(--rif)); 
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+}
 
 .player-buttons { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 280px; align-items: center; }
+
 .btn-player {
   display: flex; align-items: center; justify-content: center; gap: 14px; 
-  padding: 18px; width: 100%; border-radius: 20px; border: 2px solid var(--border); 
-  background: var(--surface); cursor: pointer; color: var(--text); transition: 0.2s;
+  padding: 18px; width: 100%; border-radius: 20px; 
+  background: var(--surface); cursor: pointer; color: var(--text); 
+  transition: 0.2s;
 }
 .btn-player:active { transform: scale(0.95); }
 
 /* ===== GAME LIST ===== */
 .games-list { padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto; }
+
 .game-card { 
-    background: var(--surface); border: 1.5px solid var(--border); border-radius: 18px; 
+    background: var(--surface); border-radius: 20px; 
     padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; 
     transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;
 }
-.game-card:active { transform: scale(0.96); }
 
-/* אנימציית דופק כשמישהו מחכה */
 .game-card.someone-waiting {
     border-color: var(--gold);
-    box-shadow: 0 0 15px rgba(245, 200, 66, 0.15);
-    animation: pulseBorder 2s infinite;
+    box-shadow: 0 0 20px rgba(245, 200, 66, 0.15);
+    animation: pulseCard 2s infinite;
 }
-@keyframes pulseBorder {
-    0% { transform: scale(1); }
+@keyframes pulseCard {
+    0%, 100% { transform: scale(1); }
     50% { transform: scale(1.02); }
-    100% { transform: scale(1); }
 }
 
 .game-icon { font-size: 1.8rem; width: 50px; height: 50px; background: var(--surface2); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
 .game-name { font-family: 'Fredoka One'; font-size: 1.1rem; }
 .game-desc { font-size: 0.75rem; color: var(--dim); }
 
-/* תגית נוכחות על הכפתור */
 .presence-tag {
     position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
-    background: var(--surface2); padding: 4px 10px; border-radius: 20px;
+    background: rgba(245, 200, 66, 0.15); padding: 5px 12px; border-radius: 20px;
     display: flex; align-items: center; gap: 6px; border: 1px solid var(--gold);
-    font-size: 0.75rem; font-weight: 700; color: var(--gold);
+    font-size: 0.75rem; font-weight: 800; color: var(--gold);
+    backdrop-filter: blur(4px);
 }
 
-/* Modals & Waiting room - נשארים דומים */
-#modal-guest { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; z-index: 100; padding: 20px; }
-.modal-content { background: var(--surface); border: 2px solid var(--border); border-radius: 24px; padding: 24px; width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 16px; }
-.guest-input { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 12px; padding: 12px; color: var(--text); font-size: 1rem; text-align: center; width: 100%; }
-.emoji-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-.emoji-opt { font-size: 1.5rem; padding: 8px; border-radius: 10px; background: var(--surface2); cursor: pointer; text-align: center; border: 1.5px solid transparent; }
-.emoji-opt.selected { border-color: var(--gold); background: var(--border); }
+/* Modals */
+#modal-guest { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+.modal-content { background: var(--surface); border-radius: 24px; padding: 24px; width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 16px; }
+.guest-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; color: var(--text); font-size: 1rem; text-align: center; width: 100%; }
+
 .btn-confirm { background: var(--gold); color: var(--bg); border: none; padding: 14px; border-radius: 12px; font-weight: 900; cursor: pointer; }
 
-#screen-waiting { align-items: center; justify-content: center; padding: 20px; gap: 24px; }
-.waiting-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 22px; padding: 24px; width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 20px; }
-.players-status { display: flex; align-items: center; gap: 10px; }
-.p-slot { flex: 1; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface2); padding: 15px 5px; text-align: center; min-height: 100px; }
+/* Waiting Room */
+.waiting-card { background: var(--surface); border-radius: 24px; padding: 24px; width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 20px; }
+.p-slot { flex: 1; border-radius: 16px; border: 1.5px solid var(--border); background: var(--surface2); padding: 15px 5px; text-align: center; min-height: 100px; }
 .p-slot.active { border-color: var(--gold); }
-.p-slot-emoji { font-size: 1.8rem; }
-.p-slot-name { font-family: 'Fredoka One', cursive; font-size: 0.9rem; margin-top: 5px; }
-.vs-circle { width: 34px; height: 34px; border-radius: 50%; background: var(--border); display: flex; align-items: center; justify-content: center; font-family: 'Fredoka One'; font-size: 0.7rem; color: var(--dim); }
+
+.spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .fade-in { animation: fadeUp 0.4s ease forwards; opacity: 0; }
 @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
@@ -115,51 +126,58 @@ html, body {
 
 <div id="screen-player" class="screen active">
   <div class="platform-header">
-    <div class="platform-title">משחקי אמה וריף</div>
-    <div style="color:var(--dim); font-size: 1rem; margin-top: 5px;">מי משחק עכשיו?</div>
+    <div class="platform-title fade-in">משחקי אמה וריף</div>
+    <div style="color:var(--dim); font-size: 1.1rem; margin-top: 5px;">מי משחק עכשיו?</div>
   </div>
   <div class="player-buttons">
-    <button class="btn-player" onclick="selectFixedPlayer('emma')" style="color: var(--emma);"><div class="player-avatar">👧</div><div class="player-name">אמה</div></button>
-    <button class="btn-player" onclick="selectFixedPlayer('rif')" style="color: var(--rif);"><div class="player-avatar">👦</div><div class="player-name">ריף</div></button>
-    <button class="btn-player" onclick="openGuestModal()" style="color: var(--guest); border-style: dashed; margin-top: 10px;"><div class="player-avatar">✨</div><div class="player-name">אורח</div></button>
+    <button class="btn-player glass fade-in" onclick="selectFixedPlayer('emma')" style="color: var(--emma);"><div class="player-avatar">👧</div><div class="player-name">אמה</div></button>
+    <button class="btn-player glass fade-in" onclick="selectFixedPlayer('rif')" style="color: var(--rif);"><div class="player-avatar">👦</div><div class="player-name">ריף</div></button>
+    <button class="btn-player glass fade-in" onclick="openGuestModal()" style="color: var(--guest); border-style: dashed; margin-top: 10px;"><div class="player-avatar">✨</div><div class="player-name">אורח</div></button>
   </div>
 </div>
 
 <div id="modal-guest">
-  <div class="modal-content">
+  <div class="modal-content glass">
     <h3 style="text-align:center; font-family:'Fredoka One'">שחקן אורח</h3>
-    <input type="text" id="guest-name-input" class="guest-input" placeholder="הכנס שם...">
-    <div class="emoji-grid"><div class="emoji-opt selected" onclick="selectGuestEmoji('🐱', this)">🐱</div><div class="emoji-opt" onclick="selectGuestEmoji('🦊', this)">🦊</div><div class="emoji-opt" onclick="selectGuestEmoji('🦁', this)">🦁</div><div class="emoji-opt" onclick="selectGuestEmoji('🦖', this)">🦖</div></div>
-    <button class="btn-confirm" onclick="confirmGuest()">כניסה</button>
-    <button onclick="closeGuestModal()" style="background:none; border:none; color:var(--dim); font-size:0.8rem;">ביטול</button>
+    <input type="text" id="guest-name-input" class="guest-input" placeholder="איך קוראים לך?">
+    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;">
+        <div class="btn-player glass" style="padding:10px; font-size:1.5rem" onclick="selectGuestEmoji('🐱', this)">🐱</div>
+        <div class="btn-player glass" style="padding:10px; font-size:1.5rem" onclick="selectGuestEmoji('🦊', this)">🦊</div>
+        <div class="btn-player glass" style="padding:10px; font-size:1.5rem" onclick="selectGuestEmoji('🦁', this)">🦁</div>
+        <div class="btn-player glass" style="padding:10px; font-size:1.5rem" onclick="selectGuestEmoji('🦖', this)">🦖</div>
+    </div>
+    <button class="btn-confirm" onclick="confirmGuest()">כניסה למשחקים</button>
+    <button onclick="closeGuestModal()" style="background:none; border:none; color:var(--dim); font-size:0.8rem; cursor:pointer;">ביטול</button>
   </div>
 </div>
 
 <div id="screen-games" class="screen">
-  <div style="padding: 15px; border-bottom: 1px solid var(--border); display:flex; align-items:center; gap:10px;">
+  <div style="padding: 15px; border-bottom: 1px solid var(--border); display:flex; align-items:center; justify-content: space-between; backdrop-filter: blur(10px);">
     <button onclick="location.reload()" style="background:var(--surface2); border:1px solid var(--border); color:white; border-radius:50%; width:35px; height:35px;">→</button>
-    <div id="active-user-chip" style="background:var(--surface2); padding:5px 12px; border-radius:20px; font-size:0.9rem; border:1.5px solid var(--gold);"></div>
+    <div id="active-user-chip" class="glass" style="padding:5px 12px; border-radius:20px; font-size:0.9rem; border:1.5px solid var(--gold);"></div>
   </div>
   <div class="games-list" id="games-container"></div>
 </div>
 
 <div id="screen-waiting" class="screen">
-  <div style="text-align:center">
-    <div id="wait-game-icon" style="font-size:3rem"></div>
-    <div id="wait-game-name" style="font-family:'Fredoka One'; font-size:1.5rem; color:var(--gold)"></div>
+  <div style="text-align:center; margin-top: 40px;">
+    <div id="wait-game-icon" style="font-size:4rem"></div>
+    <div id="wait-game-name" style="font-family:'Fredoka One'; font-size:1.8rem; color:var(--gold)"></div>
   </div>
-  <div class="waiting-card">
-    <div class="players-status">
-      <div class="p-slot" id="slot-0"><div class="p-slot-emoji">❓</div><div class="p-slot-name">מחכה...</div></div>
-      <div class="vs-circle">VS</div>
-      <div class="p-slot" id="slot-1"><div class="p-slot-emoji">❓</div><div class="p-slot-name">מחכה...</div></div>
-    </div>
-    <div id="wait-status-msg" style="display:flex; align-items:center; justify-content:center; gap:10px; font-size:0.9rem; color:var(--dim);">
-      <div style="width:18px; height:18px; border:2px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin 0.8s linear infinite;"></div>
-      <span>מחפש חבר...</span>
+  <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+    <div class="waiting-card glass">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div class="p-slot" id="slot-0"><div style="font-size:2rem">❓</div><div style="font-size:0.9rem">מחכה...</div></div>
+          <div style="font-family:'Fredoka One'; color:var(--dim)">VS</div>
+          <div class="p-slot" id="slot-1"><div style="font-size:2rem">❓</div><div style="font-size:0.9rem">מחכה...</div></div>
+        </div>
+        <div id="wait-status-msg" style="display:flex; align-items:center; justify-content:center; gap:10px; font-size:0.9rem; color:var(--dim);">
+          <div class="spinner"></div>
+          <span>מחפש שותף למשחק...</span>
+        </div>
     </div>
   </div>
-  <button onclick="cancelWaiting()" style="background:none; border:1px solid var(--border); color:var(--dim); padding:10px 20px; border-radius:20px; cursor:pointer;">ביטול</button>
+  <button onclick="cancelWaiting()" style="margin-bottom:40px; background:none; border:1px solid var(--border); color:var(--dim); padding:12px 30px; border-radius:25px; align-self:center; cursor:pointer;">חזרה לרשימה</button>
 </div>
 
 <script type="module">
@@ -195,99 +213,99 @@ const GAMES = [
   { id: 'tasks', name: 'מטלות בית', icon: '🏠', url: 'tasks.html', restricted: true }
 ];
 
-// --- רקע חי (Live Particles) ---
+// --- רקע חי משודרג (Twinkling Particles) ---
 const canvas = document.getElementById('bg-canvas');
 const ctx = canvas.getContext('2d');
 let particles = [];
+
 function initCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    particles = [];
-    for(let i=0; i<30; i++) {
-        particles.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            size: Math.random() * 2 + 1,
-            speedX: (Math.random() - 0.5) * 0.5,
-            speedY: (Math.random() - 0.5) * 0.5,
-            opacity: Math.random() * 0.5
-        });
-    }
+    particles = Array.from({ length: 45 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2 + 0.5,
+        speedX: (Math.random() - 0.5) * 0.4,
+        speedY: (Math.random() - 0.5) * 0.4,
+        opacity: Math.random(),
+        fade: Math.random() * 0.02 * (Math.random() > 0.5 ? 1 : -1)
+    }));
 }
-function animateCanvas() {
-    ctx.clearRect(0,0,canvas.width, canvas.height);
+
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     particles.forEach(p => {
         p.x += p.speedX; p.y += p.speedY;
-        if(p.x < 0 || p.x > canvas.width) p.speedX *= -1;
-        if(p.y < 0 || p.y > canvas.height) p.speedY *= -1;
-        ctx.fillStyle = `rgba(110, 114, 153, ${p.opacity})`;
+        p.opacity += p.fade;
+        if (p.opacity <= 0.1 || p.opacity >= 0.8) p.fade *= -1;
+        if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
+        
+        ctx.fillStyle = `rgba(150, 160, 255, ${Math.abs(p.opacity)})`;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
     });
-    requestAnimationFrame(animateCanvas);
+    requestAnimationFrame(animate);
 }
 window.addEventListener('resize', initCanvas);
-initCanvas(); animateCanvas();
+initCanvas(); animate();
 
-// --- לוגיקת אפליקציה ---
+// --- לוגיקה ---
 window.selectFixedPlayer = (type) => {
   if (type === 'emma') myUser = { id: 'emma', name: 'אמה', emoji: '👧', color: '#FF5C7A' };
   else myUser = { id: 'rif', name: 'ריף', emoji: '👦', color: '#4DB8FF' };
   startApp();
 };
+
 window.openGuestModal = () => document.getElementById('modal-guest').style.display = 'flex';
 window.closeGuestModal = () => document.getElementById('modal-guest').style.display = 'none';
 window.selectGuestEmoji = (emoji, el) => {
     selectedEmoji = emoji;
-    document.querySelectorAll('.emoji-opt').forEach(opt => opt.classList.remove('selected'));
+    document.querySelectorAll('#modal-guest .btn-player').forEach(opt => opt.classList.remove('selected'));
     el.classList.add('selected');
 };
+
 window.confirmGuest = () => {
     const name = document.getElementById('guest-name-input').value.trim();
-    if (!name) return alert("שם?");
+    if (!name) return alert("איך קוראים לך?");
     myUser = { id: 'guest_'+Date.now(), name: name, emoji: selectedEmoji, color: '#3DD68C', isGuest: true };
     startApp();
 };
 
 function startApp() {
-  closeGuestModal();
-  document.getElementById('active-user-chip').innerHTML = `${myUser.emoji} ${myUser.name}`;
-  document.getElementById('active-user-chip').style.borderColor = myUser.color;
-  renderGames();
-  listenToAllRooms();
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-games').classList.add('active');
+    closeGuestModal();
+    document.getElementById('active-user-chip').innerHTML = `${myUser.emoji} ${myUser.name}`;
+    document.getElementById('active-user-chip').style.borderColor = myUser.color;
+    renderGames();
+    listenToPresence();
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-games').classList.add('active');
 }
 
 function renderGames() {
     const container = document.getElementById('games-container');
     container.innerHTML = GAMES.filter(g => !g.restricted || !myUser.isGuest).map(g => `
-        <div class="game-card fade-in ${g.restricted ? 'special-task' : ''}" id="card-${g.id}" onclick="handleGameEntry('${g.id}')">
+        <div class="game-card glass fade-in ${g.restricted ? 'special-task' : ''}" id="card-${g.id}" onclick="handleGameEntry('${g.id}')">
             <div class="game-icon">${g.icon}</div>
             <div style="flex:1">
                 <div class="game-name">${g.name}</div>
-                <div class="game-desc">${g.restricted ? 'אזור אישי' : 'לחץ למשחק'}</div>
+                <div class="game-desc">${g.restricted ? 'אזור פרטי' : 'לחץ להתחלה'}</div>
             </div>
             <div id="presence-${g.id}"></div>
         </div>
     `).join('');
 }
 
-// האזנה לכל החדרים כדי להציג מי מחכה
-function listenToAllRooms() {
+function listenToPresence() {
     if (presenceListener) presenceListener();
-    const allRoomsRef = ref(db, `rooms_v3`);
-    onValue(allRoomsRef, (snap) => {
-        const allRooms = snap.val() || {};
+    onValue(ref(db, `rooms_v3`), (snap) => {
+        const rooms = snap.val() || {};
         GAMES.forEach(game => {
-            const room = allRooms[game.id] || {};
-            const players = Object.values(room);
+            const players = Object.values(rooms[game.id] || {});
             const badge = document.getElementById(`presence-${game.id}`);
             const card = document.getElementById(`card-${game.id}`);
             if (!badge) return;
-
-            // אם מישהו אחר מחכה בחדר
             const someoneElse = players.find(p => p.name !== myUser.name);
             if (someoneElse) {
                 badge.innerHTML = `<div class="presence-tag"><span>${someoneElse.emoji}</span><span>מחכה לך!</span></div>`;
@@ -303,7 +321,7 @@ function listenToAllRooms() {
 window.handleGameEntry = (gameId) => {
     currentGame = GAMES.find(g => g.id === gameId);
     if (gameId === 'tasks' && !myUser.isGuest) {
-        window.location.href = `${currentGame.url}?player=${myUser.id}`;
+        window.location.href = `tasks.html?player=${myUser.id}`;
         return;
     }
     enterWaitingRoom(gameId);
@@ -312,7 +330,6 @@ window.handleGameEntry = (gameId) => {
 function enterWaitingRoom(gameId) {
     document.getElementById('wait-game-icon').textContent = currentGame.icon;
     document.getElementById('wait-game-name').textContent = currentGame.name;
-    document.querySelectorAll('.p-slot').forEach(s => { s.className = 'p-slot'; s.querySelector('.p-slot-emoji').textContent = '❓'; });
     document.getElementById('screen-games').classList.remove('active');
     document.getElementById('screen-waiting').classList.add('active');
 
@@ -320,18 +337,16 @@ function enterWaitingRoom(gameId) {
     set(roomRef, { name: myUser.name, emoji: myUser.emoji, color: myUser.color });
     onDisconnect(roomRef).remove();
 
-    const gameRoomRef = ref(db, `rooms_v3/${gameId}`);
-    roomListener = onValue(gameRoomRef, (snap) => {
+    roomListener = onValue(ref(db, `rooms_v3/${gameId}`), (snap) => {
         const players = Object.values(snap.val() || {});
         players.forEach((p, i) => {
             if(i > 1) return;
             const slot = document.getElementById(`slot-${i}`);
             slot.className = 'p-slot active'; slot.style.borderColor = p.color;
-            slot.querySelector('.p-slot-emoji').textContent = p.emoji;
-            slot.querySelector('.p-slot-name').textContent = p.name;
+            slot.innerHTML = `<div style="font-size:2rem">${p.emoji}</div><div style="font-size:0.9rem">${p.name}</div>`;
         });
         if (players.length >= 2) {
-            document.getElementById('wait-status-msg').innerHTML = "🎮 מתחילים!";
+            document.getElementById('wait-status-msg').innerHTML = "🎮 יצאנו לדרך!";
             setTimeout(() => { window.location.href = `${currentGame.url}?player=${myUser.id}&name=${encodeURIComponent(myUser.name)}`; }, 1000);
         }
     });
