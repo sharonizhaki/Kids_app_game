@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>איקס עיגול - אמה וריף</title>
   <style>
+    /* ... ה-CSS נשאר זהה ... */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0d1117; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
     body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 80% 60% at 20% 20%, rgba(255,107,107,0.12) 0%, transparent 60%), radial-gradient(ellipse 80% 60% at 80% 80%, rgba(78,205,196,0.12) 0%, transparent 60%); pointer-events: none; z-index: 0; }
@@ -107,7 +108,9 @@ async function initGame() {
     const snap = await get(gameRef);
     const data = snap.val();
 
+    // אם המשחק ישן (מעל 10 דקות) או לא קיים - מאפסים הכל כולל ניקוד
     if (!data || !Array.isArray(data.board) || (Date.now() - data.ts > 600000)) {
+        scores = { X: 0, O: 0, draw: 0 };
         await resetGameState('X');
     } else {
         updateLocalState(data);
@@ -128,10 +131,9 @@ function listenToGame() {
             isExiting = true;
             turnText.style.color = "#ffd700";
             turnText.innerHTML = "🏠 חוזרים למסך המשחקים...";
-            // השהייה קצרה כדי שיראו את ההודעה לפני הניווט
             setTimeout(() => {
                 window.location.href = 'index.html?screen=games';
-            }, 2500);
+            }, 2000);
             return;
         }
 
@@ -227,8 +229,12 @@ function highlightWin(combo) {
 
 window.goHome = async () => {
     isExiting = true;
-    // מעדכן את כולם שיש יציאה
-    await update(gameRef, { exitToHome: true, ts: Date.now() });
+    // איפוס הניקוד ב-Firebase לפני היציאה כדי שהמשחק הבא יתחיל נקי
+    await update(gameRef, { 
+        exitToHome: true, 
+        ts: Date.now(),
+        scores: { X: 0, O: 0, draw: 0 } 
+    });
     window.location.href = 'index.html?screen=games';
 };
 
