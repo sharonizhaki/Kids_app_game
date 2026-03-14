@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>איקס עיגול - גרסה 2.2</title>
+  <title>איקס עיגול - אמה וריף</title>
   <style>
+    /* ... כל ה-CSS שלך נשאר זהה ... */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0d1117; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
     body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 80% 60% at 20% 20%, rgba(255,107,107,0.12) 0%, transparent 60%), radial-gradient(ellipse 80% 60% at 80% 80%, rgba(78,205,196,0.12) 0%, transparent 60%); pointer-events: none; z-index: 0; }
@@ -20,11 +21,15 @@
     .o-card .player-name { color: #4ecdc4; }
     .score-value { font-size: 2.2rem; font-weight: 900; color: #e2e8f0; margin-top: 0.3rem; }
     .draw-card { display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); border: 1.5px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 0.5rem; }
+    .draw-label { font-size: 0.7rem; color: #4a5568; }
+    .draw-value { font-size: 1.5rem; font-weight: 700; color: #718096; }
     .turn-bar { display: flex; align-items: center; justify-content: center; gap: 0.5rem; height: 2.4rem; margin-bottom: 1.2rem; }
     .turn-dot { width: 10px; height: 10px; border-radius: 50%; }
     .turn-text { font-size: 1rem; font-weight: 700; }
+    .turn-text.x-turn { color: #ff6b6b; }
+    .turn-text.o-turn { color: #4ecdc4; }
     .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 312px; height: 312px; margin: 0 auto 1.4rem; }
-    .cell { background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; position: relative; }
+    .cell { background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
     .cell svg { width: 52px; height: 52px; }
     .x-path { stroke: #ff6b6b; stroke-width: 5; stroke-linecap: round; fill: none; stroke-dasharray: 60; stroke-dashoffset: 60; animation: drawStroke 0.25s ease-out forwards; }
     .o-circle { stroke: #4ecdc4; stroke-width: 5; stroke-linecap: round; fill: none; stroke-dasharray: 163; stroke-dashoffset: 163; animation: drawStroke 0.35s ease-out forwards; }
@@ -33,23 +38,22 @@
     .btn { padding: 0.6rem 1.4rem; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
     .btn-restart { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
     .btn-reset { background: rgba(255,255,255,0.07); color: #a0aec0; border: 1.5px solid rgba(255,255,255,0.12); }
-    .confetti-container { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
     .cell.winning { animation: winPulse 0.7s ease-in-out infinite alternate; }
     @keyframes winPulse { from { background: rgba(255,215,0,0.08); transform: scale(1); } to { background: rgba(255,215,0,0.18); transform: scale(1.05); } }
   </style>
 </head>
 <body>
-<div class="confetti-container" id="confetti"></div>
+<div id="confetti" style="position:fixed; inset:0; pointer-events:none;"></div>
 <div class="container">
   <h1>✕ ◯</h1>
   <div class="scoreboard">
-    <div class="score-card x-card" id="card-x">
+    <div class="score-card x-card active" id="card-x">
       <div class="player-name">אמה (X)</div>
       <div class="score-value" id="score-x">0</div>
     </div>
     <div class="draw-card">
-      <div style="font-size: 0.7rem; color: #4a5568;">תיקו</div>
-      <div class="score-value" id="score-draw" style="font-size: 1.5rem;">0</div>
+      <div class="draw-label">תיקו</div>
+      <div class="draw-value" id="score-draw">0</div>
     </div>
     <div class="score-card o-card" id="card-o">
       <div class="player-name">ריף (O)</div>
@@ -58,7 +62,7 @@
   </div>
   <div class="turn-bar">
     <span class="turn-dot" id="turn-dot"></span>
-    <span class="turn-text" id="turn-text">תור <span id="turn-name">טוען...</span></span>
+    <span class="turn-text" id="turn-text">טוען משחק...</span>
   </div>
   <div class="board" id="board">
     <div class="cell" data-index="0"></div><div class="cell" data-index="1"></div><div class="cell" data-index="2"></div>
@@ -66,16 +70,14 @@
     <div class="cell" data-index="6"></div><div class="cell" data-index="7"></div><div class="cell" data-index="8"></div>
   </div>
   <div class="buttons">
-    <button class="btn btn-restart" onclick="restartGame()">▶ משחק חדש</button>
-    <button class="btn btn-reset" onclick="resetAll()">↺ אפס ניקוד</button>
-    <button class="btn btn-reset" onclick="window.location.href='index.html'">🏠 בית</button>
+    <button class="btn btn-restart" onclick="restartGame()">▶ חדש</button>
+    <button class="btn btn-reset" onclick="goHome()">🏠 לבית</button>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, get, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-// הערה: ייבוא הפונקציות מ-firebase/database
+import { getDatabase, ref, set, onValue, get, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
@@ -89,105 +91,82 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const gameId = 'xo';
-const gameRef = ref(db, `game/${gameId}`);
-const presenceRef = ref(db, `presence/${gameId}`);
+const gameRef = ref(db, 'game/xo');
 
 const params = new URLSearchParams(location.search);
-const myId = params.get('player') || 'emma';
-const otherId = myId === 'emma' ? 'rif' : 'emma';
-const mySymbol = myId === 'emma' ? 'X' : 'O';
+const myPlayer = params.get('player') || 'emma';
+const mySymbol = myPlayer === 'emma' ? 'X' : 'O';
 
 let board = Array(9).fill(null);
 let currentPlayer = 'X';
 let gameOver = false;
 let scores = { X: 0, O: 0, draw: 0 };
-let lastTs = 0;
-let hasLeft = false;
-let leaveTimeout = null;
+let lastTs = null;
 
 const cells = document.querySelectorAll('.cell');
+const turnText = document.getElementById('turn-text');
 
-async function init() {
-  // 1. ניהול נוכחות
-  const myPresence = ref(db, `presence/${gameId}/${myId}`);
-  set(myPresence, true);
-  onDisconnect(myPresence).remove();
-
-  // 2. האזנה לעזיבה עם "Grace Period" של 2 שניות
-  onValue(ref(db, `presence/${gameId}/${otherId}`), (snap) => {
-    const isOtherPresent = !!snap.val();
-    
-    if (!isOtherPresent) {
-      if (!leaveTimeout && !hasLeft) {
-        leaveTimeout = setTimeout(() => {
-          hasLeft = true;
-          alert(`המשתמש השני עזב את המשחק.`);
-          window.location.href = 'index.html';
-        }, 2000); 
-      }
-    } else {
-      if (leaveTimeout) {
-        clearTimeout(leaveTimeout);
-        leaveTimeout = null;
-      }
-    }
-  });
-
-  // 3. אתחול המשחק מה-DB
+async function initGame() {
   const snap = await get(gameRef);
   const data = snap.val();
-  if (!data || (Date.now() - data.ts > 300000)) {
-    resetBoard('X');
-  }
 
+  // טיפול בעזיבה קודמת
+  onDisconnect(gameRef).update({ playerLeft: mySymbol, ts: Date.now() });
+
+  if (!data || !Array.isArray(data.board) || (Date.now() - data.ts > 600000)) {
+    await resetGameState('X');
+  } else {
+    updateLocalState(data);
+  }
+  
+  renderUI();
+  listenToGame();
+}
+
+function listenToGame() {
   onValue(gameRef, (snap) => {
     const data = snap.val();
     if (!data || data.ts === lastTs) return;
     lastTs = data.ts;
-    updateUI(data);
+
+    // חיווי על יציאה למסך הבית
+    if (data.exitToHome) {
+      window.location.href = 'index.html';
+      return;
+    }
+
+    // חיווי על ניתוק שחקן
+    if (data.playerLeft && data.playerLeft !== mySymbol) {
+      turnText.innerHTML = "⚠️ השחקן השני עזב...";
+      setTimeout(() => window.location.href = 'index.html', 3000);
+      return;
+    }
+
+    updateLocalState(data);
+    renderUI();
+    if (data.winCombo) highlightWin(data.winCombo);
   });
 }
 
-function updateUI(data) {
+function updateLocalState(data) {
   board = data.board.map(v => v || null);
   currentPlayer = data.currentPlayer;
   gameOver = data.gameOver;
   scores = data.scores || scores;
+}
 
-  cells.forEach((cell, i) => {
-    cell.innerHTML = board[i] ? (board[i] === 'X' ? xSvg() : oSvg()) : '';
-    cell.classList.toggle('taken', !!board[i]);
-    cell.classList.remove('winning');
-  });
-
-  if (data.winCombo) {
-    data.winCombo.forEach(idx => cells[idx].classList.add('winning'));
-    if (data.ts !== 0 && !data.isDraw) spawnConfetti();
-  }
-
-  document.getElementById('score-x').textContent = scores.X;
-  document.getElementById('score-o').textContent = scores.O;
-  document.getElementById('score-draw').textContent = scores.draw;
-
-  const turnNameLabel = currentPlayer === 'X' ? 'אמה' : 'ריף';
-  const turnColor = currentPlayer === 'X' ? '#ff6b6b' : '#4ecdc4';
-  
-  document.getElementById('turn-name').textContent = turnNameLabel;
-  document.getElementById('turn-text').style.color = turnColor;
-  document.getElementById('turn-dot').style.backgroundColor = turnColor;
-
-  document.getElementById('card-x').classList.toggle('active', currentPlayer === 'X');
-  document.getElementById('card-o').classList.toggle('active', currentPlayer === 'O');
-
-  if (gameOver) {
-    if (data.isDraw) {
-        document.getElementById('turn-name').textContent = "תיקו!";
-    } else {
-        const winnerName = currentPlayer === 'X' ? 'ריף' : 'אמה';
-        document.getElementById('turn-name').textContent = `ניצחון ל${winnerName}!`;
-    }
-  }
+async function resetGameState(starter) {
+  const initialState = {
+    board: Array(9).fill(''),
+    currentPlayer: starter,
+    gameOver: false,
+    winCombo: null,
+    scores: scores,
+    exitToHome: false,
+    playerLeft: null,
+    ts: Date.now()
+  };
+  await set(gameRef, initialState);
 }
 
 function handleClick(e) {
@@ -209,10 +188,9 @@ function handleClick(e) {
   update(gameRef, {
     board: board.map(v => v || ''),
     currentPlayer: nextPlayer,
-    gameOver: gameOver,
+    gameOver,
     winCombo: win,
-    isDraw: isDraw,
-    scores: scores,
+    scores,
     ts: Date.now()
   });
 }
@@ -225,46 +203,49 @@ function checkWin() {
   return null;
 }
 
-function resetBoard(starter) {
-  set(gameRef, {
-    board: Array(9).fill(''),
-    currentPlayer: starter,
-    gameOver: false,
-    winCombo: null,
-    isDraw: false,
-    scores: scores,
-    ts: Date.now()
+function renderUI() {
+  cells.forEach((cell, i) => {
+    cell.innerHTML = board[i] ? (board[i] === 'X' ? 
+      `<svg viewBox="0 0 60 60"><line class="x-path" x1="14" y1="14" x2="46" y2="46"/><line class="x-path" x1="46" y1="14" x2="14" y2="46"/></svg>` : 
+      `<svg viewBox="0 0 60 60"><circle class="o-circle" cx="30" cy="30" r="18"/></svg>`) : '';
+    cell.classList.toggle('winning', false);
   });
+
+  document.getElementById('score-x').textContent = scores.X;
+  document.getElementById('score-o').textContent = scores.O;
+  document.getElementById('score-draw').textContent = scores.draw;
+
+  const currentLabel = currentPlayer === 'X' ? 'אמה' : 'ריף';
+  const cls = currentPlayer === 'X' ? 'x-turn' : 'o-turn';
+  
+  document.getElementById('turn-dot').className = `turn-dot ${currentPlayer === 'X' ? 'x-path' : 'o-circle'}`; // שימוש בסטייל קיים
+  turnText.className = `turn-text ${cls}`;
+  
+  if (gameOver) {
+    const win = checkWin();
+    turnText.innerHTML = win ? `🏆 ${currentLabel} ניצח/ה!` : `🤝 תיקו!`;
+  } else {
+    turnText.innerHTML = currentPlayer === mySymbol ? "תורך לשחק!" : `תור ${currentLabel}...`;
+  }
+
+  document.getElementById('card-x').classList.toggle('active', currentPlayer === 'X');
+  document.getElementById('card-o').classList.toggle('active', currentPlayer === 'O');
 }
 
-window.restartGame = () => {
-    const snap = get(gameRef).then(s => {
-        const d = s.val();
-        resetBoard(d.currentPlayer === 'X' ? 'O' : 'X');
-    });
+function highlightWin(combo) {
+  combo.forEach(i => cells[i].classList.add('winning'));
+}
+
+window.goHome = () => {
+  update(gameRef, { exitToHome: true, ts: Date.now() });
 };
 
-window.resetAll = () => { scores = {X:0, O:0, draw:0}; resetBoard('X'); };
-
-function xSvg() { return `<svg viewBox="0 0 60 60"><line class="x-path" x1="14" y1="14" x2="46" y2="46"/><line class="x-path" x1="46" y1="14" x2="14" y2="46"/></svg>`; }
-function oSvg() { return `<svg viewBox="0 0 60 60"><circle class="o-circle" cx="30" cy="30" r="18"/></svg>`; }
-
-function spawnConfetti() {
-  const container = document.getElementById('confetti');
-  for (let i=0; i<40; i++) {
-    const piece = document.createElement('div');
-    piece.style.cssText = `position:absolute; width:8px; height:8px; background:${['#ff6b6b','#4ecdc4','#ffd700'][Math.floor(Math.random()*3)]}; left:${Math.random()*100}vw; top:-10px; animation:fall ${1+Math.random()*2}s linear forwards;`;
-    container.appendChild(piece);
-  }
-  setTimeout(() => container.innerHTML = '', 3000);
-}
-
-const style = document.createElement('style');
-style.innerHTML = `@keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }`;
-document.head.appendChild(style);
+window.restartGame = () => {
+  resetGameState(currentPlayer === 'X' ? 'O' : 'X');
+};
 
 cells.forEach(c => c.addEventListener('click', handleClick));
-init();
+initGame();
 </script>
 </body>
 </html>
