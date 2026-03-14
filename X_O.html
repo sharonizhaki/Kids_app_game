@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>איקס עיגול - משחק רשת</title>
+  <title>איקס עיגול - אמה וריף</title>
   <style>
+    /* ה-CSS נשאר זהה לגרסה האחרונה שאהבת */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0d1117; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
     body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 80% 60% at 20% 20%, rgba(255,107,107,0.12) 0%, transparent 60%), radial-gradient(ellipse 80% 60% at 80% 80%, rgba(78,205,196,0.12) 0%, transparent 60%); pointer-events: none; z-index: 0; }
@@ -72,7 +73,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, get, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, get, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
@@ -91,7 +92,6 @@ const roomRef = ref(db, 'rooms_v3/xo');
 
 const params = new URLSearchParams(location.search);
 const myPlayerId = params.get('player') || 'emma';
-const myName = decodeURIComponent(params.get('name') || (myPlayerId === 'emma' ? 'אמה' : 'ריף'));
 const mySymbol = myPlayerId === 'emma' ? 'X' : 'O';
 
 let board = Array(9).fill(null);
@@ -108,22 +108,20 @@ const turnText = document.getElementById('turn-text');
 async function initGame() {
     await update(gameRef, { exitToHome: false });
     
-    // קבלת שמות השחקנים מהחדר ב-Firebase
+    // שליפת שמות מעודכנים מהחדר
     const roomSnap = await get(roomRef);
-    const roomData = roomSnap.val() || {};
-    const playersArr = Object.values(roomData);
-    
-    // אם יש שחקנים בחדר, נעדכן את השמות לפי הסדר (הראשון X, השני O)
-    if (playersArr.length > 0) {
-        playersNames.X = playersArr[0].name || 'אמה';
-        if (playersArr.length > 1) {
-            playersNames.O = playersArr[1].name || 'ריף';
-        }
+    if (roomSnap.exists()) {
+        const roomData = roomSnap.val();
+        const playersArr = Object.values(roomData);
+        // השחקן הראשון שנכנס הוא תמיד X, השני הוא O
+        if (playersArr[0]) playersNames.X = playersArr[0].name;
+        if (playersArr[1]) playersNames.O = playersArr[1].name;
     }
 
     const snap = await get(gameRef);
     const data = snap.val();
 
+    // איפוס נקודות רק אם המשחק ישן מאוד או לא קיים
     if (!data || !Array.isArray(data.board) || (Date.now() - data.ts > 600000)) {
         scores = { X: 0, O: 0, draw: 0 };
         await resetGameState('X');
@@ -221,10 +219,8 @@ function renderUI() {
         cell.classList.remove('winning');
     });
 
-    // עדכון שמות בלוח התוצאות
     document.getElementById('name-x').textContent = `${playersNames.X} (X)`;
     document.getElementById('name-o').textContent = `${playersNames.O} (O)`;
-    
     document.getElementById('score-x').textContent = scores.X;
     document.getElementById('score-o').textContent = scores.O;
     document.getElementById('score-draw').textContent = scores.draw;
@@ -248,6 +244,8 @@ function highlightWin(combo) {
 
 window.goHome = async () => {
     isExiting = true;
+    // איפוס חדר וניקוד ב-Firebase
+    await remove(roomRef); 
     await update(gameRef, { 
         exitToHome: true, 
         ts: Date.now(),
