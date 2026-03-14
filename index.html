@@ -3,596 +3,84 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0F1320">
-<title>משחקי אמה וריף</title>
+<title>משחקי אמה וריף - v2.3</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Heebo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root {
+    --bg: #0F1320; --surface: #181D2E; --surface2: #212840; --border: #2E3450;
+    --emma: #FF5C7A; --emma-dim: rgba(255,92,122,0.12);
+    --rif: #4DB8FF; --rif-dim: rgba(77,184,255,0.12);
+    --gold: #F5C842; --green: #3DD68C; --text: #EEF0FF; --dim: #6B7299;
+  }
+  body { font-family: 'Heebo', sans-serif; background-color: var(--bg); color: var(--text); overflow-x: hidden; }
+  .app-container { max-width: 500px; margin: 0 auto; padding: 20px; }
+  header { padding: 20px 0 40px; text-align: center; }
+  .logo-text { font-family: 'Fredoka One', cursive; font-size: 42px; background: linear-gradient(135deg, var(--emma), var(--rif)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  
+  .player-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 40px; }
+  .player-card { background: var(--surface); border: 2px solid var(--border); border-radius: 20px; padding: 20px; text-align: center; cursor: pointer; transition: 0.3s; }
+  .player-card.selected-emma { border-color: var(--emma); background: var(--emma-dim); transform: translateY(-5px); }
+  .player-card.selected-rif { border-color: var(--rif); background: var(--rif-dim); transform: translateY(-5px); }
+  
+  .games-grid { display: grid; gap: 15px; }
+  .game-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 16px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.2s; }
+  .game-card:active { transform: scale(0.98); background: var(--surface2); }
+  .game-icon { width: 50px; height: 50px; background: var(--surface2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
 
-:root {
-  --bg:       #0F1320;
-  --surface:  #181D2E;
-  --surface2: #212840;
-  --border:   #2E3450;
-  --emma:     #FF5C7A;
-  --emma-dim: rgba(255,92,122,0.12);
-  --rif:      #4DB8FF;
-  --rif-dim:  rgba(77,184,255,0.12);
-  --gold:     #F5C842;
-  --green:    #3DD68C;
-  --text:     #EEF0FF;
-  --dim:      #6B7299;
-  --safe-b:   env(safe-area-inset-bottom, 0px);
-}
-
-html, body {
-  height: 100%; width: 100%;
-  background: var(--bg);
-  font-family: 'Heebo', sans-serif;
-  color: var(--text);
-  overflow-x: hidden;
-}
-
-/* ===== SCREENS ===== */
-.screen { display:none; min-height:100dvh; flex-direction:column; }
-.screen.active { display:flex; }
-
-/* ===== SCREEN 1 — PLAYER SELECT ===== */
-#screen-player {
-  align-items: center;
-  justify-content: center;
-  padding: 32px 20px calc(32px + var(--safe-b));
-  background:
-    radial-gradient(ellipse at 20% 10%, rgba(255,92,122,0.1) 0%, transparent 45%),
-    radial-gradient(ellipse at 80% 90%, rgba(77,184,255,0.08) 0%, transparent 45%),
-    var(--bg);
-  gap: 40px;
-}
-
-.platform-header { text-align: center; }
-
-.platform-logo {
-  font-size: 2.8rem;
-  margin-bottom: 10px;
-  animation: floatLogo 3s ease-in-out infinite;
-}
-@keyframes floatLogo {
-  0%,100%{ transform: translateY(0); }
-  50%    { transform: translateY(-7px); }
-}
-
-.platform-title {
-  font-family: 'Fredoka One', cursive;
-  font-size: clamp(1.8rem, 7vw, 2.8rem);
-  line-height: 1;
-  background: linear-gradient(135deg, var(--emma) 0%, var(--gold) 50%, var(--rif) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.platform-sub {
-  margin-top: 6px;
-  font-size: 0.85rem;
-  color: var(--dim);
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.choose-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--dim);
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  text-align: center;
-}
-
-.player-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  width: 100%;
-  max-width: 320px;
-}
-
-.btn-player {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 18px 22px;
-  border-radius: 18px;
-  border: 2px solid var(--border);
-  background: var(--surface);
-  cursor: pointer;
-  transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s, background 0.2s;
-  text-align: right;
-  -webkit-appearance: none;
-  width: 100%;
-}
-
-.btn-player:active { transform: scale(0.96); }
-
-.btn-player.emma:hover,
-.btn-player.emma:focus {
-  border-color: var(--emma);
-  background: var(--emma-dim);
-  box-shadow: 0 0 20px rgba(255,92,122,0.2);
-}
-.btn-player.rif:hover,
-.btn-player.rif:focus {
-  border-color: var(--rif);
-  background: var(--rif-dim);
-  box-shadow: 0 0 20px rgba(77,184,255,0.2);
-}
-
-.btn-player.selected.emma {
-  border-color: var(--emma);
-  background: var(--emma-dim);
-  box-shadow: 0 0 24px rgba(255,92,122,0.25);
-}
-.btn-player.selected.rif {
-  border-color: var(--rif);
-  background: var(--rif-dim);
-  box-shadow: 0 0 24px rgba(77,184,255,0.25);
-}
-
-.player-avatar {
-  font-size: 2.6rem;
-  flex-shrink: 0;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
-}
-
-.player-info { flex: 1; }
-
-.player-name {
-  font-family: 'Fredoka One', cursive;
-  font-size: 1.4rem;
-  line-height: 1.1;
-}
-
-.player-tagline {
-  font-size: 0.75rem;
-  color: var(--dim);
-  font-weight: 600;
-  margin-top: 2px;
-}
-
-.emma .player-name { color: var(--emma); }
-.rif  .player-name { color: var(--rif); }
-
-.player-arrow {
-  font-size: 1rem;
-  color: var(--dim);
-  transition: transform 0.2s, color 0.2s;
-}
-.btn-player:hover .player-arrow,
-.btn-player.selected .player-arrow {
-  transform: translateX(-4px);
-  color: var(--text);
-}
-
-/* ===== SCREEN 2 — GAME LIST ===== */
-#screen-games {
-  flex-direction: column;
-  background:
-    radial-gradient(ellipse at 70% 0%, rgba(245,200,66,0.06) 0%, transparent 50%),
-    var(--bg);
-}
-
-.games-header {
-  padding: 16px 16px 12px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.btn-back {
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-size: 1rem;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.15s;
-  -webkit-appearance: none;
-}
-.btn-back:active { background: var(--border); }
-
-.header-player-chip {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 14px;
-  border-radius: 40px;
-  border: 1.5px solid var(--border);
-  background: var(--surface2);
-  flex-shrink: 0;
-}
-.header-player-chip.emma { border-color: var(--emma); background: var(--emma-dim); }
-.header-player-chip.rif  { border-color: var(--rif);  background: var(--rif-dim); }
-
-.hpc-emoji { font-size: 1.1rem; }
-.hpc-name  { font-family: 'Fredoka One', cursive; font-size: 0.95rem; }
-.header-player-chip.emma .hpc-name { color: var(--emma); }
-.header-player-chip.rif  .hpc-name { color: var(--rif); }
-
-.header-title {
-  flex: 1;
-  font-family: 'Fredoka One', cursive;
-  font-size: 1rem;
-  color: var(--dim);
-}
-
-.games-list {
-  flex: 1;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
-  padding-bottom: calc(16px + var(--safe-b));
-}
-
-.game-card {
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 18px;
-  padding: 18px 16px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  cursor: pointer;
-  transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
-  -webkit-appearance: none;
-  width: 100%;
-  text-align: right;
-}
-.game-card:active { transform: scale(0.97); }
-.game-card:hover  {
-  border-color: var(--gold);
-  box-shadow: 0 0 16px rgba(245,200,66,0.12);
-}
-
-.game-card.coming-soon {
-  opacity: 0.45;
-  cursor: default;
-  pointer-events: none;
-}
-
-.game-icon {
-  width: 52px; height: 52px;
-  border-radius: 14px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.8rem;
-  flex-shrink: 0;
-}
-
-.game-info { flex: 1; min-width: 0; }
-
-.game-name {
-  font-family: 'Fredoka One', cursive;
-  font-size: 1.1rem;
-  line-height: 1.2;
-}
-
-.game-desc {
-  font-size: 0.75rem;
-  color: var(--dim);
-  font-weight: 600;
-  margin-top: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.game-badge {
-  font-size: 0.6rem;
-  font-weight: 900;
-  padding: 3px 8px;
-  border-radius: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  flex-shrink: 0;
-}
-.badge-ready { background: rgba(61,214,140,0.15); color: var(--green); border: 1px solid rgba(61,214,140,0.3); }
-.badge-soon  { background: rgba(107,114,153,0.15); color: var(--dim);   border: 1px solid rgba(107,114,153,0.3); }
-
-/* ===== SCREEN 3 — WAITING ROOM ===== */
-#screen-waiting {
-  align-items: center;
-  justify-content: center;
-  padding: 32px 20px calc(32px + var(--safe-b));
-  gap: 28px;
-  background:
-    radial-gradient(ellipse at 50% 40%, rgba(245,200,66,0.07) 0%, transparent 55%),
-    var(--bg);
-}
-
-.waiting-game-title {
-  text-align: center;
-}
-
-.waiting-icon {
-  font-size: 3.5rem;
-  margin-bottom: 8px;
-  animation: floatLogo 2.5s ease-in-out infinite;
-}
-
-.waiting-game-name {
-  font-family: 'Fredoka One', cursive;
-  font-size: 1.6rem;
-  color: var(--gold);
-}
-
-.waiting-card {
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 22px;
-  padding: 28px 24px;
-  width: 100%;
-  max-width: 340px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-}
-
-.players-status {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-}
-
-.player-status-card {
-  flex: 1;
-  border-radius: 14px;
-  border: 1.5px solid var(--border);
-  background: var(--surface2);
-  padding: 14px 10px;
-  text-align: center;
-  transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
-}
-.player-status-card.joined.emma {
-  border-color: var(--emma);
-  background: var(--emma-dim);
-  box-shadow: 0 0 14px rgba(255,92,122,0.18);
-}
-.player-status-card.joined.rif {
-  border-color: var(--rif);
-  background: var(--rif-dim);
-  box-shadow: 0 0 14px rgba(77,184,255,0.18);
-}
-
-.psc-emoji { font-size: 1.8rem; }
-.psc-name  {
-  font-family: 'Fredoka One', cursive;
-  font-size: 0.95rem;
-  margin-top: 4px;
-}
-.player-status-card.emma .psc-name { color: var(--emma); }
-.player-status-card.rif  .psc-name { color: var(--rif); }
-
-.psc-status {
-  font-size: 0.65rem;
-  font-weight: 700;
-  margin-top: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-.psc-status.waiting { color: var(--dim); }
-.psc-status.ready   { color: var(--green); }
-
-.vs-badge {
-  font-family: 'Fredoka One', cursive;
-  font-size: 0.9rem;
-  color: var(--dim);
-  flex-shrink: 0;
-}
-
-.waiting-msg {
-  font-size: 0.85rem;
-  color: var(--dim);
-  font-weight: 600;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.spinner {
-  width: 14px; height: 14px;
-  border: 2px solid var(--border);
-  border-top-color: var(--gold);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  flex-shrink: 0;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.waiting-msg.both-ready {
-  color: var(--green);
-  font-family: 'Fredoka One', cursive;
-  font-size: 1rem;
-}
-
-.btn-cancel {
-  padding: 11px 28px;
-  background: transparent;
-  border: 1.5px solid var(--border);
-  border-radius: 40px;
-  color: var(--dim);
-  font-family: 'Heebo', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
-  -webkit-appearance: none;
-}
-.btn-cancel:hover { border-color: var(--emma); color: var(--emma); }
-.btn-cancel:active { transform: scale(0.96); }
-
-/* Staggered entrance animation */
-.fade-in {
-  opacity: 0;
-  transform: translateY(16px);
-  animation: fadeUp 0.4s ease forwards;
-}
-@keyframes fadeUp {
-  to { opacity:1; transform:translateY(0); }
-}
-.fade-in:nth-child(1) { animation-delay: 0.05s; }
-.fade-in:nth-child(2) { animation-delay: 0.12s; }
-.fade-in:nth-child(3) { animation-delay: 0.19s; }
-.fade-in:nth-child(4) { animation-delay: 0.26s; }
-.fade-in:nth-child(5) { animation-delay: 0.33s; }
+  .modal-overlay { position: fixed; inset:0; background: rgba(0,0,0,0.85); display:none; align-items:center; justify-content:center; z-index:1000; backdrop-filter: blur(5px); }
+  .modal-overlay.active { display: flex; }
+  .waiting-modal { background: var(--surface); width: 90%; max-width: 350px; border-radius: 24px; padding: 30px; text-align: center; border: 1px solid var(--border); }
+  .vs-container { display: flex; align-items: center; justify-content: space-around; margin: 30px 0; }
+  .psc-avatar { width: 60px; height: 60px; background: var(--surface2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; border: 2px solid transparent; }
+  .psc-card.joined .psc-avatar { border-color: var(--green); box-shadow: 0 0 15px var(--green); }
+  .waiting-msg { font-weight: 700; color: var(--gold); }
 </style>
 </head>
 <body>
 
-<!-- ===== SCREEN 1: בחר שחקן ===== -->
-<div id="screen-player" class="screen active">
-  <div class="platform-header fade-in">
-    <div class="platform-logo">🎮</div>
-    <div class="platform-title">משחקי אמה וריף</div>
-    <div class="platform-sub">בחר/י את השחקן שלך</div>
+<div class="app-container">
+  <header><div class="logo-text">Emma & Rif</div></header>
+
+  <div class="player-selector">
+    <div class="player-card" id="card-emma" onclick="selectPlayer('emma')"><span>👧</span><div style="font-weight:800">אמה</div></div>
+    <div class="player-card" id="card-rif" onclick="selectPlayer('rif')"><span>👦</span><div style="font-weight:800">ריף</div></div>
   </div>
 
-  <div class="choose-label fade-in">מי אתה?</div>
-
-  <div class="player-buttons">
-    <button class="btn-player emma fade-in" onclick="selectPlayer('emma')">
-      <div class="player-avatar">👧</div>
-      <div class="player-info">
-        <div class="player-name">אמה</div>
-        <div class="player-tagline">שחקנית מספר 1</div>
-      </div>
-      <div class="player-arrow">←</div>
-    </button>
-
-    <button class="btn-player rif fade-in" onclick="selectPlayer('rif')">
-      <div class="player-avatar">👦</div>
-      <div class="player-info">
-        <div class="player-name">ריף</div>
-        <div class="player-tagline">שחקן מספר 2</div>
-      </div>
-      <div class="player-arrow">←</div>
-    </button>
-  </div>
-</div>
-
-<!-- ===== SCREEN 2: רשימת משחקים ===== -->
-<div id="screen-games" class="screen">
-  <div class="games-header">
-    <button class="btn-back" onclick="goBack('screen-player')">←</button>
-    <div class="header-player-chip" id="header-chip">
-      <span class="hpc-emoji" id="header-emoji">👧</span>
-      <span class="hpc-name"  id="header-name">אמה</span>
-    </div>
-    <div class="header-title">בחר/י משחק</div>
-  </div>
-
-  <div class="games-list">
-    <div class="game-card fade-in" onclick="openGame('matalot')">
-      <div class="game-icon">🏠</div>
-      <div class="game-info">
-        <div class="game-name">מטלות בית</div>
-        <div class="game-desc">תחרות — מי מסיים קודם?</div>
-      </div>
-      <div class="game-badge badge-ready">מוכן</div>
+  <div class="games-grid">
+    <div class="game-card" onclick="openGame('xo')">
+      <div class="game-icon">✕</div>
+      <div><div style="font-weight:800">איקס עיגול</div><div style="font-size:12px;color:var(--dim)">קרב אסטרטגי בזמן אמת</div></div>
     </div>
 
-    <div class="game-card fade-in" onclick="openGame('drawing-guess')">
-      <div class="game-icon">✏️</div>
-      <div class="game-info">
-        <div class="game-name">ציור וניחוש</div>
-        <div class="game-desc">אחד מצייר · השני מנחש · ניקוד</div>
-      </div>
-      <div class="game-badge badge-ready">מוכן</div>
+    <div class="game-card" onclick="openGame('racing')">
+      <div class="game-icon">🏎️</div>
+      <div><div style="font-weight:800">מרוץ אקסטרים</div><div style="font-size:12px;color:var(--dim)">מי יגיע ראשון לקו הסיום?</div></div>
     </div>
 
-    <div class="game-card fade-in" onclick="openGame('snakes-ladders')">
-      <div class="game-icon">🐍</div>
-      <div class="game-info">
-        <div class="game-name">סולמות ונחשים</div>
-        <div class="game-desc">100 משבצות · 2 שחקנים · תורות</div>
-      </div>
-      <div class="game-badge badge-ready">מוכן</div>
-    </div>
-
-    <div class="game-card fade-in" onclick="openGame('xo')">
-      <div class="game-icon">❌</div>
-      <div class="game-info">
-        <div class="game-name">איקס עיגול</div>
-        <div class="game-desc">3×3 · 2 שחקנים · ניקוד</div>
-      </div>
-      <div class="game-badge badge-ready">מוכן</div>
-    </div>
-
-    <div class="game-card fade-in" onclick="openGame('mavoch')">
-      <div class="game-icon">🌀</div>
-      <div class="game-info">
-        <div class="game-name">מבוך</div>
-        <div class="game-desc">13×13 · שני שחקנים · תחרות</div>
-      </div>
-      <div class="game-badge badge-ready">מוכן</div>
-    </div>
-
-    <div class="game-card fade-in" onclick="openGame('bingo')">
-      <div class="game-icon">🎉</div>
-      <div class="game-info">
-        <div class="game-name">בינגו!</div>
-        <div class="game-desc">לוח אימוג'י · הגרלה · מי ראשון?</div>
-      </div>
-      <div class="game-badge badge-ready">מוכן</div>
+    <div class="game-card" onclick="openGame('memory')">
+      <div class="game-icon">🧠</div>
+      <div><div style="font-weight:800">משחק הזיכרון</div><div style="font-size:12px;color:var(--dim)">מצאו את כל הזוגות ביחד</div></div>
     </div>
   </div>
 </div>
 
-<!-- ===== SCREEN 3: חדר המתנה ===== -->
-<div id="screen-waiting" class="screen">
-  <div class="waiting-game-title fade-in">
-    <div class="waiting-icon" id="waiting-icon">🐍</div>
-    <div class="waiting-game-name" id="waiting-game-name">סולמות וגנבים</div>
-  </div>
-
-  <div class="waiting-card fade-in">
-    <div class="players-status">
-      <div class="player-status-card emma" id="psc-emma">
-        <div class="psc-emoji">👧</div>
-        <div class="psc-name">אמה</div>
-        <div class="psc-status waiting" id="psc-emma-status">ממתינה...</div>
-      </div>
-      <div class="vs-badge">VS</div>
-      <div class="player-status-card rif" id="psc-rif">
-        <div class="psc-emoji">👦</div>
-        <div class="psc-name">ריף</div>
-        <div class="psc-status waiting" id="psc-rif-status">ממתין...</div>
-      </div>
+<div class="modal-overlay" id="modal-overlay">
+  <div class="waiting-modal">
+    <h2 id="waiting-game-name">טוען...</h2>
+    <div class="vs-container">
+      <div class="psc-card" id="psc-emma"><div class="psc-avatar">👧</div><div id="psc-emma-status" style="font-size:11px">ממתין...</div></div>
+      <div style="font-family:cursive;color:var(--dim)">VS</div>
+      <div class="psc-card" id="psc-rif"><div class="psc-avatar">👦</div><div id="psc-rif-status" style="font-size:11px">ממתין...</div></div>
     </div>
-
-    <div class="waiting-msg" id="waiting-msg">
-      <div class="spinner"></div>
-      <span id="waiting-text">ממתין לשחקן השני...</span>
-    </div>
+    <div class="waiting-msg" id="waiting-msg">מחכים לשחקן השני...</div>
   </div>
-
-  <button class="btn-cancel fade-in" onclick="cancelWaiting()">← ביטול</button>
-  <button class="btn-cancel fade-in" style="border-color:var(--green);color:var(--green);margin-top:-8px;" onclick="playSolo()">🎮 שחק לבד</button>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, onDisconnect, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-// ===== FIREBASE =====
 const firebaseConfig = {
   apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
   authDomain: "kidssapp-izhaki.firebaseapp.com",
@@ -604,136 +92,58 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db  = getDatabase(app);
-
-// ===== STATE =====
+const db = getDatabase(app);
 let currentPlayer = null;
-let currentGame   = null;
-let roomListener  = null;
+let roomListener = null;
 
 const GAMES = {
-  'matalot':        { name: 'מטלות בית',      icon: '🏠', url: 'matalot.html',         needsWaiting: false },
-  'drawing-guess':  { name: 'ציור וניחוש',    icon: '✏️', url: 'drawing-guess.html',   needsWaiting: true  },
-  'snakes-ladders': { name: 'סולמות ונחשים', icon: '🐍', url: 'snakes-ladders.html',  needsWaiting: true  },
-  'xo':             { name: 'איקס עיגול',    icon: '❌', url: 'X_O.html',             needsWaiting: true  },
-  'mavoch':         { name: 'מבוך',           icon: '🌀', url: 'mavoch.html',          needsWaiting: true  },
-  'bingo':          { name: 'בינגו!',          icon: '🎉', url: 'bingo.html',           needsWaiting: true  },
+  'xo': { name: 'איקס עיגול', url: 'X_O.html' },
+  'racing': { name: 'מרוץ אקסטרים', url: 'racing.html' },
+  'memory': { name: 'משחק הזיכרון', url: 'memory.html' }
 };
 
-const PLAYERS = {
-  emma: { name: 'אמה', emoji: '👧', cls: 'emma' },
-  rif:  { name: 'ריף', emoji: '👦', cls: 'rif'  }
+window.selectPlayer = (p) => {
+  currentPlayer = p;
+  document.getElementById('card-emma').className = 'player-card' + (p === 'emma' ? ' selected-emma' : '');
+  document.getElementById('card-rif').className = 'player-card' + (p === 'rif' ? ' selected-rif' : '');
 };
 
-// ===== NAVIGATION =====
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const screen = document.getElementById(id);
-  screen.classList.add('active');
-  screen.querySelectorAll('.fade-in').forEach(el => {
-    el.style.animation = 'none';
-    void el.offsetWidth;
-    el.style.animation = '';
-  });
-}
-
-// ===== PLAYER SELECT =====
-window.goBack = function(to) { showScreen(to); };
-
-window.selectPlayer = function(player) {
-  currentPlayer = player;
-  document.querySelectorAll('.btn-player').forEach(b => b.classList.remove('selected'));
-  document.querySelector(`.btn-player.${player}`).classList.add('selected');
-  const p = PLAYERS[player];
-  document.getElementById('header-chip').className = `header-player-chip ${p.cls}`;
-  document.getElementById('header-emoji').textContent = p.emoji;
-  document.getElementById('header-name').textContent  = p.name;
-  setTimeout(() => showScreen('screen-games'), 180);
-};
-
-// ===== GAME SELECT =====
-window.openGame = function(gameId) {
-  if (!currentPlayer) return;
-  currentGame = gameId;
+window.openGame = (gameId) => {
+  if (!currentPlayer) return alert('בחרו שחקן קודם!');
   const game = GAMES[gameId];
+  
+  // עדכון נוכחות
+  set(ref(db, `rooms/${gameId}/${currentPlayer}`), true);
+  onDisconnect(ref(db, `rooms/${gameId}/${currentPlayer}`)).remove();
+  set(ref(db, `presence/${gameId}/${currentPlayer}`), true);
+  onDisconnect(ref(db, `presence/${gameId}/${currentPlayer}`)).remove();
 
-  // משחקים שלא צריכים חדר המתנה — נכנסים ישירות
-  if (!game.needsWaiting) {
-    window.location.href = `${game.url}?player=${currentPlayer}`;
-    return;
-  }
-
-  document.getElementById('waiting-icon').textContent      = game.icon;
+  document.getElementById('modal-overlay').classList.add('active');
   document.getElementById('waiting-game-name').textContent = game.name;
 
-  // סמן שחקן נוכחי כמוכן
-  const myCard = document.getElementById(`psc-${currentPlayer}`);
-  myCard.classList.add('joined');
-  document.getElementById(`psc-${currentPlayer}-status`).textContent = '✓ מוכן';
-  document.getElementById(`psc-${currentPlayer}-status`).className = 'psc-status ready';
-
-  // סמן שחקן שני כממתין
-  const otherId = currentPlayer === 'emma' ? 'rif' : 'emma';
-  const otherCard = document.getElementById(`psc-${otherId}`);
-  otherCard.classList.remove('joined');
-  document.getElementById(`psc-${otherId}-status`).textContent = 'ממתין...';
-  document.getElementById(`psc-${otherId}-status`).className = 'psc-status waiting';
-
-  document.getElementById('waiting-msg').className = 'waiting-msg';
-  document.getElementById('waiting-msg').innerHTML =
-    `<div class="spinner"></div><span>ממתין לשחקן השני...</span>`;
-
-  showScreen('screen-waiting');
-
-  // כתוב ל-Firebase שאני נכנסתי
-  const roomRef = ref(db, `rooms/${gameId}/${currentPlayer}`);
-  set(roomRef, true);
-  onDisconnect(roomRef).remove();
-
-  // האזן לשינויים בחדר
-  const gameRoomRef = ref(db, `rooms/${gameId}`);
   if (roomListener) roomListener();
-  roomListener = onValue(gameRoomRef, (snap) => {
+  roomListener = onValue(ref(db, `rooms/${gameId}`), (snap) => {
     const room = snap.val() || {};
-    const emmaIn = !!room.emma;
-    const rifIn  = !!room.rif;
+    updateStatus('emma', !!room.emma);
+    updateStatus('rif', !!room.rif);
 
-    const otherInNow = currentPlayer === 'emma' ? rifIn : emmaIn;
-    if (otherInNow) {
-      const oCard = document.getElementById(`psc-${otherId}`);
-      oCard.classList.add('joined');
-      document.getElementById(`psc-${otherId}-status`).textContent = '✓ מוכן';
-      document.getElementById(`psc-${otherId}-status`).className = 'psc-status ready';
-    }
-
-    if (emmaIn && rifIn) {
-      if (roomListener) { roomListener(); roomListener = null; }
-      const msgEl = document.getElementById('waiting-msg');
-      msgEl.className = 'waiting-msg both-ready';
-      msgEl.innerHTML = '🎮 שניכם כאן! מתחילים...';
+    if (room.emma && room.rif) {
+      document.getElementById('waiting-msg').textContent = '🎮 שניהם כאן! מתחילים...';
       setTimeout(() => {
+        if (currentPlayer === 'emma') remove(ref(db, `rooms/${gameId}`));
         window.location.href = `${game.url}?player=${currentPlayer}`;
-      }, 1200);
+      }, 1500);
     }
   });
 };
 
-// ===== CANCEL =====
-window.cancelWaiting = function() {
-  if (roomListener) { roomListener(); roomListener = null; }
-  if (currentGame && currentPlayer) {
-    remove(ref(db, `rooms/${currentGame}/${currentPlayer}`));
-  }
-  showScreen('screen-games');
-};
-
-window.playSolo = function() {
-  if (roomListener) { roomListener(); roomListener = null; }
-  if (currentGame && currentPlayer) {
-    remove(ref(db, `rooms/${currentGame}/${currentPlayer}`));
-  }
-  window.location.href = `${GAMES[currentGame].url}?player=${currentPlayer}&solo=true`;
-};
+function updateStatus(id, ready) {
+  const card = document.getElementById(`psc-${id}`);
+  const status = document.getElementById(`psc-${id}-status`);
+  card.classList.toggle('joined', ready);
+  status.textContent = ready ? '✓ מוכן' : 'ממתין...';
+  status.style.color = ready ? '#3DD68C' : '#6B7299';
+}
 </script>
 </body>
 </html>

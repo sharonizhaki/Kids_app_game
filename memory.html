@@ -1,0 +1,444 @@
+<!DOCTYPE html><html lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>משחק זיכרון</title><style>
+
+body{
+margin:0;
+font-family:Arial;
+background:radial-gradient(circle at top,#1a1a1a,#000);
+color:white;
+display:flex;
+justify-content:center;
+}
+
+.app{
+max-width:480px;
+width:100%;
+}
+
+/* -------- מסך ראשי -------- */
+
+#menu{
+padding:30px 20px;
+text-align:center;
+}
+
+.title{
+font-size:36px;
+font-weight:bold;
+margin-bottom:8px;
+text-shadow:0 0 20px rgba(255,255,255,.25);
+}
+
+.subtitle{
+opacity:.7;
+margin-bottom:30px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+}
+
+.grid.cat{
+grid-template-columns:repeat(2,1fr);
+}
+
+.option{
+background:rgba(255,255,255,.06);
+padding:16px;
+border-radius:14px;
+cursor:pointer;
+transition:.25s;
+font-size:16px;
+}
+
+.option:hover{
+transform:scale(1.05);
+}
+
+.option.selected{
+background:#3b82f6;
+}
+
+#startBtn{
+margin-top:22px;
+width:100%;
+padding:16px;
+border:none;
+border-radius:14px;
+background:#3b82f6;
+color:white;
+font-size:18px;
+opacity:.4;
+}
+
+#startBtn.active{opacity:1}
+
+/* -------- משחק -------- */
+
+#game{
+display:none;
+padding:10px;
+}
+
+.top{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:10px;
+}
+
+.back{
+background:rgba(255,255,255,.1);
+padding:6px 10px;
+border-radius:10px;
+}
+
+.players{
+display:flex;
+justify-content:space-between;
+margin-bottom:10px;
+}
+
+.player{
+background:rgba(255,255,255,.07);
+padding:6px 10px;
+border-radius:10px;
+}
+
+.player.active{
+background:#22c55e;
+color:black;
+}
+
+.player.p2.active{
+background:#a855f7;
+color:white;
+}
+
+/* -------- לוח -------- */
+
+#board{
+display:grid;
+gap:14px;
+}
+
+.card{
+height:95px;
+perspective:900px;
+position:relative;
+}
+
+.inner{
+width:100%;
+height:100%;
+border-radius:16px;
+transition:transform .5s;
+transform-style:preserve-3d;
+box-shadow:0 10px 25px rgba(0,0,0,.45);
+}
+
+.flip .inner{
+transform:rotateY(180deg);
+}
+
+.face{
+position:absolute;
+width:100%;
+height:100%;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:40px;
+border-radius:16px;
+backface-visibility:hidden;
+}
+
+.front{
+background:rgba(255,255,255,.05);
+}
+
+.back{
+background:rgba(255,255,255,.12);
+transform:rotateY(180deg);
+}
+
+.match1 .back{background:#22c55e}
+.match2 .back{background:#a855f7}
+
+/* -------- ערבוב -------- */
+
+.shuffle{
+animation:shuffle .6s ease;
+}
+
+@keyframes shuffle{
+
+0%{transform:translateY(-40px) rotate(-10deg)}
+50%{transform:translateY(20px) rotate(10deg)}
+100%{transform:translateY(0) rotate(0)}
+
+}
+
+/* -------- ripple -------- */
+
+.ripple{
+position:absolute;
+border-radius:50%;
+background:rgba(255,255,255,.35);
+transform:scale(0);
+animation:ripple .6s linear;
+pointer-events:none;
+}
+
+@keyframes ripple{
+to{transform:scale(4);opacity:0}
+}
+
+/* -------- popup -------- */
+
+.popup{
+position:fixed;
+top:25%;
+left:50%;
+transform:translateX(-50%);
+background:rgba(0,0,0,.7);
+padding:10px 16px;
+border-radius:10px;
+font-size:18px;
+}
+
+</style></head><body><div class="app"><!-- מסך ראשי --><div id="menu"><div class="title">🧠 משחק זיכרון</div>
+<div class="subtitle">בחר קושי וקטגוריה</div><h3>רמת קושי</h3><div class="grid">
+<div class="option" data-diff="4">קל<br>4×4</div>
+<div class="option" data-diff="6">בינוני<br>6×6</div>
+<div class="option" data-diff="8">קשה<br>8×8</div>
+</div><h3>קטגוריה</h3><div class="grid cat">
+<div class="option" data-cat="animals">🐶 חיות</div>
+<div class="option" data-cat="symbols">⭐ סמלים</div>
+<div class="option" data-cat="people">👨 אנשים</div>
+<div class="option" data-cat="food">🍕 אוכל</div>
+<div class="option" data-cat="sports">⚽ ספורט</div>
+</div><button id="startBtn">התחל משחק</button>
+
+</div><!-- משחק --><div id="game"><div class="top">
+<div class="back" id="backBtn">← חזור</div>
+</div><div class="players">
+<div id="p1" class="player active">😀 שחקן 1 <span id="t1">0</span>s</div>
+<div id="p2" class="player p2">😎 שחקן 2 <span id="t2">0</span>s</div>
+</div><div id="board"></div></div></div><script>
+
+/* קטגוריות */
+
+const cats={
+animals:["🐶","🐱","🐭","🐹","🦊","🐻","🐼","🐸"],
+symbols:["⭐","❤️","🔥","⚡","💎","🎵","🌙","☀️"],
+people:["👨","👩","👮","👩‍🚀","👨‍🍳","👩‍⚕️","🧙","🧑‍🎤"],
+food:["🍕","🍔","🍟","🌮","🍩","🍓","🍉","🍣"],
+sports:["⚽","🏀","🏈","⚾","🎾","🏓","🥊","🏄"]
+}
+
+let diff=null
+let cat=null
+
+const startBtn=document.getElementById("startBtn")
+
+document.querySelectorAll("[data-diff]").forEach(el=>{
+el.onclick=()=>{
+document.querySelectorAll("[data-diff]").forEach(e=>e.classList.remove("selected"))
+el.classList.add("selected")
+diff=parseInt(el.dataset.diff)
+checkStart()
+}
+})
+
+document.querySelectorAll("[data-cat]").forEach(el=>{
+el.onclick=()=>{
+document.querySelectorAll("[data-cat]").forEach(e=>e.classList.remove("selected"))
+el.classList.add("selected")
+cat=el.dataset.cat
+checkStart()
+}
+})
+
+function checkStart(){
+if(diff&&cat){
+startBtn.classList.add("active")
+}
+}
+
+/* התחלת משחק */
+
+let board=document.getElementById("board")
+
+startBtn.onclick=()=>{
+
+document.getElementById("menu").style.display="none"
+document.getElementById("game").style.display="block"
+
+board.style.gridTemplateColumns=`repeat(${diff},1fr)`
+
+let arr=[...cats[cat]]
+let cards=[...arr,...arr]
+
+cards.sort(()=>Math.random()-.5)
+
+cards.forEach(e=>{
+
+let c=document.createElement("div")
+c.className="card shuffle"
+c.dataset.v=e
+
+c.innerHTML=`
+<div class="inner">
+<div class="face front"></div>
+<div class="face back">${e}</div>
+</div>
+`
+
+c.onclick=(ev)=>flip(c,ev)
+
+board.appendChild(c)
+
+})
+
+gameStarted=true
+
+}
+
+/* ripple */
+
+function ripple(card,e){
+
+let r=document.createElement("span")
+r.className="ripple"
+
+let rect=card.getBoundingClientRect()
+let size=Math.max(rect.width,rect.height)
+
+r.style.width=size+"px"
+r.style.height=size+"px"
+r.style.left=e.clientX-rect.left-size/2+"px"
+r.style.top=e.clientY-rect.top-size/2+"px"
+
+card.appendChild(r)
+
+setTimeout(()=>r.remove(),600)
+
+}
+
+/* משחק */
+
+let flipped=[]
+let turn=1
+let lock=false
+let gameStarted=false
+
+function flip(card,e){
+
+if(lock)return
+if(card.classList.contains("flip"))return
+
+ripple(card,e)
+
+card.classList.add("flip")
+flipped.push(card)
+
+if(flipped.length===2){
+
+lock=true
+setTimeout(check,700)
+
+}
+
+}
+
+function check(){
+
+let[a,b]=flipped
+
+if(a.dataset.v===b.dataset.v){
+
+playSound()
+
+}else{
+
+if(navigator.vibrate)navigator.vibrate(120)
+
+a.classList.remove("flip")
+b.classList.remove("flip")
+
+switchTurn()
+
+}
+
+flipped=[]
+lock=false
+
+}
+
+function switchTurn(){
+
+turn=turn===1?2:1
+
+document.getElementById("p1").classList.toggle("active")
+document.getElementById("p2").classList.toggle("active")
+
+popup("התור של שחקן "+turn,500)
+
+}
+
+/* popup */
+
+function popup(txt,time=800){
+
+let p=document.createElement("div")
+p.className="popup"
+p.innerText=txt
+document.body.appendChild(p)
+
+setTimeout(()=>p.remove(),time)
+
+}
+
+/* טיימר */
+
+let t1=0,t2=0
+
+setInterval(()=>{
+
+if(!gameStarted)return
+
+if(turn===1){
+t1++
+document.getElementById("t1").innerText=t1
+}else{
+t2++
+document.getElementById("t2").innerText=t2
+}
+
+},1000)
+
+/* צליל */
+
+function playSound(){
+
+let ctx=new AudioContext()
+let osc=ctx.createOscillator()
+osc.frequency.value=700
+osc.connect(ctx.destination)
+osc.start()
+osc.stop(ctx.currentTime+.12)
+
+}
+
+/* חזור */
+
+document.getElementById("backBtn").onclick=()=>location.reload()
+
+</script></body>
+</html>

@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>איקס עיגול - גרסה 2.1</title>
+  <title>איקס עיגול - גרסה 2.2</title>
   <style>
-    /* ה-CSS המקורי שלך נשמר במלואו */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0d1117; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
     body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 80% 60% at 20% 20%, rgba(255,107,107,0.12) 0%, transparent 60%), radial-gradient(ellipse 80% 60% at 80% 80%, rgba(78,205,196,0.12) 0%, transparent 60%); pointer-events: none; z-index: 0; }
@@ -44,7 +43,7 @@
 <div class="container">
   <h1>✕ ◯</h1>
   <div class="scoreboard">
-    <div class="score-card x-card active" id="card-x">
+    <div class="score-card x-card" id="card-x">
       <div class="player-name">אמה (X)</div>
       <div class="score-value" id="score-x">0</div>
     </div>
@@ -59,7 +58,7 @@
   </div>
   <div class="turn-bar">
     <span class="turn-dot" id="turn-dot"></span>
-    <span class="turn-text" id="turn-text">תור <span id="turn-name"></span></span>
+    <span class="turn-text" id="turn-text">תור <span id="turn-name">טוען...</span></span>
   </div>
   <div class="board" id="board">
     <div class="cell" data-index="0"></div><div class="cell" data-index="1"></div><div class="cell" data-index="2"></div>
@@ -75,7 +74,8 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, get, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, get, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+// הערה: ייבוא הפונקציות מ-firebase/database
 
 const firebaseConfig = {
   apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
@@ -94,7 +94,7 @@ const gameRef = ref(db, `game/${gameId}`);
 const presenceRef = ref(db, `presence/${gameId}`);
 
 const params = new URLSearchParams(location.search);
-const myId = params.get('player') || 'emma'; // emma / rif
+const myId = params.get('player') || 'emma';
 const otherId = myId === 'emma' ? 'rif' : 'emma';
 const mySymbol = myId === 'emma' ? 'X' : 'O';
 
@@ -104,28 +104,40 @@ let gameOver = false;
 let scores = { X: 0, O: 0, draw: 0 };
 let lastTs = 0;
 let hasLeft = false;
+let leaveTimeout = null;
 
 const cells = document.querySelectorAll('.cell');
 
 async function init() {
-  // 1. ניהול נוכחות - עדכון שאני בפנים ומחיקה כשאני יוצא
+  // 1. ניהול נוכחות
   const myPresence = ref(db, `presence/${gameId}/${myId}`);
   set(myPresence, true);
   onDisconnect(myPresence).remove();
 
-  // 2. האזנה לעזיבה של השני
+  // 2. האזנה לעזיבה עם "Grace Period" של 2 שניות
   onValue(ref(db, `presence/${gameId}/${otherId}`), (snap) => {
-    if (!snap.val() && !hasLeft) {
-      hasLeft = true;
-      alert(`המשתמש השני עזב את המשחק.`);
-      window.location.href = 'index.html';
+    const isOtherPresent = !!snap.val();
+    
+    if (!isOtherPresent) {
+      if (!leaveTimeout && !hasLeft) {
+        leaveTimeout = setTimeout(() => {
+          hasLeft = true;
+          alert(`המשתמש השני עזב את המשחק.`);
+          window.location.href = 'index.html';
+        }, 2000); 
+      }
+    } else {
+      if (leaveTimeout) {
+        clearTimeout(leaveTimeout);
+        leaveTimeout = null;
+      }
     }
   });
 
-  // 3. אתחול המשחק
+  // 3. אתחול המשחק מה-DB
   const snap = await get(gameRef);
   const data = snap.val();
-  if (!data || (Date.now() - data.ts > 300000)) { // איפוס אם עברו 5 דקות של שקט
+  if (!data || (Date.now() - data.ts > 300000)) {
     resetBoard('X');
   }
 
@@ -151,16 +163,17 @@ function updateUI(data) {
 
   if (data.winCombo) {
     data.winCombo.forEach(idx => cells[idx].classList.add('winning'));
-    if (data.ts !== 0) spawnConfetti();
+    if (data.ts !== 0 && !data.isDraw) spawnConfetti();
   }
 
   document.getElementById('score-x').textContent = scores.X;
   document.getElementById('score-o').textContent = scores.O;
   document.getElementById('score-draw').textContent = scores.draw;
 
-  const turnName = currentPlayer === 'X' ? 'אמה' : 'ריף';
+  const turnNameLabel = currentPlayer === 'X' ? 'אמה' : 'ריף';
   const turnColor = currentPlayer === 'X' ? '#ff6b6b' : '#4ecdc4';
-  document.getElementById('turn-name').textContent = turnName;
+  
+  document.getElementById('turn-name').textContent = turnNameLabel;
   document.getElementById('turn-text').style.color = turnColor;
   document.getElementById('turn-dot').style.backgroundColor = turnColor;
 
@@ -168,7 +181,12 @@ function updateUI(data) {
   document.getElementById('card-o').classList.toggle('active', currentPlayer === 'O');
 
   if (gameOver) {
-    document.getElementById('turn-name').textContent = data.isDraw ? "תיקו!" : `ניצחון ל${turnName === 'אמה' ? 'ריף' : 'אמה'}!`;
+    if (data.isDraw) {
+        document.getElementById('turn-name').textContent = "תיקו!";
+    } else {
+        const winnerName = currentPlayer === 'X' ? 'ריף' : 'אמה';
+        document.getElementById('turn-name').textContent = `ניצחון ל${winnerName}!`;
+    }
   }
 }
 
@@ -219,7 +237,13 @@ function resetBoard(starter) {
   });
 }
 
-window.restartGame = () => resetBoard(currentPlayer === 'X' ? 'O' : 'X');
+window.restartGame = () => {
+    const snap = get(gameRef).then(s => {
+        const d = s.val();
+        resetBoard(d.currentPlayer === 'X' ? 'O' : 'X');
+    });
+};
+
 window.resetAll = () => { scores = {X:0, O:0, draw:0}; resetBoard('X'); };
 
 function xSvg() { return `<svg viewBox="0 0 60 60"><line class="x-path" x1="14" y1="14" x2="46" y2="46"/><line class="x-path" x1="46" y1="14" x2="14" y2="46"/></svg>`; }
@@ -235,7 +259,6 @@ function spawnConfetti() {
   setTimeout(() => container.innerHTML = '', 3000);
 }
 
-// הוספת אנימציית קונפטי בסיסית ב-JS
 const style = document.createElement('style');
 style.innerHTML = `@keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }`;
 document.head.appendChild(style);
