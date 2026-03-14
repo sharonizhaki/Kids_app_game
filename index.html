@@ -12,9 +12,9 @@
     
     :root {
       --bg: #0F1320;
-      --surface: rgba(24, 29, 46, 0.45);
-      --surface2: rgba(33, 40, 64, 0.7);
-      --border: rgba(255, 255, 255, 0.1);
+      --surface: rgba(24, 29, 46, 0.6);
+      --surface2: rgba(33, 40, 64, 0.8);
+      --border: rgba(255, 255, 255, 0.15);
       --emma: #FF5C7A;
       --rif: #4DB8FF;
       --guest: #3DD68C;
@@ -23,145 +23,139 @@
       --gold: #F5C842;
     }
 
-    html, body { height:100%; width:100%; background: var(--bg); color: var(--text); font-family: 'Heebo', sans-serif; overflow:hidden; }
-
-    /* רקע ואלמנטים צפים - גרסה מחוזקת */
-    .background-elements { 
-        position: fixed; 
-        top: 0; left: 0; 
-        width: 100%; height: 100%; 
-        z-index: -1; 
-        pointer-events: none; 
-        overflow: hidden;
-        background: var(--bg);
+    body { 
+        min-height: 100vh; width: 100vw; 
+        background: var(--bg); color: var(--text); 
+        font-family: 'Heebo', sans-serif; overflow-x: hidden; position: relative;
     }
-    
+
+    /* רקע מונפש */
+    .bg-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
     .stars {
-        position: absolute; inset: 0;
-        background-image: 
-            radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
-            radial-gradient(1.5px 1.5px at 100px 150px, #fff, rgba(0,0,0,0)),
-            radial-gradient(2.5px 2.5px at 200px 80px, #fff, rgba(0,0,0,0)),
-            radial-gradient(1.5px 1.5px at 280px 250px, #eee, rgba(0,0,0,0));
-        background-size: 250px 250px;
-        opacity: 0.4; 
-        animation: starsMove 80s linear infinite;
+        position: absolute; width: 200%; height: 200%; z-index: 1;
+        background-image: radial-gradient(white 1px, transparent 1px), radial-gradient(white 1px, transparent 1px);
+        background-size: 60px 60px; background-position: 0 0, 30px 30px; opacity: 0.15;
+        animation: starsMove 40s linear infinite;
     }
-    @keyframes starsMove { from { background-position: 0 0; } to { background-position: 0 1000px; } }
+    @keyframes starsMove { from { transform: translate(0, 0); } to { transform: translate(-100px, -100px); } }
 
-    .watermark { 
-        position: absolute; 
-        opacity: 0.25; 
-        filter: grayscale(0.5) brightness(1.5); 
-        font-size: 8rem; 
-        animation: floatAround 25s infinite ease-in-out; 
+    .bg-emoji {
+        position: absolute; font-size: 8rem; opacity: 0.25; filter: blur(1px); z-index: 2;
+        animation: floatWide 12s infinite ease-in-out;
     }
-    .watermark:nth-child(2) { top: 15%; left: -5%; }
-    .watermark:nth-child(3) { top: 45%; right: -10%; animation-delay: -7s; }
-    .watermark:nth-child(4) { bottom: 10%; left: 10%; animation-delay: -12s; }
-    
-    @keyframes floatAround {
+    @keyframes floatWide {
         0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
-        33% { transform: translate(30px, -40px) rotate(15deg) scale(1.1); }
-        66% { transform: translate(-20px, 20px) rotate(-10deg) scale(0.95); }
+        33% { transform: translate(120px, -80px) rotate(15deg) scale(1.1); }
+        66% { transform: translate(-60px, 150px) rotate(-10deg) scale(0.9); }
     }
 
-    /* מבנה מסכים */
-    .screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; padding:20px; }
-    .screen.active { display:flex; animation: fadeIn 0.4s ease-out forwards; }
-    @keyframes fadeIn { from { opacity:0; transform: scale(0.98); } to { opacity:1; transform: scale(1); } }
+    /* תוכן ומבנה */
+    .content-wrapper { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .screen { display: none; width: 100%; flex-direction: column; align-items: center; }
+    .screen.active { display: flex; animation: fadeIn 0.4s ease-out; }
+    @keyframes fadeIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
 
-    h1 { font-family: 'Fredoka One', cursive; font-size: 3rem; margin-bottom: 30px; background: linear-gradient(135deg, #FF5C7A, #4DB8FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    h1 { font-family: 'Fredoka One', cursive; font-size: 3.2rem; margin-bottom: 30px; background: linear-gradient(135deg, var(--emma), var(--rif)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; }
     
-    /* כפתורי משתמשים - פרופורציות מוקטנות */
-    .user-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; width: 100%; max-width: 400px; }
+    .user-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; max-width: 360px; }
     .user-btn { 
-        background: var(--surface); border: 2px solid var(--border); border-top: 2px solid rgba(255, 255, 255, 0.3);
-        border-radius: 28px; padding: 25px 15px;
-        cursor: pointer; transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
-        display: flex; flex-direction: column; align-items: center; gap: 12px; color: white; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); 
+        background: var(--surface); border: 2px solid var(--border); border-top: 2px solid rgba(255,255,255,0.3);
+        border-radius: 24px; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; color: white;
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); cursor: pointer; transition: 0.2s;
     }
-    .user-btn:active { animation: bounce 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    .user-btn.emma { border-color: var(--emma); } 
-    .user-btn.rif { border-color: var(--rif); } 
-    .user-btn i { font-size: 3.5rem; font-style: normal; }
-    .user-btn span { font-weight: 800; font-size: 1.2rem; }
+    .user-btn.emma { border-color: var(--emma); }
+    .user-btn.rif { border-color: var(--rif); }
+    .user-btn i { font-size: 3rem; font-style: normal; }
+    .user-btn span { font-weight: 800; font-size: 1.1rem; }
 
-    @keyframes bounce { 0% { transform: scale(1); } 50% { transform: scale(0.92); } 100% { transform: scale(1); } }
+    /* הגדרות אורח */
+    #guest-setup { width: 100%; max-width: 360px; text-align: center; }
+    input { width: 100%; padding: 15px; border-radius: 18px; border: 1px solid var(--border); background: rgba(0,0,0,0.3); color: white; margin-bottom: 10px; text-align: center; font-size: 1.1rem; transition: 0.3s; }
+    input:focus { outline: none; border-color: var(--guest); background: rgba(0,0,0,0.5); }
+    
+    .emoji-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0 25px 0; padding: 10px; border-radius: 20px; transition: 0.3s; border: 1px solid transparent; }
+    .emoji-opt { font-size: 2rem; padding: 10px; cursor: pointer; border-radius: 15px; transition: 0.2s; border: 1px solid transparent; }
+    .emoji-opt.selected { background: rgba(255,255,255,0.15); transform: scale(1.1); border-color: var(--guest); }
 
-    /* גריד משחקים - פרופורציות מוקטנות */
-    .game-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; max-width: 500px; }
+    /* התראות שגיאה */
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-6px); }
+        75% { transform: translateX(6px); }
+    }
+    .shake { animation: shake 0.3s ease-in-out; border-color: var(--emma) !important; }
+
+    .btn-main { background: var(--guest); color: #0F1320; padding: 15px; border-radius: 18px; border: none; font-weight: 900; cursor: pointer; width: 100%; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(61, 214, 140, 0.3); }
+
+    /* כרטיסי משחק */
+    .game-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; max-width: 450px; }
     .game-card { 
-        background: var(--surface); border: 1px solid var(--border); border-top: 1px solid rgba(255, 255, 255, 0.2); 
-        border-radius: 24px; padding: 18px 10px;
-        display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; 
-        transition: 0.2s ease; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); opacity: 0; transform: translateY(20px); 
+        background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 15px 5px;
+        display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer;
+        opacity: 0; transform: translateY(10px); transition: 0.2s; position: relative;
     }
-    .game-card.animate { animation: cardSlideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-    @keyframes cardSlideUp { to { opacity: 1; transform: translateY(0); } }
-    .game-card:active:not(.soon) { transform: scale(0.95); background: rgba(255,255,255,0.1); }
-    .game-card.soon { opacity: 0.5; cursor: default; }
+    .game-card.animate { animation: cardUp 0.4s forwards; }
+    @keyframes cardUp { to { opacity: 1; transform: translateY(0); } }
     .game-card i { font-size: 2.2rem; font-style: normal; }
-    .game-card span { font-weight: 700; font-size: 1rem; }
+    .game-card span { font-weight: 700; font-size: 0.95rem; }
 
-    /* המתנה */
+    .game-status { font-size: 0.65rem; color: var(--gold); font-weight: 600; height: 14px; text-align: center; opacity: 0.9; }
+
+    /* חדר המתנה */
     .waiting-box { background: var(--surface2); border: 2px solid var(--border); border-radius: 32px; padding: 40px 20px; width: 100%; max-width: 380px; text-align: center; backdrop-filter: blur(20px); }
-    .slots { display: flex; justify-content: center; gap: 25px; margin: 30px 0; }
-    .p-slot { width: 90px; height: 90px; border-radius: 50%; border: 3px dashed var(--dim); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    .p-slot.active { border-style: solid; transform: scale(1.1); background: rgba(255,255,255,0.05); }
-    .loader { width: 20px; height: 20px; border: 3px solid var(--gold); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .slots { display: flex; justify-content: center; gap: 20px; margin: 25px 0; }
+    .p-slot { width: 85px; height: 85px; border-radius: 50%; border: 3px dashed var(--dim); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s; }
+    .p-slot.active { border-style: solid; background: rgba(255,255,255,0.05); transform: scale(1.05); }
 
-    /* כפתורים וטפסים */
-    .btn-main { background: var(--guest); color: #0F1320; padding: 15px; border-radius: 18px; border: none; font-weight: 900; cursor: pointer; width: 100%; font-size: 1.1rem; }
-    .btn-cancel { background: transparent; color: var(--dim); border: none; margin-top: 25px; cursor: pointer; font-size: 0.9rem; font-weight: 600; text-decoration: underline; }
-    input { width:100%; padding:15px; border-radius:15px; border:1px solid var(--border); background:rgba(0,0,0,0.3); color:white; margin-bottom:15px; text-align:center; }
+    .btn-cancel { background: none; border: none; color: var(--text); opacity: 0.6; margin-top: 25px; text-decoration: underline; font-size: 0.9rem; cursor: pointer; }
+
+    #greeting { margin-bottom: 25px; font-weight: 900; display: flex; align-items: center; gap: 8px; justify-content: center; font-size: 1.8rem; flex-wrap: wrap; }
 </style>
 </head>
 <body>
 
-<div class="background-elements">
+<div class="bg-layer">
     <div class="stars"></div>
-    <div class="watermark">🎮</div>
-    <div class="watermark">🎲</div>
-    <div class="watermark">🕹️</div>
+    <div class="bg-emoji" style="top: 15%; left: 5%;">🎮</div>
+    <div class="bg-emoji" style="top: 50%; right: 5%; animation-delay: -3s;">🎲</div>
+    <div class="bg-emoji" style="bottom: 15%; left: 10%; animation-delay: -6s;">🕹️</div>
 </div>
 
-<div id="screen-login" class="screen active">
-  <h1>מי משחק?</h1>
-  <div class="user-grid" id="main-user-grid">
-    <button class="user-btn emma" onclick="selectUser('emma', 'אמה', '👧', '#FF5C7A')">
-      <i>👧</i><span>אמה</span>
-    </button>
-    <button class="user-btn rif" onclick="selectUser('rif', 'ריף', '👦', '#4DB8FF')">
-      <i>👦</i><span>ריף</span>
-    </button>
-    <button class="user-btn guest" style="grid-column: span 2; border-color: var(--guest)" onclick="toggleGuestSetup()">
-      <i>👤</i><span>שחקן אורח</span>
-    </button>
-  </div>
-  <div id="guest-setup" style="display:none; width:100%; max-width:400px;">
-    <input type="text" id="guest-name-input" placeholder="איך קוראים לך?">
-    <div id="emoji-picker" style="display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin-bottom:20px;"></div>
-    <button class="btn-main" onclick="confirmGuest()">הצטרף</button>
-    <button class="btn-cancel" onclick="location.reload()">חזור</button>
-  </div>
-</div>
+<div class="content-wrapper">
+    <div id="screen-login" class="screen active">
+      <h1>מי משחק?</h1>
+      <div class="user-grid" id="main-user-grid">
+        <div class="user-btn emma" onclick="selectUser('emma', 'אמה', '👧', '#FF5C7A')"><i>👧</i><span>אמה</span></div>
+        <div class="user-btn rif" onclick="selectUser('rif', 'ריף', '👦', '#4DB8FF')"><i>👦</i><span>ריף</span></div>
+        <div class="user-btn" style="grid-column: span 2; border-color: var(--guest)" onclick="showGuestSetup()"><i>👤</i><span>שחקן אורח</span></div>
+      </div>
+      <div id="guest-setup" style="display:none;">
+        <input type="text" id="guest-name-input" placeholder="איך קוראים לך?" maxlength="12">
+        <p id="guest-hint" style="font-size: 0.85rem; color: var(--dim); margin-bottom: 10px;">בחר דמות שתייצג אותך:</p>
+        <div class="emoji-picker" id="emoji-picker"></div>
+        <button class="btn-main" onclick="confirmGuest()">הצטרף למשחק</button>
+        <button class="btn-cancel" onclick="location.reload()">חזור</button>
+      </div>
+    </div>
 
-<div id="screen-games" class="screen">
-  <h2 id="greeting" style="margin-bottom: 25px; font-weight: 900;"></h2>
-  <div class="game-grid" id="game-list-container"></div>
-  <button class="btn-cancel" onclick="logout()">החלף משתמש</button>
-</div>
+    <div id="screen-games" class="screen">
+      <h2 id="greeting">
+          <span id="greeting-name"></span>
+          <span id="greeting-emoji"></span>
+          <span id="greeting-question">מה נשחק?</span>
+      </h2>
+      <div class="game-grid" id="game-list"></div>
+      <button class="btn-cancel" onclick="logout()">החלף משתמש</button>
+    </div>
 
-<div id="screen-waiting" class="screen">
-  <div class="waiting-box">
-    <div id="wait-game-icon" style="font-size: 4rem; margin-bottom: 15px;"></div>
-    <h3 id="wait-game-name" style="font-size: 1.5rem;"></h3>
-    <div class="slots"><div id="slot-0" class="p-slot"></div><div id="slot-1" class="p-slot"></div></div>
-    <div style="display:flex; align-items:center; justify-content:center; gap:12px;"><div class="loader"></div><div>מחפשים חבר...</div></div>
-    <button class="btn-cancel" onclick="cancelWaiting()">ביטול</button>
-  </div>
+    <div id="screen-waiting" class="screen">
+      <div class="waiting-box">
+        <div id="wait-game-icon" style="font-size: 4rem;"></div>
+        <h3 id="wait-game-name"></h3>
+        <div class="slots"><div id="slot-0" class="p-slot"></div><div id="slot-1" class="p-slot"></div></div>
+        <button class="btn-cancel" onclick="cancelWaiting()">ביטול</button>
+      </div>
+    </div>
 </div>
 
 <script type="module">
@@ -184,90 +178,139 @@ const db = getDatabase(app);
 let myUser = null;
 let currentGame = null;
 let roomListener = null;
-let myUserEmoji = '👤';
+let selectedGuestEmoji = null;
 
 const games = [
-    { id: 'xo', name: 'איקס עיגול', url: 'X_O.html', icon: '❌', guest: true },
-    { id: 'draw', name: 'צייר ונחש', url: 'draw_game.html', icon: '🎨', guest: true },
-    { id: 'race', name: 'מרוץ מכוניות', url: 'Race.html', icon: '🏎️', guest: true },
-    { id: 'memory', name: 'משחק זיכרון', url: 'Memory.html', icon: '🧩', guest: true },
-    { id: 'bingo', name: 'בינגו', url: 'Bingo.html', icon: '🔢', guest: true },
-    { id: 'snakes', name: 'סולמות ונחשים', url: 'Snakes.html', icon: '🐍', guest: true },
-    { id: 'tasks', name: 'פעילות בית', url: 'Tasks.html', icon: '🏠', guest: false }
+    { id: 'xo', name: 'איקס עיגול', url: 'X_O.html', icon: '❌' },
+    { id: 'draw', name: 'צייר ונחש', url: 'draw_game.html', icon: '🎨' },
+    { id: 'race', name: 'מרוץ מכוניות', url: 'Race.html', icon: '🏎️' },
+    { id: 'memory', name: 'משחק זיכרון', url: 'Memory.html', icon: '🧩' },
+    { id: 'bingo', name: 'בינגו', url: 'Bingo.html', icon: '🔢' },
+    { id: 'snakes', name: 'סולמות ונחשים', url: 'Snakes.html', icon: '🐍' }
 ];
 
-function renderGames() {
-    const container = document.getElementById('game-list-container');
-    container.innerHTML = '';
-    const isGuest = myUser && myUser.id.startsWith('guest_');
-    let displayedCount = 0;
+// מעקב אחרי מצב החדרים בכפתורים
+function watchAllRooms() {
+    onValue(ref(db, 'rooms_v3'), (snap) => {
+        const allRooms = snap.val() || {};
+        games.forEach(g => {
+            const statusDiv = document.getElementById(`status-${g.id}`);
+            if (!statusDiv) return;
+            const players = Object.values(allRooms[g.id] || {});
+            if (players.length === 0) statusDiv.textContent = '';
+            else if (players.length === 1) {
+                statusDiv.textContent = `${players[0].name}${players[0].emoji} ממתין...`;
+                statusDiv.style.color = 'var(--gold)';
+            } else {
+                statusDiv.textContent = `במשחק: ${players[0].name} ו-${players[1].name}`;
+                statusDiv.style.color = 'var(--guest)';
+            }
+        });
+    });
+}
 
-    games.forEach((game) => {
-        if (isGuest && !game.guest) return; 
+function startApp() {
+    showScreen('screen-games');
+    const gn = document.getElementById('greeting-name');
+    const ge = document.getElementById('greeting-emoji');
+    const gq = document.getElementById('greeting-question');
+    
+    gn.textContent = `היי ${myUser.name}`;
+    gn.style.color = myUser.color;
+    ge.textContent = myUser.emoji;
+    gq.style.color = myUser.color; // צבע "מה נשחק?"
+
+    const list = document.getElementById('game-list');
+    list.innerHTML = '';
+    games.forEach((g, i) => {
         const card = document.createElement('div');
         card.className = 'game-card animate';
-        card.style.animationDelay = `${displayedCount * 0.1}s`;
-        card.onclick = () => window.joinGame(game.id);
-        card.innerHTML = `<i>${game.icon}</i><span>${game.name}</span>`;
-        container.appendChild(card);
-        displayedCount++;
+        card.style.animationDelay = `${i * 0.05}s`;
+        card.onclick = () => joinGame(g.id);
+        card.innerHTML = `<i>${g.icon}</i><span>${g.name}</span><div class="game-status" id="status-${g.id}"></div>`;
+        list.appendChild(card);
     });
-
-    const soonCard = document.createElement('div');
-    soonCard.className = 'game-card animate soon';
-    soonCard.style.animationDelay = `${displayedCount * 0.1}s`;
-    soonCard.innerHTML = `<i>🚀</i><span>בקרוב...</span>`;
-    container.appendChild(soonCard);
+    watchAllRooms();
 }
 
 window.selectUser = (id, name, emoji, color) => {
-    myUser = { id: id + '_' + Math.floor(Math.random()*1000), name, emoji, color };
+    myUser = { id: id + '_' + Math.floor(Math.random()*1000), name, emoji, color, rawId: id };
     localStorage.setItem('myUser', JSON.stringify(myUser));
     startApp();
 };
 
-window.confirmGuest = () => {
-    const name = document.getElementById('guest-name-input').value.trim() || "אורח";
-    window.selectUser('guest', name, myUserEmoji, '#3DD68C');
-};
-
-window.toggleGuestSetup = () => {
+window.showGuestSetup = () => {
     document.getElementById('main-user-grid').style.display = 'none';
     document.getElementById('guest-setup').style.display = 'block';
+    const input = document.getElementById('guest-name-input');
+    input.focus();
+    input.oninput = () => input.classList.remove('shake');
+
+    const picker = document.getElementById('emoji-picker');
+    picker.innerHTML = '';
+    ['🦊', '🐯', '🐸', '🐼', '🤖', '👾', '🦄', '🐲'].forEach(emoji => {
+        const div = document.createElement('div');
+        div.className = 'emoji-opt';
+        div.textContent = emoji;
+        div.onclick = () => {
+            Array.from(picker.children).forEach(c => c.classList.remove('selected', 'shake'));
+            div.classList.add('selected');
+            selectedGuestEmoji = emoji;
+            picker.classList.remove('shake');
+        };
+        picker.appendChild(div);
+    });
+};
+
+window.confirmGuest = () => {
+    const input = document.getElementById('guest-name-input');
+    const picker = document.getElementById('emoji-picker');
+    const name = input.value.trim();
+    let error = false;
+
+    input.classList.remove('shake');
+    picker.classList.remove('shake');
+    void input.offsetWidth;
+
+    if (!name) { input.classList.add('shake'); input.placeholder = "חובה שם!"; error = true; }
+    if (!selectedGuestEmoji) { picker.classList.add('shake'); error = true; }
+    
+    if (!error) window.selectUser('guest', name, selectedGuestEmoji, '#3DD68C');
 };
 
 window.joinGame = (gameId) => {
-    const game = games.find(g => g.id === gameId);
-    currentGame = game;
-    document.getElementById('wait-game-icon').textContent = game.icon;
-    document.getElementById('wait-game-name').textContent = game.name;
-    showScreen('screen-waiting');
+    currentGame = games.find(g => g.id === gameId);
+    onValue(ref(db, `rooms_v3/${gameId}`), (snap) => {
+        const players = Object.values(snap.val() || {});
+        if (players.length >= 2) window.location.href = `${currentGame.url}?player=${myUser.id}&view=true`;
+        else startWaiting(gameId);
+    }, { onlyOnce: true });
+};
 
-    const roomRef = ref(db, `rooms_v3/${gameId}`);
+function startWaiting(gameId) {
+    document.getElementById('wait-game-icon').textContent = currentGame.icon;
+    document.getElementById('wait-game-name').textContent = currentGame.name;
+    showScreen('screen-waiting');
     const myPlayerRef = ref(db, `rooms_v3/${gameId}/${myUser.id}`);
     set(myPlayerRef, { name: myUser.name, emoji: myUser.emoji, color: myUser.color });
     onDisconnect(myPlayerRef).remove();
-
-    roomListener = onValue(roomRef, (snap) => {
+    roomListener = onValue(ref(db, `rooms_v3/${gameId}`), (snap) => {
         const players = Object.values(snap.val() || {});
         [0, 1].forEach(i => {
             const slot = document.getElementById(`slot-${i}`);
             if (players[i]) {
                 slot.className = 'p-slot active';
                 slot.style.borderColor = players[i].color;
-                slot.innerHTML = `<div style="font-size:2.2rem">${players[i].emoji}</div><div style="font-size:0.8rem;font-weight:900">${players[i].name}</div>`;
+                slot.innerHTML = `<div style="font-size:2rem">${players[i].emoji}</div><div style="font-size:0.7rem;font-weight:900">${players[i].name}</div>`;
             } else {
-                slot.className = 'p-slot'; slot.style.borderColor = ''; slot.innerHTML = '';
+                slot.className = 'p-slot'; slot.innerHTML = ''; slot.style.borderColor = '';
             }
         });
         if (players.length >= 2) {
-            setTimeout(() => { 
-                if (roomListener) roomListener();
-                window.location.href = `${currentGame.url}?player=${myUser.id}`; 
-            }, 1000);
+            setTimeout(() => { if (roomListener) roomListener(); window.location.href = `${currentGame.url}?player=${myUser.id}`; }, 800);
         }
     });
-};
+}
 
 window.cancelWaiting = () => {
     if (roomListener) roomListener();
@@ -276,45 +319,13 @@ window.cancelWaiting = () => {
 };
 
 window.logout = () => { localStorage.removeItem('myUser'); location.reload(); };
-
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 }
-
-function startApp() {
-    renderGames();
-    showScreen('screen-games');
-    const greeting = document.getElementById('greeting');
-    greeting.textContent = `היי ${myUser.name}, מה נשחק?`;
-
-    if (myUser.id.includes('emma')) {
-        greeting.style.background = 'linear-gradient(135deg, #FF5C7A, #FFB2C1)';
-    } else if (myUser.id.includes('rif')) {
-        greeting.style.background = 'linear-gradient(135deg, #4DB8FF, #B2E2FF)';
-    } else {
-        greeting.style.background = 'linear-gradient(135deg, #3DD68C, #A8F0D0)';
-    }
-    greeting.style.webkitBackgroundClip = 'text';
-    greeting.style.webkitTextFillColor = 'transparent';
-    greeting.style.display = 'block';
-}
-
 window.onload = () => {
     const saved = localStorage.getItem('myUser');
     if (saved) { myUser = JSON.parse(saved); startApp(); }
-    const picker = document.getElementById('emoji-picker');
-    ['🦊', '🐯', '🐸', '🐼', '🤖', '👾', '🦄', '🐲'].forEach(e => {
-        const d = document.createElement('div');
-        d.style.fontSize = '2rem'; d.style.cursor = 'pointer'; d.style.textAlign = 'center';
-        d.textContent = e;
-        d.onclick = () => { 
-            myUserEmoji = e; 
-            Array.from(picker.children).forEach(c => c.style.background = 'none');
-            d.style.background = 'rgba(255,255,255,0.1)'; 
-        };
-        picker.appendChild(d);
-    });
 };
 </script>
 </body>
