@@ -7,11 +7,13 @@
 <title>משחקי אמה וריף</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Heebo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
+    /* איפוס והגדרות בסיס */
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    
     :root {
       --bg: #0F1320;
-      --surface: rgba(24, 29, 46, 0.4);
-      --surface2: rgba(33, 40, 64, 0.6);
+      --surface: rgba(24, 29, 46, 0.45);
+      --surface2: rgba(33, 40, 64, 0.7);
       --border: rgba(255, 255, 255, 0.1);
       --emma: #FF5C7A;
       --rif: #4DB8FF;
@@ -20,137 +22,99 @@
       --dim: #6B7299;
       --gold: #F5C842;
     }
-    html, body { height:100%; background: var(--bg); color: var(--text); font-family: 'Heebo', sans-serif; overflow:hidden; }
-    
-    body::before {
-      content: ''; position: fixed; inset: 0;
-      background: radial-gradient(circle at 15% 15%, rgba(255, 92, 122, 0.08) 0%, transparent 40%),
-                  radial-gradient(circle at 85% 85%, rgba(77, 184, 255, 0.08) 0%, transparent 40%);
-      animation: backgroundShift 8s infinite alternate ease-in-out;
-      z-index: -1;
-    }
-    @keyframes backgroundShift { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
 
-    .background-watermarks {
-        position: fixed; inset: 0;
-        z-index: -1; pointer-events: none;
-        opacity: 0.015; 
-        font-size: 8rem;
+    html, body { height:100%; width:100%; background: var(--bg); color: var(--text); font-family: 'Heebo', sans-serif; overflow:hidden; }
+
+    /* רקע ואלמנטים צפים */
+    .background-elements { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+    
+    .stars {
+        position: absolute; inset: 0;
+        background-image: 
+            radial-gradient(1.5px 1.5px at 20px 30px, #fff, rgba(0,0,0,0)),
+            radial-gradient(1.2px 1.2px at 80px 120px, #fff, rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 150px 40px, #fff, rgba(0,0,0,0)),
+            radial-gradient(1px 1px at 250px 180px, #fff, rgba(0,0,0,0)),
+            radial-gradient(1.5px 1.5px at 110px 210px, #fff, rgba(0,0,0,0));
+        background-size: 300px 300px;
+        opacity: 0.18;
+        animation: starsMove 100s linear infinite;
     }
-    .watermark { position: absolute; animation: floatAround 20s infinite linear; }
-    .watermark:nth-child(1) { top: 10%; left: 10%; animation-duration: 25s; }
-    .watermark:nth-child(2) { top: 60%; left: 80%; animation-duration: 30s; animation-delay: -5s; }
-    .watermark:nth-child(3) { top: 80%; left: 20%; animation-duration: 22s; animation-delay: -10s; }
+    @keyframes starsMove { from { background-position: 0 0; } to { background-position: 0 1000px; } }
+
+    .watermark { 
+        position: absolute; opacity: 0.12; filter: grayscale(1) brightness(1.8); 
+        font-size: 9rem; animation: floatAround 30s infinite ease-in-out; 
+    }
+    .watermark:nth-child(2) { top: 10%; left: 10%; }
+    .watermark:nth-child(3) { top: 55%; left: 75%; animation-delay: -5s; }
+    .watermark:nth-child(4) { top: 85%; left: 15%; animation-delay: -10s; }
     
     @keyframes floatAround {
-        0% { transform: translate(0, 0) rotate(0deg); }
-        25% { transform: translate(20px, 10px) rotate(5deg); }
-        50% { transform: translate(0, 20px) rotate(0deg); }
-        75% { transform: translate(-20px, 10px) rotate(-5deg); }
-        100% { transform: translate(0, 0) rotate(0deg); }
+        0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+        33% { transform: translate(30px, -40px) rotate(15deg) scale(1.1); }
+        66% { transform: translate(-20px, 20px) rotate(-10deg) scale(0.95); }
     }
 
-    .screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; padding:20px; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-    .screen.active { display:flex; animation: fadeIn 0.5s ease-out; }
-    @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+    /* מבנה מסכים */
+    .screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; padding:20px; }
+    .screen.active { display:flex; animation: fadeIn 0.4s ease-out forwards; }
+    @keyframes fadeIn { from { opacity:0; transform: scale(0.98); } to { opacity:1; transform: scale(1); } }
 
-    h1 { font-family: 'Fredoka One', cursive; font-size: 2.8rem; margin-bottom: 25px; background: linear-gradient(135deg, #FF5C7A, #4DB8FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    h1 { font-family: 'Fredoka One', cursive; font-size: 3rem; margin-bottom: 30px; background: linear-gradient(135deg, #FF5C7A, #4DB8FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     
-    /* עדכון סעיף 5: אנימציית קפיץ לכפתורי משתמש בלחיצה */
-    @keyframes btnPressBounce {
-        0% { transform: scale(1); }
-        30% { transform: scale(0.92); }
-        100% { transform: scale(1); }
-    }
-    
+    /* כפתורי משתמשים - הקטנה ופרופורציות */
     .user-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; width: 100%; max-width: 400px; }
     .user-btn { 
-        background: var(--surface); 
-        border: 2px solid var(--border); 
-        border-top: 2px solid rgba(255, 255, 255, 0.2); 
-        border-radius: 24px; 
-        padding: 25px 15px; 
-        cursor: pointer; 
-        transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* מעבר חלק לקפיץ */
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-        gap: 10px; 
-        color: white; 
-        backdrop-filter: blur(10px); 
-        -webkit-backdrop-filter: blur(10px); 
+        background: var(--surface); border: 2px solid var(--border); border-top: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 28px; padding: 25px 15px; /* הקטנה */
+        cursor: pointer; transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
+        display: flex; flex-direction: column; align-items: center; gap: 12px; color: white; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); 
     }
-    .user-btn:active { animation: btnPressBounce 0.2s linear forwards; } /* הפעלת האנימציה בלחיצה */
-    .user-btn.emma { border-color: var(--emma); border-top-color: rgba(255, 255, 255, 0.3); } 
-    .user-btn.rif { border-color: var(--rif); border-top-color: rgba(255, 255, 255, 0.3); } 
-    .user-btn i { font-size: 3.5rem; font-style: normal; }
+    .user-btn:active { animation: bounce 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .user-btn.emma { border-color: var(--emma); } 
+    .user-btn.rif { border-color: var(--rif); } 
+    .user-btn i { font-size: 3.5rem; /* הקטנה */ font-style: normal; }
+    .user-btn span { font-weight: 800; font-size: 1.2rem; }
 
-    #guest-setup { display: none; background: var(--surface2); border: 2px solid var(--guest); border-radius: 24px; padding: 20px; width: 100%; max-width: 400px; margin-top: 20px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+    @keyframes bounce { 0% { transform: scale(1); } 50% { transform: scale(0.92); } 100% { transform: scale(1); } }
 
-    .game-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; max-width: 500px; padding: 5px; }
-    
-    /* עדכון סעיף 5: אנימציית קפיץ לכפתורי משחקים בלחיצה */
+    /* גריד משחקים - הקטנה */
+    .game-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; max-width: 500px; }
     .game-card { 
-        background: var(--surface); 
-        border: 1px solid var(--border); 
-        border-top: 1px solid rgba(255, 255, 255, 0.2); 
-        border-radius: 20px; 
-        padding: 15px 10px; 
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-        gap: 8px; 
-        cursor: pointer; 
-        transition: 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* מעבר חלק לקפיץ */
-        backdrop-filter: blur(10px); 
-        -webkit-backdrop-filter: blur(10px); 
-        
-        opacity: 0; 
-        transform: translateY(20px); 
-        animation: cardPopIn 0.4s ease-out forwards; 
+        background: var(--surface); border: 1px solid var(--border); border-top: 1px solid rgba(255, 255, 255, 0.2); 
+        border-radius: 24px; padding: 18px 10px; /* הקטנה */
+        display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; 
+        transition: 0.2s ease; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); opacity: 0; transform: translateY(20px); 
     }
-    
-    @keyframes cardPopIn {
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .game-card:active { animation: btnPressBounce 0.2s linear forwards; } /* הפעלת האנימציה בלחיצה */
-    .game-card i { font-size: 2.2rem; font-style: normal; }
-    .game-card span { font-weight: 700; font-size: 0.95rem; }
+    .game-card.animate { animation: cardSlideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    @keyframes cardSlideUp { to { opacity: 1; transform: translateY(0); } }
+    .game-card:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
+    .game-card.soon { opacity: 0.5; cursor: default; }
+    .game-card i { font-size: 2.2rem; /* הקטנה */ font-style: normal; }
+    .game-card span { font-weight: 700; font-size: 1rem; }
 
-    .waiting-box { background: var(--surface2); border: 2px solid var(--border); border-radius: 30px; padding: 40px 20px; width: 100%; max-width: 400px; text-align: center; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-    .slots { display: flex; justify-content: center; gap: 20px; margin: 30px 0; }
-    .p-slot { width: 85px; height: 85px; border-radius: 50%; border: 3px dashed var(--dim); display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); }
-    .p-slot.active { border-style: solid; background: rgba(255,255,255,0.08); }
-    
-    .loader { width: 16px; height: 16px; border: 2px solid var(--gold); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    /* המתנה */
+    .waiting-box { background: var(--surface2); border: 2px solid var(--border); border-radius: 32px; padding: 40px 20px; width: 100%; max-width: 380px; text-align: center; backdrop-filter: blur(20px); }
+    .slots { display: flex; justify-content: center; gap: 25px; margin: 30px 0; }
+    .p-slot { width: 90px; height: 90px; border-radius: 50%; border: 3px dashed var(--dim); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .p-slot.active { border-style: solid; transform: scale(1.1); background: rgba(255,255,255,0.05); }
+    .loader { width: 20px; height: 20px; border: 3px solid var(--gold); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .btn-main { background: var(--guest); color: #0F1320; padding: 12px 30px; border-radius: 15px; border: none; font-weight: 900; cursor: pointer; width: 100%; font-size: 1.1rem; }
-    
-    /* סעיף 5: אנימציית קפיץ גם לכפתורים המשניים */
-    .btn-cancel { 
-        background: rgba(255,255,255,0.05); 
-        border: 1px solid var(--border); 
-        color: #ff6b6b; 
-        padding: 10px 25px; 
-        border-radius: 15px; 
-        margin-top: 20px; 
-        cursor: pointer; 
-        font-weight: bold; 
-        transition: 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .btn-cancel:active { animation: btnPressBounce 0.2s linear forwards; }
-    .btn-main:active { animation: btnPressBounce 0.2s linear forwards; }
-
+    /* כפתורים וטפסים */
+    .btn-main { background: var(--guest); color: #0F1320; padding: 15px; border-radius: 18px; border: none; font-weight: 900; cursor: pointer; width: 100%; font-size: 1.1rem; }
+    .btn-cancel { background: transparent; color: var(--dim); border: none; margin-top: 25px; cursor: pointer; font-size: 0.9rem; font-weight: 600; text-decoration: underline; }
+    input { width:100%; padding:15px; border-radius:15px; border:1px solid var(--border); background:rgba(0,0,0,0.3); color:white; margin-bottom:15px; text-align:center; }
 </style>
 </head>
 <body>
 
-<div class="background-watermarks">
+<div class="background-elements">
+    <div class="stars"></div>
     <div class="watermark">🎮</div>
     <div class="watermark">🎲</div>
-    <div class="watermark">🎮</div>
+    <div class="watermark">🕹️</div>
 </div>
 
 <div id="screen-login" class="screen active">
@@ -166,30 +130,26 @@
       <i>👤</i><span>שחקן אורח</span>
     </button>
   </div>
-
-  <div id="guest-setup">
-    <input type="text" id="guest-name-input" class="guest-input" style="width:100%; padding:12px; border-radius:12px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:white; margin-bottom:15px; text-align:center;" placeholder="איך קוראים לך?">
-    <div id="emoji-picker" style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:15px;"></div>
-    <button class="btn-main" onclick="confirmGuest()">יאללה למשחקים!</button>
+  <div id="guest-setup" style="display:none; width:100%; max-width:400px;">
+    <input type="text" id="guest-name-input" placeholder="איך קוראים לך?">
+    <div id="emoji-picker" style="display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin-bottom:20px;"></div>
+    <button class="btn-main" onclick="confirmGuest()">הצטרף</button>
+    <button class="btn-cancel" onclick="location.reload()">חזור</button>
   </div>
 </div>
 
 <div id="screen-games" class="screen">
-  <h2 id="greeting" style="margin-bottom: 20px; font-weight: 800;">היי, מה נשחק?</h2>
-  <div class="game-grid" id="game-list-container">
-    </div>
-  <button class="btn-cancel" onclick="logout()" style="color: var(--dim); border: none; margin-top: 20px;">החלף משתמש</button>
+  <h2 id="greeting" style="margin-bottom: 25px; font-weight: 900;"></h2>
+  <div class="game-grid" id="game-list-container"></div>
+  <button class="btn-cancel" onclick="logout()">החלף משתמש</button>
 </div>
 
 <div id="screen-waiting" class="screen">
   <div class="waiting-box">
-    <div id="wait-game-icon" style="font-size: 3.5rem; margin-bottom: 10px;"></div>
-    <h3 id="wait-game-name"></h3>
+    <div id="wait-game-icon" style="font-size: 4rem; margin-bottom: 15px;"></div>
+    <h3 id="wait-game-name" style="font-size: 1.5rem;"></h3>
     <div class="slots"><div id="slot-0" class="p-slot"></div><div id="slot-1" class="p-slot"></div></div>
-    <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
-        <div class="loader"></div>
-        <div id="wait-status-msg">מחכים לחבר שיצטרף...</div>
-    </div>
+    <div style="display:flex; align-items:center; justify-content:center; gap:12px;"><div class="loader"></div><div>מחפשים חבר...</div></div>
     <button class="btn-cancel" onclick="cancelWaiting()">ביטול</button>
   </div>
 </div>
@@ -214,6 +174,7 @@ const db = getDatabase(app);
 let myUser = null;
 let currentGame = null;
 let roomListener = null;
+let myUserEmoji = '👤';
 
 const games = [
     { id: 'xo', name: 'איקס עיגול', url: 'X_O.html', icon: '❌', guest: true },
@@ -229,49 +190,45 @@ function renderGames() {
     const container = document.getElementById('game-list-container');
     container.innerHTML = '';
     const isGuest = myUser && myUser.id.startsWith('guest_');
+    let displayedCount = 0;
 
-    let cardCount = 0;
-
-    games.forEach(game => {
+    games.forEach((game) => {
         if (isGuest && !game.guest) return; 
-        
         const card = document.createElement('div');
-        card.className = 'game-card';
+        card.className = 'game-card animate';
+        card.style.animationDelay = `${displayedCount * 0.1}s`;
         card.onclick = () => window.joinGame(game.id);
         card.innerHTML = `<i>${game.icon}</i><span>${game.name}</span>`;
-        
-        card.style.animationDelay = `${cardCount * 0.08}s`; 
-        cardCount++;
-        
         container.appendChild(card);
+        displayedCount++;
     });
 
-    const soon = document.createElement('div');
-    soon.className = 'game-card';
-    soon.style.opacity = '0.5';
-    soon.style.cursor = 'default';
-    soon.innerHTML = `<i>🚀</i><span>בקרוב...</span>`;
-    soon.style.animationDelay = `${cardCount * 0.08}s`;
-    
-    container.appendChild(soon);
+    // הוספת קלף "בקרוב" בסוף
+    const soonCard = document.createElement('div');
+    soonCard.className = 'game-card animate soon';
+    soonCard.style.animationDelay = `${displayedCount * 0.1}s`;
+    soonCard.innerHTML = `<i>🚀</i><span>בקרוב...</span>`;
+    container.appendChild(soonCard);
 }
 
 window.selectUser = (id, name, emoji, color) => {
     myUser = { id: id + '_' + Math.floor(Math.random()*1000), name, emoji, color };
     localStorage.setItem('myUser', JSON.stringify(myUser));
-    renderGames(); 
-    showScreen('screen-games');
-    document.getElementById('greeting').textContent = `היי ${name}, מה נשחק?`;
+    startApp();
 };
 
 window.confirmGuest = () => {
     const name = document.getElementById('guest-name-input').value.trim() || "אורח";
-    window.selectUser('guest', name, '👤', '#3DD68C');
+    window.selectUser('guest', name, myUserEmoji, '#3DD68C');
+};
+
+window.toggleGuestSetup = () => {
+    document.getElementById('main-user-grid').style.display = 'none';
+    document.getElementById('guest-setup').style.display = 'block';
 };
 
 window.joinGame = (gameId) => {
     const game = games.find(g => g.id === gameId);
-    if(!game) return;
     currentGame = game;
     document.getElementById('wait-game-icon').textContent = game.icon;
     document.getElementById('wait-game-name').textContent = game.name;
@@ -279,7 +236,6 @@ window.joinGame = (gameId) => {
 
     const roomRef = ref(db, `rooms_v3/${gameId}`);
     const myPlayerRef = ref(db, `rooms_v3/${gameId}/${myUser.id}`);
-    
     set(myPlayerRef, { name: myUser.name, emoji: myUser.emoji, color: myUser.color });
     onDisconnect(myPlayerRef).remove();
 
@@ -290,19 +246,16 @@ window.joinGame = (gameId) => {
             if (players[i]) {
                 slot.className = 'p-slot active';
                 slot.style.borderColor = players[i].color;
-                slot.innerHTML = `<div style="font-size:2rem">${players[i].emoji}</div><div style="font-size:0.7rem;font-weight:bold">${players[i].name}</div>`;
+                slot.innerHTML = `<div style="font-size:2.2rem">${players[i].emoji}</div><div style="font-size:0.8rem;font-weight:900">${players[i].name}</div>`;
             } else {
-                slot.className = 'p-slot';
-                slot.style.borderColor = '';
-                slot.innerHTML = '';
+                slot.className = 'p-slot'; slot.style.borderColor = ''; slot.innerHTML = '';
             }
         });
-
         if (players.length >= 2) {
             setTimeout(() => { 
                 if (roomListener) roomListener();
                 window.location.href = `${currentGame.url}?player=${myUser.id}`; 
-            }, 1200);
+            }, 1000);
         }
     });
 };
@@ -314,34 +267,34 @@ window.cancelWaiting = () => {
 };
 
 window.logout = () => { localStorage.removeItem('myUser'); location.reload(); };
-window.toggleGuestSetup = () => {
-    document.getElementById('main-user-grid').style.display = 'none';
-    document.getElementById('guest-setup').style.display = 'block';
-};
 
 function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 }
 
+function startApp() {
+    renderGames();
+    showScreen('screen-games');
+    document.getElementById('greeting').textContent = `היי ${myUser.name}, מה נשחק?`;
+}
+
 window.onload = () => {
     const saved = localStorage.getItem('myUser');
-    if (saved) {
-        myUser = JSON.parse(saved);
-        renderGames();
-        showScreen('screen-games');
-        document.getElementById('greeting').textContent = `היי ${myUser.name}, מה נשחק?`;
-    }
+    if (saved) { myUser = JSON.parse(saved); startApp(); }
     const picker = document.getElementById('emoji-picker');
     ['🦊', '🐯', '🐸', '🐼', '🤖', '👾', '🦄', '🐲'].forEach(e => {
         const d = document.createElement('div');
         d.style.fontSize = '2rem'; d.style.cursor = 'pointer'; d.style.textAlign = 'center';
         d.textContent = e;
-        d.onclick = () => { myUserEmoji = e; d.style.background = 'rgba(255,255,255,0.1)'; };
+        d.onclick = () => { 
+            myUserEmoji = e; 
+            Array.from(picker.children).forEach(c => c.style.background = 'none');
+            d.style.background = 'rgba(255,255,255,0.1)'; 
+        };
         picker.appendChild(d);
     });
 };
-let myUserEmoji = '👤';
 </script>
 </body>
 </html>
