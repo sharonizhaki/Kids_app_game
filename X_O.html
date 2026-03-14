@@ -20,6 +20,7 @@
     .x-card .player-name { color: #ff6b6b; }
     .o-card .player-name { color: #4ecdc4; }
     .score-value { font-size: 2.2rem; font-weight: 900; color: #e2e8f0; margin-top: 0.3rem; }
+    
     .draw-card { display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); border: 1.5px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 0.5rem; }
     .draw-label { font-size: 0.7rem; color: #4a5568; }
     .draw-value { font-size: 1.5rem; font-weight: 700; color: #718096; }
@@ -70,7 +71,7 @@
   <h1>✕ ◯</h1>
   <div class="scoreboard">
     <div class="score-card x-card" id="card-x">
-      <div class="player-name" id="name-x">ממתין...</div>
+      <div class="player-name" id="name-x">שחקן 1</div>
       <div class="score-value" id="score-x">0</div>
     </div>
     <div class="draw-card">
@@ -78,12 +79,12 @@
       <div class="draw-value" id="score-draw">0</div>
     </div>
     <div class="score-card o-card" id="card-o">
-      <div class="player-name" id="name-o">ממתין...</div>
+      <div class="player-name" id="name-o">שחקן 2</div>
       <div class="score-value" id="score-o">0</div>
     </div>
   </div>
   <div class="turn-bar">
-    <div id="turn-text" class="turn-text">מתחבר...</div>
+    <div id="turn-text" class="turn-text">טוען נתונים...</div>
   </div>
   <div class="board" id="board">
     <div class="cell" data-index="0"></div><div class="cell" data-index="1"></div><div class="cell" data-index="2"></div>
@@ -116,7 +117,7 @@ const gameRef = ref(db, 'game/xo');
 const roomRef = ref(db, 'rooms_v3/xo');
 
 const params = new URLSearchParams(location.search);
-const myPlayerId = params.get('player');
+const myPlayerId = params.get('player') || 'guest_' + Math.floor(Math.random()*1000);
 const isViewer = params.get('view') === 'true';
 
 let mySymbol = null; 
@@ -124,7 +125,7 @@ let board = Array(9).fill(null);
 let currentPlayer = 'X';
 let gameOver = false;
 let scores = { X: 0, O: 0, draw: 0 };
-let playersNames = { X: 'ממתין...', O: 'ממתין...' };
+let playersNames = { X: 'שחקן 1', O: 'שחקן 2' };
 let isExiting = false;
 
 const cells = document.querySelectorAll('.cell');
@@ -133,43 +134,37 @@ const turnText = document.getElementById('turn-text');
 async function initGame() {
     if (isViewer) document.getElementById('viewer-tag').style.display = 'block';
 
-    // שלב 1: זיהוי השחקן והשמות
+    // 1. האזנה לשמות בחדר
     onValue(roomRef, (snap) => {
         const data = snap.val() || {};
         const ids = Object.keys(data);
         
-        // הגדרת סמל (X או O) - רק אם עדיין לא הוגדר
+        // זיהוי סמל - אם אני בחדר, אני מקבל X או O. אם אני לבד, אני X.
         if (!isViewer && !mySymbol) {
-            if (ids[0] === myPlayerId) mySymbol = 'X';
-            else if (ids[1] === myPlayerId) mySymbol = 'O';
+            if (ids.length === 0 || ids[0] === myPlayerId) mySymbol = 'X';
+            else if (ids[1] === myPlayerId || ids.length >= 1) mySymbol = 'O';
             
-            if (mySymbol) {
-                onDisconnect(ref(db, `rooms_v3/xo/${myPlayerId}`)).remove();
-            }
+            if (mySymbol) onDisconnect(ref(db, `rooms_v3/xo/${myPlayerId}`)).remove();
         }
 
-        // עדכון שמות תצוגה
-        if (ids[0]) playersNames.X = data[ids[0]].name + ' ' + (data[ids[0]].emoji || '');
-        if (ids[1]) playersNames.O = data[ids[1]].name + ' ' + (data[ids[1]].emoji || '');
-        
+        if (ids[0]) playersNames.X = data[ids[0]].name || 'שחקן 1';
+        if (ids[1]) playersNames.O = data[ids[1]].name || 'שחקן 2';
         renderUI();
     });
 
-    // שלב 2: איפוס המשחק אם נכנסים ראשונים
-    const roomSnap = await get(roomRef);
-    const playersInRoom = Object.keys(roomSnap.val() || {});
-    if (playersInRoom.length <= 1 && !isViewer) {
+    // 2. בדיקה אם לאתחל את המשחק ב-Firebase
+    const gameSnap = await get(gameRef);
+    if (!gameSnap.exists()) {
         await resetFullGame();
     }
 
-    // שלב 3: האזנה למצב הלוח
+    // 3. האזנה לשינויים בלוח
     onValue(gameRef, (snap) => {
         const data = snap.val();
         if (!data || isExiting) return;
 
         if (data.exitToHome) {
             isExiting = true;
-            document.getElementById('exit-msg').textContent = `${data.leaver || "השחקן"} עזב את המשחק.`;
             document.getElementById('exit-modal').classList.add('active');
             return;
         }
@@ -185,22 +180,21 @@ async function initGame() {
 }
 
 async function resetFullGame() {
-    scores = { X: 0, O: 0, draw: 0 };
     await set(gameRef, {
         board: Array(9).fill(''),
         currentPlayer: 'X',
         gameOver: false,
         winCombo: null,
-        scores: scores,
+        scores: { X: 0, O: 0, draw: 0 },
         exitToHome: false,
         ts: Date.now()
     });
 }
 
 function handleClick(e) {
-    if (isViewer || gameOver || isExiting || !mySymbol) return;
+    if (isViewer || gameOver || !mySymbol || currentPlayer !== mySymbol) return;
     const idx = parseInt(e.currentTarget.dataset.index);
-    if (board[idx] || currentPlayer !== mySymbol) return;
+    if (board[idx]) return;
 
     board[idx] = currentPlayer;
     const win = checkWin();
@@ -210,11 +204,9 @@ function handleClick(e) {
     if (win) newScores[currentPlayer]++;
     else if (isDraw) newScores.draw++;
 
-    const nextPlayer = (win || isDraw) ? currentPlayer : (currentPlayer === 'X' ? 'O' : 'X');
-    
     update(gameRef, {
         board: board.map(v => v || ''),
-        currentPlayer: nextPlayer,
+        currentPlayer: (win || isDraw) ? currentPlayer : (currentPlayer === 'X' ? 'O' : 'X'),
         gameOver: win || isDraw,
         winCombo: win,
         scores: newScores,
@@ -248,14 +240,14 @@ function renderUI() {
     document.getElementById('card-o').classList.toggle('active', currentPlayer === 'O');
 
     if (gameOver) {
-        const cleanName = playersNames[currentPlayer].split(' ')[0];
-        turnText.innerHTML = checkWin() ? `🏆 ${cleanName} ניצח/ה!` : `🤝 תיקו!`;
+        const winner = playersNames[currentPlayer];
+        turnText.innerHTML = checkWin() ? `🏆 ${winner} ניצח/ה!` : `🤝 תיקו!`;
     } else {
-        const currentCleanName = playersNames[currentPlayer].split(' ')[0];
         if (!mySymbol && !isViewer) {
             turnText.innerHTML = "מתחבר...";
         } else {
-            turnText.innerHTML = (currentPlayer === mySymbol) ? "תורך לשחק!" : `תור ${currentCleanName}...`;
+            const currentTurnName = playersNames[currentPlayer];
+            turnText.innerHTML = (currentPlayer === mySymbol) ? "תורך לשחק!" : `תור ${currentTurnName}...`;
         }
     }
 }
@@ -266,12 +258,9 @@ function highlightWin(combo) {
 
 window.goHome = async () => {
     isExiting = true;
-    const myName = playersNames[mySymbol] ? playersNames[mySymbol].split(' ')[0] : "מישהו";
     await remove(ref(db, `rooms_v3/xo/${myPlayerId}`)); 
     const roomSnap = await get(roomRef);
-    if (!roomSnap.exists()) {
-        await update(gameRef, { exitToHome: true, leaver: myName, ts: Date.now() });
-    }
+    if (!roomSnap.exists()) await update(gameRef, { exitToHome: true, ts: Date.now() });
     window.location.href = 'index.html?screen=games';
 };
 
@@ -281,7 +270,7 @@ window.restartGame = () => {
     if (isViewer) return;
     update(gameRef, {
         board: Array(9).fill(''),
-        currentPlayer: currentPlayer === 'X' ? 'O' : 'X',
+        currentPlayer: 'X',
         gameOver: false,
         winCombo: null,
         ts: Date.now()
