@@ -63,6 +63,7 @@ html, body {
   background: var(--surface); cursor: pointer; color: var(--text); 
   transition: 0.2s;
 }
+.btn-player:active { transform: scale(0.95); }
 
 /* ===== GUEST MODAL ===== */
 #modal-guest { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 100; padding: 20px; }
@@ -75,18 +76,19 @@ html, body {
 .game-card { 
     background: var(--surface); border-radius: 20px; 
     padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; 
-    transition: 0.3s; position: relative;
+    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;
     border: 1.5px solid var(--border);
 }
-.game-card.someone-waiting { border-color: var(--gold) !important; box-shadow: 0 0 15px rgba(245, 200, 66, 0.2); }
+.game-card.someone-waiting { border-color: var(--gold) !important; box-shadow: 0 0 15px rgba(245, 200, 66, 0.15); }
 .game-icon { font-size: 1.8rem; width: 50px; height: 50px; background: var(--surface2); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
 .game-name { font-family: 'Fredoka One'; font-size: 1.1rem; }
 .game-desc { font-size: 0.75rem; color: var(--dim); }
 .presence-tag {
     position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
-    background: rgba(245, 200, 66, 0.2); padding: 5px 12px; border-radius: 20px;
+    background: rgba(245, 200, 66, 0.15); padding: 5px 12px; border-radius: 20px;
     display: flex; align-items: center; gap: 6px; border: 1px solid var(--gold);
     font-size: 0.75rem; font-weight: 800; color: var(--gold);
+    backdrop-filter: blur(4px);
 }
 
 /* ===== WAITING ROOM ===== */
@@ -95,6 +97,9 @@ html, body {
 .p-slot.active { border-color: var(--gold); }
 .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.fade-in { animation: fadeUp 0.4s ease forwards; opacity: 0; }
+@keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
 </style>
 </head>
 <body>
@@ -103,13 +108,13 @@ html, body {
 
 <div id="screen-player" class="screen active">
   <div class="platform-header">
-    <div class="platform-title">משחקי אמה וריף</div>
+    <div class="platform-title fade-in">משחקי אמה וריף</div>
     <div style="color:var(--dim); font-size: 1.1rem; margin-top: 5px;">מי משחק עכשיו?</div>
   </div>
   <div class="player-buttons">
-    <button class="btn-player glass" onclick="selectFixedPlayer('emma')" style="color: var(--emma);">👧 אמה</button>
-    <button class="btn-player glass" onclick="selectFixedPlayer('rif')" style="color: var(--rif);">👦 ריף</button>
-    <button class="btn-player glass" onclick="openGuestModal()" style="color: var(--guest); border-style: dashed; margin-top: 10px;">✨ אורח</button>
+    <button class="btn-player glass fade-in" onclick="selectFixedPlayer('emma')" style="color: var(--emma);">👧 אמה</button>
+    <button class="btn-player glass fade-in" onclick="selectFixedPlayer('rif')" style="color: var(--rif);">👦 ריף</button>
+    <button class="btn-player glass fade-in" onclick="openGuestModal()" style="color: var(--guest); border-style: dashed; margin-top: 10px;">✨ אורח</button>
   </div>
 </div>
 
@@ -129,7 +134,7 @@ html, body {
 </div>
 
 <div id="screen-games" class="screen">
-  <div style="padding: 15px; border-bottom: 1px solid var(--border); display:flex; align-items:center; justify-content: space-between;">
+  <div style="padding: 15px; border-bottom: 1px solid var(--border); display:flex; align-items:center; justify-content: space-between; backdrop-filter: blur(10px);">
     <button onclick="location.reload()" style="background:var(--surface2); border:1px solid var(--border); color:white; border-radius:50%; width:35px; height:35px;">→</button>
     <div id="active-user-chip" class="glass" style="padding:5px 12px; border-radius:20px; font-size:0.9rem; border:1.5px solid var(--gold);"></div>
   </div>
@@ -182,7 +187,10 @@ let selectedEmoji = '🐱';
 const GAMES = [
   { id: 'car-race', name: 'מרוץ מכוניות', icon: '🏎️', url: 'car-race.html' },
   { id: 'draw-guess', name: 'ניחוש ציורים', icon: '🎨', url: 'draw-guess.html' },
+  { id: 'snakes-ladders', name: 'סולמות וגנבים', icon: '🐍', url: 'snakes-ladders.html' },
   { id: 'xo', name: 'איקס עיגול', icon: '✖️', url: 'X_O.html' },
+  { id: 'bingo', name: 'בינגו', icon: '🔢', url: 'bingo.html' },
+  { id: 'memory', name: 'משחק הזיכרון', icon: '🧠', url: 'memory.html' },
   { id: 'tasks', name: 'מטלות בית', icon: '🏠', url: 'tasks.html', restricted: true }
 ];
 
@@ -192,17 +200,20 @@ const ctx = canvas.getContext('2d');
 let particles = [];
 function initCanvas() {
     canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-    particles = Array.from({length:35}, () => ({
+    particles = Array.from({length:40}, () => ({
         x: Math.random()*canvas.width, y: Math.random()*canvas.height, 
-        size: Math.random()*2, speedX: (Math.random()-0.5)*0.3, speedY: (Math.random()-0.5)*0.3, opacity: Math.random()
+        size: Math.random()*2 + 0.5, speedX: (Math.random()-0.5)*0.3, speedY: (Math.random()-0.5)*0.3, 
+        opacity: Math.random(), fade: Math.random()*0.02 * (Math.random()>0.5?1:-1)
     }));
 }
 function animate() {
     ctx.clearRect(0,0,canvas.width, canvas.height);
     particles.forEach(p => {
         p.x+=p.speedX; p.y+=p.speedY;
+        p.opacity += p.fade;
+        if(p.opacity<=0.1 || p.opacity>=0.8) p.fade *= -1;
         if(p.x<0||p.x>canvas.width) p.speedX*=-1; if(p.y<0||p.y>canvas.height) p.speedY*=-1;
-        ctx.fillStyle=`rgba(150,160,255,${p.opacity})`; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle=`rgba(150,160,255,${Math.abs(p.opacity)})`; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
     });
     requestAnimationFrame(animate);
 }
@@ -246,7 +257,7 @@ function renderGames() {
             <div class="game-icon">${g.icon}</div>
             <div style="flex:1">
                 <div class="game-name">${g.name}</div>
-                <div class="game-desc" id="desc-${g.id}">לחץ לשחק</div>
+                <div class="game-desc" id="desc-${g.id}">${g.restricted ? 'אזור פרטי' : 'לחץ לשחק'}</div>
             </div>
             <div id="presence-${g.id}"></div>
         </div>
@@ -271,7 +282,7 @@ function listenToPresence() {
             } else {
                 badge.innerHTML = '';
                 card.classList.remove('someone-waiting');
-                desc.textContent = "לחץ לשחק";
+                desc.textContent = game.restricted ? 'אזור פרטי' : 'לחץ לשחק';
             }
         });
     });
