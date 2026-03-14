@@ -103,19 +103,15 @@ const cells = document.querySelectorAll('.cell');
 const turnText = document.getElementById('turn-text');
 
 async function initGame() {
-    // ניקוי דגלי יציאה ישנים מיד עם הכניסה
     await update(gameRef, { exitToHome: false });
-    
     const snap = await get(gameRef);
     const data = snap.val();
 
-    // אתחול משחק רק אם המידע לא תקין או ישן מאוד
     if (!data || !Array.isArray(data.board) || (Date.now() - data.ts > 600000)) {
         await resetGameState('X');
     } else {
         updateLocalState(data);
     }
-    
     renderUI();
     listenToGame();
 }
@@ -125,14 +121,17 @@ function listenToGame() {
         const data = snap.val();
         if (!data || isExiting) return;
 
-        // אם בוצע עדכון עם חותמת זמן ישנה יותר, התעלם ממנו
         if (lastTs && data.ts <= lastTs) return;
         lastTs = data.ts;
 
-        // בדיקה אם מישהו לחץ על כפתור הבית
         if (data.exitToHome) {
             isExiting = true;
-            window.location.href = 'index.html';
+            turnText.style.color = "#ffd700";
+            turnText.innerHTML = "🏠 חוזרים למסך המשחקים...";
+            // השהייה קצרה כדי שיראו את ההודעה לפני הניווט
+            setTimeout(() => {
+                window.location.href = 'index.html?screen=games';
+            }, 2500);
             return;
         }
 
@@ -179,7 +178,6 @@ function handleClick(e) {
     }
 
     const nextPlayer = (win || isDraw) ? currentPlayer : (currentPlayer === 'X' ? 'O' : 'X');
-    
     update(gameRef, {
         board: board.map(v => v || ''),
         currentPlayer: nextPlayer,
@@ -229,9 +227,9 @@ function highlightWin(combo) {
 
 window.goHome = async () => {
     isExiting = true;
-    // מעדכן את ה-Database שכולם צריכים לצאת
+    // מעדכן את כולם שיש יציאה
     await update(gameRef, { exitToHome: true, ts: Date.now() });
-    window.location.href = 'index.html';
+    window.location.href = 'index.html?screen=games';
 };
 
 window.restartGame = () => {
