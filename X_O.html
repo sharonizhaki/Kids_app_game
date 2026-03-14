@@ -5,47 +5,76 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>איקס עיגול - אמה וריף</title>
   <style>
-    /* ה-CSS נשאר זהה לגרסה האחרונה שאהבת */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0d1117; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
     body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 80% 60% at 20% 20%, rgba(255,107,107,0.12) 0%, transparent 60%), radial-gradient(ellipse 80% 60% at 80% 80%, rgba(78,205,196,0.12) 0%, transparent 60%); pointer-events: none; z-index: 0; }
     .container { position: relative; z-index: 1; text-align: center; padding: 1.5rem; max-width: 420px; width: 100%; }
     h1 { font-size: 2.8rem; font-weight: 900; letter-spacing: 3px; background: linear-gradient(135deg, #ff6b6b, #ffd700, #4ecdc4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.2rem; filter: drop-shadow(0 0 20px rgba(255,215,0,0.3)); }
+    
+    /* לוח תוצאות */
     .scoreboard { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.8rem; margin-bottom: 1.4rem; align-items: stretch; }
     .score-card { background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 0.8rem 0.6rem; transition: all 0.35s ease; position: relative; }
     .score-card.active { border-color: rgba(255,255,255,0.22); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
     .score-card.x-card.active { border-color: rgba(255,107,107,0.5); }
     .score-card.o-card.active { border-color: rgba(78,205,196,0.5); }
-    .player-name { font-size: 0.78rem; font-weight: 700; color: #fff; text-align: center; }
+    .player-name { font-size: 0.78rem; font-weight: 700; color: #fff; text-align: center; height: 1.2rem; overflow: hidden; }
     .x-card .player-name { color: #ff6b6b; }
     .o-card .player-name { color: #4ecdc4; }
     .score-value { font-size: 2.2rem; font-weight: 900; color: #e2e8f0; margin-top: 0.3rem; }
     .draw-card { display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); border: 1.5px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 0.5rem; }
     .draw-label { font-size: 0.7rem; color: #4a5568; }
     .draw-value { font-size: 1.5rem; font-weight: 700; color: #718096; }
+
+    /* בר תור */
     .turn-bar { display: flex; align-items: center; justify-content: center; gap: 10px; height: 2.4rem; margin-bottom: 1.2rem; }
     .turn-text { font-size: 1.1rem; font-weight: 700; color: #e2e8f0; }
+
+    /* לוח משחק */
     .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 312px; height: 312px; margin: 0 auto 1.4rem; }
     .cell { background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; height: 100px; }
     .cell svg { width: 52px; height: 52px; pointer-events: none; }
     .x-path { stroke: #ff6b6b; stroke-width: 5; stroke-linecap: round; fill: none; stroke-dasharray: 60; stroke-dashoffset: 60; animation: drawStroke 0.25s ease-out forwards; }
     .o-circle { stroke: #4ecdc4; stroke-width: 5; stroke-linecap: round; fill: none; stroke-dasharray: 163; stroke-dashoffset: 163; animation: drawStroke 0.35s ease-out forwards; }
     @keyframes drawStroke { to { stroke-dashoffset: 0; } }
+    .cell.winning { animation: winPulse 0.7s ease-in-out infinite alternate; }
+    @keyframes winPulse { from { background: rgba(255,215,0,0.08); transform: scale(1); } to { background: rgba(255,215,0,0.18); transform: scale(1.05); } }
+
+    /* כפתורים */
     .buttons { display: flex; gap: 0.8rem; justify-content: center; }
-    .btn { padding: 0.6rem 1.4rem; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; }
+    .btn { padding: 0.6rem 1.4rem; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 1rem; }
     .btn:active { transform: scale(0.95); }
     .btn-restart { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
     .btn-reset { background: rgba(255,255,255,0.07); color: #a0aec0; border: 1.5px solid rgba(255,255,255,0.12); }
-    .cell.winning { animation: winPulse 0.7s ease-in-out infinite alternate; }
-    @keyframes winPulse { from { background: rgba(255,215,0,0.08); transform: scale(1); } to { background: rgba(255,215,0,0.18); transform: scale(1.05); } }
+
+    /* מודאל הודעות מעוצב */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(5px); }
+    .modal-content { background: #1a1f26; border: 2px solid #ffd700; padding: 2.5rem 2rem; border-radius: 20px; text-align: center; max-width: 300px; width: 90%; box-shadow: 0 0 30px rgba(255,215,0,0.2); transform: scale(0.9); transition: 0.3s; }
+    .modal-overlay.active { display: flex; }
+    .modal-overlay.active .modal-content { transform: scale(1); }
+    .modal-title { color: #ffd700; font-size: 1.4rem; margin-bottom: 1rem; font-weight: 800; }
+    .modal-text { color: #e2e8f0; font-size: 1.1rem; margin-bottom: 2rem; line-height: 1.4; }
+    .btn-modal { background: #ffd700; color: #000; width: 100%; padding: 0.8rem; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; font-size: 1.1rem; }
+
+    .viewer-mode { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); background: #ffd700; color: #000; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.8rem; z-index: 100; display: none; }
   </style>
 </head>
 <body>
+
+<div id="viewer-tag" class="viewer-mode">👀 מצב צפייה</div>
+
+<div class="modal-overlay" id="exit-modal">
+  <div class="modal-content">
+    <div class="modal-title">המשחק הסתיים</div>
+    <div class="modal-text" id="exit-msg">מישהו עזב את החדר.</div>
+    <button class="btn-modal" onclick="confirmExit()">הבנתי, חזרה לבית</button>
+  </div>
+</div>
+
 <div class="container">
   <h1>✕ ◯</h1>
   <div class="scoreboard">
     <div class="score-card x-card" id="card-x">
-      <div class="player-name" id="name-x">טוען...</div>
+      <div class="player-name" id="name-x">ממתין...</div>
       <div class="score-value" id="score-x">0</div>
     </div>
     <div class="draw-card">
@@ -53,7 +82,7 @@
       <div class="draw-value" id="score-draw">0</div>
     </div>
     <div class="score-card o-card" id="card-o">
-      <div class="player-name" id="name-o">טוען...</div>
+      <div class="player-name" id="name-o">ממתין...</div>
       <div class="score-value" id="score-o">0</div>
     </div>
   </div>
@@ -66,14 +95,14 @@
     <div class="cell" data-index="6"></div><div class="cell" data-index="7"></div><div class="cell" data-index="8"></div>
   </div>
   <div class="buttons">
-    <button class="btn btn-restart" onclick="restartGame()">▶ חדש</button>
+    <button id="btn-restart" class="btn btn-restart" onclick="restartGame()">▶ חדש</button>
     <button class="btn btn-reset" onclick="goHome()">🏠 לבית</button>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, get, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, get, update, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
@@ -91,96 +120,102 @@ const gameRef = ref(db, 'game/xo');
 const roomRef = ref(db, 'rooms_v3/xo');
 
 const params = new URLSearchParams(location.search);
-const myPlayerId = params.get('player') || 'emma';
-const mySymbol = myPlayerId === 'emma' ? 'X' : 'O';
+const myPlayerId = params.get('player');
+const isViewer = params.get('view') === 'true';
 
+let mySymbol = null; 
 let board = Array(9).fill(null);
 let currentPlayer = 'X';
 let gameOver = false;
 let scores = { X: 0, O: 0, draw: 0 };
 let lastTs = null;
 let isExiting = false;
-let playersNames = { X: 'אמה', O: 'ריף' };
+let playersNames = { X: 'ממתין...', O: 'ממתין...' };
 
 const cells = document.querySelectorAll('.cell');
 const turnText = document.getElementById('turn-text');
+const exitModal = document.getElementById('exit-modal');
 
 async function initGame() {
-    await update(gameRef, { exitToHome: false });
-    
-    // שליפת שמות מעודכנים מהחדר
+    if (isViewer) {
+        document.getElementById('viewer-tag').style.display = 'block';
+        document.getElementById('btn-restart').style.display = 'none';
+    }
+
     const roomSnap = await get(roomRef);
+    let isFirstIn = false;
+
     if (roomSnap.exists()) {
         const roomData = roomSnap.val();
-        const playersArr = Object.values(roomData);
-        // השחקן הראשון שנכנס הוא תמיד X, השני הוא O
-        if (playersArr[0]) playersNames.X = playersArr[0].name;
-        if (playersArr[1]) playersNames.O = playersArr[1].name;
-    }
-
-    const snap = await get(gameRef);
-    const data = snap.val();
-
-    // איפוס נקודות רק אם המשחק ישן מאוד או לא קיים
-    if (!data || !Array.isArray(data.board) || (Date.now() - data.ts > 600000)) {
-        scores = { X: 0, O: 0, draw: 0 };
-        await resetGameState('X');
+        const playerIds = Object.keys(roomData);
+        if (!isViewer) {
+            if (playerIds[0] === myPlayerId) mySymbol = 'X';
+            else if (playerIds[1] === myPlayerId) mySymbol = 'O';
+            onDisconnect(ref(db, `rooms_v3/xo/${myPlayerId}`)).remove();
+        }
     } else {
-        updateLocalState(data);
+        if (!isViewer) isFirstIn = true;
     }
-    renderUI();
+
+    if (isFirstIn && !isViewer) {
+        await resetFullGame();
+    }
+
+    onValue(roomRef, (snap) => {
+        const roomData = snap.val();
+        if (roomData) {
+            const playersArr = Object.values(roomData);
+            if (playersArr[0]) playersNames.X = playersArr[0].name + ' ' + (playersArr[0].emoji || '');
+            if (playersArr[1]) playersNames.O = playersArr[1].name + ' ' + (playersArr[1].emoji || '');
+            renderUI();
+        }
+    });
+
     listenToGame();
+}
+
+async function resetFullGame() {
+    scores = { X: 0, O: 0, draw: 0 };
+    await set(gameRef, {
+        board: Array(9).fill(''),
+        currentPlayer: 'X',
+        gameOver: false,
+        winCombo: null,
+        scores: scores,
+        exitToHome: false,
+        ts: Date.now()
+    });
 }
 
 function listenToGame() {
     onValue(gameRef, (snap) => {
         const data = snap.val();
         if (!data || isExiting) return;
-
         if (lastTs && data.ts <= lastTs) return;
         lastTs = data.ts;
 
         if (data.exitToHome) {
             isExiting = true;
-            turnText.style.color = "#ffd700";
-            turnText.innerHTML = "🏠 חוזרים למסך המשחקים...";
-            setTimeout(() => {
-                window.location.href = 'index.html?screen=games';
-            }, 2000);
+            const leaverName = data.leaver || "השחקן השני";
+            document.getElementById('exit-msg').textContent = `${leaverName} עזב את המשחק.`;
+            exitModal.classList.add('active');
             return;
         }
 
-        updateLocalState(data);
+        if (data.board) board = data.board.map(v => v === '' ? null : v);
+        currentPlayer = data.currentPlayer || 'X';
+        gameOver = !!data.gameOver;
+        scores = data.scores || { X: 0, O: 0, draw: 0 };
+
         renderUI();
         if (data.winCombo) highlightWin(data.winCombo);
     });
 }
 
-function updateLocalState(data) {
-    if (data.board && Array.isArray(data.board)) {
-        board = data.board.map(v => (v === '' || v === null) ? null : v);
-    }
-    currentPlayer = data.currentPlayer || 'X';
-    gameOver = !!data.gameOver;
-    scores = data.scores || { X: 0, O: 0, draw: 0 };
-}
-
-async function resetGameState(starter) {
-    const initialState = {
-        board: Array(9).fill(''),
-        currentPlayer: starter,
-        gameOver: false,
-        winCombo: null,
-        scores: scores,
-        exitToHome: false,
-        ts: Date.now()
-    };
-    await set(gameRef, initialState);
-}
-
 function handleClick(e) {
+    if (isViewer || gameOver || isExiting) return;
     const idx = parseInt(e.currentTarget.dataset.index);
-    if (gameOver || board[idx] || currentPlayer !== mySymbol || isExiting) return;
+    if (board[idx] || currentPlayer !== mySymbol) return;
 
     board[idx] = currentPlayer;
     const win = checkWin();
@@ -219,22 +254,26 @@ function renderUI() {
         cell.classList.remove('winning');
     });
 
-    document.getElementById('name-x').textContent = `${playersNames.X} (X)`;
-    document.getElementById('name-o').textContent = `${playersNames.O} (O)`;
+    document.getElementById('name-x').textContent = playersNames.X;
+    document.getElementById('name-o').textContent = playersNames.O;
     document.getElementById('score-x').textContent = scores.X;
     document.getElementById('score-o').textContent = scores.O;
     document.getElementById('score-draw').textContent = scores.draw;
 
-    const currentName = playersNames[currentPlayer];
     document.getElementById('card-x').classList.toggle('active', currentPlayer === 'X');
     document.getElementById('card-o').classList.toggle('active', currentPlayer === 'O');
 
     if (gameOver) {
         const win = checkWin();
-        turnText.innerHTML = win ? `🏆 ${currentName} ניצח/ה!` : `🤝 תיקו!`;
+        const winnerName = playersNames[currentPlayer].split(' ')[0];
+        turnText.innerHTML = win ? `🏆 ${winnerName} ניצח/ה!` : `🤝 תיקו!`;
     } else {
-        turnText.style.color = "#e2e8f0";
-        turnText.innerHTML = currentPlayer === mySymbol ? "תורך לשחק!" : `תור ${currentName}...`;
+        const currentCleanName = playersNames[currentPlayer].split(' ')[0];
+        if (isViewer) {
+            turnText.innerHTML = `תור ${currentCleanName}...`;
+        } else {
+            turnText.innerHTML = currentPlayer === mySymbol ? "תורך לשחק!" : `תור ${currentCleanName}...`;
+        }
     }
 }
 
@@ -243,19 +282,34 @@ function highlightWin(combo) {
 }
 
 window.goHome = async () => {
+    if (isExiting) return;
     isExiting = true;
-    // איפוס חדר וניקוד ב-Firebase
-    await remove(roomRef); 
-    await update(gameRef, { 
-        exitToHome: true, 
-        ts: Date.now(),
-        scores: { X: 0, O: 0, draw: 0 } 
-    });
+    if (!isViewer) {
+        const myName = playersNames[mySymbol] ? playersNames[mySymbol].split(' ')[0] : "מישהו";
+        await remove(ref(db, `rooms_v3/xo/${myPlayerId}`)); 
+        const roomSnap = await get(roomRef);
+        
+        // אם החדר נשאר ריק או שיש בו רק אדם אחד, מעדכנים את מצב היציאה לאחרים
+        if (!roomSnap.exists() || Object.keys(roomSnap.val()).length < 2) {
+            await update(gameRef, { exitToHome: true, leaver: myName, ts: Date.now() });
+        }
+    }
+    window.location.href = 'index.html?screen=games';
+};
+
+window.confirmExit = () => {
     window.location.href = 'index.html?screen=games';
 };
 
 window.restartGame = () => {
-    resetGameState(currentPlayer === 'X' ? 'O' : 'X');
+    if (isViewer) return;
+    update(gameRef, {
+        board: Array(9).fill(''),
+        currentPlayer: currentPlayer === 'X' ? 'O' : 'X',
+        gameOver: false,
+        winCombo: null,
+        ts: Date.now()
+    });
 };
 
 cells.forEach(c => c.addEventListener('click', handleClick));
