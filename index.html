@@ -57,6 +57,7 @@ html, body {
 }
 
 .player-buttons { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 280px; align-items: center; }
+
 .btn-player {
   display: flex; align-items: center; justify-content: center; gap: 14px; 
   padding: 18px; width: 100%; border-radius: 20px; 
@@ -73,16 +74,23 @@ html, body {
 
 /* ===== GAME LIST ===== */
 .games-list { padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto; }
+
 .game-card { 
     background: var(--surface); border-radius: 20px; 
     padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; 
     transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;
     border: 1.5px solid var(--border);
 }
-.game-card.someone-waiting { border-color: var(--gold) !important; box-shadow: 0 0 15px rgba(245, 200, 66, 0.15); }
+
+.game-card.someone-waiting {
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 20px rgba(245, 200, 66, 0.15);
+}
+
 .game-icon { font-size: 1.8rem; width: 50px; height: 50px; background: var(--surface2); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
 .game-name { font-family: 'Fredoka One'; font-size: 1.1rem; }
 .game-desc { font-size: 0.75rem; color: var(--dim); }
+
 .presence-tag {
     position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
     background: rgba(245, 200, 66, 0.15); padding: 5px 12px; border-radius: 20px;
@@ -95,6 +103,7 @@ html, body {
 .waiting-card { background: var(--surface); border-radius: 24px; padding: 24px; width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 20px; }
 .p-slot { flex: 1; border-radius: 16px; border: 1.5px solid var(--border); background: var(--surface2); padding: 15px 5px; text-align: center; min-height: 100px; }
 .p-slot.active { border-color: var(--gold); }
+
 .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -159,7 +168,7 @@ html, body {
         </div>
     </div>
   </div>
-  <button onclick="cancelWaiting()" style="margin-bottom:40px; background:none; border:1px solid var(--border); color:var(--dim); padding:12px 30px; border-radius:25px; align-self:center; cursor:pointer;">ביטול</button>
+  <button onclick="cancelWaiting()" style="margin-bottom:40px; background:none; border:1px solid var(--border); color:var(--dim); padding:12px 30px; border-radius:25px; align-self:center; cursor:pointer;">חזרה לרשימה</button>
 </div>
 
 <script type="module">
@@ -185,9 +194,9 @@ let roomListener = null;
 let selectedEmoji = '🐱';
 
 const GAMES = [
-  { id: 'car-race', name: 'מרוץ מכוניות', icon: '🏎️', url: 'car-race.html' },
-  { id: 'draw-guess', name: 'ניחוש ציורים', icon: '🎨', url: 'draw-guess.html' },
-  { id: 'snakes-ladders', name: 'סולמות וגנבים', icon: '🐍', url: 'snakes-ladders.html' },
+  { id: 'car-race', name: 'מרוץ מכוניות', icon: '🏎️', url: 'Racing.html' },
+  { id: 'draw-guess', name: 'ניחוש ציורים משותף', icon: '🎨', url: 'drawing-guess.html' },
+  { id: 'snakes-ladders', name: 'סולמות ונחשים', icon: '🐍', url: 'snakes-ladders.html' },
   { id: 'xo', name: 'איקס עיגול', icon: '✖️', url: 'X_O.html' },
   { id: 'bingo', name: 'בינגו', icon: '🔢', url: 'bingo.html' },
   { id: 'memory', name: 'משחק הזיכרון', icon: '🧠', url: 'memory.html' },
@@ -202,7 +211,7 @@ function initCanvas() {
     canvas.width = window.innerWidth; canvas.height = window.innerHeight;
     particles = Array.from({length:40}, () => ({
         x: Math.random()*canvas.width, y: Math.random()*canvas.height, 
-        size: Math.random()*2 + 0.5, speedX: (Math.random()-0.5)*0.3, speedY: (Math.random()-0.5)*0.3, 
+        size: Math.random()*2 + 0.5, speedX: (Math.random()-0.5)*0.4, speedY: (Math.random()-0.5)*0.4, 
         opacity: Math.random(), fade: Math.random()*0.02 * (Math.random()>0.5?1:-1)
     }));
 }
@@ -219,7 +228,7 @@ function animate() {
 }
 initCanvas(); animate();
 
-// --- לוגיקת משתמשים ---
+// --- לוגיקה ---
 window.selectFixedPlayer = (type) => {
     myUser = type === 'emma' ? {id:'emma', name:'אמה', emoji:'👧', color:'#FF5C7A'} : {id:'rif', name:'ריף', emoji:'👦', color:'#4DB8FF'};
     startApp();
@@ -253,11 +262,11 @@ function startApp() {
 function renderGames() {
     const container = document.getElementById('games-container');
     container.innerHTML = GAMES.filter(g => !g.restricted || !myUser.isGuest).map(g => `
-        <div class="game-card glass" id="card-${g.id}" onclick="handleGameEntry('${g.id}')">
+        <div class="game-card glass fade-in" id="card-${g.id}" onclick="handleGameEntry('${g.id}')">
             <div class="game-icon">${g.icon}</div>
             <div style="flex:1">
                 <div class="game-name">${g.name}</div>
-                <div class="game-desc" id="desc-${g.id}">${g.restricted ? 'אזור פרטי' : 'לחץ לשחק'}</div>
+                <div class="game-desc" id="desc-${g.id}">${g.restricted ? 'אזור פרטי' : 'לחץ להתחלה'}</div>
             </div>
             <div id="presence-${g.id}"></div>
         </div>
@@ -282,7 +291,7 @@ function listenToPresence() {
             } else {
                 badge.innerHTML = '';
                 card.classList.remove('someone-waiting');
-                desc.textContent = game.restricted ? 'אזור פרטי' : 'לחץ לשחק';
+                desc.textContent = game.restricted ? 'אזור פרטי' : 'לחץ להתחלה';
             }
         });
     });
@@ -290,7 +299,7 @@ function listenToPresence() {
 
 window.handleGameEntry = (gameId) => {
     currentGame = GAMES.find(g => g.id === gameId);
-    if (gameId === 'tasks') {
+    if (gameId === 'tasks' && !myUser.isGuest) {
         window.location.href = `tasks.html?player=${myUser.id}`;
         return;
     }
@@ -313,9 +322,10 @@ function enterWaitingRoom(gameId) {
             if(i > 1) return;
             const slot = document.getElementById(`slot-${i}`);
             slot.className = 'p-slot active'; slot.style.borderColor = p.color;
-            slot.innerHTML = `<div style="font-size:2rem">${p.emoji}</div><div>${p.name}</div>`;
+            slot.innerHTML = `<div style="font-size:2rem">${p.emoji}</div><div style="font-size:0.9rem">${p.name}</div>`;
         });
         if (players.length >= 2) {
+            document.getElementById('wait-status-msg').innerHTML = "🎮 יצאנו לדרך!";
             setTimeout(() => { 
                 window.location.href = `${currentGame.url}?player=${myUser.id}&name=${encodeURIComponent(myUser.name)}`; 
             }, 1000);
