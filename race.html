@@ -3,108 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>מרוץ קליקים - תיקון כיוון וחיבור</title>
+    <title>מרוץ קליקים - רטט ומכשולים</title>
     <style>
-        body { 
-            margin: 0; background: #111; font-family: sans-serif; 
-            overflow: hidden; touch-action: none; color: white;
-            user-select: none; -webkit-user-select: none;
-        }
+        body { margin: 0; background: #111; font-family: sans-serif; overflow: hidden; touch-action: none; color: white; user-select: none; }
+        #game-viewport { width: 100vw; height: 100vh; background: #222; position: relative; display: flex; justify-content: center; transition: transform 0.1s; }
+        .track-full { width: 90%; max-width: 400px; height: 100%; background: #333; position: relative; border-left: 4px solid #555; border-right: 4px solid #555; box-shadow: inset 0 0 80px #000; }
         
-        #game-viewport {
-            width: 100vw; height: 100vh;
-            background: #222; position: relative;
-            display: flex; justify-content: center;
+        /* חפצים */
+        .game-obj { position: absolute; font-size: 35px; transform: translateX(-50%); z-index: 8; }
+        
+        .car { position: absolute; width: 60px; height: 80px; font-size: 50px; transition: left 0.2s ease, bottom 0.1s linear; transform: translateX(-50%) rotate(-90deg); z-index: 10; display: flex; align-items: center; justify-content: center; }
+        
+        /* UI */
+        #ui-overlay { position: fixed; top: 15px; right: 15px; z-index: 100; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px; border: 1px solid #444; min-width: 120px; }
+        .stat { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .speed-val { font-weight: bold; }
+        .speed-1 { color: #fff; } .speed-2 { color: #0f0; } .speed-3 { color: #0ff; text-shadow: 0 0 8px #0ff; }
+        
+        #controls { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: grid; grid-template-columns: 1fr 2fr 1fr; z-index: 50; }
+        
+        /* אפקט רעידה למסך */
+        .shake { animation: shakeAnim 0.3s; }
+        @keyframes shakeAnim {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            20% { transform: translate(-3px, 0px) rotate(-1deg); }
+            40% { transform: translate(3px, 2px) rotate(1deg); }
+            60% { transform: translate(-3px, 1px) rotate(-1deg); }
+            80% { transform: translate(3px, -1px) rotate(1deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
         }
 
-        .track-full {
-            width: 90%; max-width: 400px; height: 100%;
-            background: #333; position: relative;
-            border-left: 4px solid #555; border-right: 4px solid #555;
-            box-shadow: inset 0 0 80px #000;
-        }
-
-        .next-level-arrows {
-            position: absolute; top: 5%; width: 100%; height: 50px;
-            display: flex; flex-direction: column; align-items: center;
-            opacity: 0.6; animation: moveArrows 1s infinite;
-        }
-        @keyframes moveArrows {
-            0% { transform: translateY(0); opacity: 0; }
-            50% { opacity: 1; }
-            100% { transform: translateY(-20px); opacity: 0; }
-        }
-
-        .finish-line { 
-            position: absolute; top: 5%; width: 100%; height: 40px;
-            background: repeating-linear-gradient(45deg, #fff, #fff 10px, #000 10px, #000 20px);
-            display: none; border-top: 4px solid gold; border-bottom: 4px solid gold;
-        }
-
-        .lane-line {
-            position: absolute; height: 100%; width: 1px;
-            background: rgba(255,255,255,0.1); border-left: 2px dashed rgba(255,255,255,0.2);
-        }
-
-        .car { 
-            position: absolute; width: 60px; height: 80px; font-size: 50px;
-            transition: left 0.2s ease, bottom 0.1s linear; transform: translateX(-50%) rotate(-90deg); /* סיבוב האימוג'י למעלה */
-            z-index: 10; display: flex; align-items: center; justify-content: center;
-        }
-
-        #opponent-mini {
-            position: fixed; top: 15px; left: 15px; width: 40px; height: 120px;
-            background: rgba(0,0,0,0.6); border: 1px solid #777; z-index: 100; border-radius: 5px;
-        }
-        #opp-dot {
-            position: absolute; width: 12px; height: 12px; background: #ff4444;
-            border-radius: 50%; left: 14px; transition: bottom 0.3s; box-shadow: 0 0 5px red;
-        }
-
-        #ui-overlay {
-            position: fixed; top: 15px; right: 15px; text-align: right; z-index: 100;
-            background: rgba(0,0,0,0.7); padding: 8px 12px; border-radius: 8px; border: 1px solid #444;
-        }
-
-        /* אזורי לחיצה מתוקנים */
-        #controls {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            display: grid; grid-template-columns: 1.5fr 3fr 1.5fr; z-index: 50;
-        }
-        .btn-zone { background: transparent; -webkit-tap-highlight-color: transparent; }
+        .finish-line { position: absolute; top: 5%; width: 100%; height: 40px; background: repeating-linear-gradient(45deg, #fff, #fff 10px, #000 10px, #000 20px); display: none; }
     </style>
 </head>
 <body>
 
     <div id="ui-overlay">
-        <div id="level-text" style="color: #00ffcc; font-weight: bold; font-size: 18px;">STAGE 1/3</div>
-        <div id="player-role" style="font-size: 12px; color: #aaa;">מחפש שחקן...</div>
-    </div>
-
-    <div id="opponent-mini">
-        <div style="font-size: 9px; text-align: center; margin-top: -15px;">יריב</div>
-        <div id="opp-dot" style="bottom: 0;"></div>
+        <div id="level-text" style="color: gold; text-align: center; font-size: 18px; margin-bottom: 5px;">STAGE 1</div>
+        <div class="stat"><span>💎 יהלומים:</span> <span id="score-val">0</span></div>
+        <div class="stat"><span>🚀 מהירות:</span> <span id="speed-val" class="speed-1">x1</span></div>
     </div>
 
     <div id="game-viewport">
-        <div class="track-full">
-            <div id="arrows" class="next-level-arrows">
-                <span style="color: #00ff00;">▲</span>
-                <span style="color: #00ff00;">▲</span>
-            </div>
+        <div class="track-full" id="main-track">
             <div id="finish" class="finish-line"></div>
-            
-            <div class="lane-line" style="left: 33.3%"></div>
-            <div class="lane-line" style="left: 66.6%"></div>
-            
+            <div style="position:absolute; height:100%; width:1px; left:33.3%; border-left:1px dashed #555;"></div>
+            <div style="position:absolute; height:100%; width:1px; left:66.6%; border-left:1px dashed #555;"></div>
             <div id="my-car" class="car">🏎️</div>
+            <div id="objects-layer"></div>
         </div>
     </div>
 
     <div id="controls">
-        <div class="btn-zone" id="touch-left"></div>
-        <div class="btn-zone" id="touch-center"></div>
-        <div class="btn-zone" id="touch-right"></div>
+        <div id="touch-left" onclick="moveLane(-1)"></div>
+        <div id="touch-center" onclick="drive()"></div>
+        <div id="touch-right" onclick="moveLane(1)"></div>
     </div>
 
     <script type="module">
@@ -123,85 +76,124 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-
         const urlParams = new URLSearchParams(window.location.search);
-        let roomId = urlParams.get('room') || 'race_test';
-        if (!urlParams.get('room')) window.history.replaceState({}, '', `?room=${roomId}`);
+        let roomId = urlParams.get('room') || 'race_pro';
+        const gameRef = ref(db, `race_v5/${roomId}`);
+        const objsRef = ref(db, `race_v5/${roomId}/objects`);
 
-        const gameRef = ref(db, `race_v3/${roomId}`);
-        
         let myId = null;
         let gameState = {};
         const lanesX = [16.6, 50, 83.3];
+        const objTypes = [{char:'💎', type:'coin'}, {char:'⚡', type:'boost'}, {char:'💥', type:'trap'}];
 
-        // מנגנון חיבור חזק יותר
         onValue(gameRef, (snapshot) => {
             const data = snapshot.val() || {};
-            
             if (!myId) {
-                // אם פתחתי את הדף, אני בודק מי פנוי
-                if (!data.p1) myId = 'p1';
-                else if (!data.p2) myId = 'p2';
-                else myId = 'p1'; // ברירת מחדל אם שניהם תפוסים (למטרת צפייה)
-
-                // רושם אותי ב-DB
-                update(gameRef, { [myId]: { pos: 5, lane: 1, stage: 1 } });
-                
-                // ניקוי אוטומטי כשאני עוזב את הדף
-                onDisconnect(ref(db, `race_v3/${roomId}/${myId}`)).remove();
+                myId = (!data.p1) ? 'p1' : (data.p2 ? 'p1' : 'p2');
+                update(gameRef, { [myId]: { pos: 5, lane: 1, stage: 1, score: 0, speed: 1 } });
+                onDisconnect(ref(db, `race_v5/${roomId}/${myId}`)).remove();
+                if (myId === 'p1') startObjectSpawner();
             }
-
             gameState = data;
             render();
         });
 
         function render() {
             const me = gameState[myId];
-            const oppId = myId === 'p1' ? 'p2' : 'p1';
-            const opp = gameState[oppId];
+            if (!me) return;
 
-            if (me) {
-                const myCarEl = document.getElementById('my-car');
-                myCarEl.style.bottom = me.pos + "%";
-                myCarEl.style.left = lanesX[me.lane] + "%";
-                myCarEl.style.filter = myId === 'p2' ? 'hue-rotate(150deg)' : '';
-                
-                document.getElementById('player-role').innerText = `אתה שחקן: ${myId === 'p1' ? 'ירוק' : 'סגול'}`;
-                document.getElementById('level-text').innerText = `STAGE ${me.stage}/3`;
-                document.getElementById('arrows').style.display = me.stage < 3 ? 'flex' : 'none';
-                document.getElementById('finish').style.display = me.stage === 3 ? 'block' : 'none';
-            }
+            const car = document.getElementById('my-car');
+            car.style.bottom = me.pos + "%";
+            car.style.left = lanesX[me.lane] + "%";
+            car.style.filter = myId === 'p2' ? 'hue-rotate(150deg)' : '';
 
-            if (opp) {
-                const totalOppProgress = ((opp.stage - 1) * 100 + opp.pos) / 3;
-                document.getElementById('opp-dot').style.bottom = totalOppProgress + "%";
-            } else {
-                document.getElementById('opp-dot').style.bottom = "0%";
+            document.getElementById('score-val').innerText = me.score || 0;
+            document.getElementById('speed-val').innerText = 'x' + me.speed;
+            document.getElementById('speed-val').className = 'speed-val speed-' + me.speed;
+            document.getElementById('level-text').innerText = `STAGE ${me.stage}`;
+            document.getElementById('finish').style.display = me.stage === 3 ? 'block' : 'none';
+
+            const objLayer = document.getElementById('objects-layer');
+            objLayer.innerHTML = '';
+            if (gameState.objects) {
+                Object.keys(gameState.objects).forEach(id => {
+                    const obj = gameState.objects[id];
+                    if (obj.stage === me.stage) {
+                        const div = document.createElement('div');
+                        div.className = 'game-obj';
+                        div.innerText = obj.char;
+                        div.style.bottom = obj.pos + "%";
+                        div.style.left = lanesX[obj.lane] + "%";
+                        objLayer.appendChild(div);
+                    }
+                });
             }
         }
 
-        // --- תיקון לוגיקת תנועה ---
-        
         window.drive = () => {
             if (!myId || !gameState[myId]) return;
-            let { pos, stage } = gameState[myId];
-            pos += 4;
+            let { pos, stage, score, speed, lane } = gameState[myId];
+            
+            const moveStep = speed === 1 ? 4 : (speed === 2 ? 7 : 12);
+            pos += moveStep;
+
+            // בדיקת התנגשות
+            if (gameState.objects) {
+                Object.keys(gameState.objects).forEach(id => {
+                    const obj = gameState.objects[id];
+                    if (obj.stage === stage && obj.lane === lane && Math.abs(obj.pos - pos) < 8) {
+                        if (obj.type === 'coin') score += 10;
+                        if (obj.type === 'boost') speed = Math.min(3, speed + 1);
+                        if (obj.type === 'trap') { 
+                            // --- אפקטים של התנגשות ---
+                            triggerCollision();
+                            speed = 1; 
+                            pos = 5; // חזרה לתחילת השלב
+                        }
+                        update(ref(db, `race_v5/${roomId}/objects`), { [id]: null });
+                    }
+                });
+            }
+
             if (pos >= 95) {
                 if (stage < 3) { stage++; pos = 5; } 
-                else { alert("ניצחת במרוץ!"); stage = 1; pos = 5; }
+                else { alert("מקום ראשון! אלוף!"); stage = 1; pos = 5; score = 0; speed = 1; }
             }
-            update(gameRef, { [`${myId}/pos`]: pos, [`${myId}/stage`]: stage });
+            update(gameRef, { [myId]: { pos, stage, score, speed, lane } });
         };
+
+        function triggerCollision() {
+            // רטט בטלפון
+            if ("vibrate" in navigator) {
+                navigator.vibrate(200); 
+            }
+            // רעידת מסך ויזואלית
+            const viewport = document.getElementById('game-viewport');
+            viewport.classList.add('shake');
+            setTimeout(() => viewport.classList.remove('shake'), 300);
+        }
 
         window.moveLane = (dir) => {
             if (!myId || !gameState[myId]) return;
-            let currentLane = gameState[myId].lane;
-            // תיקון כיוון: dir=1 זה ימינה, dir=-1 זה שמאלה
-            let newLane = Math.max(0, Math.min(2, currentLane + dir));
+            let newLane = Math.max(0, Math.min(2, gameState[myId].lane + dir));
             update(gameRef, { [`${myId}/lane`]: newLane });
         };
 
-        // חיבור אירועי לחיצה למסך המלא
+        function startObjectSpawner() {
+            setInterval(() => {
+                const id = 'obj_' + Date.now();
+                const randomObj = objTypes[Math.floor(Math.random() * objTypes.length)];
+                update(objsRef, { [id]: {
+                    ...randomObj,
+                    lane: Math.floor(Math.random() * 3),
+                    pos: Math.floor(Math.random() * 60) + 20,
+                    stage: Math.floor(Math.random() * 3) + 1
+                }});
+                setTimeout(() => update(objsRef, { [id]: null }), 8000);
+            }, 1500);
+        }
+
+        // שיפור מהירות התגובה באנדרואיד
         document.getElementById('touch-center').addEventListener('pointerdown', (e) => { e.preventDefault(); window.drive(); });
         document.getElementById('touch-left').addEventListener('pointerdown', (e) => { e.preventDefault(); window.moveLane(-1); });
         document.getElementById('touch-right').addEventListener('pointerdown', (e) => { e.preventDefault(); window.moveLane(1); });
