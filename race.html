@@ -3,43 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>מרוץ 5 נתיבים - ניהול נתיבים והחלקות</title>
+    <title>מרוץ 5 שלבים - חוויה ויזואלית מלאה</title>
     <style>
-        body { margin: 0; background: #111; font-family: sans-serif; overflow: hidden; touch-action: none; color: white; user-select: none; }
-        #game-viewport { width: 100vw; height: 100vh; background: #222; position: relative; display: flex; justify-content: center; overflow: hidden; }
+        body { margin: 0; background: #050505; font-family: sans-serif; overflow: hidden; touch-action: none; color: white; user-select: none; }
         
+        /* שכבת רקע פרלקס (אבק כוכבים) */
+        #game-viewport { 
+            width: 100vw; height: 100vh; 
+            position: relative; display: flex; justify-content: center; overflow: hidden; 
+            background-image: radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+                              radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+                              radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            background-position: 0 0, 40px 60px, 130px 270px;
+            animation: parallaxBackground 20s linear infinite;
+        }
+
+        @keyframes parallaxBackground {
+            from { background-position: 0 0, 40px 60px, 130px 270px; }
+            to { background-position: 0 550px, 40px 410px, 130px 820px; }
+        }
+
         .track-5-lanes { 
-            width: 95%; max-width: 500px; height: 100%; background: #333; position: relative; 
+            width: 95%; max-width: 500px; height: 100%; background: #1a1a1a; position: relative; 
             border-left: 5px solid #ffcc00; border-right: 5px solid #ffcc00; 
             box-shadow: inset 0 0 100px #000;
         }
 
-        .lane-mark { position: absolute; height: 100%; width: 1px; border-left: 1px dashed rgba(255,255,255,0.1); }
+        .lane-mark { position: absolute; height: 100%; width: 1px; border-left: 1px dashed rgba(255,255,255,0.05); }
 
-        .game-obj { position: absolute; font-size: 30px; transform: translateX(-50%); z-index: 8; transition: bottom 0.1s linear; }
-        
-        /* המכונית עם אנימציות חלקות */
-        .car { 
-            position: absolute; width: 50px; height: 70px; font-size: 45px; 
-            transition: left 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), bottom 0.1s linear, transform 0.2s; 
-            transform: translateX(-50%) rotate(-90deg); /* ברירת מחדל: ישר */
-            z-index: 10; 
-            display: flex; align-items: center; justify-content: center; 
+        /* חפצים עם תאורה דינמית */
+        .game-obj { position: absolute; font-size: 30px; transform: translateX(-50%); z-index: 8; }
+        .game-obj.coin { animation: coinGlow 1.5s infinite alternate; }
+        .game-obj.boost { text-shadow: 0 0 10px #0ff; }
+        .game-obj.trap { text-shadow: 0 0 10px #f00; }
+
+        @keyframes coinGlow {
+            from { text-shadow: 0 0 5px #fff; opacity: 0.8; }
+            to { text-shadow: 0 0 15px #ffd700; opacity: 1; }
         }
 
-        /* סגנונות הטייה (Tilt) להחלקות */
+        /* מכונית עם תאורה פועמת וצל מוטל */
+        .car { 
+            position: absolute; width: 50px; height: 70px; font-size: 45px; 
+            transition: left 0.2s ease, bottom 0.1s linear, transform 0.2s; 
+            transform: translateX(-50%) rotate(-90deg); z-index: 10; 
+            display: flex; align-items: center; justify-content: center; 
+            animation: carPulse 2s infinite alternate;
+        }
+
+        /* צל מוטל מתחת למכונית */
+        .car::after {
+            content: '';
+            position: absolute;
+            width: 100%; height: 10px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 50%;
+            bottom: -15px; left: 0;
+            filter: blur(5px);
+            z-index: -1;
+            transition: transform 0.2s;
+        }
+
+        @keyframes carPulse {
+            from { text-shadow: 0 0 5px currentColor; }
+            to { text-shadow: 0 0 15px currentColor; }
+        }
+
+        /* סגנונות הטייה (Tilt) ותיקון צל */
         .tilt-right { transform: translateX(-50%) rotate(-80deg) !important; }
+        .tilt-right::after { transform: translateX(-10px); }
         .tilt-left { transform: translateX(-50%) rotate(-100deg) !important; }
+        .tilt-left::after { transform: translateX(10px); }
 
         #ui-overlay { position: fixed; top: 10px; width: 100%; display: flex; justify-content: space-around; z-index: 100; pointer-events: none; }
-        .player-box { background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 15px; border: 1px solid #555; text-align: center; }
+        .player-box { background: rgba(0,0,0,0.8); padding: 5px 12px; border-radius: 12px; border: 1px solid #555; text-align: center; min-width: 80px; }
 
-        /* אזורי לחיצה שקופים */
+        /* מד מהירות ויזואלי */
+        #speedometer {
+            position: fixed; bottom: 20px; right: 20px;
+            width: 80px; height: 40px;
+            background: rgba(0,0,0,0.8);
+            border: 2px solid #555;
+            border-radius: 40px 40px 0 0;
+            z-index: 100;
+        }
+        #speed-needle {
+            position: absolute; bottom: 0; left: 50%;
+            width: 2px; height: 35px;
+            background: red;
+            transform-origin: bottom center;
+            transform: translateX(-50%) rotate(-90deg);
+            transition: transform 0.3s ease-out;
+        }
+
         #controls { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; z-index: 50; }
         .control-area { height: 100%; }
-        #area-left { width: 30%; }
-        #area-center { width: 40%; }
-        #area-right { width: 30%; }
+        #area-left { width: 33%; }
+        #area-center { width: 34%; }
+        #area-right { width: 33%; }
 
         .finish-line { position: absolute; top: 5%; width: 100%; height: 40px; background: repeating-linear-gradient(45deg, #fff, #fff 10px, #000 10px, #000 20px); display: none; }
     </style>
@@ -47,15 +109,19 @@
 <body>
 
     <div id="ui-overlay">
-        <div class="player-box" id="p1-ui" style="border-color: #00ff00;">
-            <div style="font-size: 12px;">שחקן 1</div>
+        <div class="player-box" id="p1-ui" style="border-color: #00ff00; color: #00ff00;">
+            <div style="font-size: 10px;">שחקן 1</div>
             <div id="p1-score">💎 0</div>
         </div>
-        <div id="stage-info" style="font-weight: bold; font-size: 20px; color: gold; padding-top: 10px;">STAGE 1</div>
-        <div class="player-box" id="p2-ui" style="border-color: #cc00ff;">
-            <div style="font-size: 12px;">שחקן 2</div>
+        <div id="stage-info" style="font-weight: bold; font-size: 18px; color: gold; padding-top: 5px;">STAGE 1/5</div>
+        <div class="player-box" id="p2-ui" style="border-color: #cc00ff; color: #cc00ff;">
+            <div style="font-size: 10px;">שחקן 2</div>
             <div id="p2-score">💎 0</div>
         </div>
+    </div>
+
+    <div id="speedometer">
+        <div id="speed-needle"></div>
     </div>
 
     <div id="game-viewport">
@@ -66,8 +132,8 @@
             <div class="lane-mark" style="left: 60%;"></div>
             <div class="lane-mark" style="left: 80%;"></div>
             
-            <div id="car-p1" class="car" style="display:none;">🏎️</div>
-            <div id="car-p2" class="car" style="display:none; filter: hue-rotate(150deg);">🏎️</div>
+            <div id="car-p1" class="car" style="display:none; color: #00ff00;">🏎️</div>
+            <div id="car-p2" class="car" style="display:none; color: #cc00ff; filter: hue-rotate(150deg);">🏎️</div>
             
             <div id="objects-layer"></div>
         </div>
@@ -81,7 +147,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, onValue, update, onDisconnect, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
@@ -96,8 +162,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const urlParams = new URLSearchParams(window.location.search);
-        let roomId = urlParams.get('room') || 'multi_lane_manager';
-        const gameRef = ref(db, `race_v7/${roomId}`);
+        let roomId = urlParams.get('room') || 'race_v9_visuals';
+        const gameRef = ref(db, `race_v9/${roomId}`);
 
         let myId = null;
         let gameState = {};
@@ -108,15 +174,14 @@
             if (!myId) {
                 myId = (!data.p1) ? 'p1' : (data.p2 ? 'p1' : 'p2');
                 update(gameRef, { [myId]: { pos: 10, lane: 2, stage: 1, score: 0, speed: 1 } });
-                onDisconnect(ref(db, `race_v7/${roomId}/${myId}`)).remove();
-                if (myId === 'p1') startSpawner(); // רק שחקן 1 מייצר
+                onDisconnect(ref(db, `race_v9/${roomId}/${myId}`)).remove();
+                if (myId === 'p1') initWorld(); 
             }
             gameState = data;
             render();
         });
 
         function render() {
-            // עדכון שחקן 1
             if (gameState.p1) {
                 const p1El = document.getElementById('car-p1');
                 p1El.style.display = 'flex';
@@ -124,7 +189,6 @@
                 p1El.style.left = lanesX[gameState.p1.lane] + "%";
                 document.getElementById('p1-score').innerText = `💎 ${gameState.p1.score || 0}`;
             }
-            // עדכון שחקן 2
             if (gameState.p2) {
                 const p2El = document.getElementById('car-p2');
                 p2El.style.display = 'flex';
@@ -135,8 +199,11 @@
 
             const me = gameState[myId];
             if (me) {
-                document.getElementById('stage-info').innerText = `STAGE ${me.stage}`;
-                document.getElementById('finish').style.display = me.stage === 3 ? 'block' : 'none';
+                document.getElementById('stage-info').innerText = `STAGE ${me.stage}/5`;
+                document.getElementById('finish').style.display = me.stage === 5 ? 'block' : 'none';
+                
+                // עדכון מד מהירות
+                updateSpeedometer(me.speed);
             }
 
             const objLayer = document.getElementById('objects-layer');
@@ -145,7 +212,7 @@
                 Object.entries(gameState.objects).forEach(([id, obj]) => {
                     if (me && obj.stage === me.stage) {
                         const d = document.createElement('div');
-                        d.className = 'game-obj';
+                        d.className = `game-obj ${obj.type}`; // הוספת סוג חפץ ל-CSS
                         d.innerText = obj.char;
                         d.style.bottom = obj.pos + "%";
                         d.style.left = lanesX[obj.lane] + "%";
@@ -155,23 +222,31 @@
             }
         }
 
+        function updateSpeedometer(speed) {
+            const needle = document.getElementById('speed-needle');
+            // זווית המחט: -90deg (מהירות 1) עד 90deg (מהירות 3)
+            const angle = (speed - 1) * 90 - 90;
+            needle.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+        }
+
         function handleAction(type) {
             if (!myId || !gameState[myId]) return;
             let { pos, stage, score, speed, lane } = gameState[myId];
 
             if (type === 'drive') {
-                pos += (speed === 1 ? 4 : (speed === 2 ? 7 : 12));
-                // בדיקת פגיעה בחפצים
+                const moveStep = speed === 1 ? 1.5 : (speed === 2 ? 2.5 : 4);
+                pos += moveStep;
+
                 if (gameState.objects) {
                     Object.entries(gameState.objects).forEach(([id, obj]) => {
-                        if (obj.stage === stage && obj.lane === lane && Math.abs(obj.pos - pos) < 8) {
+                        if (obj.stage === stage && obj.lane === lane && Math.abs(obj.pos - pos) < 6) {
                             if (obj.type === 'coin') score += 10;
                             if (obj.type === 'boost') speed = Math.min(3, speed + 1);
                             if (obj.type === 'trap') {
                                 if ("vibrate" in navigator) navigator.vibrate(200);
                                 pos = 10; speed = 1; 
                             }
-                            update(ref(db, `race_v7/${roomId}/objects`), { [id]: null });
+                            update(ref(db, `race_v9/${roomId}/objects`), { [id]: null });
                         }
                     });
                 }
@@ -184,20 +259,17 @@
             }
 
             if (pos >= 95) {
-                if (stage < 3) { stage++; pos = 10; }
-                else { alert("ניצחון!"); stage = 1; pos = 10; score = 0; speed = 1; }
+                if (stage < 5) { stage++; pos = 10; }
+                else { alert("אלוף העולם! סיימת 5 שלבים!"); stage = 1; pos = 10; score = 0; speed = 1; }
             }
             update(gameRef, { [myId]: { pos, stage, score, speed, lane } });
         }
 
-        // --- פונקציית הטייה (Tilt) להחלקות ---
         function applyTilt(dir) {
             const carEl = document.getElementById(`car-${myId}`);
             carEl.classList.remove('tilt-left', 'tilt-right');
             if (dir === 'left') carEl.classList.add('tilt-left');
             if (dir === 'right') carEl.classList.add('tilt-right');
-            
-            // החזרה למצב ישר אחרי 200ms
             setTimeout(() => carEl.classList.remove('tilt-left', 'tilt-right'), 200);
         }
 
@@ -205,33 +277,22 @@
         document.getElementById('area-center').addEventListener('pointerdown', (e) => { e.preventDefault(); handleAction('drive'); });
         document.getElementById('area-right').addEventListener('pointerdown', (e) => { e.preventDefault(); handleAction('right'); });
 
-        // --- מנוע ייצור חפצים משופר (ניהול נתיבים) ---
-        function startSpawner() {
-            const types = [{char:'💎',type:'coin'}, {char:'⚡',type:'boost'}, {char:'💥',type:'trap'}];
+        function initWorld() {
+            const objects = {};
+            const stages = [1, 2, 3, 4, 5];
             
-            // זיכרון מתי הופיע חפץ לאחרונה בכל נתיב
-            let lastSpawnTime = [0, 0, 0, 0, 0];
-            const minSpawnInterval = 1500; // לפחות 1.5 שניות בין חפצים באותו נתיב
-
-            setInterval(() => {
-                const now = Date.now();
-                // מנסים לייצר חפץ בנתיב אקראי
-                const lane = Math.floor(Math.random() * 5);
-                
-                // בודקים אם עבר מספיק זמן מאז החפץ האחרון בנתיב הזה
-                if (now - lastSpawnTime[lane] > minSpawnInterval) {
-                    const id = 'o' + now;
-                    update(ref(db, `race_v7/${roomId}/objects`), { [id]: {
-                        ...types[Math.floor(Math.random() * types.length)],
-                        lane: lane,
-                        pos: Math.floor(Math.random() * 60) + 20,
-                        stage: Math.floor(Math.random() * 3) + 1
-                    }});
-                    lastSpawnTime[lane] = now; // עדכון זמן הייצור האחרון
-                    setTimeout(() => update(ref(db, `race_v7/${roomId}/objects`), { [id]: null }), 7000);
-                }
-            }, 500); // הלולאה רצה כל 0.5 שניות, אבל הייצור מוגבל לפי נתיב
+            stages.forEach(s => {
+                for(let i=0; i<10; i++) objects[`s${s}_c${i}`] = { char:'💎', type:'coin', lane:rndLane(), pos:rndPos(), stage:s };
+                for(let i=0; i<7; i++) objects[`s${s}_b${i}`] = { char:'⚡', type:'boost', lane:rndLane(), pos:rndPos(), stage:s };
+                for(let i=0; i<7; i++) objects[`s${s}_t${i}`] = { char:'💥', type:'trap', lane:rndLane(), pos:rndPos(), stage:s };
+            });
+            
+            update(gameRef, { objects: objects });
         }
+
+        function rndLane() { return Math.floor(Math.random() * 5); }
+        function rndPos() { return Math.floor(Math.random() * 75) + 15; }
+
     </script>
 </body>
 </html>
