@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>מרוץ 5 נתיבים - ראש בראש</title>
+    <title>מרוץ 5 נתיבים - ניהול נתיבים והחלקות</title>
     <style>
         body { margin: 0; background: #111; font-family: sans-serif; overflow: hidden; touch-action: none; color: white; user-select: none; }
         #game-viewport { width: 100vw; height: 100vh; background: #222; position: relative; display: flex; justify-content: center; overflow: hidden; }
@@ -14,16 +14,22 @@
             box-shadow: inset 0 0 100px #000;
         }
 
-        .lane-mark { position: absolute; height: 100%; width: 1px; border-left: 1px dashed rgba(255,255,255,0.2); }
+        .lane-mark { position: absolute; height: 100%; width: 1px; border-left: 1px dashed rgba(255,255,255,0.1); }
 
         .game-obj { position: absolute; font-size: 30px; transform: translateX(-50%); z-index: 8; transition: bottom 0.1s linear; }
         
+        /* המכונית עם אנימציות חלקות */
         .car { 
             position: absolute; width: 50px; height: 70px; font-size: 45px; 
-            transition: left 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), bottom 0.1s linear; 
-            transform: translateX(-50%) rotate(-90deg); z-index: 10; 
+            transition: left 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), bottom 0.1s linear, transform 0.2s; 
+            transform: translateX(-50%) rotate(-90deg); /* ברירת מחדל: ישר */
+            z-index: 10; 
             display: flex; align-items: center; justify-content: center; 
         }
+
+        /* סגנונות הטייה (Tilt) להחלקות */
+        .tilt-right { transform: translateX(-50%) rotate(-80deg) !important; }
+        .tilt-left { transform: translateX(-50%) rotate(-100deg) !important; }
 
         #ui-overlay { position: fixed; top: 10px; width: 100%; display: flex; justify-content: space-around; z-index: 100; pointer-events: none; }
         .player-box { background: rgba(0,0,0,0.7); padding: 5px 15px; border-radius: 15px; border: 1px solid #555; text-align: center; }
@@ -35,9 +41,6 @@
         #area-center { width: 40%; }
         #area-right { width: 30%; }
 
-        .shake { animation: shake 0.3s; }
-        @keyframes shake { 0%, 100% { transform: translate(0,0); } 25% { transform: translate(5px,5px); } 50% { transform: translate(-5px,-5px); } 75% { transform: translate(5px,-5px); } }
-        
         .finish-line { position: absolute; top: 5%; width: 100%; height: 40px; background: repeating-linear-gradient(45deg, #fff, #fff 10px, #000 10px, #000 20px); display: none; }
     </style>
 </head>
@@ -93,20 +96,20 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const urlParams = new URLSearchParams(window.location.search);
-        let roomId = urlParams.get('room') || 'multi_5_lane';
-        const gameRef = ref(db, `race_v6/${roomId}`);
+        let roomId = urlParams.get('room') || 'multi_lane_manager';
+        const gameRef = ref(db, `race_v7/${roomId}`);
 
         let myId = null;
         let gameState = {};
-        const lanesX = [10, 30, 50, 70, 90]; // 5 נתיבים מרכזיים
+        const lanesX = [10, 30, 50, 70, 90]; 
 
         onValue(gameRef, (snapshot) => {
             const data = snapshot.val() || {};
             if (!myId) {
                 myId = (!data.p1) ? 'p1' : (data.p2 ? 'p1' : 'p2');
                 update(gameRef, { [myId]: { pos: 10, lane: 2, stage: 1, score: 0, speed: 1 } });
-                onDisconnect(ref(db, `race_v6/${roomId}/${myId}`)).remove();
-                if (myId === 'p1') startSpawner();
+                onDisconnect(ref(db, `race_v7/${roomId}/${myId}`)).remove();
+                if (myId === 'p1') startSpawner(); // רק שחקן 1 מייצר
             }
             gameState = data;
             render();
@@ -130,14 +133,12 @@
                 document.getElementById('p2-score').innerText = `💎 ${gameState.p2.score || 0}`;
             }
 
-            // עדכון שלב כללי (לפי השחקן שלי)
             const me = gameState[myId];
             if (me) {
                 document.getElementById('stage-info').innerText = `STAGE ${me.stage}`;
                 document.getElementById('finish').style.display = me.stage === 3 ? 'block' : 'none';
             }
 
-            // רינדור חפצים
             const objLayer = document.getElementById('objects-layer');
             objLayer.innerHTML = '';
             if (gameState.objects) {
@@ -168,18 +169,18 @@
                             if (obj.type === 'boost') speed = Math.min(3, speed + 1);
                             if (obj.type === 'trap') {
                                 if ("vibrate" in navigator) navigator.vibrate(200);
-                                document.getElementById('game-viewport').classList.add('shake');
-                                setTimeout(() => document.getElementById('game-viewport').classList.remove('shake'), 300);
-                                pos = 10; speed = 1; // עונש: חזרה להתחלה ומהירות 1
+                                pos = 10; speed = 1; 
                             }
-                            update(ref(db, `race_v6/${roomId}/objects`), { [id]: null });
+                            update(ref(db, `race_v7/${roomId}/objects`), { [id]: null });
                         }
                     });
                 }
             } else if (type === 'left') {
                 lane = Math.max(0, lane - 1);
+                applyTilt('left');
             } else if (type === 'right') {
                 lane = Math.min(4, lane + 1);
+                applyTilt('right');
             }
 
             if (pos >= 95) {
@@ -189,23 +190,47 @@
             update(gameRef, { [myId]: { pos, stage, score, speed, lane } });
         }
 
-        // הגדרת אזורי לחיצה ללא בלאגן
+        // --- פונקציית הטייה (Tilt) להחלקות ---
+        function applyTilt(dir) {
+            const carEl = document.getElementById(`car-${myId}`);
+            carEl.classList.remove('tilt-left', 'tilt-right');
+            if (dir === 'left') carEl.classList.add('tilt-left');
+            if (dir === 'right') carEl.classList.add('tilt-right');
+            
+            // החזרה למצב ישר אחרי 200ms
+            setTimeout(() => carEl.classList.remove('tilt-left', 'tilt-right'), 200);
+        }
+
         document.getElementById('area-left').addEventListener('pointerdown', (e) => { e.preventDefault(); handleAction('left'); });
         document.getElementById('area-center').addEventListener('pointerdown', (e) => { e.preventDefault(); handleAction('drive'); });
         document.getElementById('area-right').addEventListener('pointerdown', (e) => { e.preventDefault(); handleAction('right'); });
 
+        // --- מנוע ייצור חפצים משופר (ניהול נתיבים) ---
         function startSpawner() {
             const types = [{char:'💎',type:'coin'}, {char:'⚡',type:'boost'}, {char:'💥',type:'trap'}];
+            
+            // זיכרון מתי הופיע חפץ לאחרונה בכל נתיב
+            let lastSpawnTime = [0, 0, 0, 0, 0];
+            const minSpawnInterval = 1500; // לפחות 1.5 שניות בין חפצים באותו נתיב
+
             setInterval(() => {
-                const id = 'o' + Date.now();
-                update(ref(db, `race_v6/${roomId}/objects`), { [id]: {
-                    ...types[Math.floor(Math.random()*types.length)],
-                    lane: Math.floor(Math.random()*5),
-                    pos: Math.floor(Math.random()*60)+20,
-                    stage: Math.floor(Math.random()*3)+1
-                }});
-                setTimeout(() => update(ref(db, `race_v6/${roomId}/objects`), { [id]: null }), 7000);
-            }, 1200);
+                const now = Date.now();
+                // מנסים לייצר חפץ בנתיב אקראי
+                const lane = Math.floor(Math.random() * 5);
+                
+                // בודקים אם עבר מספיק זמן מאז החפץ האחרון בנתיב הזה
+                if (now - lastSpawnTime[lane] > minSpawnInterval) {
+                    const id = 'o' + now;
+                    update(ref(db, `race_v7/${roomId}/objects`), { [id]: {
+                        ...types[Math.floor(Math.random() * types.length)],
+                        lane: lane,
+                        pos: Math.floor(Math.random() * 60) + 20,
+                        stage: Math.floor(Math.random() * 3) + 1
+                    }});
+                    lastSpawnTime[lane] = now; // עדכון זמן הייצור האחרון
+                    setTimeout(() => update(ref(db, `race_v7/${roomId}/objects`), { [id]: null }), 7000);
+                }
+            }, 500); // הלולאה רצה כל 0.5 שניות, אבל הייצור מוגבל לפי נתיב
         }
     </script>
 </body>
