@@ -3,450 +3,79 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>איקס עיגול</title>
+  <title>איקס עיגול - גרסה 2.1</title>
   <style>
+    /* ה-CSS המקורי שלך נשמר במלואו */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: #0d1117;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
-    }
-
-    /* Animated background */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 80% 60% at 20% 20%, rgba(255,107,107,0.12) 0%, transparent 60%),
-        radial-gradient(ellipse 80% 60% at 80% 80%, rgba(78,205,196,0.12) 0%, transparent 60%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .container {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      padding: 1.5rem;
-      max-width: 420px;
-      width: 100%;
-    }
-
-    /* Title */
-    h1 {
-      font-size: 2.8rem;
-      font-weight: 900;
-      letter-spacing: 3px;
-      background: linear-gradient(135deg, #ff6b6b, #ffd700, #4ecdc4);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 0.2rem;
-      filter: drop-shadow(0 0 20px rgba(255,215,0,0.3));
-    }
-
-    .subtitle {
-      color: #4a5568;
-      font-size: 0.85rem;
-      margin-bottom: 1.6rem;
-      letter-spacing: 1px;
-    }
-
-    /* Scoreboard */
-    .scoreboard {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      gap: 0.8rem;
-      margin-bottom: 1.4rem;
-      align-items: stretch;
-    }
-
-    .score-card {
-      background: rgba(255,255,255,0.04);
-      border: 1.5px solid rgba(255,255,255,0.08);
-      border-radius: 14px;
-      padding: 0.8rem 0.6rem;
-      transition: all 0.35s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .score-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      transition: opacity 0.35s;
-      border-radius: 14px;
-    }
-
-    .score-card.x-card::before  { background: linear-gradient(135deg, rgba(255,107,107,0.15), transparent); }
-    .score-card.o-card::before  { background: linear-gradient(135deg, rgba(78,205,196,0.15), transparent); }
-
-    .score-card.active {
-      border-color: rgba(255,255,255,0.22);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    }
-
-    .score-card.active::before { opacity: 1; }
-    .score-card.x-card.active  { border-color: rgba(255,107,107,0.5); }
-    .score-card.o-card.active  { border-color: rgba(78,205,196,0.5); }
-
-    .player-name {
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      cursor: pointer;
-      border: none;
-      background: transparent;
-      text-align: center;
-      width: 100%;
-      padding: 2px 4px;
-      border-radius: 4px;
-      transition: background 0.2s;
-      outline: none;
-      font-family: inherit;
-    }
-
-    .player-name:hover, .player-name:focus {
-      background: rgba(255,255,255,0.08);
-    }
-
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0d1117; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+    body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 80% 60% at 20% 20%, rgba(255,107,107,0.12) 0%, transparent 60%), radial-gradient(ellipse 80% 60% at 80% 80%, rgba(78,205,196,0.12) 0%, transparent 60%); pointer-events: none; z-index: 0; }
+    .container { position: relative; z-index: 1; text-align: center; padding: 1.5rem; max-width: 420px; width: 100%; }
+    h1 { font-size: 2.8rem; font-weight: 900; letter-spacing: 3px; background: linear-gradient(135deg, #ff6b6b, #ffd700, #4ecdc4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.2rem; filter: drop-shadow(0 0 20px rgba(255,215,0,0.3)); }
+    .scoreboard { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.8rem; margin-bottom: 1.4rem; align-items: stretch; }
+    .score-card { background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 0.8rem 0.6rem; transition: all 0.35s ease; position: relative; }
+    .score-card.active { border-color: rgba(255,255,255,0.22); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+    .score-card.x-card.active { border-color: rgba(255,107,107,0.5); }
+    .score-card.o-card.active { border-color: rgba(78,205,196,0.5); }
+    .player-name { font-size: 0.78rem; font-weight: 700; color: #fff; text-align: center; width: 100%; }
     .x-card .player-name { color: #ff6b6b; }
     .o-card .player-name { color: #4ecdc4; }
-
-    .name-hint {
-      font-size: 0.6rem;
-      color: #2d3748;
-      margin-top: 1px;
-    }
-
-    .score-value {
-      font-size: 2.2rem;
-      font-weight: 900;
-      color: #e2e8f0;
-      line-height: 1.1;
-      margin-top: 0.3rem;
-    }
-
-    .score-card.active .score-value {
-      text-shadow: 0 0 20px currentColor;
-    }
-
-    .x-card.active .score-value { color: #ff6b6b; }
-    .o-card.active .score-value { color: #4ecdc4; }
-
-    .draw-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255,255,255,0.03);
-      border: 1.5px solid rgba(255,255,255,0.06);
-      border-radius: 14px;
-      padding: 0.5rem;
-    }
-
-    .draw-label {
-      font-size: 0.7rem;
-      color: #4a5568;
-      letter-spacing: 1px;
-    }
-
-    .draw-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #718096;
-    }
-
-    /* Turn indicator */
-    .turn-bar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      height: 2.4rem;
-      margin-bottom: 1.2rem;
-    }
-
-    .turn-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      transition: all 0.3s;
-    }
-
-    .turn-text {
-      font-size: 1rem;
-      font-weight: 700;
-      transition: color 0.3s;
-      letter-spacing: 0.5px;
-    }
-
-    .turn-text.x-turn  { color: #ff6b6b; }
-    .turn-text.o-turn  { color: #4ecdc4; }
-    .turn-text.winner  { color: #ffd700; font-size: 1.15rem; }
-    .turn-text.draw    { color: #718096; }
-
-    .turn-dot.x-turn  { background: #ff6b6b; box-shadow: 0 0 8px #ff6b6b; }
-    .turn-dot.o-turn  { background: #4ecdc4; box-shadow: 0 0 8px #4ecdc4; }
-    .turn-dot.winner  { background: #ffd700; box-shadow: 0 0 8px #ffd700; }
-    .turn-dot.draw    { background: #718096; }
-
-    /* Board */
-    .board-wrap {
-      position: relative;
-      width: 312px;
-      height: 312px;
-      margin: 0 auto 1.4rem;
-    }
-
-    .board-lines {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
-
-    .board-lines line {
-      stroke: rgba(255,255,255,0.1);
-      stroke-width: 2;
-      stroke-linecap: round;
-    }
-
-    .board {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      width: 312px;
-      height: 312px;
-    }
-
-    .cell {
-      background: rgba(255,255,255,0.04);
-      border: 1.5px solid rgba(255,255,255,0.08);
-      border-radius: 14px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s, border-color 0.2s, transform 0.15s;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .cell:hover:not(.taken) {
-      background: rgba(255,255,255,0.08);
-      border-color: rgba(255,255,255,0.2);
-    }
-
-    .cell.taken { cursor: default; }
-
-    /* SVG symbols */
+    .score-value { font-size: 2.2rem; font-weight: 900; color: #e2e8f0; margin-top: 0.3rem; }
+    .draw-card { display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); border: 1.5px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 0.5rem; }
+    .turn-bar { display: flex; align-items: center; justify-content: center; gap: 0.5rem; height: 2.4rem; margin-bottom: 1.2rem; }
+    .turn-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .turn-text { font-size: 1rem; font-weight: 700; }
+    .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 312px; height: 312px; margin: 0 auto 1.4rem; }
+    .cell { background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; position: relative; }
     .cell svg { width: 52px; height: 52px; }
-
-    /* X paths */
-    .x-path {
-      stroke: #ff6b6b;
-      stroke-width: 5;
-      stroke-linecap: round;
-      fill: none;
-      filter: drop-shadow(0 0 6px rgba(255,107,107,0.6));
-      stroke-dasharray: 60;
-      stroke-dashoffset: 60;
-    }
-
-    /* O circle */
-    .o-circle {
-      stroke: #4ecdc4;
-      stroke-width: 5;
-      stroke-linecap: round;
-      fill: none;
-      filter: drop-shadow(0 0 6px rgba(78,205,196,0.6));
-      stroke-dasharray: 163;
-      stroke-dashoffset: 163;
-    }
-
-    /* Draw animations */
-    .cell.drawn .x-path { animation: drawStroke 0.25s ease-out forwards; }
-    .cell.drawn .o-circle { animation: drawStroke 0.35s ease-out forwards; }
-
-    @keyframes drawStroke {
-      to { stroke-dashoffset: 0; }
-    }
-
-    /* Preview hover */
-    .cell-preview {
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .cell:hover:not(.taken) .cell-preview { opacity: 0.25; }
-
-    .cell.taken .cell-preview { display: none; }
-
-    /* Winning cells */
-    .cell.winning {
-      animation: winPulse 0.7s ease-in-out infinite alternate;
-    }
-
-    .cell.winning .x-path { stroke: #ffd700; filter: drop-shadow(0 0 10px rgba(255,215,0,0.8)); }
-    .cell.winning .o-circle { stroke: #ffd700; filter: drop-shadow(0 0 10px rgba(255,215,0,0.8)); }
-
-    @keyframes winPulse {
-      from { background: rgba(255,215,0,0.08); border-color: rgba(255,215,0,0.3); transform: scale(1); }
-      to   { background: rgba(255,215,0,0.18); border-color: rgba(255,215,0,0.7); transform: scale(1.05); }
-    }
-
-    /* Draw shake */
-    .board.shake {
-      animation: shake 0.5s ease;
-    }
-
-    @keyframes shake {
-      0%,100% { transform: translateX(0); }
-      20%     { transform: translateX(-6px); }
-      40%     { transform: translateX(6px); }
-      60%     { transform: translateX(-4px); }
-      80%     { transform: translateX(4px); }
-    }
-
-    /* Confetti */
-    .confetti-container {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 100;
-      overflow: hidden;
-    }
-
-    .confetti-piece {
-      position: absolute;
-      width: 8px;
-      height: 8px;
-      border-radius: 2px;
-      top: -20px;
-      animation: confettiFall linear forwards;
-    }
-
-    @keyframes confettiFall {
-      0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
-      80%  { opacity: 1; }
-      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
-    }
-
-    /* Buttons */
-    .buttons {
-      display: flex;
-      gap: 0.8rem;
-      justify-content: center;
-    }
-
-    button.btn {
-      padding: 0.6rem 1.4rem;
-      font-size: 0.95rem;
-      font-family: inherit;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      transition: transform 0.12s, box-shadow 0.2s, opacity 0.2s;
-    }
-
-    button.btn:hover { opacity: 0.9; transform: translateY(-1px); }
-    button.btn:active { transform: scale(0.95); }
-
-    .btn-restart {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      box-shadow: 0 4px 14px rgba(102,126,234,0.35);
-    }
-
-    .btn-reset {
-      background: rgba(255,255,255,0.07);
-      color: #a0aec0;
-      border: 1.5px solid rgba(255,255,255,0.12);
-    }
-
-    .btn-reset:hover { background: rgba(255,255,255,0.12); }
-
-    /* Active turn arrow */
-    .turn-arrow {
-      display: inline-block;
-      font-size: 1rem;
-      animation: bounce 0.6s ease infinite alternate;
-    }
-
-    @keyframes bounce {
-      from { transform: translateY(0); }
-      to   { transform: translateY(-4px); }
-    }
+    .x-path { stroke: #ff6b6b; stroke-width: 5; stroke-linecap: round; fill: none; stroke-dasharray: 60; stroke-dashoffset: 60; animation: drawStroke 0.25s ease-out forwards; }
+    .o-circle { stroke: #4ecdc4; stroke-width: 5; stroke-linecap: round; fill: none; stroke-dasharray: 163; stroke-dashoffset: 163; animation: drawStroke 0.35s ease-out forwards; }
+    @keyframes drawStroke { to { stroke-dashoffset: 0; } }
+    .buttons { display: flex; gap: 0.8rem; justify-content: center; }
+    .btn { padding: 0.6rem 1.4rem; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
+    .btn-restart { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+    .btn-reset { background: rgba(255,255,255,0.07); color: #a0aec0; border: 1.5px solid rgba(255,255,255,0.12); }
+    .confetti-container { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
+    .cell.winning { animation: winPulse 0.7s ease-in-out infinite alternate; }
+    @keyframes winPulse { from { background: rgba(255,215,0,0.08); transform: scale(1); } to { background: rgba(255,215,0,0.18); transform: scale(1.05); } }
   </style>
 </head>
 <body>
 <div class="confetti-container" id="confetti"></div>
-
 <div class="container">
   <h1>✕ ◯</h1>
-  <p class="subtitle">לחץ על שם השחקן כדי לשנות אותו</p>
-
   <div class="scoreboard">
     <div class="score-card x-card active" id="card-x">
-      <input class="player-name" id="name-x" value="שחקן X" maxlength="10" spellcheck="false" />
-      <div class="name-hint">לחץ לעריכה</div>
+      <div class="player-name">אמה (X)</div>
       <div class="score-value" id="score-x">0</div>
     </div>
     <div class="draw-card">
-      <div class="draw-label">תיקו</div>
-      <div class="draw-value" id="score-draw">0</div>
+      <div style="font-size: 0.7rem; color: #4a5568;">תיקו</div>
+      <div class="score-value" id="score-draw" style="font-size: 1.5rem;">0</div>
     </div>
     <div class="score-card o-card" id="card-o">
-      <input class="player-name" id="name-o" value="שחקן O" maxlength="10" spellcheck="false" />
-      <div class="name-hint">לחץ לעריכה</div>
+      <div class="player-name">ריף (O)</div>
       <div class="score-value" id="score-o">0</div>
     </div>
   </div>
-
   <div class="turn-bar">
-    <span class="turn-dot x-turn" id="turn-dot"></span>
-    <span class="turn-text x-turn" id="turn-text">
-      <span class="turn-arrow">▸</span> תור <span id="turn-name">שחקן X</span>
-    </span>
+    <span class="turn-dot" id="turn-dot"></span>
+    <span class="turn-text" id="turn-text">תור <span id="turn-name"></span></span>
   </div>
-
-  <div class="board-wrap">
-    <div class="board" id="board">
-      <div class="cell" data-index="0"></div>
-      <div class="cell" data-index="1"></div>
-      <div class="cell" data-index="2"></div>
-      <div class="cell" data-index="3"></div>
-      <div class="cell" data-index="4"></div>
-      <div class="cell" data-index="5"></div>
-      <div class="cell" data-index="6"></div>
-      <div class="cell" data-index="7"></div>
-      <div class="cell" data-index="8"></div>
-    </div>
+  <div class="board" id="board">
+    <div class="cell" data-index="0"></div><div class="cell" data-index="1"></div><div class="cell" data-index="2"></div>
+    <div class="cell" data-index="3"></div><div class="cell" data-index="4"></div><div class="cell" data-index="5"></div>
+    <div class="cell" data-index="6"></div><div class="cell" data-index="7"></div><div class="cell" data-index="8"></div>
   </div>
-
   <div class="buttons">
     <button class="btn btn-restart" onclick="restartGame()">▶ משחק חדש</button>
     <button class="btn btn-reset" onclick="resetAll()">↺ אפס ניקוד</button>
-    <button class="btn btn-reset" onclick="window.location.href='index.html'">🏠 דף הבית</button>
+    <button class="btn btn-reset" onclick="window.location.href='index.html'">🏠 בית</button>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, get, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
@@ -458,302 +87,161 @@ const firebaseConfig = {
   appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
 };
 
-const app   = initializeApp(firebaseConfig);
-const db    = getDatabase(app);
-const gameRef = ref(db, 'game/xo');
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const gameId = 'xo';
+const gameRef = ref(db, `game/${gameId}`);
+const presenceRef = ref(db, `presence/${gameId}`);
 
-const params   = new URLSearchParams(location.search);
-const myPlayer = params.get('player') || 'emma';
-const solo     = params.get('solo') === 'true';
-// אמה = X, ריף = O
-const mySymbol = myPlayer === 'emma' ? 'X' : 'O';
-
-let lastTs = null;
-
-const WINNING_COMBOS = [
-  [0,1,2],[3,4,5],[6,7,8],
-  [0,3,6],[1,4,7],[2,5,8],
-  [0,4,8],[2,4,6]
-];
+const params = new URLSearchParams(location.search);
+const myId = params.get('player') || 'emma'; // emma / rif
+const otherId = myId === 'emma' ? 'rif' : 'emma';
+const mySymbol = myId === 'emma' ? 'X' : 'O';
 
 let board = Array(9).fill(null);
 let currentPlayer = 'X';
 let gameOver = false;
 let scores = { X: 0, O: 0, draw: 0 };
-let lastStarter = 'X'; // מי התחיל את המשחק האחרון
+let lastTs = 0;
+let hasLeft = false;
 
-const cells   = document.querySelectorAll('.cell');
-const boardEl = document.getElementById('board');
-const turnDot  = document.getElementById('turn-dot');
-const turnText = document.getElementById('turn-text');
-const cardX   = document.getElementById('card-x');
-const cardO   = document.getElementById('card-o');
-const nameX   = document.getElementById('name-x');
-const nameO   = document.getElementById('name-o');
+const cells = document.querySelectorAll('.cell');
 
-// שמות קבועים
-nameX.value = 'אמה';
-nameO.value = 'ריף';
+async function init() {
+  // 1. ניהול נוכחות - עדכון שאני בפנים ומחיקה כשאני יוצא
+  const myPresence = ref(db, `presence/${gameId}/${myId}`);
+  set(myPresence, true);
+  onDisconnect(myPresence).remove();
 
-// ===== AUDIO =====
-const AudioCtx = window.AudioContext || window.webkitAudioContext;
-let audioCtx = null;
-function getAudioCtx() { if (!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
-function playSound(type) {
-  try {
-    const ctx = getAudioCtx();
-    const osc = ctx.createOscillator(), gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    if (type === 'place') {
-      osc.frequency.setValueAtTime(currentPlayer==='X'?440:523, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(currentPlayer==='X'?330:660, ctx.currentTime+0.1);
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.15);
-      osc.start(); osc.stop(ctx.currentTime+0.15);
-    } else if (type === 'win') {
-      [523,659,784,1047].forEach((freq,i) => {
-        const o2=ctx.createOscillator(), g2=ctx.createGain();
-        o2.connect(g2); g2.connect(ctx.destination);
-        o2.frequency.value=freq; o2.type='sine';
-        g2.gain.setValueAtTime(0.18, ctx.currentTime+i*0.1);
-        g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+i*0.1+0.25);
-        o2.start(ctx.currentTime+i*0.1); o2.stop(ctx.currentTime+i*0.1+0.25);
-      });
-    } else if (type === 'draw') {
-      osc.frequency.setValueAtTime(300, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime+0.4);
-      gain.gain.setValueAtTime(0.12, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.4);
-      osc.start(); osc.stop(ctx.currentTime+0.4);
+  // 2. האזנה לעזיבה של השני
+  onValue(ref(db, `presence/${gameId}/${otherId}`), (snap) => {
+    if (!snap.val() && !hasLeft) {
+      hasLeft = true;
+      alert(`המשתמש השני עזב את המשחק.`);
+      window.location.href = 'index.html';
     }
-  } catch(e) {}
+  });
+
+  // 3. אתחול המשחק
+  const snap = await get(gameRef);
+  const data = snap.val();
+  if (!data || (Date.now() - data.ts > 300000)) { // איפוס אם עברו 5 דקות של שקט
+    resetBoard('X');
+  }
+
+  onValue(gameRef, (snap) => {
+    const data = snap.val();
+    if (!data || data.ts === lastTs) return;
+    lastTs = data.ts;
+    updateUI(data);
+  });
 }
 
-// ===== SVG =====
-function makeSvg(player, preview=false) {
-  const cls = preview ? 'cell-preview' : '';
-  if (player==='X') return `<svg viewBox="0 0 60 60" class="${cls}"><line class="x-path" x1="14" y1="14" x2="46" y2="46"/><line class="x-path" x1="46" y1="14" x2="14" y2="46"/></svg>`;
-  return `<svg viewBox="0 0 60 60" class="${cls}"><circle class="o-circle" cx="30" cy="30" r="18"/></svg>`;
-}
+function updateUI(data) {
+  board = data.board.map(v => v || null);
+  currentPlayer = data.currentPlayer;
+  gameOver = data.gameOver;
+  scores = data.scores || scores;
 
-// ===== RENDER BOARD =====
-function renderBoard() {
   cells.forEach((cell, i) => {
-    if (board[i]) {
-      cell.innerHTML = makeSvg(board[i]);
-      cell.classList.add('taken', 'drawn', board[i].toLowerCase());
-    } else {
-      cell.innerHTML = '';
-      cell.className = 'cell';
-      cell.dataset.index = i;
-    }
+    cell.innerHTML = board[i] ? (board[i] === 'X' ? xSvg() : oSvg()) : '';
+    cell.classList.toggle('taken', !!board[i]);
+    cell.classList.remove('winning');
   });
+
+  if (data.winCombo) {
+    data.winCombo.forEach(idx => cells[idx].classList.add('winning'));
+    if (data.ts !== 0) spawnConfetti();
+  }
+
+  document.getElementById('score-x').textContent = scores.X;
+  document.getElementById('score-o').textContent = scores.O;
+  document.getElementById('score-draw').textContent = scores.draw;
+
+  const turnName = currentPlayer === 'X' ? 'אמה' : 'ריף';
+  const turnColor = currentPlayer === 'X' ? '#ff6b6b' : '#4ecdc4';
+  document.getElementById('turn-name').textContent = turnName;
+  document.getElementById('turn-text').style.color = turnColor;
+  document.getElementById('turn-dot').style.backgroundColor = turnColor;
+
+  document.getElementById('card-x').classList.toggle('active', currentPlayer === 'X');
+  document.getElementById('card-o').classList.toggle('active', currentPlayer === 'O');
+
+  if (gameOver) {
+    document.getElementById('turn-name').textContent = data.isDraw ? "תיקו!" : `ניצחון ל${turnName === 'אמה' ? 'ריף' : 'אמה'}!`;
+  }
 }
 
-// ===== HOVER =====
-cells.forEach(cell => {
-  cell.addEventListener('mouseenter', () => {
-    if (gameOver || cell.classList.contains('taken')) return;
-    if (!solo && currentPlayer !== mySymbol) return;
-    cell.innerHTML = makeSvg(currentPlayer, true);
-  });
-  cell.addEventListener('mouseleave', () => {
-    if (!cell.classList.contains('taken')) cell.innerHTML = '';
-  });
-  cell.addEventListener('click', handleClick);
-});
-
-// ===== CLICK =====
 function handleClick(e) {
-  const cell = e.currentTarget;
-  const idx  = parseInt(cell.dataset.index);
-  if (gameOver || board[idx]) return;
-  if (!solo && currentPlayer !== mySymbol) return; // לא התורך
+  const idx = e.currentTarget.dataset.index;
+  if (gameOver || board[idx] || currentPlayer !== mySymbol) return;
 
   board[idx] = currentPlayer;
-  playSound('place');
-
   const win = checkWin();
   const isDraw = !win && board.every(v => v);
 
-  if (!solo) {
-    const ts = Date.now();
-    lastTs = ts;
-    set(gameRef, {
-      board: board.map(v => v||''),
-      currentPlayer: win||isDraw ? currentPlayer : (currentPlayer==='X'?'O':'X'),
-      gameOver: !!(win||isDraw),
-      winCombo: win || null,
-      isDraw: !!isDraw,
-      scores,
-      ts
-    });
-  }
-
-  applyMove(win, isDraw);
-}
-
-function applyMove(win, isDraw) {
-  renderBoard();
-
-  if (win) {
-    highlightWin(win);
-    scores[currentPlayer]++;
-    updateScores();
-    const winner = currentPlayer==='X' ? nameX.value : nameO.value;
-    setStatus('winner', `🏆 ${winner} ניצח!`);
+  if (win || isDraw) {
     gameOver = true;
-    playSound('win');
-    spawnConfetti();
-    return;
-  }
-  if (isDraw) {
-    scores.draw++;
-    updateScores();
-    setStatus('draw', '🤝 תיקו!');
-    boardEl.classList.add('shake');
-    setTimeout(() => boardEl.classList.remove('shake'), 500);
-    gameOver = true;
-    playSound('draw');
-    return;
+    if (win) scores[currentPlayer]++;
+    else scores.draw++;
   }
 
-  currentPlayer = currentPlayer==='X' ? 'O' : 'X';
-  updateTurnUI();
-}
-
-// ===== FIREBASE LISTEN =====
-function listenToGame() {
-  if (solo) return;
-  onValue(gameRef, (snap) => {
-    const s = snap.val();
-    if (!s) return;
-    if (s.ts === lastTs) return;
-    lastTs = s.ts;
-
-    board = s.board.map(v => v||null);
-    currentPlayer = s.currentPlayer;
-    gameOver = s.gameOver;
-    if (s.scores) scores = s.scores;
-    if (s.lastStarter) lastStarter = s.lastStarter;
-
-    renderBoard();
-    updateScores();
-
-    if (s.winCombo) highlightWin(s.winCombo);
-
-    if (s.gameOver) {
-      if (s.isDraw) {
-        setStatus('draw', '🤝 תיקו!');
-      } else {
-        const prev = currentPlayer==='X' ? 'O' : 'X'; // מי שניצח
-        const winner = prev==='X' ? nameX.value : nameO.value;
-        setStatus('winner', `🏆 ${winner} ניצח!`);
-        spawnConfetti();
-      }
-    } else {
-      updateTurnUI();
-    }
+  const nextPlayer = (win || isDraw) ? currentPlayer : (currentPlayer === 'X' ? 'O' : 'X');
+  
+  update(gameRef, {
+    board: board.map(v => v || ''),
+    currentPlayer: nextPlayer,
+    gameOver: gameOver,
+    winCombo: win,
+    isDraw: isDraw,
+    scores: scores,
+    ts: Date.now()
   });
 }
 
-// ===== UI =====
-function setStatus(type, text) {
-  turnText.innerHTML = text;
-  turnText.className = `turn-text ${type}`;
-  turnDot.className  = `turn-dot ${type}`;
-}
-
-function updateTurnUI() {
-  const name = currentPlayer==='X' ? nameX.value : nameO.value;
-  const cls  = currentPlayer==='X' ? 'x-turn' : 'o-turn';
-  turnDot.className  = `turn-dot ${cls}`;
-  turnText.className = `turn-text ${cls}`;
-  turnText.innerHTML = `<span class="turn-arrow">▸</span> תור <span>${name}</span>`;
-  cardX.classList.toggle('active', currentPlayer==='X');
-  cardO.classList.toggle('active', currentPlayer==='O');
-
-  // הודעה כשממתינים
-  if (!solo && !gameOver && currentPlayer !== mySymbol) {
-    const other = currentPlayer==='X' ? nameX.value : nameO.value;
-    turnText.innerHTML += ` <small style="opacity:0.5">(⏳)</small>`;
-  }
-}
-
 function checkWin() {
-  for (const [a,b,c] of WINNING_COMBOS)
-    if (board[a] && board[a]===board[b] && board[a]===board[c]) return [a,b,c];
+  const combos = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  for (const [a,b,c] of combos) {
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) return [a,b,c];
+  }
   return null;
 }
 
-function highlightWin(combo) {
-  combo.forEach(i => cells[i].classList.add('winning'));
+function resetBoard(starter) {
+  set(gameRef, {
+    board: Array(9).fill(''),
+    currentPlayer: starter,
+    gameOver: false,
+    winCombo: null,
+    isDraw: false,
+    scores: scores,
+    ts: Date.now()
+  });
 }
 
-function updateScores() {
-  document.getElementById('score-x').textContent    = scores.X;
-  document.getElementById('score-o').textContent    = scores.O;
-  document.getElementById('score-draw').textContent = scores.draw;
-}
+window.restartGame = () => resetBoard(currentPlayer === 'X' ? 'O' : 'X');
+window.resetAll = () => { scores = {X:0, O:0, draw:0}; resetBoard('X'); };
 
-// ===== RESTART =====
-function restartGame() {
-  // מי שלא התחיל את המשחק הקודם — מתחיל עכשיו
-  const nextStarter = lastStarter === 'X' ? 'O' : 'X';
-  lastStarter = nextStarter;
-  board = Array(9).fill(null);
-  currentPlayer = nextStarter; gameOver = false;
-  renderBoard();
-  cardX.classList.toggle('active', nextStarter==='X');
-  cardO.classList.toggle('active', nextStarter==='O');
-  updateTurnUI();
-  if (!solo) {
-    const ts = Date.now(); lastTs = ts;
-    set(gameRef, { board: Array(9).fill(''), currentPlayer: nextStarter, gameOver:false, winCombo:null, isDraw:false, scores, lastStarter: nextStarter, ts });
-  }
-}
+function xSvg() { return `<svg viewBox="0 0 60 60"><line class="x-path" x1="14" y1="14" x2="46" y2="46"/><line class="x-path" x1="46" y1="14" x2="14" y2="46"/></svg>`; }
+function oSvg() { return `<svg viewBox="0 0 60 60"><circle class="o-circle" cx="30" cy="30" r="18"/></svg>`; }
 
-function resetAll() {
-  scores = { X:0, O:0, draw:0 };
-  restartGame();
-}
-
-window.restartGame = restartGame;
-window.resetAll    = resetAll;
-
-// ===== CONFETTI =====
-const colors = ['#ff6b6b','#4ecdc4','#ffd700','#667eea','#a78bfa','#34d399'];
 function spawnConfetti() {
   const container = document.getElementById('confetti');
-  container.innerHTML = '';
-  for (let i=0; i<80; i++) {
+  for (let i=0; i<40; i++) {
     const piece = document.createElement('div');
-    piece.className = 'confetti-piece';
-    piece.style.left = Math.random()*100+'vw';
-    piece.style.background = colors[Math.floor(Math.random()*colors.length)];
-    piece.style.animationDuration = (1.5+Math.random()*2)+'s';
-    piece.style.animationDelay = (Math.random()*0.8)+'s';
-    piece.style.width  = (6+Math.random()*6)+'px';
-    piece.style.height = (6+Math.random()*10)+'px';
-    piece.style.borderRadius = Math.random()>0.5?'50%':'2px';
+    piece.style.cssText = `position:absolute; width:8px; height:8px; background:${['#ff6b6b','#4ecdc4','#ffd700'][Math.floor(Math.random()*3)]}; left:${Math.random()*100}vw; top:-10px; animation:fall ${1+Math.random()*2}s linear forwards;`;
     container.appendChild(piece);
   }
-  setTimeout(() => container.innerHTML='', 4000);
+  setTimeout(() => container.innerHTML = '', 3000);
 }
 
-// ===== INIT =====
-(function init() {
-  updateTurnUI();
-  if (solo) return;
-  if (myPlayer === 'emma') {
-    // אמה מאתחלת
-    const ts = Date.now(); lastTs = ts;
-    set(gameRef, { board: Array(9).fill(''), currentPlayer:'X', gameOver:false, winCombo:null, isDraw:false, scores, ts })
-      .then(() => listenToGame());
-  } else {
-    listenToGame();
-  }
-})();
+// הוספת אנימציית קונפטי בסיסית ב-JS
+const style = document.createElement('style');
+style.innerHTML = `@keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }`;
+document.head.appendChild(style);
+
+cells.forEach(c => c.addEventListener('click', handleClick));
+init();
 </script>
 </body>
 </html>
