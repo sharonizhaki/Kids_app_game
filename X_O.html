@@ -25,7 +25,7 @@
     .turn-bar { display: flex; align-items: center; justify-content: center; gap: 10px; height: 2.4rem; margin-bottom: 1.2rem; }
     .turn-text { font-size: 1.1rem; font-weight: 700; color: #e2e8f0; }
     .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 312px; height: 312px; margin: 0 auto 1.4rem; }
-    .cell { background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .cell { background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; height: 100px; width: 100px; }
     .cell svg { width: 52px; height: 52px; pointer-events: none; }
     .x-path { stroke: #ff6b6b; stroke-width: 5; stroke-linecap: round; fill: none; stroke-dasharray: 60; stroke-dashoffset: 60; animation: drawStroke 0.25s ease-out forwards; }
     .o-circle { stroke: #4ecdc4; stroke-width: 5; stroke-linecap: round; fill: none; stroke-dasharray: 163; stroke-dashoffset: 163; animation: drawStroke 0.35s ease-out forwards; }
@@ -40,7 +40,6 @@
   </style>
 </head>
 <body>
-<div id="confetti" style="position:fixed; inset:0; pointer-events:none;"></div>
 <div class="container">
   <h1>✕ ◯</h1>
   <div class="scoreboard">
@@ -98,152 +97,152 @@ let currentPlayer = 'X';
 let gameOver = false;
 let scores = { X: 0, O: 0, draw: 0 };
 let lastTs = null;
+let isExiting = false;
 
 const cells = document.querySelectorAll('.cell');
 const turnText = document.getElementById('turn-text');
 
 async function initGame() {
-  try {
     const snap = await get(gameRef);
     const data = snap.val();
 
-    // הגדרה מה קורה כשמתנתקים
+    // ניקוי מצב עזיבה קודם ב-Database מיד עם הכניסה
+    await update(gameRef, { playerLeft: null, exitToHome: false });
+
     onDisconnect(gameRef).update({ playerLeft: mySymbol, ts: Date.now() });
 
-    // אם אין נתונים בכלל או שהם ישנים מאוד - אתחל
-    if (!data || !Array.isArray(data.board) || (Date.now() - data.ts > 600000)) {
-      await resetGameState('X');
+    if (!data || !Array.isArray(data.board) || (Date.now() - data.ts > 300000)) {
+        await resetGameState('X');
     } else {
-      updateLocalState(data);
+        updateLocalState(data);
     }
     
     renderUI();
     listenToGame();
-  } catch (e) {
-    console.error("Init Error:", e);
-    await resetGameState('X');
-    renderUI();
-    listenToGame();
-  }
 }
 
 function listenToGame() {
-  onValue(gameRef, (snap) => {
-    const data = snap.val();
-    if (!data || data.ts === lastTs) return;
-    lastTs = data.ts;
+    onValue(gameRef, (snap) => {
+        const data = snap.val();
+        if (!data || isExiting) return;
 
-    if (data.exitToHome) {
-      window.location.href = 'index.html';
-      return;
-    }
+        // אם זה עדכון ישן, התעלם
+        if (lastTs && data.ts <= lastTs) return;
+        lastTs = data.ts;
 
-    if (data.playerLeft && data.playerLeft !== mySymbol) {
-      turnText.style.color = "#ff6b6b";
-      turnText.innerHTML = "⚠️ השחקן השני עזב...";
-      setTimeout(() => window.location.href = 'index.html', 3000);
-      return;
-    }
+        if (data.exitToHome) {
+            isExiting = true;
+            window.location.href = 'index.html';
+            return;
+        }
 
-    updateLocalState(data);
-    renderUI();
-    if (data.winCombo) highlightWin(data.winCombo);
-  });
+        if (data.playerLeft && data.playerLeft !== mySymbol) {
+            turnText.style.color = "#ff6b6b";
+            turnText.innerHTML = "⚠️ השחקן השני עזב...";
+            setTimeout(() => { if(!isExiting) window.location.href = 'index.html'; }, 3000);
+            return;
+        }
+
+        updateLocalState(data);
+        renderUI();
+        if (data.winCombo) highlightWin(data.winCombo);
+    });
 }
 
 function updateLocalState(data) {
-  if (data.board && Array.isArray(data.board)) {
-    board = data.board.map(v => v || null);
-  }
-  currentPlayer = data.currentPlayer || 'X';
-  gameOver = !!data.gameOver;
-  scores = data.scores || { X: 0, O: 0, draw: 0 };
+    if (data.board && Array.isArray(data.board)) {
+        board = data.board.map(v => v === '' ? null : v);
+    }
+    currentPlayer = data.currentPlayer || 'X';
+    gameOver = !!data.gameOver;
+    scores = data.scores || { X: 0, O: 0, draw: 0 };
 }
 
 async function resetGameState(starter) {
-  const initialState = {
-    board: Array(9).fill(''),
-    currentPlayer: starter,
-    gameOver: false,
-    winCombo: null,
-    scores: scores,
-    exitToHome: false,
-    playerLeft: null,
-    ts: Date.now()
-  };
-  await set(gameRef, initialState);
+    const initialState = {
+        board: Array(9).fill(''),
+        currentPlayer: starter,
+        gameOver: false,
+        winCombo: null,
+        scores: scores,
+        exitToHome: false,
+        playerLeft: null,
+        ts: Date.now()
+    };
+    await set(gameRef, initialState);
 }
 
 function handleClick(e) {
-  const idx = e.currentTarget.dataset.index;
-  if (gameOver || board[idx] || currentPlayer !== mySymbol) return;
+    const idx = parseInt(e.currentTarget.dataset.index);
+    if (gameOver || board[idx] || currentPlayer !== mySymbol || isExiting) return;
 
-  board[idx] = currentPlayer;
-  const win = checkWin();
-  const isDraw = !win && board.every(v => v);
+    board[idx] = currentPlayer;
+    const win = checkWin();
+    const isDraw = !win && board.every(v => v !== null);
 
-  if (win || isDraw) {
-    gameOver = true;
-    if (win) scores[currentPlayer]++;
-    else scores.draw++;
-  }
+    if (win || isDraw) {
+        gameOver = true;
+        if (win) scores[currentPlayer]++;
+        else scores.draw++;
+    }
 
-  const nextPlayer = (win || isDraw) ? currentPlayer : (currentPlayer === 'X' ? 'O' : 'X');
-  
-  update(gameRef, {
-    board: board.map(v => v || ''),
-    currentPlayer: nextPlayer,
-    gameOver,
-    winCombo: win,
-    scores,
-    ts: Date.now()
-  });
+    const nextPlayer = (win || isDraw) ? currentPlayer : (currentPlayer === 'X' ? 'O' : 'X');
+    
+    update(gameRef, {
+        board: board.map(v => v || ''),
+        currentPlayer: nextPlayer,
+        gameOver: gameOver,
+        winCombo: win,
+        scores: scores,
+        ts: Date.now()
+    });
 }
 
 function checkWin() {
-  const combos = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-  for (const [a,b,c] of combos) {
-    if (board[a] && board[a] === board[b] && board[a] === board[c]) return [a,b,c];
-  }
-  return null;
+    const combos = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (const [a,b,c] of combos) {
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) return [a,b,c];
+    }
+    return null;
 }
 
 function renderUI() {
-  cells.forEach((cell, i) => {
-    cell.innerHTML = board[i] ? (board[i] === 'X' ? 
-      `<svg viewBox="0 0 60 60"><line class="x-path" x1="14" y1="14" x2="46" y2="46"/><line class="x-path" x1="46" y1="14" x2="14" y2="46"/></svg>` : 
-      `<svg viewBox="0 0 60 60"><circle class="o-circle" cx="30" cy="30" r="18"/></svg>`) : '';
-    cell.classList.remove('winning');
-  });
+    cells.forEach((cell, i) => {
+        cell.innerHTML = board[i] ? (board[i] === 'X' ? 
+            `<svg viewBox="0 0 60 60"><line class="x-path" x1="14" y1="14" x2="46" y2="46"/><line class="x-path" x1="46" y1="14" x2="14" y2="46"/></svg>` : 
+            `<svg viewBox="0 0 60 60"><circle class="o-circle" cx="30" cy="30" r="18"/></svg>`) : '';
+        cell.classList.remove('winning');
+    });
 
-  document.getElementById('score-x').textContent = scores.X;
-  document.getElementById('score-o').textContent = scores.O;
-  document.getElementById('score-draw').textContent = scores.draw;
+    document.getElementById('score-x').textContent = scores.X;
+    document.getElementById('score-o').textContent = scores.O;
+    document.getElementById('score-draw').textContent = scores.draw;
 
-  const currentLabel = currentPlayer === 'X' ? 'אמה' : 'ריף';
-  
-  document.getElementById('card-x').classList.toggle('active', currentPlayer === 'X');
-  document.getElementById('card-o').classList.toggle('active', currentPlayer === 'O');
+    const currentLabel = currentPlayer === 'X' ? 'אמה' : 'ריף';
+    document.getElementById('card-x').classList.toggle('active', currentPlayer === 'X');
+    document.getElementById('card-o').classList.toggle('active', currentPlayer === 'O');
 
-  if (gameOver) {
-    const win = checkWin();
-    turnText.innerHTML = win ? `🏆 ${currentLabel} ניצח/ה!` : `🤝 תיקו!`;
-  } else {
-    turnText.style.color = "#e2e8f0";
-    turnText.innerHTML = currentPlayer === mySymbol ? "תורך לשחק!" : `תור ${currentLabel}...`;
-  }
+    if (gameOver) {
+        const win = checkWin();
+        turnText.innerHTML = win ? `🏆 ${currentLabel} ניצח/ה!` : `🤝 תיקו!`;
+    } else {
+        turnText.style.color = "#e2e8f0";
+        turnText.innerHTML = currentPlayer === mySymbol ? "תורך לשחק!" : `תור ${currentLabel}...`;
+    }
 }
 
 function highlightWin(combo) {
-  combo.forEach(i => cells[i].classList.add('winning'));
+    combo.forEach(i => cells[i].classList.add('winning'));
 }
 
-window.goHome = () => {
-  update(gameRef, { exitToHome: true, ts: Date.now() });
+window.goHome = async () => {
+    isExiting = true;
+    await update(gameRef, { exitToHome: true, ts: Date.now() });
+    window.location.href = 'index.html';
 };
 
 window.restartGame = () => {
-  resetGameState(currentPlayer === 'X' ? 'O' : 'X');
+    resetGameState(currentPlayer === 'X' ? 'O' : 'X');
 };
 
 cells.forEach(c => c.addEventListener('click', handleClick));
