@@ -1,74 +1,75 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="he" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>מרוץ אקסטרים 20-20-20</title>
+    <title>מרוץ אקסטרים v16.6 - שליטה אינטואיטיבית</title>
     <style>
-        body { margin: 0; background: #050505; font-family: sans-serif; overflow: hidden; touch-action: none; color: white; user-select: none; }
+        body { margin: 0; background: #000; font-family: sans-serif; overflow: hidden; touch-action: none; color: white; user-select: none; direction: ltr; }
         #game-viewport { width: 100vw; height: 100vh; position: relative; display: flex; justify-content: center; overflow: hidden; background: #222; }
         
         .track-5-lanes { 
-            width: 95%; max-width: 500px; height: 100%; background: #333; position: relative; 
-            border-left: 12px solid; border-right: 12px solid;
-            border-image: repeating-linear-gradient(-45deg, #f00, #f00 10px, #fff 10px, #fff 20px) 1;
+            width: 90%; max-width: 450px; height: 100%; background: #333; position: relative; 
+            border-left: 15px solid; border-right: 15px solid;
+            border-image: repeating-linear-gradient(-45deg, #f00, #f00 15px, #fff 15px, #fff 30px) 1;
         }
 
-        .lane-mark { 
-            position: absolute; height: 100%; width: 4px; 
-            background: repeating-linear-gradient(to bottom, #fff, #fff 20px, transparent 20px, transparent 40px);
-            transform: translateX(-50%);
+        .start-line {
+            position: absolute; bottom: 10%; width: 100%; height: 40px;
+            background: repeating-linear-gradient(45deg, #eee 25%, #222 25%, #222 50%, #eee 50%, #eee 75%, #222 75%, #222 100%);
+            background-size: 20px 20px; border-top: 3px solid gold; border-bottom: 3px solid gold; z-index: 5;
         }
 
         .car { 
-            position: absolute; width: 50px; height: 70px; font-size: 45px; z-index: 100;
-            transition: left 0.15s ease-out, bottom 0.1s linear, transform 0.2s; 
-            transform: translateX(-50%) rotate(90deg);
+            position: absolute; width: 55px; height: 75px; font-size: 50px; z-index: 200;
+            transition: left 0.12s ease-out; transform: translateX(-50%) rotate(90deg);
             display: flex; align-items: center; justify-content: center;
         }
         
-        .tilt-right { transform: translateX(-50%) rotate(110deg) !important; }
-        .tilt-left { transform: translateX(-50%) rotate(70deg) !important; }
-
-        .game-obj { position: absolute; font-size: 30px; transform: translateX(-50%); z-index: 80; }
+        .game-obj { position: absolute; font-size: 35px; transform: translate(-50%, 50%); z-index: 100; text-shadow: 0 0 10px #000; }
 
         #ui { position: fixed; top: 10px; width: 100%; display: flex; justify-content: space-around; z-index: 1000; pointer-events: none; }
-        .stat-box { background: rgba(0,0,0,0.8); padding: 5px 15px; border-radius: 10px; border: 1px solid #444; text-align: center; }
+        .stat-box { background: rgba(0,0,0,0.85); padding: 8px 12px; border-radius: 12px; border: 2px solid #555; text-align: center; min-width: 80px; }
+        
+        #overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 3000;
+        }
 
-        #controls { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; z-index: 999; }
-        .btn-zone { height: 100%; width: 50%; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        /* הגדרת אזורי לחיצה פיזיים */
+        #touch-left-side { position: fixed; top: 0; left: 0; width: 50%; height: 100%; z-index: 500; }
+        #touch-right-side { position: fixed; top: 0; right: 0; width: 50%; height: 100%; z-index: 500; }
     </style>
 </head>
 <body>
 
+    <div id="overlay">
+        <button id="ready-btn" style="padding:20px 40px; font-size:25px; border-radius:30px; background:lime; font-weight:bold; border:none; cursor:pointer;">START!</button>
+        <div id="countdown-txt" style="font-size:100px; color:gold;"></div>
+    </div>
+
     <div id="ui">
-        <div class="stat-box" style="color: #00ff00;">שחקן 1<br><span id="p1-s">💎 0</span></div>
-        <div id="stage-txt" style="font-size: 20px; font-weight: bold; color: gold;">STAGE 1/5</div>
-        <div class="stat-box" style="color: #cc00ff;">שחקן 2<br><span id="p2-s">💎 0</span></div>
+        <div class="stat-box" style="border-color: #00ff00;">P1<br><span id="p1-s">💎 0</span></div>
+        <div id="stage-txt" style="font-size: 22px; font-weight: bold; color: gold;">STAGE 1</div>
+        <div class="stat-box" style="border-color: #cc00ff;">P2<br><span id="p2-s">💎 0</span></div>
     </div>
 
     <div id="game-viewport">
         <div class="track-5-lanes">
-            <div class="lane-mark" style="left: 20%;"></div>
-            <div class="lane-mark" style="left: 40%;"></div>
-            <div class="lane-mark" style="left: 60%;"></div>
-            <div class="lane-mark" style="left: 80%;"></div>
-            
+            <div id="start-line-el" class="start-line"></div>
             <div id="p1-car" class="car" style="display:none; color: #00ff00;">🏎️</div>
-            <div id="p2-car" class="car" style="display:none; color: #cc00ff; filter: hue-rotate(150deg);">🏎️</div>
-            
+            <div id="p2-car" class="car" style="display:none; color: #cc00ff;">🏎️</div>
             <div id="obj-layer"></div>
         </div>
     </div>
 
-    <div id="controls">
-        <div class="btn-zone" id="btn-l"></div>
-        <div class="btn-zone" id="btn-r"></div>
-    </div>
+    <div id="touch-left-side"></div>
+    <div id="touch-right-side"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, onValue, update, onDisconnect, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
@@ -82,24 +83,23 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const roomId = new URLSearchParams(window.location.search).get('room') || 'balanced_v15';
-        const gameRef = ref(db, `race_v15/${roomId}`);
+        const roomId = new URLSearchParams(window.location.search).get('room') || 'race_fix_v16_6';
+        const gameRef = ref(db, `race_v16_6/${roomId}`);
 
         let myId = null;
-        let localData = { pos: 10, lane: 2, stage: 1, score: 0, speed: 1 };
+        let localData = { pos: 5, lane: 2, stage: 1, score: 0, speed: 1, isRacing: false };
         const lanesX = [10, 30, 50, 70, 90]; 
 
-        onValue(gameRef, (snap) => {
+        async function joinGame() {
+            const snap = await get(gameRef);
             const data = snap.val() || {};
-            if (!myId) {
-                myId = (!data.p1) ? 'p1' : (data.p2 ? 'p1' : 'p2');
-                update(gameRef, { [myId]: localData });
-                onDisconnect(ref(db, `race_v15/${roomId}/${myId}`)).remove();
-                if (myId === 'p1') setupGlobalMap();
-                startAutoDrive();
-            }
-            render(data);
-        });
+            myId = (!data.p1) ? 'p1' : 'p2';
+            await set(ref(db, `race_v16_6/${roomId}/${myId}`), localData);
+            onDisconnect(ref(db, `race_v16_6/${roomId}/${myId}`)).remove();
+            if (myId === 'p1') setupGlobalMap();
+            onValue(gameRef, (s) => render(s.val() || {}));
+            startEngine();
+        }
 
         function render(data) {
             ['p1', 'p2'].forEach(p => {
@@ -111,111 +111,91 @@
                     document.getElementById(`${p}-s`).innerText = `💎 ${data[p].score}`;
                 }
             });
-            if (data[myId]) {
-                document.getElementById('stage-txt').innerText = `STAGE ${data[myId].stage}/5`;
-                localData = data[myId];
-            }
-
+            document.getElementById('stage-txt').innerText = `STAGE ${localData.stage}`;
+            document.getElementById('start-line-el').style.display = (localData.stage === 1) ? 'block' : 'none';
             const layer = document.getElementById('obj-layer');
             layer.innerHTML = '';
             if (data.objects) {
                 Object.entries(data.objects).forEach(([id, o]) => {
                     if (o.stage === localData.stage) {
                         const d = document.createElement('div');
-                        d.className = 'game-obj';
-                        d.innerText = o.char;
-                        d.style.bottom = o.pos + "%";
-                        d.style.left = lanesX[o.lane] + "%";
+                        d.className = 'game-obj'; d.innerText = o.char;
+                        d.style.bottom = o.pos + "%"; d.style.left = lanesX[o.lane] + "%";
                         layer.appendChild(d);
                     }
                 });
             }
         }
 
-        function startAutoDrive() {
+        function startEngine() {
             setInterval(() => {
-                if (!myId) return;
-                let speedFactor = 0.3 * localData.speed; 
-                localData.pos += speedFactor;
-
-                checkCollisions();
-
-                if (localData.pos >= 96) {
-                    if (localData.stage < 5) {
-                        localData.stage++;
-                        localData.pos = 10;
-                    } else {
-                        alert("ניצחת!");
-                        localData.stage = 1; localData.pos = 10; localData.score = 0; localData.speed = 1;
-                    }
+                if (!localData.isRacing) return;
+                localData.pos += (0.5 * localData.speed); 
+                if (localData.pos >= 98) {
+                    if (localData.stage < 5) { localData.stage++; localData.pos = 5; } 
+                    else { alert("🏁 FINISH!"); localData.stage = 1; localData.pos = 5; localData.isRacing = false; }
                 }
-                update(ref(db, `race_v15/${roomId}/${myId}`), localData);
-            }, 50);
+                checkCollisions();
+                update(ref(db, `race_v16_6/${roomId}/${myId}`), localData);
+            }, 40);
         }
 
-        function checkCollisions() {
-            onValue(ref(db, `race_v15/${roomId}/objects`), (snap) => {
-                const objs = snap.val();
-                if (!objs) return;
-                Object.entries(objs).forEach(([id, o]) => {
-                    if (o.stage === localData.stage && o.lane === localData.lane && Math.abs(o.pos - localData.pos) < 6) {
-                        if (o.type === 'coin') localData.score += 10;
-                        if (o.type === 'boost') localData.speed = Math.min(3, localData.speed + 0.5);
-                        if (o.type === 'trap') { 
-                            localData.stage = 1;
-                            localData.pos = 10; 
-                            localData.speed = 1; 
-                            if(navigator.vibrate) navigator.vibrate([100, 50, 100]); 
-                        }
-                        update(ref(db, `race_v15/${roomId}/objects`), { [id]: null });
-                    }
-                });
-            }, { onlyOnce: true });
+        async function checkCollisions() {
+            const snap = await get(ref(db, `race_v16_6/${roomId}/objects`));
+            const objs = snap.val(); if (!objs) return;
+            Object.entries(objs).forEach(([id, o]) => {
+                if (o.stage === localData.stage && o.lane === localData.lane && Math.abs(o.pos - localData.pos) < 3.5) {
+                    if (o.type === 'coin') localData.score += 10;
+                    if (o.type === 'boost') localData.speed = Math.min(3.0, localData.speed + 0.3);
+                    if (o.type === 'trap') { localData.stage = 1; localData.pos = 5; localData.speed = 1; }
+                    update(ref(db, `race_v16_6/${roomId}/objects`), { [id]: null });
+                }
+            });
         }
 
-        // תיקון היגוי סופי בהחלט
-        function changeLane(dir) {
-            if (dir === 'left') { 
-                if (localData.lane > 0) localData.lane -= 1; 
-                tilt('l'); 
-            } else { 
-                if (localData.lane < 4) localData.lane += 1; 
-                tilt('r'); 
-            }
-            update(ref(db, `race_v15/${roomId}/${myId}`), localData);
-        }
+        // לוגיקת כפתורי START
+        document.getElementById('ready-btn').addEventListener('click', () => {
+            document.getElementById('ready-btn').style.display = 'none';
+            let c = 3;
+            const t = document.getElementById('countdown-txt');
+            const iv = setInterval(() => {
+                if (c > 0) { t.innerText = c; c--; }
+                else { t.innerText = "GO!"; clearInterval(iv);
+                    setTimeout(() => { document.getElementById('overlay').style.display = 'none'; localData.isRacing = true; }, 500);
+                }
+            }, 800);
+        });
 
-        function tilt(dir) {
-            const el = document.getElementById(`${myId}-car`);
-            el.classList.add(dir === 'l' ? 'tilt-left' : 'tilt-right');
-            setTimeout(() => el.classList.remove('tilt-left', 'tilt-right'), 200);
-        }
+        // --- תיקון השליטה: לכיוון האצבע ---
 
-        // צד ימין של הקוד (btn-l) מפעיל פקודת שמאלה, וצד שמאל (btn-r) ימינה
-        document.getElementById('btn-l').addEventListener('pointerdown', (e) => { e.preventDefault(); changeLane('left'); });
-        document.getElementById('btn-r').addEventListener('pointerdown', (e) => { e.preventDefault(); changeLane('right'); });
+        // צד שמאל של המסך מושך שמאלה (נתיב קטן יותר)
+        document.getElementById('touch-left-side').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            if (localData.lane > 0) localData.lane--;
+            update(ref(db, `race_v16_6/${roomId}/${myId}`), { lane: localData.lane });
+        });
+
+        // צד ימין של המסך מושך ימינה (נתיב גדול יותר)
+        document.getElementById('touch-right-side').addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            if (localData.lane < 4) localData.lane++;
+            update(ref(db, `race_v16_6/${roomId}/${myId}`), { lane: localData.lane });
+        });
 
         function setupGlobalMap() {
             const obs = {};
-            // חלוקה מאוזנת: 4 מכל סוג לכל אחד מ-5 השלבים (סה"כ 20 מכל סוג)
             for(let s=1; s<=5; s++) {
-                for(let i=0; i<4; i++) addObj(obs, '💎', 'coin', `s${s}_c${i}`, s);
-                for(let i=0; i<4; i++) addObj(obs, '⚡', 'boost', `s${s}_b${i}`, s);
-                for(let i=0; i<4; i++) addObj(obs, '💥', 'trap', `s${s}_t${i}`, s);
+                for(let i=0; i<4; i++) {
+                    obs[`s${s}_c${i}`] = { char:'💎', type:'coin', stage:s, lane:Math.floor(Math.random()*5), pos:Math.floor(Math.random()*65)+20 };
+                    obs[`s${s}_t${i}`] = { char:'💥', type:'trap', stage:s, lane:Math.floor(Math.random()*5), pos:Math.floor(Math.random()*65)+20 };
+                }
+                for(let i=0; i<8; i++) {
+                    obs[`s${s}_b${i}`] = { char:'⚡', type:'boost', stage:s, lane:Math.floor(Math.random()*5), pos:Math.floor(Math.random()*65)+20 };
+                }
             }
-            update(gameRef, { objects: obs });
+            set(ref(db, `race_v16_6/${roomId}/objects`), obs);
         }
-
-        function addObj(target, char, type, id, s) {
-            target[id] = { 
-                char, 
-                type, 
-                lane: Math.floor(Math.random() * 5), 
-                // מניעת הופעה ב-10% הראשונים (מתחיל מ-15% גובה)
-                pos: Math.floor(Math.random() * 75) + 15, 
-                stage: s 
-            };
-        }
+        joinGame();
     </script>
 </body>
 </html>
