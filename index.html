@@ -25,30 +25,40 @@
 
     html, body { height:100%; width:100%; background: var(--bg); color: var(--text); font-family: 'Heebo', sans-serif; overflow:hidden; }
 
-    /* רקע ואלמנטים צפים */
-    .background-elements { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+    /* רקע ואלמנטים צפים - גרסה מחוזקת */
+    .background-elements { 
+        position: fixed; 
+        top: 0; left: 0; 
+        width: 100%; height: 100%; 
+        z-index: -1; 
+        pointer-events: none; 
+        overflow: hidden;
+        background: var(--bg);
+    }
     
     .stars {
         position: absolute; inset: 0;
         background-image: 
-            radial-gradient(1.5px 1.5px at 20px 30px, #fff, rgba(0,0,0,0)),
-            radial-gradient(1.2px 1.2px at 80px 120px, #fff, rgba(0,0,0,0)),
-            radial-gradient(2px 2px at 150px 40px, #fff, rgba(0,0,0,0)),
-            radial-gradient(1px 1px at 250px 180px, #fff, rgba(0,0,0,0)),
-            radial-gradient(1.5px 1.5px at 110px 210px, #fff, rgba(0,0,0,0));
-        background-size: 300px 300px;
-        opacity: 0.18;
-        animation: starsMove 100s linear infinite;
+            radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
+            radial-gradient(1.5px 1.5px at 100px 150px, #fff, rgba(0,0,0,0)),
+            radial-gradient(2.5px 2.5px at 200px 80px, #fff, rgba(0,0,0,0)),
+            radial-gradient(1.5px 1.5px at 280px 250px, #eee, rgba(0,0,0,0));
+        background-size: 250px 250px;
+        opacity: 0.4; 
+        animation: starsMove 80s linear infinite;
     }
     @keyframes starsMove { from { background-position: 0 0; } to { background-position: 0 1000px; } }
 
     .watermark { 
-        position: absolute; opacity: 0.8; filter: grayscale(1) brightness(1.8); 
-        font-size: 15rem; animation: floatAround 30s infinite ease-in-out; 
+        position: absolute; 
+        opacity: 0.25; 
+        filter: grayscale(0.5) brightness(1.5); 
+        font-size: 8rem; 
+        animation: floatAround 25s infinite ease-in-out; 
     }
-    .watermark:nth-child(2) { top: 10%; left: 10%; }
-    .watermark:nth-child(3) { top: 55%; left: 75%; animation-delay: -5s; }
-    .watermark:nth-child(4) { top: 85%; left: 15%; animation-delay: -10s; }
+    .watermark:nth-child(2) { top: 15%; left: -5%; }
+    .watermark:nth-child(3) { top: 45%; right: -10%; animation-delay: -7s; }
+    .watermark:nth-child(4) { bottom: 10%; left: 10%; animation-delay: -12s; }
     
     @keyframes floatAround {
         0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
@@ -63,35 +73,35 @@
 
     h1 { font-family: 'Fredoka One', cursive; font-size: 3rem; margin-bottom: 30px; background: linear-gradient(135deg, #FF5C7A, #4DB8FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     
-    /* כפתורי משתמשים - הקטנה ופרופורציות */
+    /* כפתורי משתמשים - פרופורציות מוקטנות */
     .user-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; width: 100%; max-width: 400px; }
     .user-btn { 
         background: var(--surface); border: 2px solid var(--border); border-top: 2px solid rgba(255, 255, 255, 0.3);
-        border-radius: 28px; padding: 25px 15px; /* הקטנה */
+        border-radius: 28px; padding: 25px 15px;
         cursor: pointer; transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
         display: flex; flex-direction: column; align-items: center; gap: 12px; color: white; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); 
     }
     .user-btn:active { animation: bounce 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
     .user-btn.emma { border-color: var(--emma); } 
     .user-btn.rif { border-color: var(--rif); } 
-    .user-btn i { font-size: 3.5rem; /* הקטנה */ font-style: normal; }
+    .user-btn i { font-size: 3.5rem; font-style: normal; }
     .user-btn span { font-weight: 800; font-size: 1.2rem; }
 
     @keyframes bounce { 0% { transform: scale(1); } 50% { transform: scale(0.92); } 100% { transform: scale(1); } }
 
-    /* גריד משחקים - הקטנה */
+    /* גריד משחקים - פרופורציות מוקטנות */
     .game-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; max-width: 500px; }
     .game-card { 
         background: var(--surface); border: 1px solid var(--border); border-top: 1px solid rgba(255, 255, 255, 0.2); 
-        border-radius: 24px; padding: 18px 10px; /* הקטנה */
+        border-radius: 24px; padding: 18px 10px;
         display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; 
         transition: 0.2s ease; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); opacity: 0; transform: translateY(20px); 
     }
     .game-card.animate { animation: cardSlideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
     @keyframes cardSlideUp { to { opacity: 1; transform: translateY(0); } }
-    .game-card:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
+    .game-card:active:not(.soon) { transform: scale(0.95); background: rgba(255,255,255,0.1); }
     .game-card.soon { opacity: 0.5; cursor: default; }
-    .game-card i { font-size: 2.2rem; /* הקטנה */ font-style: normal; }
+    .game-card i { font-size: 2.2rem; font-style: normal; }
     .game-card span { font-weight: 700; font-size: 1rem; }
 
     /* המתנה */
@@ -203,7 +213,6 @@ function renderGames() {
         displayedCount++;
     });
 
-    // הוספת קלף "בקרוב" בסוף
     const soonCard = document.createElement('div');
     soonCard.className = 'game-card animate soon';
     soonCard.style.animationDelay = `${displayedCount * 0.1}s`;
@@ -276,7 +285,19 @@ function showScreen(id) {
 function startApp() {
     renderGames();
     showScreen('screen-games');
-    document.getElementById('greeting').textContent = `היי ${myUser.name}, מה נשחק?`;
+    const greeting = document.getElementById('greeting');
+    greeting.textContent = `היי ${myUser.name}, מה נשחק?`;
+
+    if (myUser.id.includes('emma')) {
+        greeting.style.background = 'linear-gradient(135deg, #FF5C7A, #FFB2C1)';
+    } else if (myUser.id.includes('rif')) {
+        greeting.style.background = 'linear-gradient(135deg, #4DB8FF, #B2E2FF)';
+    } else {
+        greeting.style.background = 'linear-gradient(135deg, #3DD68C, #A8F0D0)';
+    }
+    greeting.style.webkitBackgroundClip = 'text';
+    greeting.style.webkitTextFillColor = 'transparent';
+    greeting.style.display = 'block';
 }
 
 window.onload = () => {
