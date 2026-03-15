@@ -181,7 +181,7 @@ let roomListener = null;
 let selectedGuestEmoji = null;
 
 const games = [
-    { id: 'xo', name: 'איקס עיגול', url: 'X_O.html', icon: '❌' },
+    { id: 'xo', name: 'איקס עיגול', url: 'xo.html', icon: '❌' },
     { id: 'draw', name: 'צייר ונחש', url: 'draw_game.html', icon: '🎨' },
     { id: 'race', name: 'מרוץ מכוניות', url: 'Race.html', icon: '🏎️' },
     { id: 'memory', name: 'משחק זיכרון', url: 'Memory.html', icon: '🧩' },
@@ -218,7 +218,7 @@ function startApp() {
     gn.textContent = `היי ${myUser.name}`;
     gn.style.color = myUser.color;
     ge.textContent = myUser.emoji;
-    gq.style.color = myUser.color; // צבע "מה נשחק?"
+    gq.style.color = myUser.color;
 
     const list = document.getElementById('game-list');
     list.innerHTML = '';
