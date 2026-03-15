@@ -53,7 +53,7 @@
 
   <div class="scoreboard">
     <div class="score-card" id="card-X">
-      <div class="player-name x-text" id="name-X">ממתין...</div>
+      <div class="player-name x-text" id="name-X">אמה</div>
       <div class="score-value" id="score-X">0</div>
     </div>
     <div class="draw-card">
@@ -61,7 +61,7 @@
       <div id="score-draw" style="font-size:1.2rem; font-weight:bold">0</div>
     </div>
     <div class="score-card" id="card-O">
-      <div class="player-name o-text" id="name-O">ממתין...</div>
+      <div class="player-name o-text" id="name-O">ריף</div>
       <div class="score-value" id="score-O">0</div>
     </div>
   </div>
@@ -82,7 +82,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, update, get, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
@@ -99,52 +99,44 @@ const db = getDatabase(app);
 const gameRef = ref(db, 'game/xo');
 const roomRef = ref(db, 'rooms_v3/xo');
 
-// קבלת ה-ID מה-URL (חשוב!)
 const params = new URLSearchParams(location.search);
-const myId = params.get('player');
+const myId = params.get('player') || "";
 
 let mySymbol = null;
-let currentPlayersNames = { X: 'ממתין...', O: 'ממתין...' };
+let currentPlayersNames = { X: 'אמה', O: 'ריף' };
 
-console.log("My ID from URL:", myId);
+// זיהוי מיידי לפי ה-ID בכתובת
+if (myId.toLowerCase().includes('emma')) {
+    mySymbol = 'X';
+} else if (myId.toLowerCase().includes('rif')) {
+    mySymbol = 'O';
+}
 
-// האזנה לשחקנים בחדר
+// עדכון Firebase שאני כאן (כדי למנוע את המערך הריק)
+if (myId) {
+    set(ref(db, `rooms_v3/xo/${myId}`), {
+        name: mySymbol === 'X' ? 'אמה' : (mySymbol === 'O' ? 'ריף' : 'אורח'),
+        active: true
+    });
+}
+
+// האזנה לשחקנים בחדר לעדכון ה-UI
 onValue(roomRef, (snap) => {
     const data = snap.val() || {};
     const ids = Object.keys(data);
     
-    console.log("Firebase IDs in room:", ids);
-
-    // זיהוי לפי ה-ID המלא (כולל המספר האקראי)
-    const myIndex = ids.indexOf(myId);
-    
-    if (myIndex === 0) mySymbol = 'X';
-    else if (myIndex === 1) mySymbol = 'O';
-    else mySymbol = null;
-
-    // פונקציה שמציגה רק את השם בלי ה-ID האקראי
-    const cleanName = (id) => {
-        if (!id || !data[id]) return "ממתין...";
-        return data[id].name || id.split('_')[0];
-    };
-
-    currentPlayersNames.X = cleanName(ids[0]);
-    currentPlayersNames.O = cleanName(ids[1]);
-    
-    document.getElementById('name-X').textContent = currentPlayersNames.X;
-    document.getElementById('name-O').textContent = currentPlayersNames.O;
+    console.log("Current IDs in room:", ids);
 
     const badge = document.getElementById('my-role');
     if (mySymbol) {
-        badge.textContent = `אתה: ${currentPlayersNames[mySymbol]} (${mySymbol})`;
+        badge.textContent = `אתה: ${mySymbol === 'X' ? 'אמה' : 'ריף'} (${mySymbol})`;
         badge.style.borderColor = mySymbol === 'X' ? '#ff6b6b' : '#4ecdc4';
     } else {
         badge.textContent = "מצב צפייה";
-        console.warn("MyId not found in room IDs. MyId:", myId, "Room IDs:", ids);
     }
 });
 
-// שאר הלוגיקה של המשחק (ללא שינוי)
+// לוגיקה של המשחק
 onValue(gameRef, (snap) => {
     const data = snap.val() || {};
     const board = data.board || Array(9).fill('');
@@ -175,9 +167,11 @@ onValue(gameRef, (snap) => {
 
     const statusEl = document.getElementById('status-text');
     if (gameOver) {
-        statusEl.textContent = board.includes('') ? `🏆 המנצח: ${currentPlayersNames[turn]}` : "🤝 תיקו!";
+        const winnerName = board.includes('') ? (turn === 'X' ? 'אמה' : 'ריף') : "";
+        statusEl.textContent = board.includes('') ? `🏆 המנצח: ${winnerName}` : "🤝 תיקו!";
     } else {
-        statusEl.textContent = (mySymbol === turn) ? "תורך לשחק!" : `תור ${currentPlayersNames[turn]}...`;
+        const turnName = turn === 'X' ? 'אמה' : 'ריף';
+        statusEl.textContent = (mySymbol === turn) ? "תורך לשחק!" : `תור ${turnName}...`;
     }
 });
 
