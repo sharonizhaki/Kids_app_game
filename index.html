@@ -185,15 +185,19 @@ const games = [
     { id: 'snakes', name: 'סולמות ונחשים', url: 'Snakes.html', icon: '🐍' }
 ];
 
+// החלפה 3: לוגיקת צפייה בחדרים (מי נגד מי)
 function watchAllRooms() {
     onValue(ref(db, 'rooms_v3'), (snap) => {
         const allRooms = snap.val() || {};
         games.forEach(g => {
             const statusDiv = document.getElementById(`status-${g.id}`);
             if (!statusDiv) return;
-            const players = Object.values(allRooms[g.id] || {});
-            if (players.length === 0) statusDiv.textContent = '';
-            else if (players.length === 1) {
+            
+            const players = allRooms[g.id] ? Object.values(allRooms[g.id]) : [];
+            
+            if (players.length === 0) {
+                statusDiv.textContent = '';
+            } else if (players.length === 1) {
                 statusDiv.textContent = `${players[0].name}${players[0].emoji} ממתין...`;
                 statusDiv.style.color = 'var(--gold)';
             } else {
@@ -278,8 +282,12 @@ window.joinGame = (gameId) => {
     currentGame = games.find(g => g.id === gameId);
     onValue(ref(db, `rooms_v3/${gameId}`), (snap) => {
         const players = Object.values(snap.val() || {});
-        if (players.length >= 2) window.location.href = `${currentGame.url}?player=${myUser.id}&view=true`;
-        else startWaiting(gameId);
+        // החלפה 2: שליחת השם עבור צופה (view=true)
+        if (players.length >= 2) {
+            window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}&view=true`;
+        } else {
+            startWaiting(gameId);
+        }
     }, { onlyOnce: true });
 };
 
@@ -287,9 +295,11 @@ function startWaiting(gameId) {
     document.getElementById('wait-game-icon').textContent = currentGame.icon;
     document.getElementById('wait-game-name').textContent = currentGame.name;
     showScreen('screen-waiting');
+    
     const myPlayerRef = ref(db, `rooms_v3/${gameId}/${myUser.id}`);
     set(myPlayerRef, { name: myUser.name, emoji: myUser.emoji, color: myUser.color });
     onDisconnect(myPlayerRef).remove();
+    
     roomListener = onValue(ref(db, `rooms_v3/${gameId}`), (snap) => {
         const players = Object.values(snap.val() || {});
         [0, 1].forEach(i => {
@@ -302,8 +312,13 @@ function startWaiting(gameId) {
                 slot.className = 'p-slot'; slot.innerHTML = ''; slot.style.borderColor = '';
             }
         });
+
         if (players.length >= 2) {
-            setTimeout(() => { if (roomListener) roomListener(); window.location.href = `${currentGame.url}?player=${myUser.id}`; }, 800);
+            setTimeout(() => { 
+                if (roomListener) roomListener(); 
+                // החלפה 1: שליחת השם ל-URL כדי שה-XO יציג אותו נכון
+                window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}`; 
+            }, 800);
         }
     });
 }
