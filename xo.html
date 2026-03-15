@@ -1,287 +1,261 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>איקס עיגול - אמה וריף</title>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Heebo:wght@400;700;900&display=swap" rel="stylesheet">
-  <style>
-    /* עיצוב רקע ואווירה */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    
-    body { 
-        font-family: 'Heebo', sans-serif; 
-        background: #0F1320; 
-        min-height: 100vh; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        color: white; 
-        overflow: hidden; 
-        position: relative; 
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>איקס עיגול - קרב משתתפים</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Heebo:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #0F1320; --surface: rgba(255, 255, 255, 0.05); --x-color: #FF5C7A; --o-color: #4DB8FF; --gold: #F5C842; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Heebo', sans-serif; }
+        body { background: var(--bg); color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+        
+        .header { display: flex; justify-content: space-around; width: 100%; max-width: 500px; padding: 20px; margin-top: 10px; }
+        .score-box { background: var(--surface); padding: 15px; border-radius: 20px; text-align: center; min-width: 100px; border: 2px solid transparent; transition: 0.3s; }
+        .score-box.active { border-color: var(--gold); transform: scale(1.05); box-shadow: 0 0 15px rgba(245, 200, 66, 0.2); }
+        .name { font-weight: 900; font-size: 1.1rem; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .score { font-family: 'Fredoka One', cursive; font-size: 2rem; }
+        
+        #status-bar { margin: 15px 0; font-weight: 800; color: var(--gold); font-size: 1.2rem; height: 30px; }
+        
+        .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 90vw; max-width: 350px; aspect-ratio: 1; }
+        .cell { background: var(--surface); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 4rem; font-family: 'Fredoka One', cursive; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+        .cell:active { transform: scale(0.95); }
+        .cell.x { color: var(--x-color); text-shadow: 0 0 10px rgba(255,92,122,0.3); }
+        .cell.o { color: var(--o-color); text-shadow: 0 0 10px rgba(77,184,255,0.3); }
 
-    /* שכבות צבע ברקע */
-    body::before { 
-        content: ''; 
-        position: fixed; 
-        inset: 0; 
-        background: 
-            radial-gradient(circle at 15% 15%, rgba(255, 92, 122, 0.15) 0%, transparent 40%),
-            radial-gradient(circle at 85% 85%, rgba(77, 184, 255, 0.15) 0%, transparent 40%);
-        z-index: -1;
-    }
+        .controls { display: flex; gap: 10px; margin-top: 25px; width: 90vw; max-width: 350px; }
+        .btn { flex: 1; padding: 15px; border-radius: 15px; border: none; font-weight: 900; cursor: pointer; transition: 0.2s; }
+        .btn-reset { background: #EEF0FF; color: var(--bg); }
+        .btn-home { background: rgba(255,255,255,0.1); color: white; }
 
-    .container { 
-        position: relative; 
-        z-index: 10; 
-        text-align: center; 
-        width: 100%; 
-        max-width: 420px; 
-        padding: 25px; 
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 40px;
-        box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-    }
-
-    .badge { 
-        padding: 8px 20px; 
-        border-radius: 30px; 
-        background: rgba(255, 255, 255, 0.08); 
-        border: 1px solid rgba(255, 255, 255, 0.15); 
-        margin-bottom: 25px; 
-        display: inline-block; 
-        font-size: 0.95rem; 
-        font-weight: 600;
-        letter-spacing: 0.5px;
-    }
-
-    /* לוח תוצאות מעוצב */
-    .scoreboard { 
-        display: grid; 
-        grid-template-columns: 1fr auto 1fr; 
-        gap: 15px; 
-        margin-bottom: 25px; 
-        align-items: center;
-    }
-
-    .score-card { 
-        background: rgba(0, 0, 0, 0.2); 
-        padding: 18px 10px; 
-        border-radius: 24px; 
-        border: 2px solid transparent; 
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-    }
-
-    .score-card.active { 
-        transform: scale(1.08); 
-        background: rgba(255, 255, 255, 0.05);
-        box-shadow: 0 0 20px rgba(245, 200, 66, 0.2);
-    }
-
-    #card-X.active { border-color: #FF5C7A; }
-    #card-O.active { border-color: #4DB8FF; }
-
-    .score-name { font-size: 1.1rem; font-weight: 900; margin-bottom: 5px; }
-    .score-num { font-family: 'Fredoka One', cursive; font-size: 2.2rem; }
-
-    /* לוח המשחק */
-    .board { 
-        display: grid; 
-        grid-template-columns: repeat(3, 1fr); 
-        gap: 12px; 
-        margin: 25px 0; 
-        perspective: 1000px;
-    }
-
-    .cell { 
-        background: rgba(255, 255, 255, 0.05); 
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px; 
-        height: 105px; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        font-family: 'Fredoka One', cursive;
-        font-size: 3.8rem; 
-        cursor: pointer; 
-        transition: all 0.2s ease; 
-        box-shadow: inset 0 0 15px rgba(255,255,255,0.02);
-    }
-
-    .cell:hover { background: rgba(255, 255, 255, 0.08); }
-    .cell:active { transform: scale(0.92); }
-
-    .x-color { 
-        color: #FF5C7A; 
-        text-shadow: 0 0 15px rgba(255, 92, 122, 0.5); 
-    }
-    .o-color { 
-        color: #4DB8FF; 
-        text-shadow: 0 0 15px rgba(77, 184, 255, 0.5); 
-    }
-
-    /* כפתורים */
-    .controls { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
-    
-    .btn { 
-        flex: 1;
-        padding: 16px; 
-        border-radius: 20px; 
-        border: none; 
-        font-weight: 900; 
-        font-size: 1.1rem;
-        cursor: pointer; 
-        transition: 0.3s;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-    }
-
-    .btn-reset { background: #EEF0FF; color: #0F1320; }
-    .btn-home { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
-
-    .btn:active { transform: translateY(2px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-
-    #status { 
-        color: #F5C842; 
-        font-weight: 800; 
-        height: 30px; 
-        margin-bottom: 10px; 
-        font-size: 1.3rem; 
-        text-shadow: 0 0 10px rgba(245, 200, 66, 0.3);
-    }
-  </style>
+        /* מודל הודעות */
+        #alert-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: white; color: var(--bg); padding: 30px; border-radius: 25px; text-align: center; width: 100%; max-width: 300px; }
+        .modal-content h2 { margin-bottom: 20px; font-weight: 900; }
+    </style>
 </head>
 <body>
 
-<div class="container">
-  <div class="badge" id="my-role">מתחבר למשחק...</div>
-
-  <div class="scoreboard">
-    <div class="score-card" id="card-X">
-        <div class="score-name x-color">אמה</div>
-        <div class="score-num" id="score-X">0</div>
+<div id="alert-modal">
+    <div class="modal-content">
+        <h2 id="modal-msg">המשחק הסתיים</h2>
+        <button class="btn btn-reset" onclick="location.href='index.html'">חזרה לתפריט</button>
     </div>
-    <div style="font-family: 'Fredoka One'; opacity: 0.3; font-size: 1.5rem;">VS</div>
-    <div class="score-card" id="card-O">
-        <div class="score-name o-color">ריף</div>
-        <div class="score-num" id="score-O">0</div>
+</div>
+
+<div class="header">
+    <div id="card-X" class="score-box">
+        <div id="name-X" class="name">ממתין...</div>
+        <div id="wins-X" class="score">0</div>
     </div>
-  </div>
+    <div class="score-box">
+        <div class="name">תיקו</div>
+        <div id="draws" class="score">0</div>
+    </div>
+    <div id="card-O" class="score-box">
+        <div id="name-O" class="name">ממתין...</div>
+        <div id="wins-O" class="score">0</div>
+    </div>
+</div>
 
-  <div id="status"></div>
+<div id="status-bar">מתחבר...</div>
 
-  <div class="board" id="board">
+<div class="board" id="board">
     <div class="cell" data-idx="0"></div><div class="cell" data-idx="1"></div><div class="cell" data-idx="2"></div>
     <div class="cell" data-idx="3"></div><div class="cell" data-idx="4"></div><div class="cell" data-idx="5"></div>
     <div class="cell" data-idx="6"></div><div class="cell" data-idx="7"></div><div class="cell" data-idx="8"></div>
-  </div>
+</div>
 
-  <div class="controls">
-    <button class="btn btn-reset" onclick="resetGame()">סיבוב חדש</button>
-    <button class="btn btn-home" onclick="location.href='index.html'">בית</button>
-  </div>
+<div class="controls">
+    <button class="btn btn-reset" onclick="handleForfeit()">ויתור (הפסד)</button>
+    <button class="btn btn-home" onclick="goHome()">חזרה לבית</button>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, update, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, update, onDisconnect, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
-  authDomain: "kidssapp-izhaki.firebaseapp.com",
-  databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "kidssapp-izhaki",
-  storageBucket: "kidssapp-izhaki.firebasestorage.app",
-  messagingSenderId: "663906163746",
-  appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+    apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
+    authDomain: "kidssapp-izhaki.firebaseapp.com",
+    databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "kidssapp-izhaki",
+    storageBucket: "kidssapp-izhaki.firebasestorage.app",
+    messagingSenderId: "663906163746",
+    appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const gameRef = ref(db, 'game/xo');
-
 const params = new URLSearchParams(location.search);
-const myId = params.get('player') || "";
-let mySymbol = null;
+const myName = params.get('player') || "אורח";
 
-if (myId.includes('emma')) mySymbol = 'X';
-else if (myId.includes('rif')) mySymbol = 'O';
+const roomRef = ref(db, 'rooms_v3/xo');
+const gameStateRef = ref(db, 'game/xo_dynamic');
 
-// ניקוי חדר ההמתנה
-if (myId) remove(ref(db, `rooms_v3/xo/${myId}`));
+let mySymbol = null; 
+let currentGameState = null;
 
-onValue(gameRef, (snap) => {
-    const data = snap.val() || {};
-    const board = data.board || Array(9).fill('');
-    const turn = data.currentPlayer || 'X';
-    const gameOver = data.gameOver || false;
+// 1. ניהול כניסה וזיהוי תפקיד
+async function initSession() {
+    const snap = await get(roomRef);
+    const playersMap = snap.val() || {};
+    const playerNames = Object.keys(playersMap);
+
+    if (playerNames.includes(myName)) {
+        mySymbol = (playerNames.indexOf(myName) === 0) ? 'X' : 'O';
+    } else if (playerNames.length === 0) {
+        mySymbol = 'X';
+        await set(ref(db, `rooms_v3/xo/${myName}`), { name: myName });
+    } else if (playerNames.length === 1) {
+        mySymbol = 'O';
+        await set(ref(db, `rooms_v3/xo/${myName}`), { name: myName });
+    } else {
+        mySymbol = null; // צופה
+    }
+
+    if (mySymbol) onDisconnect(ref(db, `rooms_v3/xo/${myName}`)).remove();
+    startListeners();
+}
+
+// 2. האזנה לשינויים
+function startListeners() {
+    onValue(gameStateRef, (snap) => {
+        currentGameState = snap.val() || resetFirebaseGame();
+        render();
+    });
+
+    onValue(roomRef, (snap) => {
+        const players = snap.val() || {};
+        const names = Object.keys(players);
+        
+        // עדכון שמות במסך
+        document.getElementById('name-X').textContent = names[0] || "ממתין...";
+        document.getElementById('name-O').textContent = names[1] || "ממתין...";
+
+        // אם החדר התרוקן - מאפסים הכל
+        if (names.length === 0) resetFirebaseGame(true);
+
+        // זיהוי אם מישהו עזב (מודל הודעה)
+        if (mySymbol && names.length < 2 && currentGameState && !currentGameState.gameOver) {
+            // אם היינו באמצע משחק ומישהו נעלם
+            // (אפשר להוסיף כאן לוגיקה למודל)
+        }
+    });
+}
+
+function resetFirebaseGame(fullReset = false) {
+    const newState = {
+        board: Array(9).fill(''),
+        currentPlayer: 'X',
+        starter: 'X',
+        gameOver: false,
+        scores: fullReset ? { X: 0, O: 0, draws: 0 } : (currentGameState?.scores || { X: 0, O: 0, draws: 0 })
+    };
+    set(gameStateRef, newState);
+    return newState;
+}
+
+// 3. תצוגה
+function render() {
+    if (!currentGameState) return;
+    const { board, currentPlayer, scores, gameOver } = currentGameState;
 
     document.querySelectorAll('.cell').forEach((cell, i) => {
         cell.textContent = board[i];
-        cell.className = `cell ${board[i] === 'X' ? 'x-color' : 'o-color'}`;
+        cell.className = `cell ${board[i] ? board[i].toLowerCase() : ''}`;
     });
 
-    document.getElementById('score-X').textContent = data.scores?.X || 0;
-    document.getElementById('score-O').textContent = data.scores?.O || 0;
-    document.getElementById('card-X').classList.toggle('active', turn === 'X' && !gameOver);
-    document.getElementById('card-O').classList.toggle('active', turn === 'O' && !gameOver);
+    document.getElementById('wins-X').textContent = scores.X;
+    document.getElementById('wins-O').textContent = scores.O;
+    document.getElementById('draws').textContent = scores.draws;
     
-    const roleEl = document.getElementById('my-role');
-    if (mySymbol) {
-        roleEl.textContent = `אתה משחק בתור: ${mySymbol === 'X' ? 'אמה' : 'ריף'}`;
-        roleEl.style.color = mySymbol === 'X' ? '#FF5C7A' : '#4DB8FF';
-    } else {
-        roleEl.textContent = "אתה צופה במשחק";
-    }
+    document.getElementById('card-X').classList.toggle('active', currentPlayer === 'X' && !gameOver);
+    document.getElementById('card-O').classList.toggle('active', currentPlayer === 'O' && !gameOver);
 
-    const statusEl = document.getElementById('status');
-    if (gameOver) {
-        if (!board.includes('')) statusEl.textContent = "תיקו! אין מנצח";
-        else statusEl.textContent = `כל הכבוד ל${turn === 'X' ? 'אמה' : 'ריף'}!`;
-    } else {
-        statusEl.textContent = (mySymbol === turn) ? "תורך לשחק!" : `תור של ${turn === 'X' ? 'אמה' : 'ריף'}`;
-    }
-});
+    const status = document.getElementById('status-bar');
+    if (gameOver) status.textContent = "המשחק הסתיים!";
+    else if (!mySymbol) status.textContent = "אתה במצב צפייה";
+    else status.textContent = (mySymbol === currentPlayer) ? "תורך לשחק!" : "ממתין ליריב...";
+}
 
+// 4. לוגיקת המשחק
 document.querySelectorAll('.cell').forEach(cell => {
     cell.onclick = async () => {
         const idx = cell.dataset.idx;
-        const snap = await get(gameRef);
-        const data = snap.val() || {};
-        const board = data.board || Array(9).fill('');
-        
-        if (data.gameOver || board[idx] !== '' || data.currentPlayer !== mySymbol) return;
+        if (!mySymbol || mySymbol !== currentGameState.currentPlayer || currentGameState.board[idx] !== '' || currentGameState.gameOver) return;
 
-        board[idx] = mySymbol;
-        const win = checkWin(board);
-        const isDraw = !win && !board.includes('');
-        const scores = data.scores || { X: 0, O: 0 };
-        
-        if (win) scores[mySymbol]++;
+        const newBoard = [...currentGameState.board];
+        newBoard[idx] = mySymbol;
 
-        update(gameRef, {
-            board: board,
-            currentPlayer: (win || isDraw) ? mySymbol : (mySymbol === 'X' ? 'O' : 'X'),
-            gameOver: win || isDraw,
-            scores: scores
-        });
+        const win = checkWinner(newBoard);
+        const draw = !win && !newBoard.includes('');
+        const updates = { board: newBoard };
+
+        if (win || draw) {
+            updates.gameOver = true;
+            if (win) currentGameState.scores[mySymbol]++;
+            else currentGameState.scores.draws++;
+            updates.scores = currentGameState.scores;
+            
+            // ניקוי לוח אחרי 3 שניות
+            setTimeout(autoNextRound, 3000);
+        } else {
+            updates.currentPlayer = mySymbol === 'X' ? 'O' : 'X';
+        }
+        update(gameStateRef, updates);
     };
 });
 
-function checkWin(b) {
+function checkWinner(b) {
     const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-    for (let l of lines) {
-        if (b[l[0]] && b[l[0]] === b[l[1]] && b[l[0]] === b[l[2]]) return true;
-    }
-    return false;
+    return lines.some(l => b[l[0]] && b[l[0]] === b[l[1]] && b[l[0]] === b[l[2]]);
 }
 
-window.resetGame = () => {
-    update(gameRef, { board: Array(9).fill(''), currentPlayer: 'X', gameOver: false });
+async function autoNextRound() {
+    const snap = await get(gameStateRef);
+    const data = snap.val();
+    const nextStarter = data.starter === 'X' ? 'O' : 'X';
+    update(gameStateRef, {
+        board: Array(9).fill(''),
+        currentPlayer: nextStarter,
+        starter: nextStarter,
+        gameOver: false
+    });
+}
+
+// 5. עזיבה וויתור
+window.handleForfeit = () => {
+    if (mySymbol === currentGameState.currentPlayer) {
+        const other = mySymbol === 'X' ? 'O' : 'X';
+        currentGameState.scores[other]++;
+        update(gameStateRef, { scores: currentGameState.scores });
+        autoNextRound();
+    }
 };
+
+window.goHome = async () => {
+    if (mySymbol) {
+        await remove(ref(db, `rooms_v3/xo/${myName}`));
+    }
+    location.href = 'index.html';
+};
+
+// טיפול במודל עזיבה
+onValue(roomRef, (snap) => {
+    const players = snap.val() || {};
+    const names = Object.keys(players);
+    // אם היינו 2 שחקנים ואחד עזב
+    if (mySymbol && names.length === 1 && !names.includes(myName === 'emma' ? 'rif' : 'emma')) {
+        // זיהוי שחקן שעזב
+        const leftName = myName.includes('emma') ? 'ריף' : 'אמה'; // דוגמה פשוטה
+        document.getElementById('modal-msg').textContent = `השחקן השני עזב`;
+        document.getElementById('alert-modal').style.display = 'flex';
+    }
+});
+
+initSession();
 </script>
 </body>
 </html>
