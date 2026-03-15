@@ -66,7 +66,7 @@
     </div>
   </div>
 
-  <div class="turn-bar" id="status-text">מתחבר ל-Firebase...</div>
+  <div class="turn-bar" id="status-text">מתחבר...</div>
 
   <div class="board" id="board">
     <div class="cell" data-idx="0"></div><div class="cell" data-idx="1"></div><div class="cell" data-idx="2"></div>
@@ -76,7 +76,7 @@
 
   <div class="buttons">
     <button class="btn btn-restart" onclick="resetGame()">משחק חדש</button>
-    <button class="btn btn-home" onclick="location.href='index.html?screen=games'">🏠</button>
+    <button class="btn btn-home" onclick="location.href='index.html'">🏠</button>
   </div>
 </div>
 
@@ -99,40 +99,40 @@ const db = getDatabase(app);
 const gameRef = ref(db, 'game/xo');
 const roomRef = ref(db, 'rooms_v3/xo');
 
+// קבלת ה-ID מה-URL (חשוב!)
 const params = new URLSearchParams(location.search);
 const myId = params.get('player');
 
 let mySymbol = null;
 let currentPlayersNames = { X: 'ממתין...', O: 'ממתין...' };
 
-// האזנה לשחקנים בחדר - התיקון הלוגי
+console.log("My ID from URL:", myId);
+
+// האזנה לשחקנים בחדר
 onValue(roomRef, (snap) => {
     const data = snap.val() || {};
     const ids = Object.keys(data);
     
-    console.log("IDs in room:", ids);
-    console.log("My ID:", myId);
+    console.log("Firebase IDs in room:", ids);
 
-    // קביעת תפקיד לפי מיקום בחדר
+    // זיהוי לפי ה-ID המלא (כולל המספר האקראי)
     const myIndex = ids.indexOf(myId);
+    
     if (myIndex === 0) mySymbol = 'X';
     else if (myIndex === 1) mySymbol = 'O';
     else mySymbol = null;
 
-    // משיכת שמות בצורה מפורשת לפי ה-ID שתופס כל משבצת
-    if (ids[0]) {
-        currentPlayersNames.X = data[ids[0]].name || ids[0];
-        document.getElementById('name-X').textContent = currentPlayersNames.X;
-    } else {
-        document.getElementById('name-X').textContent = "ממתין...";
-    }
+    // פונקציה שמציגה רק את השם בלי ה-ID האקראי
+    const cleanName = (id) => {
+        if (!id || !data[id]) return "ממתין...";
+        return data[id].name || id.split('_')[0];
+    };
 
-    if (ids[1]) {
-        currentPlayersNames.O = data[ids[1]].name || ids[1];
-        document.getElementById('name-O').textContent = currentPlayersNames.O;
-    } else {
-        document.getElementById('name-O').textContent = "ממתין...";
-    }
+    currentPlayersNames.X = cleanName(ids[0]);
+    currentPlayersNames.O = cleanName(ids[1]);
+    
+    document.getElementById('name-X').textContent = currentPlayersNames.X;
+    document.getElementById('name-O').textContent = currentPlayersNames.O;
 
     const badge = document.getElementById('my-role');
     if (mySymbol) {
@@ -140,10 +140,11 @@ onValue(roomRef, (snap) => {
         badge.style.borderColor = mySymbol === 'X' ? '#ff6b6b' : '#4ecdc4';
     } else {
         badge.textContent = "מצב צפייה";
+        console.warn("MyId not found in room IDs. MyId:", myId, "Room IDs:", ids);
     }
 });
 
-// האזנה למצב המשחק
+// שאר הלוגיקה של המשחק (ללא שינוי)
 onValue(gameRef, (snap) => {
     const data = snap.val() || {};
     const board = data.board || Array(9).fill('');
@@ -180,7 +181,6 @@ onValue(gameRef, (snap) => {
     }
 });
 
-// לחיצה על תא
 document.querySelectorAll('.cell').forEach(cell => {
     cell.onclick = async () => {
         const idx = cell.dataset.idx;
