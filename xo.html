@@ -93,7 +93,7 @@
 
         .score { 
             font-family: 'Fredoka One', cursive; 
-            font-size: 2.2rem;
+            font-size: 1.6rem;
             font-weight: 900;
         }
 
@@ -361,6 +361,16 @@ const db = getDatabase(app);
 const params = new URLSearchParams(location.search);
 const myName = params.get('player') || "אורח";
 
+// קבל את צבע המשתמש מ-sessionStorage
+const userDataStr = sessionStorage.getItem('myUser');
+const userData = userDataStr ? JSON.parse(userDataStr) : null;
+const myColor = userData?.color || '#EEF0FF';
+
+// עדכן צבע בעל (אם אני משחקן X)
+if (mySymbol === 'X' && myColor) {
+    document.documentElement.style.setProperty('--x-color', myColor);
+}
+
 const roomRef = ref(db, 'rooms_v3/xo');
 const gameStateRef = ref(db, 'game/xo_dynamic');
 
@@ -403,7 +413,18 @@ async function initSession() {
             mySymbol = playerNames.indexOf(myName) === 0 ? 'X' : 'O';
         }
 
-        // 4. הפעל listeners
+        // 4. עדכן צבעים וסמלים בכרטיסים
+        if (mySymbol === 'X' && myColor) {
+            document.documentElement.style.setProperty('--x-color', myColor);
+            document.getElementById('label-X').textContent = myName;
+            document.getElementById('label-X').style.color = myColor;
+        } else if (mySymbol === 'O' && myColor) {
+            document.documentElement.style.setProperty('--o-color', myColor);
+            document.getElementById('label-O').textContent = myName;
+            document.getElementById('label-O').style.color = myColor;
+        }
+
+        // 5. הפעל listeners
         startListeners();
         updateUI();
 
