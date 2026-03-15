@@ -6,62 +6,340 @@
     <title>איקס עיגול - קרב משתתפים</title>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Heebo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #0F1320; --surface: rgba(255, 255, 255, 0.05); --x-color: #FF5C7A; --o-color: #4DB8FF; --gold: #F5C842; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Heebo', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
-        .header { display: flex; justify-content: space-around; width: 100%; max-width: 500px; padding: 20px; margin-top: 10px; }
-        .score-box { background: var(--surface); padding: 15px; border-radius: 20px; text-align: center; min-width: 100px; border: 2px solid transparent; transition: 0.3s; }
-        .score-box.active { border-color: var(--gold); transform: scale(1.05); box-shadow: 0 0 15px rgba(245, 200, 66, 0.2); }
-        .name { font-weight: 900; font-size: 1.1rem; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .score { font-family: 'Fredoka One', cursive; font-size: 2rem; }
-        #status-bar { margin: 15px 0; font-weight: 800; color: var(--gold); font-size: 1.2rem; height: 30px; }
-        .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 90vw; max-width: 350px; aspect-ratio: 1; }
-        .cell { background: var(--surface); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 4rem; font-family: 'Fredoka One', cursive; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
-        .cell.x { color: var(--x-color); }
-        .cell.o { color: var(--o-color); }
-        .controls { display: flex; gap: 10px; margin-top: 25px; width: 90vw; max-width: 350px; }
-        .btn { flex: 1; padding: 15px; border-radius: 15px; border: none; font-weight: 900; cursor: pointer; transition: 0.2s; text-align: center; }
-        .btn-reset { background: #EEF0FF; color: var(--bg); }
-        .btn-home { background: rgba(255,255,255,0.1); color: white; }
-        #alert-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: white; color: var(--bg); padding: 30px; border-radius: 25px; text-align: center; width: 100%; max-width: 300px; }
+        :root { 
+            --bg: #0F1320; 
+            --surface: rgba(255, 255, 255, 0.05); 
+            --surface-bright: rgba(255, 255, 255, 0.1);
+            --x-color: #FF5C7A; 
+            --o-color: #4DB8FF; 
+            --gold: #F5C842;
+            --green: #3DD68C;
+            --red: #EF4444;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Heebo', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        body { 
+            background: var(--bg); 
+            color: white; 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* רקע אנימציה */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255, 92, 122, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(77, 184, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .header { 
+            display: flex; 
+            justify-content: space-around; 
+            width: 100%; 
+            max-width: 500px; 
+            padding: 20px 10px; 
+            margin-top: 10px;
+            gap: 8px;
+        }
+
+        .score-box { 
+            background: var(--surface); 
+            padding: 15px 12px; 
+            border-radius: 20px; 
+            text-align: center; 
+            min-width: 90px;
+            border: 2px solid transparent; 
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .score-box.active { 
+            border-color: var(--gold); 
+            transform: scale(1.08);
+            box-shadow: 0 0 20px rgba(245, 200, 66, 0.3), inset 0 0 10px rgba(245, 200, 66, 0.1);
+            background: var(--surface-bright);
+        }
+
+        .score-box.viewer {
+            border-color: var(--green);
+            background: rgba(61, 214, 140, 0.05);
+        }
+
+        .name { 
+            font-weight: 900; 
+            font-size: 0.95rem; 
+            margin-bottom: 6px; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis;
+            opacity: 0.9;
+        }
+
+        .score { 
+            font-family: 'Fredoka One', cursive; 
+            font-size: 2.2rem;
+            font-weight: 900;
+        }
+
+        .role-label {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        #status-bar { 
+            margin: 15px 0; 
+            font-weight: 800; 
+            color: var(--gold); 
+            font-size: 1.1rem; 
+            height: 28px;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .board { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 10px; 
+            width: 90vw; 
+            max-width: 350px; 
+            aspect-ratio: 1;
+            padding: 10px;
+            background: var(--surface);
+            border-radius: 20px;
+        }
+
+        .cell { 
+            background: var(--surface-bright); 
+            border-radius: 15px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 3.5rem; 
+            font-family: 'Fredoka One', cursive; 
+            cursor: pointer; 
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .cell:active {
+            transform: scale(0.95);
+        }
+
+        .cell.x { 
+            color: var(--x-color);
+            border-color: var(--x-color);
+        }
+
+        .cell.o { 
+            color: var(--o-color);
+            border-color: var(--o-color);
+        }
+
+        .cell:not(.x):not(.o):hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--gold);
+        }
+
+        .controls { 
+            display: flex; 
+            gap: 12px; 
+            margin-top: 20px; 
+            width: 90vw; 
+            max-width: 350px;
+        }
+
+        .btn { 
+            flex: 1; 
+            padding: 14px; 
+            border-radius: 15px; 
+            border: none; 
+            font-weight: 900; 
+            cursor: pointer; 
+            transition: all 0.2s ease;
+            text-align: center;
+            font-size: 0.95rem;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-reset { 
+            background: var(--green); 
+            color: #000;
+            box-shadow: 0 4px 15px rgba(61, 214, 140, 0.3);
+        }
+
+        .btn-home { 
+            background: rgba(255, 255, 255, 0.1); 
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* מודל אזהרה */
+        #alert-modal { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0, 0, 0, 0.9); 
+            z-index: 1000; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content { 
+            background: white; 
+            color: var(--bg); 
+            padding: 30px; 
+            border-radius: 25px; 
+            text-align: center; 
+            width: 100%; 
+            max-width: 320px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-content h2 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+
+        .modal-content p {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .modal-content .btn {
+            font-size: 1rem;
+            padding: 12px;
+        }
+
+        /* מסך צופים */
+        #viewer-bar {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, rgba(61, 214, 140, 0.2), rgba(77, 184, 255, 0.2));
+            padding: 8px 16px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--green);
+            border-bottom: 2px solid var(--green);
+            z-index: 100;
+        }
+
+        /* עדכון למצב צפייה */
+        body.viewer-mode {
+            padding-top: 40px;
+        }
+
+        body.viewer-mode #viewer-bar {
+            display: block;
+        }
+
+        body.viewer-mode .btn-reset {
+            display: none;
+        }
     </style>
 </head>
 <body>
 
+<!-- אזהרה על יציאת משחקן -->
 <div id="alert-modal">
     <div class="modal-content">
-        <h2 id="modal-msg">השחקן השני עזב</h2>
+        <h2 id="modal-title">⚠️ משחקן עזב</h2>
+        <p id="modal-msg">המשחקן השני עזב את המשחק</p>
         <button class="btn btn-reset" onclick="goHome()">חזרה לתפריט</button>
     </div>
 </div>
 
+<!-- סרגל צופה -->
+<div id="viewer-bar">
+    👁️ אתה צופה בלבד - המשחק מלא
+</div>
+
+<!-- הכותרת עם ניקוד -->
 <div class="header">
     <div id="card-X" class="score-box">
         <div id="name-X" class="name">ממתין...</div>
         <div id="wins-X" class="score">0</div>
+        <div class="role-label" id="label-X">X</div>
     </div>
     <div class="score-box">
         <div class="name">תיקו</div>
         <div id="draws" class="score">0</div>
+        <div class="role-label">—</div>
     </div>
     <div id="card-O" class="score-box">
         <div id="name-O" class="name">ממתין...</div>
         <div id="wins-O" class="score">0</div>
+        <div class="role-label" id="label-O">O</div>
     </div>
 </div>
 
+<!-- סרגל מצב -->
 <div id="status-bar">מתחבר...</div>
 
+<!-- לוח המשחק -->
 <div class="board" id="board">
-    <div class="cell" data-idx="0"></div><div class="cell" data-idx="1"></div><div class="cell" data-idx="2"></div>
-    <div class="cell" data-idx="3"></div><div class="cell" data-idx="4"></div><div class="cell" data-idx="5"></div>
-    <div class="cell" data-idx="6"></div><div class="cell" data-idx="7"></div><div class="cell" data-idx="8"></div>
+    <div class="cell" data-idx="0"></div>
+    <div class="cell" data-idx="1"></div>
+    <div class="cell" data-idx="2"></div>
+    <div class="cell" data-idx="3"></div>
+    <div class="cell" data-idx="4"></div>
+    <div class="cell" data-idx="5"></div>
+    <div class="cell" data-idx="6"></div>
+    <div class="cell" data-idx="7"></div>
+    <div class="cell" data-idx="8"></div>
 </div>
 
+<!-- כפתורים -->
 <div class="controls">
-    <button class="btn btn-reset" onclick="handleForfeit()">ויתור</button>
-    <button class="btn btn-home" onclick="goHome()">בית</button>
+    <button class="btn btn-reset" onclick="handleForfeit()" id="forfeit-btn">ויתור</button>
+    <button class="btn btn-home" onclick="goHome()">🏠 בית</button>
 </div>
 
 <script type="module">
@@ -86,137 +364,295 @@ const myName = params.get('player') || "אורח";
 const roomRef = ref(db, 'rooms_v3/xo');
 const gameStateRef = ref(db, 'game/xo_dynamic');
 
-let mySymbol = null; 
-let currentGameState = null;
-let gameStartTime = Date.now(); // משתנה למניעת הודעות שווא בהתחלה
+// ============= משתנים גלובליים =============
+let mySymbol = null;           // 'X', 'O', או null אם צופה
+let isViewer = false;          // האם אני צופה בלבד
+let currentGameState = null;   // מצב המשחק הנוכחי
+let gameStartTime = Date.now(); // זמן התחברות ראשונה
+let playerCountHistory = [];   // היסטוריה של כמות שחקנים
 
+// ============= אתחול =============
 async function initSession() {
-    const snap = await get(roomRef);
-    const playersMap = snap.val() || {};
-    
-    // רישום המשתמש בחדר
-    await set(ref(db, `rooms_v3/xo/${myName}`), { name: myName, active: true });
-    onDisconnect(ref(db, `rooms_v3/xo/${myName}`)).remove();
+    try {
+        // 1. רישום בחדר
+        await set(ref(db, `rooms_v3/xo/${myName}`), { 
+            name: myName, 
+            timestamp: Date.now(),
+            active: true 
+        });
+        
+        // 2. הסרה אוטומטית כשמתנתקים
+        onDisconnect(ref(db, `rooms_v3/xo/${myName}`)).remove();
 
-    // קביעת סמל
-    const updatedSnap = await get(roomRef);
-    const names = Object.keys(updatedSnap.val() || {});
-    mySymbol = (names.indexOf(myName) === 0) ? 'X' : 'O';
+        // 3. קביעת תפקיד - בדוק כמה שחקנים יש
+        const snap = await get(roomRef);
+        const players = snap.val() || {};
+        const playerNames = Object.keys(players).sort();
+        
+        if (playerNames.length > 2) {
+            // אם יש יותר מ-2 שחקנים - אני צופה
+            isViewer = true;
+            mySymbol = null;
+        } else if (playerNames.length === 1) {
+            // אני הראשון
+            mySymbol = 'X';
+            // איפוס המשחק אם אני משחקן X
+            resetFirebaseGame(true);
+        } else if (playerNames.length === 2) {
+            // אני השני
+            mySymbol = playerNames.indexOf(myName) === 0 ? 'X' : 'O';
+        }
 
-    if (mySymbol === 'X' && names.length === 1) {
-        resetFirebaseGame(true);
+        // 4. הפעל listeners
+        startListeners();
+        updateUI();
+
+    } catch (error) {
+        console.error('Error in initSession:', error);
+        showError('שגיאה בהתחברות. נסה שוב.');
     }
-
-    startListeners();
 }
 
+// ============= Listeners =============
 function startListeners() {
+    // עדכון מצב המשחק
     onValue(gameStateRef, (snap) => {
         const data = snap.val();
-        if (data) { currentGameState = data; render(); }
+        if (data) { 
+            currentGameState = data;
+            render();
+        }
     });
 
+    // עדכון רשימת משחקנים
     onValue(roomRef, (snap) => {
         const players = snap.val() || {};
-        const names = Object.keys(players);
-        
+        const names = Object.keys(players).sort();
+
+        // עדכן את רשימת השחקנים בהכותרת
         document.getElementById('name-X').textContent = names[0] || "ממתין...";
         document.getElementById('name-O').textContent = names[1] || "ממתין...";
 
-        // התיקון הקריטי: הודעת עזיבה רק אם עברו 5 שניות מתחילת החיבור ואין 2 שחקנים
-        if (mySymbol && names.length < 2 && (Date.now() - gameStartTime > 5000)) {
-            if (!currentGameState?.gameOver) {
-                 document.getElementById('alert-modal').style.display = 'flex';
-            }
+        // בדוק אם משחקן עזב (רק אחרי שהיו 2)
+        const lastCount = playerCountHistory[playerCountHistory.length - 1];
+        playerCountHistory.push(names.length);
+        
+        // תנאי: היו לפחות 2 משחקנים, ועכשיו יש פחות מ-2
+        if (lastCount === 2 && names.length < 2 && !isViewer) {
+            // משחקן עזב!
+            showDisconnectWarning();
         }
+
+        // בדוק אם אני צריך להיות צופה (אם יש יותר מ-2 משחקנים)
+        if (!isViewer && names.length > 2) {
+            isViewer = true;
+            document.body.classList.add('viewer-mode');
+            document.getElementById('forfeit-btn').style.opacity = '0.5';
+            document.getElementById('forfeit-btn').disabled = true;
+        }
+
+        updateUI();
     });
 }
 
+// ============= עדכון ממשק =============
+function updateUI() {
+    const status = document.getElementById('status-bar');
+    
+    if (isViewer) {
+        document.body.classList.add('viewer-mode');
+        status.textContent = "👁️ אתה צופה בלבד";
+        return;
+    }
+
+    if (!currentGameState) {
+        status.textContent = "טוען...";
+        return;
+    }
+
+    if (!mySymbol) {
+        status.textContent = "⏳ ממתין לשחקן שני...";
+        return;
+    }
+
+    if (currentGameState.gameOver) {
+        status.textContent = "✨ סיבוב הסתיים!";
+    } else if (mySymbol === currentGameState.currentPlayer) {
+        status.textContent = "🎯 תורך!";
+    } else {
+        status.textContent = "⏳ ממתין...";
+    }
+}
+
+// ============= רנדור (ציור) =============
+function render() {
+    if (!currentGameState) return;
+    
+    const { board, currentPlayer, scores, gameOver } = currentGameState;
+
+    // עדכן את כל התאים
+    document.querySelectorAll('.cell').forEach((cell, i) => {
+        cell.textContent = board[i];
+        cell.className = `cell ${board[i] ? board[i].toLowerCase() : ''}`;
+    });
+
+    // עדכן ניקוד
+    document.getElementById('wins-X').textContent = scores.X;
+    document.getElementById('wins-O').textContent = scores.O;
+    document.getElementById('draws').textContent = scores.draws;
+    
+    // הדגש את הדור הנוכחי
+    document.getElementById('card-X').classList.toggle('active', currentPlayer === 'X' && !gameOver);
+    document.getElementById('card-O').classList.toggle('active', currentPlayer === 'O' && !gameOver);
+
+    updateUI();
+}
+
+// ============= לוגיקת משחק =============
+document.querySelectorAll('.cell').forEach(cell => {
+    cell.onclick = () => {
+        if (isViewer || !mySymbol) return; // צופה לא יכול לשחק
+
+        const idx = cell.dataset.idx;
+        
+        // בדוק תנאים
+        if (!currentGameState) return;
+        if (mySymbol !== currentGameState.currentPlayer) return;
+        if (currentGameState.board[idx] !== '') return;
+        if (currentGameState.gameOver) return;
+
+        // ביצוע המהלך
+        const newBoard = [...currentGameState.board];
+        newBoard[idx] = mySymbol;
+        
+        const win = checkWinner(newBoard);
+        const draw = !win && !newBoard.includes('');
+        
+        const updates = { board: newBoard };
+        
+        if (win || draw) {
+            updates.gameOver = true;
+            const newScores = { ...currentGameState.scores };
+            if (win) {
+                newScores[mySymbol]++;
+            } else {
+                newScores.draws++;
+            }
+            updates.scores = newScores;
+            
+            // התחל סיבוב חדש אוטומטית (רק אם אני X)
+            if (mySymbol === 'X') {
+                setTimeout(autoNextRound, 2500);
+            }
+        } else {
+            // שם הדור הבא
+            updates.currentPlayer = mySymbol === 'X' ? 'O' : 'X';
+        }
+        
+        update(gameStateRef, updates);
+    };
+});
+
+// ============= בדיקת ניצחון =============
+function checkWinner(board) {
+    const lines = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6]
+    ];
+    
+    return lines.some(line => {
+        const [a, b, c] = line;
+        return board[a] && board[a] === board[b] && board[a] === board[c];
+    });
+}
+
+// ============= סיבוב הבא =============
+async function autoNextRound() {
+    try {
+        const snap = await get(gameStateRef);
+        const data = snap.val();
+        
+        if (!data || !data.gameOver) return;
+        
+        // החלף מי מתחיל - אם X התחיל, O יתחיל הפעם
+        const nextStarter = data.starter === 'X' ? 'O' : 'X';
+        
+        await update(gameStateRef, {
+            board: Array(9).fill(''),
+            currentPlayer: nextStarter,
+            starter: nextStarter,
+            gameOver: false
+        });
+    } catch (error) {
+        console.error('Error in autoNextRound:', error);
+    }
+}
+
+// ============= ויתור =============
+window.handleForfeit = async () => {
+    if (isViewer) return;
+    if (!currentGameState || currentGameState.gameOver) return;
+    
+    // תן ניקוד לשחקן השני
+    const opponent = mySymbol === 'X' ? 'O' : 'X';
+    const newScores = { ...currentGameState.scores };
+    newScores[opponent]++;
+    
+    await update(gameStateRef, {
+        scores: newScores,
+        gameOver: true
+    });
+    
+    // התחל סיבוב חדש אם אני X
+    if (mySymbol === 'X') {
+        setTimeout(autoNextRound, 2000);
+    }
+};
+
+// ============= יציאה =============
+window.goHome = async () => {
+    try {
+        await remove(ref(db, `rooms_v3/xo/${myName}`));
+    } catch (error) {
+        console.error('Error removing player:', error);
+    }
+    window.location.href = 'index.html';
+};
+
+// ============= הודעות =============
+function showDisconnectWarning() {
+    document.getElementById('modal-title').textContent = '⚠️ משחקן עזב';
+    document.getElementById('modal-msg').textContent = 'המשחקן השני יצא מהמשחק';
+    document.getElementById('alert-modal').style.display = 'flex';
+}
+
+function showError(message) {
+    document.getElementById('modal-title').textContent = '❌ שגיאה';
+    document.getElementById('modal-msg').textContent = message;
+    document.getElementById('alert-modal').style.display = 'flex';
+}
+
+// ============= איפוס משחק =============
 function resetFirebaseGame(fullReset = false) {
     const newState = {
         board: Array(9).fill(''),
         currentPlayer: 'X',
         starter: 'X',
         gameOver: false,
-        scores: fullReset ? { X: 0, O: 0, draws: 0 } : (currentGameState?.scores || { X: 0, O: 0, draws: 0 })
+        scores: fullReset 
+            ? { X: 0, O: 0, draws: 0 } 
+            : (currentGameState?.scores || { X: 0, O: 0, draws: 0 })
     };
     set(gameStateRef, newState);
 }
 
-function render() {
-    if (!currentGameState) return;
-    const { board, currentPlayer, scores, gameOver } = currentGameState;
-
-    document.querySelectorAll('.cell').forEach((cell, i) => {
-        cell.textContent = board[i];
-        cell.className = `cell ${board[i] ? board[i].toLowerCase() : ''}`;
-    });
-
-    document.getElementById('wins-X').textContent = scores.X;
-    document.getElementById('wins-O').textContent = scores.O;
-    document.getElementById('draws').textContent = scores.draws;
-    
-    document.getElementById('card-X').classList.toggle('active', currentPlayer === 'X' && !gameOver);
-    document.getElementById('card-O').classList.toggle('active', currentPlayer === 'O' && !gameOver);
-
-    const status = document.getElementById('status-bar');
-    if (gameOver) status.textContent = "סיבוב הסתיים!";
-    else status.textContent = (mySymbol === currentPlayer) ? "תורך!" : "ממתין...";
-}
-
-document.querySelectorAll('.cell').forEach(cell => {
-    cell.onclick = () => {
-        const idx = cell.dataset.idx;
-        if (!mySymbol || mySymbol !== currentGameState.currentPlayer || currentGameState.board[idx] !== '' || currentGameState.gameOver) return;
-
-        const newBoard = [...currentGameState.board];
-        newBoard[idx] = mySymbol;
-        const win = checkWinner(newBoard);
-        const draw = !win && !newBoard.includes('');
-        
-        const updates = { board: newBoard };
-        if (win || draw) {
-            updates.gameOver = true;
-            const newScores = {...currentGameState.scores};
-            if (win) newScores[mySymbol]++;
-            else newScores.draws++;
-            updates.scores = newScores;
-            if (mySymbol === 'X') setTimeout(autoNextRound, 2500);
-        } else {
-            updates.currentPlayer = mySymbol === 'X' ? 'O' : 'X';
-        }
-        update(gameStateRef, updates);
-    };
-});
-
-function checkWinner(b) {
-    const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-    return lines.some(l => b[l[0]] && b[l[0]] === b[l[1]] && b[l[0]] === b[l[2]]);
-}
-
-async function autoNextRound() {
-    const snap = await get(gameStateRef);
-    const data = snap.val();
-    if (!data || !data.gameOver) return;
-    const nextStarter = data.starter === 'X' ? 'O' : 'X';
-    update(gameStateRef, { board: Array(9).fill(''), currentPlayer: nextStarter, starter: nextStarter, gameOver: false });
-}
-
-window.goHome = async () => {
-    await remove(ref(db, `rooms_v3/xo/${myName}`));
-    location.href = 'index.html';
-};
-
-window.handleForfeit = () => {
-    if (currentGameState && !currentGameState.gameOver) {
-        const other = mySymbol === 'X' ? 'O' : 'X';
-        const s = {...currentGameState.scores};
-        s[other]++;
-        update(gameStateRef, { scores: s, gameOver: true });
-        if (mySymbol === 'X') setTimeout(autoNextRound, 2000);
-    }
-};
-
+// ============= התחלה =============
 initSession();
 </script>
 </body>
