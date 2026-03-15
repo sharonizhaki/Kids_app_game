@@ -2,45 +2,37 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>איקס עיגול - קרב משתתפים</title>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Heebo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #0F1320; --surface: rgba(255, 255, 255, 0.05); --x-color: #FF5C7A; --o-color: #4DB8FF; --gold: #F5C842; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Heebo', sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Heebo', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
-        
         .header { display: flex; justify-content: space-around; width: 100%; max-width: 500px; padding: 20px; margin-top: 10px; }
         .score-box { background: var(--surface); padding: 15px; border-radius: 20px; text-align: center; min-width: 100px; border: 2px solid transparent; transition: 0.3s; }
         .score-box.active { border-color: var(--gold); transform: scale(1.05); box-shadow: 0 0 15px rgba(245, 200, 66, 0.2); }
         .name { font-weight: 900; font-size: 1.1rem; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .score { font-family: 'Fredoka One', cursive; font-size: 2rem; }
-        
         #status-bar { margin: 15px 0; font-weight: 800; color: var(--gold); font-size: 1.2rem; height: 30px; }
-        
         .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 90vw; max-width: 350px; aspect-ratio: 1; }
         .cell { background: var(--surface); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 4rem; font-family: 'Fredoka One', cursive; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
-        .cell:active { transform: scale(0.95); }
-        .cell.x { color: var(--x-color); text-shadow: 0 0 10px rgba(255,92,122,0.3); }
-        .cell.o { color: var(--o-color); text-shadow: 0 0 10px rgba(77,184,255,0.3); }
-
+        .cell.x { color: var(--x-color); }
+        .cell.o { color: var(--o-color); }
         .controls { display: flex; gap: 10px; margin-top: 25px; width: 90vw; max-width: 350px; }
-        .btn { flex: 1; padding: 15px; border-radius: 15px; border: none; font-weight: 900; cursor: pointer; transition: 0.2s; }
+        .btn { flex: 1; padding: 15px; border-radius: 15px; border: none; font-weight: 900; cursor: pointer; transition: 0.2s; text-align: center; }
         .btn-reset { background: #EEF0FF; color: var(--bg); }
         .btn-home { background: rgba(255,255,255,0.1); color: white; }
-
-        /* מודל הודעות */
         #alert-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
         .modal-content { background: white; color: var(--bg); padding: 30px; border-radius: 25px; text-align: center; width: 100%; max-width: 300px; }
-        .modal-content h2 { margin-bottom: 20px; font-weight: 900; }
     </style>
 </head>
 <body>
 
 <div id="alert-modal">
     <div class="modal-content">
-        <h2 id="modal-msg">המשחק הסתיים</h2>
-        <button class="btn btn-reset" onclick="location.href='index.html'">חזרה לתפריט</button>
+        <h2 id="modal-msg">השחקן השני עזב</h2>
+        <button class="btn btn-reset" onclick="goHome()">חזרה לתפריט</button>
     </div>
 </div>
 
@@ -68,8 +60,8 @@
 </div>
 
 <div class="controls">
-    <button class="btn btn-reset" onclick="handleForfeit()">ויתור (הפסד)</button>
-    <button class="btn btn-home" onclick="goHome()">חזרה לבית</button>
+    <button class="btn btn-reset" onclick="handleForfeit()">ויתור</button>
+    <button class="btn btn-home" onclick="goHome()">בית</button>
 </div>
 
 <script type="module">
@@ -96,51 +88,46 @@ const gameStateRef = ref(db, 'game/xo_dynamic');
 
 let mySymbol = null; 
 let currentGameState = null;
+let gameStartTime = Date.now(); // משתנה למניעת הודעות שווא בהתחלה
 
-// 1. ניהול כניסה וזיהוי תפקיד
 async function initSession() {
     const snap = await get(roomRef);
     const playersMap = snap.val() || {};
-    const playerNames = Object.keys(playersMap);
+    
+    // רישום המשתמש בחדר
+    await set(ref(db, `rooms_v3/xo/${myName}`), { name: myName, active: true });
+    onDisconnect(ref(db, `rooms_v3/xo/${myName}`)).remove();
 
-    if (playerNames.includes(myName)) {
-        mySymbol = (playerNames.indexOf(myName) === 0) ? 'X' : 'O';
-    } else if (playerNames.length === 0) {
-        mySymbol = 'X';
-        await set(ref(db, `rooms_v3/xo/${myName}`), { name: myName });
-    } else if (playerNames.length === 1) {
-        mySymbol = 'O';
-        await set(ref(db, `rooms_v3/xo/${myName}`), { name: myName });
-    } else {
-        mySymbol = null; // צופה
+    // קביעת סמל
+    const updatedSnap = await get(roomRef);
+    const names = Object.keys(updatedSnap.val() || {});
+    mySymbol = (names.indexOf(myName) === 0) ? 'X' : 'O';
+
+    if (mySymbol === 'X' && names.length === 1) {
+        resetFirebaseGame(true);
     }
 
-    if (mySymbol) onDisconnect(ref(db, `rooms_v3/xo/${myName}`)).remove();
     startListeners();
 }
 
-// 2. האזנה לשינויים
 function startListeners() {
     onValue(gameStateRef, (snap) => {
-        currentGameState = snap.val() || resetFirebaseGame();
-        render();
+        const data = snap.val();
+        if (data) { currentGameState = data; render(); }
     });
 
     onValue(roomRef, (snap) => {
         const players = snap.val() || {};
         const names = Object.keys(players);
         
-        // עדכון שמות במסך
         document.getElementById('name-X').textContent = names[0] || "ממתין...";
         document.getElementById('name-O').textContent = names[1] || "ממתין...";
 
-        // אם החדר התרוקן - מאפסים הכל
-        if (names.length === 0) resetFirebaseGame(true);
-
-        // זיהוי אם מישהו עזב (מודל הודעה)
-        if (mySymbol && names.length < 2 && currentGameState && !currentGameState.gameOver) {
-            // אם היינו באמצע משחק ומישהו נעלם
-            // (אפשר להוסיף כאן לוגיקה למודל)
+        // התיקון הקריטי: הודעת עזיבה רק אם עברו 5 שניות מתחילת החיבור ואין 2 שחקנים
+        if (mySymbol && names.length < 2 && (Date.now() - gameStartTime > 5000)) {
+            if (!currentGameState?.gameOver) {
+                 document.getElementById('alert-modal').style.display = 'flex';
+            }
         }
     });
 }
@@ -154,10 +141,8 @@ function resetFirebaseGame(fullReset = false) {
         scores: fullReset ? { X: 0, O: 0, draws: 0 } : (currentGameState?.scores || { X: 0, O: 0, draws: 0 })
     };
     set(gameStateRef, newState);
-    return newState;
 }
 
-// 3. תצוגה
 function render() {
     if (!currentGameState) return;
     const { board, currentPlayer, scores, gameOver } = currentGameState;
@@ -175,32 +160,28 @@ function render() {
     document.getElementById('card-O').classList.toggle('active', currentPlayer === 'O' && !gameOver);
 
     const status = document.getElementById('status-bar');
-    if (gameOver) status.textContent = "המשחק הסתיים!";
-    else if (!mySymbol) status.textContent = "אתה במצב צפייה";
-    else status.textContent = (mySymbol === currentPlayer) ? "תורך לשחק!" : "ממתין ליריב...";
+    if (gameOver) status.textContent = "סיבוב הסתיים!";
+    else status.textContent = (mySymbol === currentPlayer) ? "תורך!" : "ממתין...";
 }
 
-// 4. לוגיקת המשחק
 document.querySelectorAll('.cell').forEach(cell => {
-    cell.onclick = async () => {
+    cell.onclick = () => {
         const idx = cell.dataset.idx;
         if (!mySymbol || mySymbol !== currentGameState.currentPlayer || currentGameState.board[idx] !== '' || currentGameState.gameOver) return;
 
         const newBoard = [...currentGameState.board];
         newBoard[idx] = mySymbol;
-
         const win = checkWinner(newBoard);
         const draw = !win && !newBoard.includes('');
+        
         const updates = { board: newBoard };
-
         if (win || draw) {
             updates.gameOver = true;
-            if (win) currentGameState.scores[mySymbol]++;
-            else currentGameState.scores.draws++;
-            updates.scores = currentGameState.scores;
-            
-            // ניקוי לוח אחרי 3 שניות
-            setTimeout(autoNextRound, 3000);
+            const newScores = {...currentGameState.scores};
+            if (win) newScores[mySymbol]++;
+            else newScores.draws++;
+            updates.scores = newScores;
+            if (mySymbol === 'X') setTimeout(autoNextRound, 2500);
         } else {
             updates.currentPlayer = mySymbol === 'X' ? 'O' : 'X';
         }
@@ -216,44 +197,25 @@ function checkWinner(b) {
 async function autoNextRound() {
     const snap = await get(gameStateRef);
     const data = snap.val();
+    if (!data || !data.gameOver) return;
     const nextStarter = data.starter === 'X' ? 'O' : 'X';
-    update(gameStateRef, {
-        board: Array(9).fill(''),
-        currentPlayer: nextStarter,
-        starter: nextStarter,
-        gameOver: false
-    });
+    update(gameStateRef, { board: Array(9).fill(''), currentPlayer: nextStarter, starter: nextStarter, gameOver: false });
 }
 
-// 5. עזיבה וויתור
-window.handleForfeit = () => {
-    if (mySymbol === currentGameState.currentPlayer) {
-        const other = mySymbol === 'X' ? 'O' : 'X';
-        currentGameState.scores[other]++;
-        update(gameStateRef, { scores: currentGameState.scores });
-        autoNextRound();
-    }
-};
-
 window.goHome = async () => {
-    if (mySymbol) {
-        await remove(ref(db, `rooms_v3/xo/${myName}`));
-    }
+    await remove(ref(db, `rooms_v3/xo/${myName}`));
     location.href = 'index.html';
 };
 
-// טיפול במודל עזיבה
-onValue(roomRef, (snap) => {
-    const players = snap.val() || {};
-    const names = Object.keys(players);
-    // אם היינו 2 שחקנים ואחד עזב
-    if (mySymbol && names.length === 1 && !names.includes(myName === 'emma' ? 'rif' : 'emma')) {
-        // זיהוי שחקן שעזב
-        const leftName = myName.includes('emma') ? 'ריף' : 'אמה'; // דוגמה פשוטה
-        document.getElementById('modal-msg').textContent = `השחקן השני עזב`;
-        document.getElementById('alert-modal').style.display = 'flex';
+window.handleForfeit = () => {
+    if (currentGameState && !currentGameState.gameOver) {
+        const other = mySymbol === 'X' ? 'O' : 'X';
+        const s = {...currentGameState.scores};
+        s[other]++;
+        update(gameStateRef, { scores: s, gameOver: true });
+        if (mySymbol === 'X') setTimeout(autoNextRound, 2000);
     }
-});
+};
 
 initSession();
 </script>
