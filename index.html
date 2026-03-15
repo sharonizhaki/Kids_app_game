@@ -181,7 +181,7 @@ let roomListener = null;
 let selectedGuestEmoji = null;
 
 const games = [
-    { id: 'xo', name: 'איקס עיגול', url: 'xo.html', icon: '❌' },
+    { id: 'xo', name: 'איקס עיגול', url: 'X_O.html', icon: '❌' },
     { id: 'draw', name: 'צייר ונחש', url: 'draw_game.html', icon: '🎨' },
     { id: 'race', name: 'מרוץ מכוניות', url: 'Race.html', icon: '🏎️' },
     { id: 'memory', name: 'משחק זיכרון', url: 'Memory.html', icon: '🧩' },
@@ -234,7 +234,9 @@ function startApp() {
 }
 
 window.selectUser = (id, name, emoji, color) => {
-    myUser = { id: id + '_' + Math.floor(Math.random()*1000), name, emoji, color, rawId: id };
+    // בשימוש בילדים אנחנו שומרים על ID נקי כדי למנוע כפילויות
+    const finalId = (id === 'emma' || id === 'rif') ? id : id + '_' + Math.floor(Math.random()*1000);
+    myUser = { id: finalId, name, emoji, color, rawId: id };
     localStorage.setItem('myUser', JSON.stringify(myUser));
     startApp();
 };
