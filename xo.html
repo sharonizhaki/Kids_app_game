@@ -452,12 +452,26 @@ function render() {
             document.getElementById('win-name').textContent = `${winnerEmoji} ${winnerName} ניצחה!`;
             document.getElementById('win-name').style.color = winnerColor;
             
-            // הסתר ב-3.5 שניות והתחל משחק חדש
+            // הסתר ב-2 שניות והתחל משחק חדש
             setTimeout(() => {
                 document.getElementById('win-modal').style.display = 'none';
                 document.getElementById('win-modal').classList.remove('show');
                 autoNextRound();
-            }, 3500);
+            }, 2000);
+        } else {
+            // תיקו! אין ניצח
+            document.getElementById('win-modal').classList.add('show');
+            document.getElementById('win-modal').style.display = 'flex';
+            document.getElementById('win-modal').style.borderColor = 'rgba(245, 200, 66, 0.5)';
+            document.getElementById('win-name').textContent = '🤝 תיקו!';
+            document.getElementById('win-name').style.color = '#FFB347';
+            
+            // הסתר ב-2 שניות והתחל משחק חדש
+            setTimeout(() => {
+                document.getElementById('win-modal').style.display = 'none';
+                document.getElementById('win-modal').classList.remove('show');
+                autoNextRound();
+            }, 2000);
         }
         
         status.textContent = "סיבוב הסתיים!";
