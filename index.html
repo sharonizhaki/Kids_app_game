@@ -966,7 +966,21 @@ function startWaiting(gameId) {
         color: myUser.color,
         timestamp: Date.now()
     });
-    // לא משתמשים ב-onDisconnect - שחקנים נשארים בDB
+    
+    // שמור heartbeat כל 10 שניות
+    const heartbeatInterval = setInterval(() => {
+        set(myPlayerRef, { 
+            name: myUser.name, 
+            emoji: myUser.emoji, 
+            color: myUser.color,
+            timestamp: Date.now()
+        });
+    }, 10000);
+    
+    // בעת ביטול המתנה, הפסק את heartbeat
+    window.stopHeartbeat = () => {
+        clearInterval(heartbeatInterval);
+    };
     
     roomListener = onValue(ref(db, `rooms_v3/${gameId}`), (snap) => {
         const players = Object.values(snap.val() || {});
@@ -999,6 +1013,7 @@ function startWaiting(gameId) {
 // ========== ביטול המתנה ==========
 window.cancelWaiting = () => {
     if (roomListener) roomListener();
+    if (window.stopHeartbeat) window.stopHeartbeat();
     // לא מוחקים את השחקן - הוא עדיין בחדר
     showScreen('screen-games');
 };
@@ -1028,6 +1043,33 @@ window.addEventListener('load', () => {
         }
     }
 });
+
+// ============= ניקוי heartbeat - בדוק כל 5 שניות =============
+setInterval(async () => {
+    try {
+        // בדוק את כל המשחקים
+        const gamesSnap = await get(ref(db, 'rooms_v3'));
+        const games = gamesSnap.val() || {};
+        const now = Date.now();
+        
+        // לכל משחק
+        for (const [gameId, players] of Object.entries(games)) {
+            if (!players || typeof players !== 'object') continue;
+            
+            // לכל שחקן בחדר
+            for (const [playerId, player] of Object.entries(players)) {
+                const timeSinceLastBeat = now - (player.timestamp || 0);
+                
+                // אם heartbeat מת יותר מ-10 שניות - הסר
+                if (timeSinceLastBeat > 10000) {
+                    await remove(ref(db, `rooms_v3/${gameId}/${playerId}`));
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error in heartbeat cleanup:', error);
+    }
+}, 5000);  // בדוק כל 5 שניות
 </script>
 </body>
 </html>

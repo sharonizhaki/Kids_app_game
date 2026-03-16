@@ -368,12 +368,6 @@
     </div>
 </div>
 
-<!-- Debug Panel - תמיד נראה -->
-<div id="debug-panel" style="position: fixed; top: 120px; right: 10px; background: rgba(0,0,0,0.98); color: #00ff00; padding: 12px; border-radius: 8px; font-size: 11px; width: 140px; z-index: 9999; font-family: monospace; max-height: 200px; overflow-y: auto; border: 2px solid #00ff00; box-shadow: 0 0 10px #00ff00;">
-    <div style="color: #ffff00; font-weight: bold; margin-bottom: 6px;">🔍 DEBUG</div>
-    <div id="debug-text" style="line-height: 1.3;"></div>
-</div>
-
 <!-- סרגל צופה -->
 <div id="viewer-bar">
     👁️ אתה צופה בלבד - המשחק מלא
@@ -422,7 +416,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, update, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, update, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
@@ -439,20 +433,11 @@ const db = getDatabase(app);
 const params = new URLSearchParams(location.search);
 const myName = params.get('player') || "אורח";
 
-// Debug Logger
-const debugMessages = [];
-function addDebug(msg) {
-    debugMessages.push(msg);
-    if (debugMessages.length > 8) debugMessages.shift();
-    document.getElementById('debug-text').innerHTML = debugMessages.map(m => m + '<br>').join('');
-}
-
 // קבל את צבע המשתמש מ-sessionStorage
 const userDataStr = sessionStorage.getItem('myUser');
 const userData = userDataStr ? JSON.parse(userDataStr) : null;
 const myColor = userData?.color || '#EEF0FF';
 
-addDebug('🎮 Init: ' + myName);
 
 // עדכן צבע בעל (אם אני משחקן X)
 if (mySymbol === 'X' && myColor) {
@@ -553,13 +538,55 @@ function startListeners() {
     onValue(roomRef, (snap) => {
         const players = snap.val() || {};
         const names = Object.keys(players).sort();
-        addDebug('👥 Players now: ' + names.length);
 
         // אם אין שחקנים כלל - נקה את המשחק
         if (names.length === 0) {
-            addDebug('🧹 Cleaning gameState');
             set(gameStateRef, null);
         }
+
+        // בדוק אם משחקן עזב (רק אחרי שהיו 2)
+        const lastCount = playerCountHistory[playerCountHistory.length - 1];
+        
+        if (lastCount === 2 && names.length < 2 && !isViewer) {
+            // משחקן עזב! הצג הודעה
+            const leftPlayer = lastCount === 2 && names.length === 1 
+                ? names[0] 
+                : (lastCount === 2 && names.length === 0 ? 'כל השחקנים' : 'משחקן');
+            
+            // קבל את פרטי המשחקן שעזב
+            const allPlayersSnapshot = await get(roomRef);
+            const allPlayers = allPlayersSnapshot.val() || {};
+            
+            // מצא את המשחקן שעזב (הוא במערך הישן אבל לא בחדש)
+            let leftPlayerName = '';
+            let leftPlayerEmoji = '';
+            
+            // זה קצת מורכב, בואו נעשה פשוט - שמור את הפרטים הקודמים
+            if (window.lastPlayersSnapshot) {
+                const oldPlayers = window.lastPlayersSnapshot || {};
+                for (const [name, player] of Object.entries(oldPlayers)) {
+                    if (!allPlayers[name]) {
+                        leftPlayerName = player.name;
+                        leftPlayerEmoji = player.emoji;
+                        break;
+                    }
+                }
+            }
+            
+            // הצג הודעה
+            document.getElementById('modal-title').textContent = '⚠️ משחקן עזב';
+            document.getElementById('modal-msg').textContent = `${leftPlayerEmoji} ${leftPlayerName} עזב את המשחק`;
+            document.getElementById('alert-modal').style.display = 'flex';
+            
+            // בלחיצה על אישור - חזור הביתה
+            const okButton = document.querySelector('.btn-reset');
+            if (okButton) {
+                okButton.onclick = () => window.goHome();
+            }
+        }
+
+        // שמור את המצב הנוכחי
+        window.lastPlayersSnapshot = players;
 
         // עדכן את רשימת השחקנים בהכותרת
         document.getElementById('name-X').textContent = names[0] || "ממתין...";
@@ -742,8 +769,14 @@ window.handleForfeit = async () => {
 };
 
 // ============= יציאה =============
-window.goHome = () => {
-    // פשוט חזור הביתה, לא מוחק
+window.goHome = async () => {
+    // הסר את עצמך מהחדר
+    try {
+        await remove(ref(db, `rooms_v3/xo/${myName}`));
+    } catch (error) {
+        console.error('Error removing player:', error);
+    }
+    // חזור הביתה
     window.location.href = 'index.html';
 };
 
