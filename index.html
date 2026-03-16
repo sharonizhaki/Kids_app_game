@@ -376,6 +376,12 @@
             75% { transform: translateX(8px); }
         }
 
+        @keyframes errorPulse {
+            0% { border-color: #EF4444; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            100% { border-color: #EF4444; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
         .emoji-section {
             margin: 12px 0;
         }
@@ -403,7 +409,7 @@
         .emoji-picker.error {
             border-color: #EF4444;
             background: rgba(239, 68, 68, 0.05);
-            animation: shake 0.4s ease-in-out;
+            animation: shake 0.4s ease-in-out, errorPulse 1s ease-in-out;
         }
 
         .emoji-opt { 
@@ -664,6 +670,31 @@
         .p-slot.active.rif{
             border-color: var(--rif);
             box-shadow: 0 0 20px rgba(77, 184, 255, 0.3);
+        }
+
+        .p-slot.active.dad{
+            border-color: #2ecc71;
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
+        }
+
+        .p-slot.active.mom{
+            border-color: #9b59b6;
+            box-shadow: 0 0 20px rgba(155, 89, 182, 0.3);
+        }
+
+        .p-slot.active.guest{
+            border-color: #3DD68C;
+            box-shadow: 0 0 20px rgba(61, 214, 140, 0.3);
+        }
+
+        /* עיגול ריק עם animation */
+        .p-slot:not(.active) {
+            animation: spinBorder 2s linear infinite;
+        }
+
+        @keyframes spinBorder {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         /* ========== עזיבה =============*/
@@ -940,18 +971,25 @@ window.confirmGuest = () => {
     const name = input.value.trim();
     let hasError = false;
 
+    // הסר error classes בהתחלה
     input.classList.remove('error');
     picker.classList.remove('error');
 
     if (!name) { 
-        input.classList.add('error'); 
-        input.placeholder = "חובה לכתוב שם!";
+        // חכה לmsec אחד, אחרי זה הוסף בחזרה כדי שה-animation תרוץ שוב
+        setTimeout(() => {
+            input.classList.add('error'); 
+            input.placeholder = "חובה לכתוב שם!";
+        }, 10);
         if (navigator.vibrate) navigator.vibrate(150);
         hasError = true; 
     }
     
     if (!selectedGuestEmoji) { 
-        picker.classList.add('error'); 
+        // חכה לmsec אחד, אחרי זה הוסף בחזרה כדי שה-animation תרוץ שוב
+        setTimeout(() => {
+            picker.classList.add('error');
+        }, 10);
         if (navigator.vibrate) navigator.vibrate(150);
         hasError = true; 
     }
@@ -1013,12 +1051,15 @@ function startWaiting(gameId) {
                 slot.classList.add('active');
                 slot.classList.toggle('emma', players[i].color === '#FF5C7A');
                 slot.classList.toggle('rif', players[i].color === '#4DB8FF');
+                slot.classList.toggle('dad', players[i].color === '#2ecc71');
+                slot.classList.toggle('mom', players[i].color === '#9b59b6');
+                slot.classList.toggle('guest', players[i].color === '#3DD68C');
                 slot.innerHTML = `
                     <div style="font-size:1.6rem">${players[i].emoji}</div>
                     <div style="font-size:0.6rem;font-weight:900;margin-top:3px">${players[i].name}</div>
                 `;
             } else {
-                slot.classList.remove('active', 'emma', 'rif');
+                slot.classList.remove('active', 'emma', 'rif', 'dad', 'mom', 'guest');
                 slot.innerHTML = '';
             }
         }
