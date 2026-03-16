@@ -8,24 +8,71 @@
     <style>
         :root { --bg: #0F1320; --surface: rgba(255, 255, 255, 0.05); --x-color: #FF5C7A; --o-color: #4DB8FF; --gold: #F5C842; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Heebo', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
-        .header { display: flex; justify-content: space-around; width: 100%; max-width: 500px; padding: 20px; margin-top: 10px; }
-        .score-box { background: var(--surface); padding: 15px; border-radius: 20px; text-align: center; min-width: 100px; border: 2px solid transparent; transition: 0.3s; }
-        .score-box.active { border-color: var(--gold); transform: scale(1.05); box-shadow: 0 0 15px rgba(245, 200, 66, 0.2); }
-        .name { font-weight: 900; font-size: 1.1rem; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .score { font-family: 'Fredoka One', cursive; font-size: 2rem; }
-        .role-label { font-size: 0.8rem; color: var(--gold); font-weight: 900; margin-top: 5px; }
-        #status-bar { margin: 15px 0; font-weight: 800; color: var(--gold); font-size: 1.2rem; height: 30px; }
-        .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 90vw; max-width: 350px; aspect-ratio: 1; }
-        .cell { background: var(--surface); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 4rem; font-family: 'Fredoka One', cursive; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
-        .cell.x { color: var(--x-color); }
-        .cell.o { color: var(--o-color); }
-        .controls { display: flex; gap: 10px; margin-top: 25px; width: 90vw; max-width: 350px; }
-        .btn { flex: 1; padding: 15px; border-radius: 15px; border: none; font-weight: 900; cursor: pointer; transition: 0.2s; text-align: center; }
-        .btn-reset { background: #EEF0FF; color: var(--bg); }
-        .btn-home { background: rgba(255,255,255,0.1); color: white; }
-        #alert-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
-        .modal-content { background: white; color: var(--bg); padding: 30px; border-radius: 25px; text-align: center; width: 100%; max-width: 300px; }
+        body { background: linear-gradient(135deg, #0F1320 0%, #1a2942 100%); color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+        
+        .header { display: flex; justify-content: space-around; width: 100%; max-width: 500px; padding: 20px; margin-top: 10px; gap: 10px; }
+        .score-box { 
+            background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+            padding: 20px 15px; 
+            border-radius: 25px; 
+            text-align: center; 
+            min-width: 100px;
+            border: 2.5px solid transparent; 
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+        .score-box::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .score-box.active { 
+            border-color: var(--gold);
+            transform: scale(1.08);
+            box-shadow: 0 0 25px rgba(245, 200, 66, 0.4), inset 0 0 15px rgba(245, 200, 66, 0.1);
+        }
+        
+        .name { font-weight: 900; font-size: 1rem; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .score { font-family: 'Fredoka One', cursive; font-size: 3.5rem; font-weight: 900; line-height: 1; }
+        .role-label { 
+            font-size: 1.2rem; 
+            color: var(--gold); 
+            font-weight: 900; 
+            margin-top: 8px;
+            text-shadow: 0 0 10px rgba(245, 200, 66, 0.3);
+        }
+        
+        #status-bar { margin: 15px 0; font-weight: 800; color: var(--gold); font-size: 1.1rem; height: 30px; text-shadow: 0 0 10px rgba(245, 200, 66, 0.3); }
+        .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 90vw; max-width: 350px; aspect-ratio: 1; margin: 15px 0; }
+        .cell { 
+            background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+            border-radius: 20px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 4.5rem; 
+            font-family: 'Fredoka One', cursive; 
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            border: 2px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            font-weight: 900;
+        }
+        .cell:active { transform: scale(0.95); }
+        .cell.x { color: var(--x-color); text-shadow: 0 0 15px rgba(255, 92, 122, 0.5); }
+        .cell.o { color: var(--o-color); text-shadow: 0 0 15px rgba(77, 184, 255, 0.5); }
+        
+        .controls { display: flex; gap: 12px; margin-top: 20px; width: 90vw; max-width: 350px; }
+        .btn { flex: 1; padding: 16px; border-radius: 20px; border: none; font-weight: 900; cursor: pointer; transition: all 0.2s; text-align: center; font-size: 1rem; }
+        .btn-home { background: linear-gradient(135deg, #FF5C7A 0%, #FF8FA3 100%); color: white; box-shadow: 0 5px 20px rgba(255, 92, 122, 0.3); }
+        .btn-home:active { transform: scale(0.95); }
+        
+        #alert-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: linear-gradient(135deg, #1a2942 0%, #0F1320 100%); color: white; padding: 40px 30px; border-radius: 30px; text-align: center; width: 100%; max-width: 320px; border: 2px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
     </style>
 </head>
 <body>
@@ -65,8 +112,7 @@
 </div>
 
 <div class="controls">
-    <button class="btn btn-reset" onclick="handleForfeit()">ויתור</button>
-    <button class="btn btn-home" onclick="goHome()">בית</button>
+    <button class="btn btn-home" onclick="goHome()">🏠 בית</button>
 </div>
 
 <script type="module">
@@ -86,7 +132,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const params = new URLSearchParams(location.search);
-const myName = params.get('player') || "אורח";
+
+// קבל את myName מ-URL וקבל את ID מ-sessionStorage
+const displayName = params.get('player') || "אורח";
+const userDataStr = sessionStorage.getItem('myUser');
+const userData = userDataStr ? JSON.parse(userDataStr) : null;
+const myName = userData?.id || displayName;  // ID מ-sessionStorage או displayName
 
 const roomRef = ref(db, 'rooms_v3/xo');
 const gameStateRef = ref(db, 'game/xo_dynamic');
@@ -94,19 +145,15 @@ const gameStateRef = ref(db, 'game/xo_dynamic');
 let mySymbol = null; 
 let currentGameState = null;
 let gameStartTime = Date.now();
-let myColor = '';
-let myEmoji = '';
+let myColor = userData?.color || '#EEF0FF';
+let myEmoji = userData?.emoji || '👤';
 let isViewer = false;
 let playerCountHistory = [];
 
 async function initSession() {
     try {
-        // 1. קבל נתונים מSessionStorage
-        const userDataStr = sessionStorage.getItem('myUser');
-        const userData = userDataStr ? JSON.parse(userDataStr) : null;
-        myColor = userData?.color || '#EEF0FF';
-        myEmoji = userData?.emoji || '👤';
-
+        console.log('🎮 initSession started, myName:', myName);
+        
         // 2. רישום בחדר עם נתונים מלאים
         await set(ref(db, `rooms_v3/xo/${myName}`), { 
             name: myName, 
@@ -160,8 +207,10 @@ async function initSession() {
 }
 
 function startListeners() {
+    console.log('🎧 startListeners called');
     onValue(gameStateRef, (snap) => {
         const data = snap.val();
+        console.log('📊 gameState:', data);
         if (data) { currentGameState = data; render(); }
     });
 
