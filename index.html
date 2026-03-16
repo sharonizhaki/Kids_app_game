@@ -14,7 +14,7 @@
             --border: rgba(255, 255, 255, 0.15);
             --emma: #FF5C7A;
             --rif: #4DB8FF;
-            --guest: #3DD68C;
+            --guest: #FFFFFF;
             --text: #EEF0FF;
             --dim: #6B7299;
             --gold: #F5C842;
@@ -683,18 +683,32 @@
         }
 
         .p-slot.active.guest{
-            border-color: #3DD68C;
+            border-color: #FFFFFF;
             box-shadow: 0 0 20px rgba(61, 214, 140, 0.3);
         }
 
         /* עיגול ריק עם animation */
         .p-slot:not(.active) {
             animation: spinBorder 2s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .p-slot:not(.active)::after {
+            content: '⏳';
+            font-size: 2rem;
+            animation: flip 1s ease-in-out infinite;
         }
 
         @keyframes spinBorder {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        @keyframes flip {
+            0%, 100% { transform: scaleX(1); }
+            50% { transform: scaleX(-1); }
         }
 
         /* ========== עזיבה =============*/
@@ -995,7 +1009,7 @@ window.confirmGuest = () => {
     }
     
     if (!hasError) {
-        window.selectUser('guest', name, selectedGuestEmoji, '#3DD68C');
+        window.selectUser('guest', name, selectedGuestEmoji, '#FFFFFF');
     }
 };
 
@@ -1053,7 +1067,7 @@ function startWaiting(gameId) {
                 slot.classList.toggle('rif', players[i].color === '#4DB8FF');
                 slot.classList.toggle('dad', players[i].color === '#2ecc71');
                 slot.classList.toggle('mom', players[i].color === '#9b59b6');
-                slot.classList.toggle('guest', players[i].color === '#3DD68C');
+                slot.classList.toggle('guest', players[i].color === '#FFFFFF');
                 slot.innerHTML = `
                     <div style="font-size:1.6rem">${players[i].emoji}</div>
                     <div style="font-size:0.6rem;font-weight:900;margin-top:3px">${players[i].name}</div>
