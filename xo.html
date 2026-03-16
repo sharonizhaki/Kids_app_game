@@ -37,7 +37,7 @@
         }
         
         .name { font-weight: 900; font-size: 1rem; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .score { font-family: 'Fredoka One', cursive; font-size: 3.5rem; font-weight: 900; line-height: 1; }
+        .score { font-family: 'Fredoka One', cursive; font-size: 2.5rem; font-weight: 900; line-height: 1; }
         .role-label { 
             font-size: 1.2rem; 
             color: var(--gold); 
@@ -68,7 +68,7 @@
         
         .controls { display: flex; gap: 12px; margin-top: 20px; width: 90vw; max-width: 350px; }
         .btn { flex: 1; padding: 16px; border-radius: 20px; border: none; font-weight: 900; cursor: pointer; transition: all 0.2s; text-align: center; font-size: 1rem; }
-        .btn-home { background: linear-gradient(135deg, #FF5C7A 0%, #FF8FA3 100%); color: white; box-shadow: 0 5px 20px rgba(255, 92, 122, 0.3); }
+        .btn-home { background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%); color: white; border: 1.5px solid rgba(255,255,255,0.2); box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3); }
         .btn-home:active { transform: scale(0.95); }
         
         #alert-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
@@ -149,6 +149,8 @@ let myColor = userData?.color || '#EEF0FF';
 let myEmoji = userData?.emoji || '👤';
 let isViewer = false;
 let playerCountHistory = [];
+let playerColors = { X: '#FF5C7A', O: '#4DB8FF' };  // צבעי X ו-O
+let playerNames = { X: '', O: '', X_emoji: '', O_emoji: '' };  // שמות ואימוג'יים
 
 async function initSession() {
     try {
@@ -156,7 +158,7 @@ async function initSession() {
         
         // 2. רישום בחדר עם נתונים מלאים
         await set(ref(db, `rooms_v3/xo/${myName}`), { 
-            name: myName, 
+            name: displayName,  // שם דיספליי בעברית
             color: myColor,
             emoji: myEmoji,
             timestamp: Date.now(),
@@ -166,7 +168,7 @@ async function initSession() {
         // 3. שמור heartbeat כל 10 שניות
         setInterval(() => {
             set(ref(db, `rooms_v3/xo/${myName}`), { 
-                name: myName, 
+                name: displayName,  // שם דיספליי בעברית
                 color: myColor,
                 emoji: myEmoji,
                 timestamp: Date.now(),
@@ -255,6 +257,9 @@ function startListeners() {
         // עדכן את רשימת השחקנים בהכותרת עם אימוג'י וצבעים
         if (players[names[0]]) {
             const p1 = players[names[0]];
+            playerColors.X = p1.color || '#FF5C7A';  // שמור צבע של X
+            playerNames.X = p1.name;  // שמור שם של X
+            playerNames.X_emoji = p1.emoji;  // שמור אימוג'י של X
             document.getElementById('name-X').innerHTML = `${p1.emoji || '❌'} ${p1.name}`;
             document.getElementById('name-X').style.color = p1.color || 'white';
             document.getElementById('card-X').style.borderColor = p1.color || 'white';
@@ -265,6 +270,9 @@ function startListeners() {
         
         if (players[names[1]]) {
             const p2 = players[names[1]];
+            playerColors.O = p2.color || '#4DB8FF';  // שמור צבע של O
+            playerNames.O = p2.name;  // שמור שם של O
+            playerNames.O_emoji = p2.emoji;  // שמור אימוג'י של O
             document.getElementById('name-O').innerHTML = `${p2.emoji || '⭕'} ${p2.name}`;
             document.getElementById('name-O').style.color = p2.color || 'white';
             document.getElementById('card-O').style.borderColor = p2.color || 'white';
@@ -302,6 +310,13 @@ function render() {
     document.querySelectorAll('.cell').forEach((cell, i) => {
         cell.textContent = board[i];
         cell.className = `cell ${board[i] ? board[i].toLowerCase() : ''}`;
+        
+        // עדכן צבע דינמי
+        if (board[i] === 'X') {
+            cell.style.color = playerColors.X;
+        } else if (board[i] === 'O') {
+            cell.style.color = playerColors.O;
+        }
     });
 
     document.getElementById('wins-X').textContent = scores.X;
@@ -317,7 +332,15 @@ function render() {
     } else if (gameOver) {
         status.textContent = "סיבוב הסתיים!";
     } else {
-        status.textContent = (mySymbol === currentPlayer) ? "תורך!" : "ממתין...";
+        // אם תורך - הצג "ממתין ל-[שם]" של השחקן השני
+        if (mySymbol === currentPlayer) {
+            status.textContent = "תורך!";
+        } else {
+            const otherSymbol = mySymbol === 'X' ? 'O' : 'X';
+            const otherName = playerNames[otherSymbol];
+            const otherEmoji = playerNames[otherSymbol + '_emoji'];
+            status.textContent = `ממתין ל-${otherEmoji} ${otherName}`;
+        }
     }
 }
 
