@@ -416,7 +416,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, update, onDisconnect, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, update, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
@@ -479,8 +479,7 @@ async function initSession() {
         });
 
         
-        // 3. הסרה אוטומטית כשמתנתקים - לא משתמשים ב-onDisconnect כי זה גורם בעיות
-        // במקום זה נשתמש ב-listener
+        // 3. שחקנים נשארים במשחק - לא מוחקים באופן אוטומטי
 
 
         // 4. קביעת תפקיד
@@ -550,28 +549,12 @@ function startListeners() {
         const players = snap.val() || {};
         const names = Object.keys(players).sort();
 
-
-        // אם אין שחקנים, מחק את המשחק
-        if (names.length === 0) {
-    
-            remove(gameStateRef).catch(err => console.error('Error removing game state:', err));
-        }
-
         // עדכן את רשימת השחקנים בהכותרת
         document.getElementById('name-X').textContent = names[0] || "ממתין...";
         document.getElementById('name-O').textContent = names[1] || "ממתין...";
 
-        // בדוק אם משחקן עזב (רק אחרי שהיו 2)
-        const lastCount = playerCountHistory[playerCountHistory.length - 1];
+        // עדכן את מספר השחקנים בהיסטוריה
         playerCountHistory.push(names.length);
-
-        
-        // תנאי: היו לפחות 2 משחקנים, ועכשיו יש פחות מ-2
-        if (lastCount === 2 && names.length < 2 && !isViewer) {
-            // משחקן עזב!
-    
-            showDisconnectWarning();
-        }
 
         // בדוק אם אני צריך להיות צופה (אם יש יותר מ-2 משחקנים)
         if (!isViewer && names.length > 2) {
@@ -579,7 +562,6 @@ function startListeners() {
             document.body.classList.add('viewer-mode');
             document.getElementById('forfeit-btn').style.opacity = '0.5';
             document.getElementById('forfeit-btn').disabled = true;
-    
         }
 
         updateUI();
@@ -754,12 +736,6 @@ window.goHome = () => {
 };
 
 // ============= הודעות =============
-function showDisconnectWarning() {
-    document.getElementById('modal-title').textContent = '⚠️ משחקן עזב';
-    document.getElementById('modal-msg').textContent = 'המשחקן השני יצא מהמשחק';
-    document.getElementById('alert-modal').style.display = 'flex';
-}
-
 function showError(message) {
     document.getElementById('modal-title').textContent = '❌ שגיאה';
     document.getElementById('modal-msg').textContent = message;
