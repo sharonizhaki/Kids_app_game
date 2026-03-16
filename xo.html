@@ -251,7 +251,10 @@ function startListeners() {
         const lastCount = playerCountHistory[playerCountHistory.length - 1];
         
         if (lastCount === 2 && names.length < 2) {
-            // משחקן עזב! מצא את השם שלו
+            // משחקן עזב! מחק את הלוח מיד
+            set(gameStateRef, null);
+            
+            // מצא את השם של השחקן שעזב
             let leftPlayerName = '';
             let leftPlayerEmoji = '';
             
