@@ -368,11 +368,6 @@
     </div>
 </div>
 
-<!-- Debug Panel -->
-<div id="debug-panel" style="display: none; position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.9); color: #0f0; padding: 10px; border-radius: 8px; font-size: 10px; max-width: 150px; z-index: 999; font-family: monospace; max-height: 100px; overflow-y: auto;">
-    <div id="debug-text"></div>
-</div>
-
 <!-- סרגל צופה -->
 <div id="viewer-bar">
     👁️ אתה צופה בלבד - המשחק מלא
@@ -438,22 +433,11 @@ const db = getDatabase(app);
 const params = new URLSearchParams(location.search);
 const myName = params.get('player') || "אורח";
 
-// Debug Logger
+// Debug Logger - מוסתר
 const debugMessages = [];
 function addDebug(msg) {
-    console.log(msg);
-    debugMessages.push(msg);
-    if (debugMessages.length > 10) debugMessages.shift();
-    document.getElementById('debug-text').innerHTML = debugMessages.map(m => m + '<br>').join('');
-}
-
-// הצג debug panel בלחיצת ממושכת על הכותרת
-document.addEventListener('dblclick', () => {
-    const panel = document.getElementById('debug-panel');
-    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-});
-
-addDebug('🎮 Game loaded for: ' + myName);
+    // Debug disabled
+};
 
 // קבל את צבע המשתמש מ-sessionStorage
 const userDataStr = sessionStorage.getItem('myUser');
@@ -481,58 +465,52 @@ async function initSession() {
         addDebug('🎮 initSession() called');
         
         // 1. בדוק כמה שחקנים יש **לפני** הרישום
-        addDebug('🔍 Getting current players...');
+
         const snap = await get(roomRef);
-        addDebug('📊 Got snapshot');
+
         const players = snap.val() || {};
         const playerNames = Object.keys(players).sort();
-        addDebug('📊 Players before: ' + playerNames.length);
+
         
         // 2. רישום בחדר
-        addDebug('📝 Registering ' + myName);
+
         await set(ref(db, `rooms_v3/xo/${myName}`), { 
             name: myName, 
             timestamp: Date.now(),
             active: true 
         });
-        addDebug('✅ Registered!');
+
         
-        // 3. הסרה אוטומטית כשמתנתקים
-        onDisconnect(ref(db, `rooms_v3/xo/${myName}`)).remove();
-        addDebug('🔌 Disconnect set');
-        
-        // אם אני X, גם המשחק ימחק בהתנתקות
-        if (playerNames.length === 0) {
-            onDisconnect(gameStateRef).remove();
-            addDebug('🎯 Game disconnect set');
-        }
+        // 3. הסרה אוטומטית כשמתנתקים - לא משתמשים ב-onDisconnect כי זה גורם בעיות
+        // במקום זה נשתמש ב-listener
+
 
         // 4. קביעת תפקיד
-        addDebug('🔍 Getting players after...');
+
         const snapAfter = await get(roomRef);
-        addDebug('📊 Got snapshot');
+
         const playersAfter = snapAfter.val() || {};
         const playerNamesAfter = Object.keys(playersAfter).sort();
-        addDebug('📊 Players after: ' + playerNamesAfter.length);
+
         addDebug('👥 Names: ' + playerNamesAfter.join(','));
         
         if (playerNamesAfter.length > 2) {
             isViewer = true;
             mySymbol = null;
-            addDebug('👁️ Viewer mode');
+    
         } else if (playerNamesAfter.length === 1) {
             mySymbol = 'X';
-            addDebug('❌ You are X');
-            addDebug('🔄 Resetting game');
+    
+    
             resetFirebaseGame(true);
-            addDebug('✅ Game reset');
+    
         } else if (playerNamesAfter.length === 2) {
             mySymbol = playerNamesAfter.indexOf(myName) === 0 ? 'X' : 'O';
-            addDebug('⭕ You are ' + mySymbol);
+    
         }
 
         // 5. עדכן צבעים וסמלים
-        addDebug('🎨 Updating colors');
+
         if (mySymbol === 'X' && myColor) {
             document.documentElement.style.setProperty('--x-color', myColor);
             document.getElementById('label-X').textContent = myName;
@@ -542,18 +520,18 @@ async function initSession() {
             document.getElementById('label-O').textContent = myName;
             document.getElementById('label-O').style.color = myColor;
         }
-        addDebug('✅ Colors set');
+
 
         // 6. הפעל listeners
-        addDebug('🎧 Starting listeners');
+
         startListeners();
-        addDebug('📊 Listeners started');
+
         updateUI();
-        addDebug('✨ UI updated');
-        addDebug('🎉 Ready!');
+
+
 
     } catch (error) {
-        addDebug('❌ Error: ' + error.message);
+
         console.error('Error in initSession:', error);
         showError('שגיאה בהתחברות. נסה שוב.');
     }
@@ -575,8 +553,10 @@ function startListeners() {
         const players = snap.val() || {};
         const names = Object.keys(players).sort();
 
+
         // אם אין שחקנים, מחק את המשחק
         if (names.length === 0) {
+    
             remove(gameStateRef).catch(err => console.error('Error removing game state:', err));
         }
 
@@ -587,10 +567,12 @@ function startListeners() {
         // בדוק אם משחקן עזב (רק אחרי שהיו 2)
         const lastCount = playerCountHistory[playerCountHistory.length - 1];
         playerCountHistory.push(names.length);
+
         
         // תנאי: היו לפחות 2 משחקנים, ועכשיו יש פחות מ-2
         if (lastCount === 2 && names.length < 2 && !isViewer) {
             // משחקן עזב!
+    
             showDisconnectWarning();
         }
 
@@ -600,6 +582,7 @@ function startListeners() {
             document.body.classList.add('viewer-mode');
             document.getElementById('forfeit-btn').style.opacity = '0.5';
             document.getElementById('forfeit-btn').disabled = true;
+    
         }
 
         updateUI();
@@ -769,18 +752,8 @@ window.handleForfeit = async () => {
 
 // ============= יציאה =============
 window.goHome = () => {
-    addDebug('🏠 goHome clicked');
-    try {
-        addDebug('🗑️ Removing player...');
-        remove(ref(db, `rooms_v3/xo/${myName}`));
-        addDebug('✅ Removed');
-    } catch (error) {
-        addDebug('❌ Error: ' + error.message);
-    }
-    addDebug('🚀 Redirecting...');
-    setTimeout(() => {
-        window.location.href = 'index.html';
-    }, 100);
+    // פשוט חזור הביתה, לא מוחק
+    window.location.href = 'index.html';
 };
 
 // ============= הודעות =============
