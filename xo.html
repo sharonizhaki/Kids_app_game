@@ -365,9 +365,12 @@ function startListeners() {
             document.getElementById('name-O').innerHTML = `${p2.emoji || '⭕'} ${p2.name}`;
             document.getElementById('name-O').style.color = p2.color || 'white';
             document.getElementById('card-O').style.borderColor = p2.color || 'white';
-        } else {
+        } else if (!isAIMode) {
+            // רק בחדר רגיל, אם אין שחקן שני - הצג "ממתין"
             document.getElementById('name-O').textContent = "ממתין...";
             document.getElementById('name-O').style.color = 'white';
+        }
+        // בAI mode, O כבר מוגדר כ"מחשב חכם" בinitialization, אל תעדכן
         }
 
         // עדכן את מספר השחקנים בהיסטוריה
