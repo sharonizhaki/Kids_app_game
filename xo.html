@@ -196,9 +196,11 @@ const displayName = params.get('player') || "אורח";
 const userDataStr = sessionStorage.getItem('myUser');
 const userData = userDataStr ? JSON.parse(userDataStr) : null;
 const myName = userData?.id || displayName;  // ID מ-sessionStorage או displayName
+const isAIMode = params.get('ai') === 'true';  // בדוק אם זה משחק מול AI
 
-const roomRef = ref(db, 'rooms_v3/xo');
-const gameStateRef = ref(db, 'game/xo_dynamic');
+// בחר room בהתאם לmode
+const roomRef = ref(db, isAIMode ? 'rooms_v3/xo_ai' : 'rooms_v3/xo');
+const gameStateRef = ref(db, isAIMode ? 'game/xo_ai_dynamic' : 'game/xo_dynamic');
 
 let mySymbol = null; 
 let currentGameState = null;
@@ -212,10 +214,11 @@ let playerNames = { X: '', O: '', X_emoji: '', O_emoji: '' };  // שמות וא�
 
 async function initSession() {
     try {
-        console.log('🎮 initSession started, myName:', myName);
+        console.log('🎮 initSession started, myName:', myName, 'AI Mode:', isAIMode);
         
         // 2. רישום בחדר עם נתונים מלאים
-        await set(ref(db, `rooms_v3/xo/${myName}`), { 
+        const roomPath = isAIMode ? `rooms_v3/xo_ai/${myName}` : `rooms_v3/xo/${myName}`;
+        await set(ref(db, roomPath), { 
             name: displayName,  // שם דיספליי בעברית
             color: myColor,
             emoji: myEmoji,
@@ -225,7 +228,7 @@ async function initSession() {
 
         // 3. שמור heartbeat כל 10 שניות
         setInterval(() => {
-            set(ref(db, `rooms_v3/xo/${myName}`), { 
+            set(ref(db, roomPath), { 
                 name: displayName,  // שם דיספליי בעברית
                 color: myColor,
                 emoji: myEmoji,
@@ -239,7 +242,15 @@ async function initSession() {
         const playersAfter = snapAfter.val() || {};
         const playerNamesAfter = Object.keys(playersAfter).sort();
 
-        if (playerNamesAfter.length > 2) {
+        if (isAIMode) {
+            // במצב AI - תמיד יש AI כ-O וכמשחקן כ-X
+            mySymbol = 'X';
+            playerNames.X = displayName;
+            playerNames.X_emoji = myEmoji;
+            playerNames.O = '🤖 AI';
+            playerNames.O_emoji = '🤖';
+            resetFirebaseGame(true);
+        } else if (playerNamesAfter.length > 2) {
             isViewer = true;
             mySymbol = null;
             // הסר את עצמך מDB אם אתה צפיין
@@ -475,6 +486,10 @@ document.querySelectorAll('.cell').forEach(cell => {
             if (mySymbol === 'X') setTimeout(autoNextRound, 2500);
         } else {
             updates.currentPlayer = mySymbol === 'X' ? 'O' : 'X';
+            // אם זה משחק מול AI והתור של AI - עשה מהלך
+            if (isAIMode && updates.currentPlayer === 'O') {
+                setTimeout(makeAIMove, 1000);  // עיכוב של שנייה
+            }
         }
         update(gameStateRef, updates);
     };
@@ -483,6 +498,67 @@ document.querySelectorAll('.cell').forEach(cell => {
 function checkWinner(b) {
     const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
     return lines.some(l => b[l[0]] && b[l[0]] === b[l[1]] && b[l[0]] === b[l[2]]);
+}
+
+async function makeAIMove() {
+    if (!currentGameState || currentGameState.currentPlayer !== 'O' || currentGameState.gameOver) return;
+    
+    const board = [...currentGameState.board];
+    
+    // 1. בדוק אם AI יכולה לנצח
+    for (let i = 0; i < 9; i++) {
+        if (board[i] === '') {
+            board[i] = 'O';
+            if (checkWinner(board)) {
+                // AI יכולה לנצח! תשחק כאן
+                const newScores = {...currentGameState.scores};
+                newScores['O']++;
+                await update(gameStateRef, { board, gameOver: true, scores: newScores });
+                setTimeout(autoNextRound, 2500);
+                return;
+            }
+            board[i] = '';
+        }
+    }
+    
+    // 2. בדוק אם צריך לחסום את המשחקן
+    for (let i = 0; i < 9; i++) {
+        if (board[i] === '') {
+            board[i] = 'X';
+            if (checkWinner(board)) {
+                // צריך לחסום! תשחק כאן
+                board[i] = 'O';
+                await update(gameStateRef, { board, currentPlayer: 'X' });
+                return;
+            }
+            board[i] = '';
+        }
+    }
+    
+    // 3. שחק במרכז אם זה פנוי
+    if (board[4] === '') {
+        board[4] = 'O';
+        await update(gameStateRef, { board, currentPlayer: 'X' });
+        return;
+    }
+    
+    // 4. שחק בפינה רנדומאלית
+    const corners = [0, 2, 6, 8].filter(i => board[i] === '');
+    if (corners.length > 0) {
+        const move = corners[Math.floor(Math.random() * corners.length)];
+        board[move] = 'O';
+        await update(gameStateRef, { board, currentPlayer: 'X' });
+        return;
+    }
+    
+    // 5. שחק בכל מקום שנותר
+    for (let i = 0; i < 9; i++) {
+        if (board[i] === '') {
+            board[i] = 'O';
+            await update(gameStateRef, { board, currentPlayer: 'X' });
+            return;
+        }
+    }
 }
 
 async function autoNextRound() {
