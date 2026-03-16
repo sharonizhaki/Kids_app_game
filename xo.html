@@ -84,6 +84,45 @@
         
         #alert-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
         .modal-content { background: linear-gradient(135deg, #1a2942 0%, #0F1320 100%); color: white; padding: 40px 30px; border-radius: 30px; text-align: center; width: 100%; max-width: 320px; border: 2px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
+        
+        #win-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1001; align-items: center; justify-content: center; padding: 20px; }
+        #win-modal.show { animation: winBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes winBounce {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .win-content { 
+            background: linear-gradient(135deg, rgba(245,200,66,0.1) 0%, rgba(77,184,255,0.1) 100%);
+            color: white; 
+            padding: 50px 30px; 
+            border-radius: 30px; 
+            text-align: center; 
+            width: 100%; 
+            max-width: 350px; 
+            border: 3px solid var(--gold);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 50px rgba(245, 200, 66, 0.3);
+        }
+        .win-trophy { font-size: 4rem; margin-bottom: 15px; animation: trophy-float 2s ease-in-out infinite; }
+        @keyframes trophy-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        .win-title { font-size: 2rem; font-weight: 900; margin: 15px 0; color: var(--gold); text-shadow: 0 0 20px rgba(245, 200, 66, 0.5); }
+        .win-name { font-size: 1.5rem; margin: 10px 0; }
+        .glow-circle { 
+            position: absolute; 
+            width: 150px; 
+            height: 150px; 
+            border: 3px solid; 
+            border-radius: 50%; 
+            animation: glow-pulse 1.5s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes glow-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -93,6 +132,14 @@
         <div style="font-size: 3rem; margin-bottom: 10px;">😢</div>
         <p id="modal-msg" style="font-size: 1.1rem; font-weight: 600; margin: 0;">אמה עזבה את המשחק</p>
         <button class="btn btn-reset" onclick="goHome()" style="margin-top: 20px;">חזרה לתפריט</button>
+    </div>
+</div>
+
+<div id="win-modal">
+    <div class="win-content">
+        <div class="win-trophy">🏆</div>
+        <div class="win-title" id="win-title">ניצחון!</div>
+        <div class="win-name" id="win-name">אמה ניצחה!</div>
     </div>
 </div>
 
@@ -354,10 +401,47 @@ function render() {
     document.getElementById('card-O').classList.toggle('active', currentPlayer === 'O' && !gameOver);
 
     const status = document.getElementById('status-bar');
-    if (isViewer) {
-        status.textContent = "👁️ אתה צופה בלבד";
-    } else if (gameOver) {
+    
+    // בדוק אם יש ניצחון
+    if (gameOver) {
+        // חשב את המנצח
+        const xWins = board.every((cell, i) => {
+            const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            return !lines.some(l => board[l[0]] === 'X' && board[l[0]] === board[l[1]] && board[l[0]] === board[l[2]]);
+        });
+        
+        const oWins = board.every((cell, i) => {
+            const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            return !lines.some(l => board[l[0]] === 'O' && board[l[0]] === board[l[1]] && board[l[0]] === board[l[2]]);
+        });
+        
+        // בדוק מי ניצח
+        let winner = null;
+        if (!xWins) winner = 'X';
+        else if (!oWins) winner = 'O';
+        
+        // אם יש ניצח - הצג modal
+        if (winner) {
+            const winnerName = playerNames[winner];
+            const winnerEmoji = playerNames[winner + '_emoji'];
+            const winnerColor = playerColors[winner];
+            
+            document.getElementById('win-modal').classList.add('show');
+            document.getElementById('win-modal').style.display = 'flex';
+            document.getElementById('win-name').textContent = `${winnerEmoji} ${winnerName} ניצחה!`;
+            document.getElementById('win-name').style.color = winnerColor;
+            
+            // הסתר ב-3.5 שניות והתחל משחק חדש
+            setTimeout(() => {
+                document.getElementById('win-modal').style.display = 'none';
+                document.getElementById('win-modal').classList.remove('show');
+                autoNextRound();
+            }, 3500);
+        }
+        
         status.textContent = "סיבוב הסתיים!";
+    } else if (isViewer) {
+        status.textContent = "👁️ אתה צופה בלבד";
     } else {
         // אם תורך - הצג "ממתין ל-[שם]" של השחקן השני
         if (mySymbol === currentPlayer) {
