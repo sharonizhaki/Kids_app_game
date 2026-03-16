@@ -471,12 +471,20 @@ async function initSession() {
 
         
         // 2. רישום בחדר
-
         await set(ref(db, `rooms_v3/xo/${myName}`), { 
             name: myName, 
             timestamp: Date.now(),
             active: true 
         });
+        
+        // שמור את השחקן עם heartbeat כל 10 שניות
+        setInterval(() => {
+            set(ref(db, `rooms_v3/xo/${myName}`), { 
+                name: myName, 
+                timestamp: Date.now(),
+                active: true 
+            });
+        }, 10000);
 
         
         // 3. שחקנים נשארים במשחק - לא מוחקים באופן אוטומטי
@@ -493,16 +501,11 @@ async function initSession() {
         if (playerNamesAfter.length > 2) {
             isViewer = true;
             mySymbol = null;
-    
         } else if (playerNamesAfter.length === 1) {
             mySymbol = 'X';
-    
-    
             resetFirebaseGame(true);
-    
         } else if (playerNamesAfter.length === 2) {
             mySymbol = playerNamesAfter.indexOf(myName) === 0 ? 'X' : 'O';
-    
         }
 
         // 5. עדכן צבעים וסמלים
@@ -548,6 +551,11 @@ function startListeners() {
     onValue(roomRef, (snap) => {
         const players = snap.val() || {};
         const names = Object.keys(players).sort();
+
+        // אם אין שחקנים כלל - נקה את המשחק
+        if (names.length === 0) {
+            set(gameStateRef, null);
+        }
 
         // עדכן את רשימת השחקנים בהכותרת
         document.getElementById('name-X').textContent = names[0] || "ממתין...";
