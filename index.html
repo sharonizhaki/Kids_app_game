@@ -1180,19 +1180,89 @@ window.showGuestSetup = () => {
     document.getElementById('guest-setup').style.display = 'block';
 };
 
+window.showGuestSetup = () => {
+    document.getElementById('main-user-grid').style.display = 'none';
+    document.getElementById('guest-setup').style.display = 'block';
+    
+    const input = document.getElementById('guest-name-input');
+    input.focus();
+
+    const picker = document.getElementById('emoji-picker');
+    picker.innerHTML = '';
+    const guestEmojis = ['🦊', '🐯', '🐸', '🐼', '🤖', '👾', '🦄', '🐲'];
+    
+    guestEmojis.forEach((emoji) => {
+        const div = document.createElement('div');
+        div.className = 'emoji-opt';
+        div.textContent = emoji;
+        div.onclick = () => {
+            Array.from(picker.children).forEach(c => c.classList.remove('selected'));
+            div.classList.add('selected');
+        };
+        picker.appendChild(div);
+    });
+};
+
 window.confirmGuest = () => {
-    const name = document.getElementById('guest-name-input').value.trim();
+    const nameInput = document.getElementById('guest-name-input');
+    const picker = document.getElementById('emoji-picker');
+    const name = nameInput.value.trim();
     const emoji = document.querySelector('.emoji-opt.selected')?.textContent;
     
-    if (!name || !emoji) return;
-    window.selectUser('guest', name, emoji, '#3DD68C');
+    let hasError = false;
+    
+    // בדוק שם
+    if (!name) {
+        nameInput.classList.add('error');
+        nameInput.style.border = '2px solid red';
+        nameInput.placeholder = "חובה לכתוב שם!";
+        // רטט
+        nameInput.style.animation = 'shake 0.5s';
+        setTimeout(() => nameInput.style.animation = '', 500);
+        hasError = true;
+    } else {
+        nameInput.classList.remove('error');
+        nameInput.style.border = '';
+    }
+    
+    // בדוק אימוג'י
+    if (!emoji) {
+        picker.style.border = '2px solid red';
+        picker.style.borderRadius = '10px';
+        picker.style.padding = '10px';
+        // רטט
+        picker.style.animation = 'shake 0.5s';
+        setTimeout(() => picker.style.animation = '', 500);
+        hasError = true;
+    } else {
+        picker.style.border = '';
+    }
+    
+    if (!hasError) {
+        window.selectUser('guest', name, emoji, '#3DD68C');
+    }
 };
 
 window.cancelGuestSetup = () => {
     document.getElementById('main-user-grid').style.display = 'grid';
     document.getElementById('guest-setup').style.display = 'none';
     document.getElementById('guest-name-input').value = '';
+    document.getElementById('guest-name-input').classList.remove('error');
+    document.getElementById('guest-name-input').style.border = '';
+    document.getElementById('emoji-picker').style.border = '';
+    document.querySelectorAll('.emoji-opt').forEach(e => e.classList.remove('selected'));
 };
+
+// הוסף CSS animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+`;
+document.head.appendChild(style);
 </script>
 </body>
 </html>
