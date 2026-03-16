@@ -447,15 +447,12 @@ function addDebug(msg) {
     document.getElementById('debug-text').innerHTML = debugMessages.map(m => m + '<br>').join('');
 }
 
-// Debug Logger - מוסתר
-const debugMessages = [];
-    // Debug disabled
-};
-
 // קבל את צבע המשתמש מ-sessionStorage
 const userDataStr = sessionStorage.getItem('myUser');
 const userData = userDataStr ? JSON.parse(userDataStr) : null;
 const myColor = userData?.color || '#EEF0FF';
+
+addDebug('🎮 Init: ' + myName);
 
 // עדכן צבע בעל (אם אני משחקן X)
 if (mySymbol === 'X' && myColor) {

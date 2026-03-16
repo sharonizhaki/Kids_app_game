@@ -773,7 +773,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
@@ -966,7 +966,7 @@ function startWaiting(gameId) {
         color: myUser.color,
         timestamp: Date.now()
     });
-    onDisconnect(myPlayerRef).remove();
+    // לא משתמשים ב-onDisconnect - שחקנים נשארים בDB
     
     roomListener = onValue(ref(db, `rooms_v3/${gameId}`), (snap) => {
         const players = Object.values(snap.val() || {});
@@ -999,7 +999,7 @@ function startWaiting(gameId) {
 // ========== ביטול המתנה ==========
 window.cancelWaiting = () => {
     if (roomListener) roomListener();
-    remove(ref(db, `rooms_v3/${currentGame.id}/${myUser.id}`));
+    // לא מוחקים את השחקן - הוא עדיין בחדר
     showScreen('screen-games');
 };
 
