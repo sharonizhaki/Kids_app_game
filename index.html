@@ -615,6 +615,19 @@
             font-size: 0.85rem;
             color: var(--dim);
             margin-bottom: 16px;
+            min-height: 20px;
+        }
+
+        .waiting-subtitle.countdown {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--gold);
+            animation: pulse 0.6s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
 
         .slots { 
@@ -758,14 +771,14 @@
         <div class="waiting-box">
             <div class="waiting-icon" id="wait-game-icon">⏳</div>
             <div class="waiting-title" id="wait-game-name">משחק</div>
-            <div class="waiting-subtitle">ממתין לשחקן שני...</div>
+            <div class="waiting-subtitle" id="waiting-status">ממתין לשחקן שני...</div>
             
             <div class="slots">
                 <div id="slot-0" class="p-slot"></div>
                 <div id="slot-1" class="p-slot"></div>
             </div>
             
-            <button class="btn-main" onclick="cancelWaiting()">ביטול</button>
+            <button class="btn-main" id="waiting-btn" onclick="cancelWaiting()">ביטול</button>
         </div>
     </div>
 
@@ -773,7 +786,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, remove, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
@@ -1002,19 +1015,62 @@ function startWaiting(gameId) {
         }
 
         if (players.length >= 2) {
-            setTimeout(() => { 
-                if (roomListener) roomListener(); 
-                window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}`; 
-            }, 800);
+            // התחל countdown 3 שניות
+            let countdown = 3;
+            const statusElement = document.getElementById('waiting-status');
+            const btnElement = document.getElementById('waiting-btn');
+            
+            // הפוך את הכפתור לא פעיל
+            btnElement.disabled = true;
+            btnElement.textContent = 'מתחילים...';
+            btnElement.style.opacity = '0.5';
+            
+            // הצג countdown
+            statusElement.textContent = countdown;
+            statusElement.classList.add('countdown');
+            
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    statusElement.textContent = countdown;
+                } else {
+                    clearInterval(countdownInterval);
+                    // עבור למשחק
+                    if (roomListener) roomListener();
+                    window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}`;
+                }
+            }, 1000);
+        } else {
+            // עדכן את הסטטוס
+            document.getElementById('waiting-status').textContent = 'ממתין לשחקן שני...';
+            document.getElementById('waiting-status').classList.remove('countdown');
+            document.getElementById('waiting-btn').disabled = false;
+            document.getElementById('waiting-btn').textContent = 'ביטול';
+            document.getElementById('waiting-btn').style.opacity = '1';
         }
     });
 }
 
 // ========== ביטול המתנה ==========
-window.cancelWaiting = () => {
+window.cancelWaiting = async () => {
     if (roomListener) roomListener();
     if (window.stopHeartbeat) window.stopHeartbeat();
-    // לא מוחקים את השחקן - הוא עדיין בחדר
+    
+    try {
+        // בדוק כמה שחקנים יש בחדר
+        const snap = await get(ref(db, `rooms_v3/${currentGame.id}`));
+        const players = snap.val() || {};
+        const playerCount = Object.keys(players).length;
+        
+        // אם רק אני בחדר - מחק אותי
+        if (playerCount <= 1) {
+            await remove(ref(db, `rooms_v3/${currentGame.id}/${myUser.id}`));
+        }
+        // אם יש עוד אחד - אל תמחק! (המשחק עלול להתחיל)
+    } catch (error) {
+        console.error('Error in cancelWaiting:', error);
+    }
+    
     showScreen('screen-games');
 };
 

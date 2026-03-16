@@ -493,6 +493,15 @@ async function initSession() {
             resetFirebaseGame(true);
         } else if (playerNamesAfter.length === 2) {
             mySymbol = playerNamesAfter.indexOf(myName) === 0 ? 'X' : 'O';
+            
+            // בדוק אם משחק קיים
+            const gameSnap = await get(gameStateRef);
+            const gameExists = gameSnap.val() !== null;
+            
+            // אם אין משחק - אתחל
+            if (!gameExists) {
+                resetFirebaseGame(true);
+            }
         }
 
         // 5. עדכן צבעים וסמלים
