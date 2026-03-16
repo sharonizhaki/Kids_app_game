@@ -364,7 +364,7 @@
     <div class="modal-content">
         <h2 id="modal-title">⚠️ משחקן עזב</h2>
         <p id="modal-msg">המשחקן השני עזב את המשחק</p>
-        <button class="btn btn-reset" onclick="goHome()">חזרה לתפריט</button>
+        <button class="btn btn-reset" onclick="window.goHome()">חזרה לתפריט</button>
     </div>
 </div>
 
@@ -416,7 +416,7 @@
 <!-- כפתורים -->
 <div class="controls">
     <button class="btn btn-reset" onclick="handleForfeit()" id="forfeit-btn">ויתור</button>
-    <button class="btn btn-home" onclick="goHome()">🏠 בית</button>
+    <button class="btn btn-home" onclick="window.goHome()">🏠 בית</button>
 </div>
 
 <script type="module">
@@ -478,16 +478,18 @@ let playerCountHistory = [];   // היסטוריה של כמות שחקנים
 // ============= אתחול =============
 async function initSession() {
     try {
-        addDebug('🎮 initSession started');
+        addDebug('🎮 initSession() called');
         
         // 1. בדוק כמה שחקנים יש **לפני** הרישום
+        addDebug('🔍 Getting current players...');
         const snap = await get(roomRef);
+        addDebug('📊 Got snapshot');
         const players = snap.val() || {};
         const playerNames = Object.keys(players).sort();
         addDebug('📊 Players before: ' + playerNames.length);
         
         // 2. רישום בחדר
-        addDebug('📝 Registering...');
+        addDebug('📝 Registering ' + myName);
         await set(ref(db, `rooms_v3/xo/${myName}`), { 
             name: myName, 
             timestamp: Date.now(),
@@ -497,17 +499,22 @@ async function initSession() {
         
         // 3. הסרה אוטומטית כשמתנתקים
         onDisconnect(ref(db, `rooms_v3/xo/${myName}`)).remove();
+        addDebug('🔌 Disconnect set');
         
         // אם אני X, גם המשחק ימחק בהתנתקות
         if (playerNames.length === 0) {
             onDisconnect(gameStateRef).remove();
+            addDebug('🎯 Game disconnect set');
         }
 
         // 4. קביעת תפקיד
+        addDebug('🔍 Getting players after...');
         const snapAfter = await get(roomRef);
+        addDebug('📊 Got snapshot');
         const playersAfter = snapAfter.val() || {};
         const playerNamesAfter = Object.keys(playersAfter).sort();
         addDebug('📊 Players after: ' + playerNamesAfter.length);
+        addDebug('👥 Names: ' + playerNamesAfter.join(','));
         
         if (playerNamesAfter.length > 2) {
             isViewer = true;
@@ -516,13 +523,16 @@ async function initSession() {
         } else if (playerNamesAfter.length === 1) {
             mySymbol = 'X';
             addDebug('❌ You are X');
+            addDebug('🔄 Resetting game');
             resetFirebaseGame(true);
+            addDebug('✅ Game reset');
         } else if (playerNamesAfter.length === 2) {
             mySymbol = playerNamesAfter.indexOf(myName) === 0 ? 'X' : 'O';
             addDebug('⭕ You are ' + mySymbol);
         }
 
         // 5. עדכן צבעים וסמלים
+        addDebug('🎨 Updating colors');
         if (mySymbol === 'X' && myColor) {
             document.documentElement.style.setProperty('--x-color', myColor);
             document.getElementById('label-X').textContent = myName;
@@ -532,12 +542,15 @@ async function initSession() {
             document.getElementById('label-O').textContent = myName;
             document.getElementById('label-O').style.color = myColor;
         }
+        addDebug('✅ Colors set');
 
         // 6. הפעל listeners
         addDebug('🎧 Starting listeners');
         startListeners();
+        addDebug('📊 Listeners started');
         updateUI();
-        addDebug('✨ Ready!');
+        addDebug('✨ UI updated');
+        addDebug('🎉 Ready!');
 
     } catch (error) {
         addDebug('❌ Error: ' + error.message);
@@ -755,19 +768,19 @@ window.handleForfeit = async () => {
 };
 
 // ============= יציאה =============
-window.goHome = async () => {
-    console.log('🏠 goHome called for player:', myName);
+window.goHome = () => {
+    addDebug('🏠 goHome clicked');
     try {
-        console.log('🗑️ Removing player from Firebase...');
-        await remove(ref(db, `rooms_v3/xo/${myName}`));
-        console.log('✅ Player removed successfully');
-        console.log('🚀 Redirecting to index.html...');
-        window.location.href = 'index.html';
+        addDebug('🗑️ Removing player...');
+        remove(ref(db, `rooms_v3/xo/${myName}`));
+        addDebug('✅ Removed');
     } catch (error) {
-        console.error('❌ Error removing player:', error);
-        console.log('🚀 Redirecting anyway...');
-        window.location.href = 'index.html';
+        addDebug('❌ Error: ' + error.message);
     }
+    addDebug('🚀 Redirecting...');
+    setTimeout(() => {
+        window.location.href = 'index.html';
+    }, 100);
 };
 
 // ============= הודעות =============
@@ -798,7 +811,9 @@ function resetFirebaseGame(fullReset = false) {
 }
 
 // ============= התחלה =============
+addDebug('⏱️ About to call initSession');
 initSession();
+addDebug('⏱️ initSession() returned');
 </script>
 </body>
 </html>
