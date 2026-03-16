@@ -384,41 +384,46 @@ let playerCountHistory = [];   // היסטוריה של כמות שחקנים
 // ============= אתחול =============
 async function initSession() {
     try {
-        // 1. רישום בחדר
+        // 1. בדוק כמה שחקנים יש **לפני** הרישום
+        const snap = await get(roomRef);
+        const players = snap.val() || {};
+        const playerNames = Object.keys(players).sort();
+        
+        // 2. רישום בחדר
         await set(ref(db, `rooms_v3/xo/${myName}`), { 
             name: myName, 
             timestamp: Date.now(),
             active: true 
         });
         
-        // 2. הסרה אוטומטית כשמתנתקים
+        // 3. הסרה אוטומטית כשמתנתקים
         onDisconnect(ref(db, `rooms_v3/xo/${myName}`)).remove();
         
         // אם אני X, גם המשחק ימחק בהתנתקות (כי X זה הראשון)
-        if (playerNames.length === 1) {
+        if (playerNames.length === 0) {
             onDisconnect(gameStateRef).remove();
         }
 
-        // 3. קביעת תפקיד - בדוק כמה שחקנים יש
-        const snap = await get(roomRef);
-        const players = snap.val() || {};
-        const playerNames = Object.keys(players).sort();
+        // 4. קביעת תפקיד - בדוק כמה שחקנים יש עכשיו (אחרי שהתווספתי)
+        const snapAfter = await get(roomRef);
+        const playersAfter = snapAfter.val() || {};
+        const playerNamesAfter = Object.keys(playersAfter).sort();
         
-        if (playerNames.length > 2) {
+        if (playerNamesAfter.length > 2) {
             // אם יש יותר מ-2 שחקנים - אני צופה
             isViewer = true;
             mySymbol = null;
-        } else if (playerNames.length === 1) {
+        } else if (playerNamesAfter.length === 1) {
             // אני הראשון
             mySymbol = 'X';
             // איפוס המשחק אם אני משחקן X
             resetFirebaseGame(true);
-        } else if (playerNames.length === 2) {
+        } else if (playerNamesAfter.length === 2) {
             // אני השני
-            mySymbol = playerNames.indexOf(myName) === 0 ? 'X' : 'O';
+            mySymbol = playerNamesAfter.indexOf(myName) === 0 ? 'X' : 'O';
         }
 
-        // 4. עדכן צבעים וסמלים בכרטיסים
+        // 5. עדכן צבעים וסמלים בכרטיסים
         if (mySymbol === 'X' && myColor) {
             document.documentElement.style.setProperty('--x-color', myColor);
             document.getElementById('label-X').textContent = myName;
@@ -429,7 +434,7 @@ async function initSession() {
             document.getElementById('label-O').style.color = myColor;
         }
 
-        // 5. הפעל listeners
+        // 6. הפעל listeners
         startListeners();
         updateUI();
 
@@ -646,10 +651,12 @@ window.handleForfeit = async () => {
 window.goHome = async () => {
     try {
         await remove(ref(db, `rooms_v3/xo/${myName}`));
+        window.location.href = 'index.html';
     } catch (error) {
         console.error('Error removing player:', error);
+        // אפילו אם יש שגיאה, חזור הביתה
+        window.location.href = 'index.html';
     }
-    window.location.href = 'index.html';
 };
 
 // ============= הודעות =============
