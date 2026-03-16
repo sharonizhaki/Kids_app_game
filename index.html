@@ -825,16 +825,22 @@ function watchAllRooms() {
             const statusDiv = document.getElementById(`status-${game.id}`);
             if (!statusDiv) return;
             
-            const players = allRooms[game.id] ? Object.values(allRooms[game.id]) : [];
+            const players = Object.values(allRooms[game.id] || {}).sort();
             
             if (players.length === 0) {
-                statusDiv.textContent = '';
+                statusDiv.innerHTML = '';
             } else if (players.length === 1) {
-                statusDiv.textContent = `${players[0].name} ${players[0].emoji} ממתין...`;
-                statusDiv.style.color = 'var(--gold)';
-            } else {
-                statusDiv.textContent = `🎮 ${players[0].name} ו-${players[1].name}`;
-                statusDiv.style.color = 'var(--guest)';
+                statusDiv.innerHTML = `<span style="color: var(--gold);">${players[0].emoji} ${players[0].name} ממתין...</span>`;
+            } else if (players.length >= 2) {
+                // 2 שחקנים משחקים
+                const p1Color = players[0].color || '#FF5C7A';
+                const p2Color = players[1].color || '#4DB8FF';
+                statusDiv.innerHTML = `
+                    <span style="color: ${p1Color}; font-weight: 900;">${players[0].emoji} ${players[0].name}</span>
+                    <span style="color: var(--dim);">  VS  </span>
+                    <span style="color: ${p2Color}; font-weight: 900;">${players[1].emoji} ${players[1].name}</span>
+                    🎮
+                `;
             }
         });
     });
@@ -1125,7 +1131,7 @@ setInterval(async () => {
     } catch (error) {
         console.error('Error in heartbeat cleanup:', error);
     }
-}, 5000);  // בדוק כל 5 שניות
+}, 2000);  // בדוק כל 2 שניות
 </script>
 </body>
 </html>
