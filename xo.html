@@ -456,43 +456,50 @@ let playerCountHistory = [];   // היסטוריה של כמות שחקנים
 // ============= אתחול =============
 async function initSession() {
     try {
+        console.log('🎮 initSession started for:', myName);
+        
         // 1. בדוק כמה שחקנים יש **לפני** הרישום
         const snap = await get(roomRef);
         const players = snap.val() || {};
         const playerNames = Object.keys(players).sort();
+        console.log('📊 Players before registration:', playerNames);
         
         // 2. רישום בחדר
+        console.log('📝 Registering player:', myName);
         await set(ref(db, `rooms_v3/xo/${myName}`), { 
             name: myName, 
             timestamp: Date.now(),
             active: true 
         });
+        console.log('✅ Player registered successfully');
         
         // 3. הסרה אוטומטית כשמתנתקים
         onDisconnect(ref(db, `rooms_v3/xo/${myName}`)).remove();
+        console.log('🔌 Disconnect handler set');
         
         // אם אני X, גם המשחק ימחק בהתנתקות (כי X זה הראשון)
         if (playerNames.length === 0) {
             onDisconnect(gameStateRef).remove();
+            console.log('🎯 Game state will be deleted on disconnect');
         }
 
         // 4. קביעת תפקיד - בדוק כמה שחקנים יש עכשיו (אחרי שהתווספתי)
         const snapAfter = await get(roomRef);
         const playersAfter = snapAfter.val() || {};
         const playerNamesAfter = Object.keys(playersAfter).sort();
+        console.log('📊 Players after registration:', playerNamesAfter);
         
         if (playerNamesAfter.length > 2) {
-            // אם יש יותר מ-2 שחקנים - אני צופה
             isViewer = true;
             mySymbol = null;
+            console.log('👁️ You are a viewer');
         } else if (playerNamesAfter.length === 1) {
-            // אני הראשון
             mySymbol = 'X';
-            // איפוס המשחק אם אני משחקן X
+            console.log('❌ You are X (first player)');
             resetFirebaseGame(true);
         } else if (playerNamesAfter.length === 2) {
-            // אני השני
             mySymbol = playerNamesAfter.indexOf(myName) === 0 ? 'X' : 'O';
+            console.log('⭕ You are', mySymbol, '(second player)');
         }
 
         // 5. עדכן צבעים וסמלים בכרטיסים
@@ -500,18 +507,22 @@ async function initSession() {
             document.documentElement.style.setProperty('--x-color', myColor);
             document.getElementById('label-X').textContent = myName;
             document.getElementById('label-X').style.color = myColor;
+            console.log('🎨 X color set to:', myColor);
         } else if (mySymbol === 'O' && myColor) {
             document.documentElement.style.setProperty('--o-color', myColor);
             document.getElementById('label-O').textContent = myName;
             document.getElementById('label-O').style.color = myColor;
+            console.log('🎨 O color set to:', myColor);
         }
 
         // 6. הפעל listeners
+        console.log('🎧 Starting listeners...');
         startListeners();
         updateUI();
+        console.log('✨ initSession completed successfully');
 
     } catch (error) {
-        console.error('Error in initSession:', error);
+        console.error('❌ Error in initSession:', error);
         showError('שגיאה בהתחברות. נסה שוב.');
     }
 }
@@ -726,12 +737,16 @@ window.handleForfeit = async () => {
 
 // ============= יציאה =============
 window.goHome = async () => {
+    console.log('🏠 goHome called for player:', myName);
     try {
+        console.log('🗑️ Removing player from Firebase...');
         await remove(ref(db, `rooms_v3/xo/${myName}`));
+        console.log('✅ Player removed successfully');
+        console.log('🚀 Redirecting to index.html...');
         window.location.href = 'index.html';
     } catch (error) {
-        console.error('Error removing player:', error);
-        // אפילו אם יש שגיאה, חזור הביתה
+        console.error('❌ Error removing player:', error);
+        console.log('🚀 Redirecting anyway...');
         window.location.href = 'index.html';
     }
 };
