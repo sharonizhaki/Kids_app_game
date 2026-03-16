@@ -778,7 +778,10 @@
                 <div id="slot-1" class="p-slot"></div>
             </div>
             
-            <button class="btn-main" id="waiting-btn" onclick="cancelWaiting()">ביטול</button>
+            <div style="display: flex; gap: 10px; margin-top: 20px; width: 100%;">
+                <button class="btn-main" id="waiting-btn" onclick="cancelWaiting()" style="flex: 1;">ביטול</button>
+                <button class="btn-main" onclick="playWithAI()" style="flex: 1; background: linear-gradient(135deg, #4DB8FF 0%, #3DB8FF 100%); box-shadow: 0 5px 20px rgba(77, 184, 255, 0.3);">🤖 שחק לבד</button>
+            </div>
         </div>
     </div>
 
@@ -1078,6 +1081,17 @@ window.cancelWaiting = async () => {
     }
     
     showScreen('screen-games');
+};
+
+window.playWithAI = () => {
+    if (roomListener) roomListener();
+    if (window.stopHeartbeat) window.stopHeartbeat();
+    
+    // שמור את myUser ב-sessionStorage
+    sessionStorage.setItem('myUser', JSON.stringify(myUser));
+    
+    // נווט ל-xo.html עם parameter ai=true
+    window.location.href = `xo.html?player=${encodeURIComponent(myUser.name)}&ai=true`;
 };
 
 // ========== עזיבה ==========
