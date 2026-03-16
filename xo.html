@@ -435,7 +435,6 @@ const myName = params.get('player') || "אורח";
 
 // Debug Logger - מוסתר
 const debugMessages = [];
-function addDebug(msg) {
     // Debug disabled
 };
 
@@ -462,7 +461,6 @@ let playerCountHistory = [];   // היסטוריה של כמות שחקנים
 // ============= אתחול =============
 async function initSession() {
     try {
-        addDebug('🎮 initSession() called');
         
         // 1. בדוק כמה שחקנים יש **לפני** הרישום
 
@@ -492,7 +490,6 @@ async function initSession() {
         const playersAfter = snapAfter.val() || {};
         const playerNamesAfter = Object.keys(playersAfter).sort();
 
-        addDebug('👥 Names: ' + playerNamesAfter.join(','));
         
         if (playerNamesAfter.length > 2) {
             isViewer = true;
@@ -784,9 +781,7 @@ function resetFirebaseGame(fullReset = false) {
 }
 
 // ============= התחלה =============
-addDebug('⏱️ About to call initSession');
 initSession();
-addDebug('⏱️ initSession() returned');
 </script>
 </body>
 </html>
