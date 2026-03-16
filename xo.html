@@ -368,6 +368,11 @@
     </div>
 </div>
 
+<!-- Debug Panel -->
+<div id="debug-panel" style="display: none; position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.9); color: #0f0; padding: 10px; border-radius: 8px; font-size: 10px; max-width: 150px; z-index: 999; font-family: monospace; max-height: 100px; overflow-y: auto;">
+    <div id="debug-text"></div>
+</div>
+
 <!-- סרגל צופה -->
 <div id="viewer-bar">
     👁️ אתה צופה בלבד - המשחק מלא
@@ -433,6 +438,23 @@ const db = getDatabase(app);
 const params = new URLSearchParams(location.search);
 const myName = params.get('player') || "אורח";
 
+// Debug Logger
+const debugMessages = [];
+function addDebug(msg) {
+    console.log(msg);
+    debugMessages.push(msg);
+    if (debugMessages.length > 10) debugMessages.shift();
+    document.getElementById('debug-text').innerHTML = debugMessages.map(m => m + '<br>').join('');
+}
+
+// הצג debug panel בלחיצת ממושכת על הכותרת
+document.addEventListener('dblclick', () => {
+    const panel = document.getElementById('debug-panel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+});
+
+addDebug('🎮 Game loaded for: ' + myName);
+
 // קבל את צבע המשתמש מ-sessionStorage
 const userDataStr = sessionStorage.getItem('myUser');
 const userData = userDataStr ? JSON.parse(userDataStr) : null;
@@ -456,73 +478,70 @@ let playerCountHistory = [];   // היסטוריה של כמות שחקנים
 // ============= אתחול =============
 async function initSession() {
     try {
-        console.log('🎮 initSession started for:', myName);
+        addDebug('🎮 initSession started');
         
         // 1. בדוק כמה שחקנים יש **לפני** הרישום
         const snap = await get(roomRef);
         const players = snap.val() || {};
         const playerNames = Object.keys(players).sort();
-        console.log('📊 Players before registration:', playerNames);
+        addDebug('📊 Players before: ' + playerNames.length);
         
         // 2. רישום בחדר
-        console.log('📝 Registering player:', myName);
+        addDebug('📝 Registering...');
         await set(ref(db, `rooms_v3/xo/${myName}`), { 
             name: myName, 
             timestamp: Date.now(),
             active: true 
         });
-        console.log('✅ Player registered successfully');
+        addDebug('✅ Registered!');
         
         // 3. הסרה אוטומטית כשמתנתקים
         onDisconnect(ref(db, `rooms_v3/xo/${myName}`)).remove();
-        console.log('🔌 Disconnect handler set');
         
-        // אם אני X, גם המשחק ימחק בהתנתקות (כי X זה הראשון)
+        // אם אני X, גם המשחק ימחק בהתנתקות
         if (playerNames.length === 0) {
             onDisconnect(gameStateRef).remove();
-            console.log('🎯 Game state will be deleted on disconnect');
         }
 
-        // 4. קביעת תפקיד - בדוק כמה שחקנים יש עכשיו (אחרי שהתווספתי)
+        // 4. קביעת תפקיד
         const snapAfter = await get(roomRef);
         const playersAfter = snapAfter.val() || {};
         const playerNamesAfter = Object.keys(playersAfter).sort();
-        console.log('📊 Players after registration:', playerNamesAfter);
+        addDebug('📊 Players after: ' + playerNamesAfter.length);
         
         if (playerNamesAfter.length > 2) {
             isViewer = true;
             mySymbol = null;
-            console.log('👁️ You are a viewer');
+            addDebug('👁️ Viewer mode');
         } else if (playerNamesAfter.length === 1) {
             mySymbol = 'X';
-            console.log('❌ You are X (first player)');
+            addDebug('❌ You are X');
             resetFirebaseGame(true);
         } else if (playerNamesAfter.length === 2) {
             mySymbol = playerNamesAfter.indexOf(myName) === 0 ? 'X' : 'O';
-            console.log('⭕ You are', mySymbol, '(second player)');
+            addDebug('⭕ You are ' + mySymbol);
         }
 
-        // 5. עדכן צבעים וסמלים בכרטיסים
+        // 5. עדכן צבעים וסמלים
         if (mySymbol === 'X' && myColor) {
             document.documentElement.style.setProperty('--x-color', myColor);
             document.getElementById('label-X').textContent = myName;
             document.getElementById('label-X').style.color = myColor;
-            console.log('🎨 X color set to:', myColor);
         } else if (mySymbol === 'O' && myColor) {
             document.documentElement.style.setProperty('--o-color', myColor);
             document.getElementById('label-O').textContent = myName;
             document.getElementById('label-O').style.color = myColor;
-            console.log('🎨 O color set to:', myColor);
         }
 
         // 6. הפעל listeners
-        console.log('🎧 Starting listeners...');
+        addDebug('🎧 Starting listeners');
         startListeners();
         updateUI();
-        console.log('✨ initSession completed successfully');
+        addDebug('✨ Ready!');
 
     } catch (error) {
-        console.error('❌ Error in initSession:', error);
+        addDebug('❌ Error: ' + error.message);
+        console.error('Error in initSession:', error);
         showError('שגיאה בהתחברות. נסה שוב.');
     }
 }
