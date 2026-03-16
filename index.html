@@ -961,6 +961,10 @@ window.confirmGuest = () => {
 // ========== כניסה למשחק ==========
 window.joinGame = (gameId) => {
     currentGame = games.find(g => g.id === gameId);
+    
+    // שמור את myUser ב-sessionStorage
+    sessionStorage.setItem('myUser', JSON.stringify(myUser));
+    
     onValue(ref(db, `rooms_v3/${gameId}`), (snap) => {
         const players = Object.values(snap.val() || {});
         
@@ -1041,6 +1045,8 @@ function startWaiting(gameId) {
                     statusElement.textContent = countdown;
                 } else {
                     clearInterval(countdownInterval);
+                    // שמור את myUser ב-sessionStorage
+                    sessionStorage.setItem('myUser', JSON.stringify(myUser));
                     // עבור למשחק
                     if (roomListener) roomListener();
                     window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}`;
