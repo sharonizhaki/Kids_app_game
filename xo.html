@@ -393,6 +393,11 @@ async function initSession() {
         
         // 2. הסרה אוטומטית כשמתנתקים
         onDisconnect(ref(db, `rooms_v3/xo/${myName}`)).remove();
+        
+        // אם אני X, גם המשחק ימחק בהתנתקות (כי X זה הראשון)
+        if (playerNames.length === 1) {
+            onDisconnect(gameStateRef).remove();
+        }
 
         // 3. קביעת תפקיד - בדוק כמה שחקנים יש
         const snap = await get(roomRef);
@@ -612,6 +617,7 @@ async function autoNextRound() {
         });
     } catch (error) {
         console.error('Error in autoNextRound:', error);
+        showError('שגיאה בתחילת סיבוב חדש. בדוק חיבור אינטרנט.');
     }
 }
 
