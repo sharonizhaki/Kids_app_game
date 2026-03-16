@@ -193,6 +193,8 @@ async function initSession() {
         if (playerNamesAfter.length > 2) {
             isViewer = true;
             mySymbol = null;
+            // הסר את עצמך מDB אם אתה צפיין
+            await remove(ref(db, `rooms_v3/xo/${myName}`));
         } else if (playerNamesAfter.length === 1) {
             mySymbol = 'X';
             resetFirebaseGame(true);
@@ -229,6 +231,14 @@ function startListeners() {
     onValue(roomRef, (snap) => {
         const players = snap.val() || {};
         const names = Object.keys(players).sort();
+
+        // אם יש יותר מ-2 שחקנים - הסר את הצופים מDB
+        if (names.length > 2) {
+            // שמור את שני הראשונים בלבד (X ו-O)
+            for (let i = 2; i < names.length; i++) {
+                remove(ref(db, `rooms_v3/xo/${names[i]}`));
+            }
+        }
 
         // אם אין שחקנים כלל - נקה את המשחק
         if (names.length === 0) {
