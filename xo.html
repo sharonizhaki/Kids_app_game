@@ -368,6 +368,11 @@
     </div>
 </div>
 
+<!-- Debug Panel -->
+<div id="debug-panel" style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.95); color: #0f0; padding: 10px; border-radius: 8px; font-size: 9px; max-width: 120px; z-index: 9999; font-family: monospace; max-height: 150px; overflow-y: auto; border: 1px solid #0f0;">
+    <div id="debug-text" style="line-height: 1.2;"></div>
+</div>
+
 <!-- סרגל צופה -->
 <div id="viewer-bar">
     👁️ אתה צופה בלבד - המשחק מלא
@@ -433,6 +438,14 @@ const db = getDatabase(app);
 const params = new URLSearchParams(location.search);
 const myName = params.get('player') || "אורח";
 
+// Debug Logger
+const debugMessages = [];
+function addDebug(msg) {
+    debugMessages.push(msg);
+    if (debugMessages.length > 8) debugMessages.shift();
+    document.getElementById('debug-text').innerHTML = debugMessages.map(m => m + '<br>').join('');
+}
+
 // Debug Logger - מוסתר
 const debugMessages = [];
     // Debug disabled
@@ -476,15 +489,6 @@ async function initSession() {
             timestamp: Date.now(),
             active: true 
         });
-        
-        // שמור את השחקן עם heartbeat כל 10 שניות
-        setInterval(() => {
-            set(ref(db, `rooms_v3/xo/${myName}`), { 
-                name: myName, 
-                timestamp: Date.now(),
-                active: true 
-            });
-        }, 10000);
 
         
         // 3. שחקנים נשארים במשחק - לא מוחקים באופן אוטומטי
@@ -766,6 +770,17 @@ function resetFirebaseGame(fullReset = false) {
 
 // ============= התחלה =============
 initSession();
+
+// שמור את השחקן עם heartbeat כל 10 שניות
+setInterval(() => {
+    if (myName) {
+        set(ref(db, `rooms_v3/xo/${myName}`), { 
+            name: myName, 
+            timestamp: Date.now(),
+            active: true 
+        });
+    }
+}, 10000);
 </script>
 </body>
 </html>
