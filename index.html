@@ -650,20 +650,19 @@
             background: rgba(0, 0, 0, 0.2);
         }
 
+        .p-slot:not(.active) {
+            animation: spinBorder 2s linear infinite;
+        }
+
+        @keyframes spinBorder {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         .p-slot.active { 
             border-style: solid; 
             background: rgba(255, 255, 255, 0.08);
             transform: scale(1.08);
-        }
-
-        .p-slot.active.emma{
-            border-color: var(--emma);
-            box-shadow: 0 0 20px rgba(255, 92, 122, 0.3);
-        }
-
-        .p-slot.active.rif{
-            border-color: var(--rif);
-            box-shadow: 0 0 20px rgba(77, 184, 255, 0.3);
         }
 
         /* ========== עזיבה =============*/
@@ -1012,14 +1011,17 @@ function startWaiting(gameId) {
             const slot = document.getElementById(`slot-${i}`);
             if (players[i]) {
                 slot.classList.add('active');
-                slot.classList.toggle('emma', players[i].color === '#FF5C7A');
-                slot.classList.toggle('rif', players[i].color === '#4DB8FF');
+                // הגדר את צבע הגבול דינמית
+                slot.style.borderColor = players[i].color || '#4DB8FF';
+                slot.style.boxShadow = `0 0 20px ${players[i].color || '#4DB8FF'}4D`;
                 slot.innerHTML = `
                     <div style="font-size:1.6rem">${players[i].emoji}</div>
                     <div style="font-size:0.6rem;font-weight:900;margin-top:3px">${players[i].name}</div>
                 `;
             } else {
-                slot.classList.remove('active', 'emma', 'rif');
+                slot.classList.remove('active');
+                slot.style.borderColor = '';
+                slot.style.boxShadow = '';
                 slot.innerHTML = '';
             }
         }
