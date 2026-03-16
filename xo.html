@@ -171,6 +171,7 @@
 
 <div class="controls">
     <button class="btn btn-home" onclick="goHome()">🏠 בית</button>
+    <button class="btn btn-home" id="reset-btn" onclick="resetGameAndScores()" style="background: linear-gradient(135deg, rgba(255,215,0,0.12) 0%, rgba(255,215,0,0.05) 100%); border: 1.5px solid rgba(255,215,0,0.3);">🔄 איפוס משחק ותוצאה</button>
 </div>
 
 <script type="module">
@@ -197,6 +198,11 @@ const userDataStr = sessionStorage.getItem('myUser');
 const userData = userDataStr ? JSON.parse(userDataStr) : null;
 const myName = userData?.id || displayName;  // ID מ-sessionStorage או displayName
 const isAIMode = params.get('ai') === 'true';  // בדוק אם זה משחק מול AI
+
+// הסתר את כפתור איפוס אם זה לא AI mode
+if (!isAIMode) {
+    document.getElementById('reset-btn').style.display = 'none';
+}
 
 // בחר room בהתאם לmode
 const roomRef = ref(db, isAIMode ? 'rooms_v3/xo_ai' : 'rooms_v3/xo');
@@ -582,13 +588,29 @@ async function autoNextRound() {
 
 window.goHome = async () => {
     try {
-        await remove(ref(db, `rooms_v3/xo/${myName}`));
+        await remove(ref(db, `rooms_v3/xo${isAIMode ? '_ai' : ''}/${myName}`));
     } catch (error) {
         console.error('Error removing player:', error);
     }
     setTimeout(() => {
         window.location.href = 'index.html';
     }, 200);
+};
+
+window.resetGameAndScores = async () => {
+    try {
+        // אפס את הלוח והתוצאה - מתחיל משחק מחדש ללא ניקוד
+        const newState = {
+            board: Array(9).fill(''),
+            currentPlayer: 'X',
+            starter: 'X',
+            gameOver: false,
+            scores: { X: 0, O: 0, draws: 0 }  // אפס הניקוד
+        };
+        await set(gameStateRef, newState);
+    } catch (error) {
+        console.error('Error resetting game:', error);
+    }
 };
 
 window.handleForfeit = () => {
