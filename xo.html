@@ -14,6 +14,7 @@
         .score-box.active { border-color: var(--gold); transform: scale(1.05); box-shadow: 0 0 15px rgba(245, 200, 66, 0.2); }
         .name { font-weight: 900; font-size: 1.1rem; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .score { font-family: 'Fredoka One', cursive; font-size: 2rem; }
+        .role-label { font-size: 0.8rem; color: var(--gold); font-weight: 900; margin-top: 5px; }
         #status-bar { margin: 15px 0; font-weight: 800; color: var(--gold); font-size: 1.2rem; height: 30px; }
         .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 90vw; max-width: 350px; aspect-ratio: 1; }
         .cell { background: var(--surface); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 4rem; font-family: 'Fredoka One', cursive; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
@@ -31,9 +32,9 @@
 
 <div id="alert-modal">
     <div class="modal-content">
-        <h2 id="modal-title">⚠️ משחקן עזב</h2>
-        <p id="modal-msg">המשחקן השני עזב את המשחק</p>
-        <button class="btn btn-reset" onclick="goHome()">חזרה לתפריט</button>
+        <div style="font-size: 3rem; margin-bottom: 10px;">😢</div>
+        <p id="modal-msg" style="font-size: 1.1rem; font-weight: 600; margin: 0;">אמה עזבה את המשחק</p>
+        <button class="btn btn-reset" onclick="goHome()" style="margin-top: 20px;">חזרה לתפריט</button>
     </div>
 </div>
 
@@ -41,14 +42,17 @@
     <div id="card-X" class="score-box">
         <div id="name-X" class="name">ממתין...</div>
         <div id="wins-X" class="score">0</div>
+        <div class="role-label" id="label-X">X</div>
     </div>
     <div class="score-box">
         <div class="name">תיקו</div>
         <div id="draws" class="score">0</div>
+        <div class="role-label">—</div>
     </div>
     <div id="card-O" class="score-box">
         <div id="name-O" class="name">ממתין...</div>
         <div id="wins-O" class="score">0</div>
+        <div class="role-label" id="label-O">O</div>
     </div>
 </div>
 
@@ -135,7 +139,8 @@ async function initSession() {
             mySymbol = 'X';
             resetFirebaseGame(true);
         } else if (playerNamesAfter.length === 2) {
-            mySymbol = playerNamesAfter.indexOf(myName) === 0 ? 'X' : 'O';
+            // חשב את mySymbol בהתאם להסדר הא-לפבתי של השחקנים
+            mySymbol = playerNamesAfter[0] === myName ? 'X' : 'O';
             
             // בדוק אם משחק קיים
             const gameSnap = await get(gameStateRef);
@@ -201,7 +206,7 @@ function startListeners() {
         // עדכן את רשימת השחקנים בהכותרת עם אימוג'י וצבעים
         if (players[names[0]]) {
             const p1 = players[names[0]];
-            document.getElementById('name-X').innerHTML = `${p1.emoji || '❌'} ${names[0]}`;
+            document.getElementById('name-X').innerHTML = `${p1.emoji || '❌'} ${p1.name}`;
             document.getElementById('name-X').style.color = p1.color || 'white';
             document.getElementById('card-X').style.borderColor = p1.color || 'white';
         } else {
@@ -211,7 +216,7 @@ function startListeners() {
         
         if (players[names[1]]) {
             const p2 = players[names[1]];
-            document.getElementById('name-O').innerHTML = `${p2.emoji || '⭕'} ${names[1]}`;
+            document.getElementById('name-O').innerHTML = `${p2.emoji || '⭕'} ${p2.name}`;
             document.getElementById('name-O').style.color = p2.color || 'white';
             document.getElementById('card-O').style.borderColor = p2.color || 'white';
         } else {
