@@ -812,10 +812,8 @@ let selectedGuestEmoji = null;
 // ========== רשימת משחקים ==========
 const games = [
     { id: 'xo', name: 'איקס עיגול', url: 'xo.html', icon: '❌' },
-    { id: 'draw', name: 'צייר ונחש', url: 'Draw_game.html', icon: '🎨' },
     { id: 'race', name: 'מרוץ מכוניות', url: 'Race.html', icon: '🏎️' },
     { id: 'memory', name: 'משחק זיכרון', url: 'Memory.html', icon: '🧩' },
-    { id: 'bingo', name: 'בינגו', url: 'Bingo.html', icon: '🔢' },
     { id: 'snakes', name: 'סולמות ונחשים', url: 'Snakes.html', icon: '🐍' }
 ];
 
@@ -882,7 +880,7 @@ window.selectUser = (id, name, emoji, color) => {
         ? id 
         : `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    myUser = { 
+    const myUser = { 
         id: finalId, 
         name: name, 
         emoji: emoji, 
@@ -891,7 +889,7 @@ window.selectUser = (id, name, emoji, color) => {
     };
     
     sessionStorage.setItem('myUser', JSON.stringify(myUser));
-    startApp();
+    window.location.href = 'index.html';
 };
 
 // ========== אורח - הראה טופס הזנה ==========
@@ -1156,6 +1154,45 @@ setInterval(async () => {
         console.error('Error in heartbeat cleanup:', error);
     }
 }, 2000);  // בדוק כל 2 שניות
+</script>
+
+<script>
+// ========== בחירת משתמש - Global Functions ==========
+window.selectUser = (id, name, emoji, color) => {
+    const finalId = (id === 'emma' || id === 'rif' || id === 'dad' || id === 'mom') 
+        ? id 
+        : `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const myUser = { 
+        id: finalId, 
+        name: name, 
+        emoji: emoji, 
+        color: color,
+        rawId: id 
+    };
+    
+    sessionStorage.setItem('myUser', JSON.stringify(myUser));
+    window.location.href = 'index.html?selected=true';
+};
+
+window.showGuestSetup = () => {
+    document.getElementById('main-user-grid').style.display = 'none';
+    document.getElementById('guest-setup').style.display = 'block';
+};
+
+window.confirmGuest = () => {
+    const name = document.getElementById('guest-name-input').value.trim();
+    const emoji = document.querySelector('.emoji-opt.selected')?.textContent;
+    
+    if (!name || !emoji) return;
+    window.selectUser('guest', name, emoji, '#3DD68C');
+};
+
+window.cancelGuestSetup = () => {
+    document.getElementById('main-user-grid').style.display = 'grid';
+    document.getElementById('guest-setup').style.display = 'none';
+    document.getElementById('guest-name-input').value = '';
+};
 </script>
 </body>
 </html>
