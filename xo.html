@@ -301,7 +301,7 @@ async function initSession() {
                 // יותר מ-2 שחקנים - זה צפייה
                 isViewer = true;
                 mySymbol = null;
-                // גנרט gameId מהראשונים שניים
+                // גנרט gameId מהראשונים שניים (בסדר א-לפבתי)
                 currentGameId = playerNamesAfter.slice(0, 2).join('_');
                 gameStateRef = ref(db, `game/xo/${currentGameId}`);
                 // הסתר את reset button
@@ -309,14 +309,16 @@ async function initSession() {
             } else if (playerNamesAfter.length === 1) {
                 // משחקן ראשון
                 mySymbol = 'X';
-                // גנרט gameId (עדיין מתחזקים בmemory עד שנוצר משחק)
-                currentGameId = myName + '_' + Date.now();
-                gameStateRef = ref(db, `game/xo/${currentGameId}`);
+                // gameId יהיה בסדר א-לפבתי כשמשחקן שני יצטרף
+                // כרגע, אנחנו לא יודעים את שמו, אז נשמור gameId זמני
+                // זה יעדכן כשמשחקן שני יצטרף
+                currentGameId = null;  // ינוסה בעדכון roomListener
+                gameStateRef = ref(db, 'game/xo/pending');  // זמני
                 resetFirebaseGame(true);
             } else if (playerNamesAfter.length === 2) {
-                // משחקן שני
+                // משחקן שני - עדכן gameId בסדר א-לפבתי
                 mySymbol = playerNamesAfter[0] === myName ? 'X' : 'O';
-                // גנרט gameId מהשניים
+                // גנרט gameId מהשניים בסדר א-לפבתי
                 currentGameId = playerNamesAfter.slice(0, 2).join('_');
                 gameStateRef = ref(db, `game/xo/${currentGameId}`);
                 
@@ -345,11 +347,6 @@ function startListeners() {
         console.log('📊 gameState:', data);
         if (data) { currentGameState = data; render(); }
     });
-
-    // עדכון רשימת משחקנים
-    onValue(roomRef, (snap) => {
-        const players = snap.val() || {};
-        const names = Object.keys(players).sort();
 
     // עדכון רשימת משחקנים
     onValue(roomRef, (snap) => {
@@ -400,6 +397,20 @@ function startListeners() {
 
         // שמור את המצב הנוכחי
         window.lastPlayersSnapshot = players;
+
+        // עדכן את gameStateRef אם משחקן שני הצטרף (Non-AI mode)
+        if (!isAIMode && !isViewer && names.length === 2 && !currentGameId) {
+            // משחקן שני הצטרף - עדכן את gameId
+            currentGameId = names.slice(0, 2).join('_');
+            gameStateRef = ref(db, `game/xo/${currentGameId}`);
+            
+            // בדוק אם משחק קיים (אם לא, יוצרים חדש)
+            get(gameStateRef).then(snap => {
+                if (!snap.val()) {
+                    resetFirebaseGame(true);
+                }
+            });
+        }
 
         // עדכן את רשימת השחקנים בהכותרת עם אימוג'י וצבעים
         if (isAIMode) {
