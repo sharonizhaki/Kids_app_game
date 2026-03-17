@@ -206,7 +206,12 @@ if (!isAIMode) {
 
 // בחר room בהתאם לmode
 const roomRef = ref(db, isAIMode ? 'rooms_v3/xo_ai' : 'rooms_v3/xo');
-const gameStateRef = ref(db, isAIMode ? 'game/xo_ai_dynamic' : 'game/xo_dynamic');
+
+// ב-AI mode - כל משתמש יהיה לו משחק משלו
+// אורחים יקבלו משחק זמני (ephemeral) שימחק כשהם יוצאים
+const gameStateRef = isAIMode 
+    ? ref(db, `game/xo_ai/${myName}`)  // per-user game state
+    : ref(db, 'game/xo_dynamic');      // shared game state
 
 let mySymbol = null; 
 let currentGameState = null;
@@ -256,7 +261,20 @@ async function initSession() {
             playerNames.O = 'מחשב חכם';  // שם ל-AI בעברית
             playerNames.O_emoji = '🤖';
             playerColors.O = '#FFB347';  // צבע כתום ל-AI
-            resetFirebaseGame(true);
+            
+            // אם זה אורח - הסתר את כפתור reset (אורח משחק זמני בלבד)
+            if (userData?.id === undefined || userData?.color === '#FFFFFF') {
+                document.getElementById('reset-btn').style.display = 'none';
+            } else {
+                document.getElementById('reset-btn').style.display = 'block';
+            }
+            
+            // בדוק אם כבר יש משחק - אם כן, אל תאתחל אותו מחדש
+            const gameSnap = await get(gameStateRef);
+            if (!gameSnap.val()) {
+                // רק אם אין משחק - אתחל
+                resetFirebaseGame(true);
+            }
         } else if (playerNamesAfter.length > 2) {
             isViewer = true;
             mySymbol = null;
@@ -679,9 +697,15 @@ async function autoNextRound() {
 
 window.goHome = async () => {
     try {
+        // הסר מה-room
         await remove(ref(db, `rooms_v3/xo${isAIMode ? '_ai' : ''}/${myName}`));
+        
+        // אם זה אורח ב-AI mode - גם מחק את המשחק
+        if (isAIMode && (!userData?.id || userData?.color === '#FFFFFF')) {
+            await remove(gameStateRef);
+        }
     } catch (error) {
-        console.error('Error removing player:', error);
+        console.error('Error in goHome:', error);
     }
     setTimeout(() => {
         window.location.href = 'index.html';
