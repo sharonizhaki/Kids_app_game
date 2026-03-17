@@ -137,9 +137,9 @@
 
 <div id="win-modal">
     <div class="win-content">
-        <div class="win-trophy">🏆</div>
+        <div class="win-trophy">🏅</div>
         <div class="win-title" id="win-title">ניצחון!</div>
-        <div class="win-name" id="win-name">אמה ניצחה!</div>
+        <div class="win-name" id="win-name">🏅 אמה ניצחה!</div>
     </div>
 </div>
 
@@ -344,30 +344,53 @@ function startListeners() {
         window.lastPlayersSnapshot = players;
 
         // עדכן את רשימת השחקנים בהכותרת עם אימוג'י וצבעים
-        if (players[names[0]]) {
-            const p1 = players[names[0]];
-            playerColors.X = p1.color || '#FF5C7A';  // שמור צבע של X
-            playerNames.X = p1.name;  // שמור שם של X
-            playerNames.X_emoji = p1.emoji;  // שמור אימוג'י של X
-            document.getElementById('name-X').innerHTML = `${p1.emoji || '❌'} ${p1.name}`;
-            document.getElementById('name-X').style.color = p1.color || 'white';
-            document.getElementById('card-X').style.borderColor = p1.color || 'white';
+        if (isAIMode) {
+            // במצב AI - עדכן X בלבד מה-room, O הוא תמיד AI
+            if (players[names[0]]) {
+                const p1 = players[names[0]];
+                playerNames.X = p1.name;  // עדכן שם של X
+                playerNames.X_emoji = p1.emoji;  // עדכן אימוג'י של X
+                playerColors.X = p1.color;  // עדכן צבע של X
+                document.getElementById('name-X').innerHTML = `${p1.emoji || '❌'} ${p1.name}`;
+                document.getElementById('name-X').style.color = p1.color || 'white';
+                document.getElementById('card-X').style.borderColor = p1.color || 'white';
+            } else {
+                document.getElementById('name-X').innerHTML = `${myEmoji} ${displayName}`;
+                document.getElementById('name-X').style.color = myColor;
+                document.getElementById('card-X').style.borderColor = myColor;
+            }
+            
+            // O תמיד AI
+            document.getElementById('name-O').innerHTML = `${playerNames.O_emoji} ${playerNames.O}`;
+            document.getElementById('name-O').style.color = playerColors.O;
+            document.getElementById('card-O').style.borderColor = playerColors.O;
         } else {
-            document.getElementById('name-X').textContent = "ממתין...";
-            document.getElementById('name-X').style.color = 'white';
-        }
-        
-        if (players[names[1]]) {
-            const p2 = players[names[1]];
-            playerColors.O = p2.color || '#4DB8FF';  // שמור צבע של O
-            playerNames.O = p2.name;  // שמור שם של O
-            playerNames.O_emoji = p2.emoji;  // שמור אימוג'י של O
-            document.getElementById('name-O').innerHTML = `${p2.emoji || '⭕'} ${p2.name}`;
-            document.getElementById('name-O').style.color = p2.color || 'white';
-            document.getElementById('card-O').style.borderColor = p2.color || 'white';
-        } else {
-            document.getElementById('name-O').textContent = "ממתין...";
-            document.getElementById('name-O').style.color = 'white';
+            // עדכון רגיל - שני שחקנים אנושיים
+            if (players[names[0]]) {
+                const p1 = players[names[0]];
+                playerColors.X = p1.color || '#FF5C7A';  // שמור צבע של X
+                playerNames.X = p1.name;  // שמור שם של X
+                playerNames.X_emoji = p1.emoji;  // שמור אימוג'י של X
+                document.getElementById('name-X').innerHTML = `${p1.emoji || '❌'} ${p1.name}`;
+                document.getElementById('name-X').style.color = p1.color || 'white';
+                document.getElementById('card-X').style.borderColor = p1.color || 'white';
+            } else {
+                document.getElementById('name-X').textContent = "ממתין...";
+                document.getElementById('name-X').style.color = 'white';
+            }
+            
+            if (players[names[1]]) {
+                const p2 = players[names[1]];
+                playerColors.O = p2.color || '#4DB8FF';  // שמור צבע של O
+                playerNames.O = p2.name;  // שמור שם של O
+                playerNames.O_emoji = p2.emoji;  // שמור אימוג'י של O
+                document.getElementById('name-O').innerHTML = `${p2.emoji || '⭕'} ${p2.name}`;
+                document.getElementById('name-O').style.color = p2.color || 'white';
+                document.getElementById('card-O').style.borderColor = p2.color || 'white';
+            } else {
+                document.getElementById('name-O').textContent = "ממתין...";
+                document.getElementById('name-O').style.color = 'white';
+            }
         }
 
         // עדכן את מספר השחקנים בהיסטוריה
@@ -420,7 +443,7 @@ function render() {
 
     const status = document.getElementById('status-bar');
     
-    // בדוק אם יש ניצחון
+    // בדוק אם יש ניצחון או תיקו
     if (gameOver) {
         // חשב את המנצח
         const xWins = board.every((cell, i) => {
@@ -446,15 +469,30 @@ function render() {
             
             document.getElementById('win-modal').classList.add('show');
             document.getElementById('win-modal').style.display = 'flex';
-            document.getElementById('win-name').textContent = `${winnerEmoji} ${winnerName} ניצחה!`;
+            document.getElementById('win-name').textContent = `🏅 ${winnerEmoji} ${winnerName} ניצחה!`;
             document.getElementById('win-name').style.color = winnerColor;
             
-            // הסתר ב-3.5 שניות והתחל משחק חדש
+            // הסתר ב-2 שניות והתחל משחק חדש
             setTimeout(() => {
                 document.getElementById('win-modal').style.display = 'none';
                 document.getElementById('win-modal').classList.remove('show');
                 autoNextRound();
-            }, 3500);
+            }, 2000);
+        } else {
+            // אין מנצח - זה תיקו!
+            document.getElementById('win-modal').classList.add('show');
+            document.getElementById('win-modal').style.display = 'flex';
+            document.getElementById('win-title').textContent = 'תיקו!';
+            document.getElementById('win-title').style.color = '#F5C842';
+            document.getElementById('win-name').textContent = '🤝 כולם אתם כמלכים!';
+            document.getElementById('win-name').style.color = '#F5C842';
+            
+            // הסתר ב-2 שניות והתחל משחק חדש
+            setTimeout(() => {
+                document.getElementById('win-modal').style.display = 'none';
+                document.getElementById('win-modal').classList.remove('show');
+                autoNextRound();
+            }, 2000);
         }
         
         status.textContent = "סיבוב הסתיים!";
@@ -545,7 +583,16 @@ async function makeAIMove() {
             if (checkWinner(board)) {
                 // צריך לחסום! תשחק כאן
                 board[i] = 'O';
-                await update(gameStateRef, { board, currentPlayer: 'X' });
+                // בדוק אם יש תיקו
+                const isDraw = !checkWinner(board) && !board.includes('');
+                if (isDraw) {
+                    const newScores = {...currentGameState.scores};
+                    newScores.draws++;
+                    await update(gameStateRef, { board, gameOver: true, scores: newScores });
+                    setTimeout(autoNextRound, 2500);
+                } else {
+                    await update(gameStateRef, { board, currentPlayer: 'X' });
+                }
                 return;
             }
             board[i] = '';
@@ -555,7 +602,16 @@ async function makeAIMove() {
     // 3. שחק במרכז אם זה פנוי
     if (board[4] === '') {
         board[4] = 'O';
-        await update(gameStateRef, { board, currentPlayer: 'X' });
+        // בדוק אם יש תיקו
+        const isDraw = !checkWinner(board) && !board.includes('');
+        if (isDraw) {
+            const newScores = {...currentGameState.scores};
+            newScores.draws++;
+            await update(gameStateRef, { board, gameOver: true, scores: newScores });
+            setTimeout(autoNextRound, 2500);
+        } else {
+            await update(gameStateRef, { board, currentPlayer: 'X' });
+        }
         return;
     }
     
@@ -564,7 +620,16 @@ async function makeAIMove() {
     if (corners.length > 0) {
         const move = corners[Math.floor(Math.random() * corners.length)];
         board[move] = 'O';
-        await update(gameStateRef, { board, currentPlayer: 'X' });
+        // בדוק אם יש תיקו
+        const isDraw = !checkWinner(board) && !board.includes('');
+        if (isDraw) {
+            const newScores = {...currentGameState.scores};
+            newScores.draws++;
+            await update(gameStateRef, { board, gameOver: true, scores: newScores });
+            setTimeout(autoNextRound, 2500);
+        } else {
+            await update(gameStateRef, { board, currentPlayer: 'X' });
+        }
         return;
     }
     
@@ -572,7 +637,16 @@ async function makeAIMove() {
     for (let i = 0; i < 9; i++) {
         if (board[i] === '') {
             board[i] = 'O';
-            await update(gameStateRef, { board, currentPlayer: 'X' });
+            // בדוק אם יש תיקו
+            const isDraw = !checkWinner(board) && !board.includes('');
+            if (isDraw) {
+                const newScores = {...currentGameState.scores};
+                newScores.draws++;
+                await update(gameStateRef, { board, gameOver: true, scores: newScores });
+                setTimeout(autoNextRound, 2500);
+            } else {
+                await update(gameStateRef, { board, currentPlayer: 'X' });
+            }
             return;
         }
     }
@@ -582,8 +656,25 @@ async function autoNextRound() {
     const snap = await get(gameStateRef);
     const data = snap.val();
     if (!data || !data.gameOver) return;
+    
+    // חשב מי צריך להתחיל את הסיבוב הבא
     const nextStarter = data.starter === 'X' ? 'O' : 'X';
-    update(gameStateRef, { board: Array(9).fill(''), currentPlayer: nextStarter, starter: nextStarter, gameOver: false });
+    
+    // חדש את הלוח וקבע מי מתחיל
+    const nextRound = {
+        board: Array(9).fill(''),
+        currentPlayer: nextStarter,
+        starter: nextStarter,
+        gameOver: false,
+        scores: data.scores  // שמור את התוצאות
+    };
+    
+    await update(gameStateRef, nextRound);
+    
+    // אם ה-AI מתחיל במשחק הבא - תן לו זמן להשחק
+    if (isAIMode && nextStarter === 'O') {
+        setTimeout(makeAIMove, 1000);
+    }
 }
 
 window.goHome = async () => {
