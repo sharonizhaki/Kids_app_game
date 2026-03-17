@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>משימות משפחתיות</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --emma:#8B5CF6; --rif:#3B82F6;
+      --bg:#F0F4FF; --card:#FFFFFF;
+      --text:#1E293B; --muted:#94A3B8;
+      --shadow:0 4px 24px rgba(0,0,0,0.08);
+      --radius:18px;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+    html,body { height:100%; }
+    body { font-family:'Heebo',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+
+    .screen { display:none; min-height:100vh; padding:20px 16px 100px; opacity:0; transition:opacity 0.3s ease; }
+    .screen.active { display:block; }
+    .screen.visible { opacity:1; }
+
+    .main-header { text-align:center; padding:28px 0 20px; }
+    .main-header h1 { font-size:1.8rem; font-weight:900; }
+    .main-header p { color:var(--muted); margin-top:4px; font-size:0.95rem; }
+
+    .kids-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:420px; margin:0 auto 16px; }
+
+    .user-card { background:var(--card); border-radius:var(--radius); padding:22px 12px; text-align:center; cursor:pointer; border:3px solid transparent; box-shadow:var(--shadow); transition:transform 0.15s,box-shadow 0.15s; min-height:110px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .user-card:active { transform:scale(0.96); }
+    .user-card[data-user="אמה"] { border-color:var(--emma); }
+    .user-card[data-user="ריף"]  { border-color:var(--rif); }
+    .uc-emoji { font-size:2.2rem; }
+    .uc-name  { font-size:1rem; font-weight:700; margin-top:6px; }
+    .uc-pts   { font-size:0.82rem; color:var(--muted); margin-top:3px; }
+    .user-card[data-user="אמה"] .uc-pts { color:var(--emma); font-weight:600; }
+    .user-card[data-user="ריף"]  .uc-pts { color:var(--rif);  font-weight:600; }
+
+    .parents-btn { background:var(--card); border-radius:var(--radius); padding:22px 12px; text-align:center; cursor:pointer; border:3px solid #CBD5E1; box-shadow:var(--shadow); min-height:110px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; transition:transform 0.15s; }
+    .parents-btn:active { transform:scale(0.96); }
+    .pb-emoji { font-size:1.6rem; }
+    .pb-name  { font-size:0.95rem; font-weight:700; }
+    .pb-sub   { font-size:0.75rem; color:var(--muted); }
+
+    .section-title { font-size:1rem; font-weight:700; margin:0 auto 10px; max-width:480px; }
+
+    .leaderboard { background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); max-width:480px; margin:0 auto 24px; overflow:hidden; }
+    .lb-row { display:flex; align-items:center; padding:16px 20px; border-bottom:1px solid #F1F5F9; gap:12px; }
+    .lb-row:last-child { border-bottom:none; }
+    .lb-row.first { background:linear-gradient(90deg,#FFF9E6,#FFFDF5); }
+    .lb-rank { font-size:1.4rem; width:32px; text-align:center; }
+    .lb-name { flex:1; font-weight:700; font-size:1rem; }
+    .lb-pts  { font-weight:900; font-size:1.2rem; }
+
+    .activity-list { background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); max-width:480px; margin:0 auto; overflow:hidden; }
+    .act-item { display:flex; align-items:center; padding:14px 16px; border-bottom:1px solid #F1F5F9; gap:10px; }
+    .act-item:last-child { border-bottom:none; }
+    .act-emoji { font-size:1.4rem; }
+    .act-info  { flex:1; }
+    .act-info strong { display:block; font-weight:600; font-size:0.92rem; }
+    .act-info span   { color:var(--muted); font-size:0.78rem; }
+    .act-pts { font-weight:700; color:#10B981; font-size:0.95rem; }
+
+    .user-header { display:flex; align-items:center; gap:12px; max-width:480px; margin:0 auto 18px; }
+    .back-btn { background:var(--card); border:none; border-radius:50%; width:44px; height:44px; font-size:1.3rem; cursor:pointer; box-shadow:0 2px 12px rgba(0,0,0,0.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--text); border:2px solid #E2E8F0; }
+    .back-btn:active { transform:scale(0.93); }
+    .user-header h2 { font-size:1.5rem; font-weight:900; flex:1; }
+
+    .greeting-card { border-radius:var(--radius); padding:18px 20px; max-width:480px; margin:0 auto 16px; color:white; }
+    .greeting-card[data-user="אמה"] { background:linear-gradient(135deg,#8B5CF6,#6D28D9); box-shadow:0 6px 24px rgba(139,92,246,0.35); }
+    .greeting-card[data-user="ריף"]  { background:linear-gradient(135deg,#3B82F6,#1D4ED8); box-shadow:0 6px 24px rgba(59,130,246,0.35); }
+    .greeting-text { font-size:1.1rem; font-weight:700; }
+    .greeting-sub  { font-size:0.85rem; opacity:0.85; margin-top:3px; }
+
+    .stats-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:480px; margin:0 auto 16px; }
+    .stat-card { background:var(--card); border-radius:var(--radius); padding:14px 16px; box-shadow:var(--shadow); text-align:center; }
+    .stat-val   { font-size:1.7rem; font-weight:900; }
+    .stat-label { font-size:0.78rem; color:var(--muted); margin-top:2px; }
+
+    .progress-card { background:var(--card); border-radius:var(--radius); padding:14px 18px; max-width:480px; margin:0 auto 16px; box-shadow:var(--shadow); }
+    .progress-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:0.88rem; font-weight:600; }
+    .progress-bar { height:22px; background:#F1F5F9; border-radius:11px; overflow:hidden; position:relative; }
+    .progress-fill { height:100%; border-radius:11px; transition:width 0.6s cubic-bezier(.4,0,.2,1); position:relative; overflow:hidden; }
+    .progress-fill[data-user="אמה"] { background:linear-gradient(90deg,#8B5CF6,#EC4899,#F59E0B); }
+    .progress-fill[data-user="ריף"]  { background:linear-gradient(90deg,#3B82F6,#06B6D4,#10B981); }
+    .progress-fill::after { content:""; position:absolute; top:0; left:-100%; width:100%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent); animation:shimmer 2s infinite; }
+    @keyframes shimmer { 0%{left:-100%} 100%{left:100%} }
+    .progress-milestone { position:absolute; top:0; bottom:0; width:2px; background:rgba(255,255,255,0.6); }
+    .progress-pts-label { position:absolute; right:8px; top:50%; transform:translateY(-50%); font-size:0.75rem; font-weight:700; color:white; text-shadow:0 1px 2px rgba(0,0,0,0.3); }
+
+    .categories-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:480px; margin:0 auto 20px; }
+    .cat-btn { background:var(--card); border:none; border-radius:var(--radius); padding:20px 10px; text-align:center; cursor:pointer; box-shadow:var(--shadow); display:flex; flex-direction:column; align-items:center; gap:8px; min-height:110px; transition:transform 0.15s; width:100%; }
+    .cat-btn:active { transform:scale(0.95); }
+    .cat-icon  { font-size:2.2rem; }
+    .cat-name  { font-size:0.92rem; font-weight:700; line-height:1.2; }
+    .cat-count { font-size:0.75rem; color:var(--muted); }
+    .cat-done  { font-size:0.72rem; background:#DCFCE7; color:#15803D; border-radius:6px; padding:2px 7px; font-weight:600; }
+
+    .history-section { max-width:480px; margin:0 auto; }
+    .history-section h3 { font-size:0.95rem; font-weight:700; margin-bottom:10px; }
+    .history-list { background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+    .hi-item { display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid #F1F5F9; }
+    .hi-item:last-child { border-bottom:none; }
+    .hi-emoji { font-size:1.3rem; }
+    .hi-info  { flex:1; }
+    .hi-info strong { display:block; font-weight:600; font-size:0.9rem; }
+    .hi-info span   { color:var(--muted); font-size:0.78rem; }
+    .hi-pts { font-weight:700; color:#10B981; }
+
+    .admin-section { max-width:480px; margin:0 auto; }
+    .admin-wrap { background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-bottom:16px; }
+    .ar-row { display:flex; align-items:center; gap:8px; padding:14px 16px; border-bottom:1px solid #F1F5F9; font-size:0.88rem; }
+    .ar-row:last-child { border-bottom:none; }
+    .ar-user { font-weight:700; min-width:34px; font-size:0.82rem; }
+    .ar-task { flex:1; font-size:0.85rem; }
+    .ar-pts  { color:#10B981; font-weight:700; min-width:30px; text-align:center; }
+    .ar-time { color:var(--muted); font-size:0.75rem; min-width:48px; }
+    .ar-del  { background:none; border:none; color:#EF4444; cursor:pointer; font-size:1.1rem; padding:4px 8px; }
+    .reset-btn { display:block; width:100%; padding:16px; background:#EF4444; color:white; border:none; border-radius:14px; font-size:1rem; font-weight:700; cursor:pointer; font-family:'Heebo',sans-serif; }
+
+    .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.65); display:flex; align-items:flex-end; justify-content:center; z-index:1000; animation:fadeIn 0.2s ease; }
+    @keyframes fadeIn { from{opacity:0}to{opacity:1} }
+    .modal-sheet { background:var(--card); border-radius:24px 24px 0 0; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; animation:slideUp 0.3s cubic-bezier(.4,0,.2,1); }
+    @keyframes slideUp { from{transform:translateY(100%)}to{transform:translateY(0)} }
+    .modal-handle { width:44px; height:5px; background:#E2E8F0; border-radius:3px; margin:14px auto 0; }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px 10px; }
+    .modal-header h2 { font-size:1.15rem; font-weight:800; }
+    .modal-close { background:#F1F5F9; border:none; border-radius:50%; width:36px; height:36px; font-size:1.1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .modal-body { padding:8px 16px 40px; }
+
+    .task-card { background:#F8FAFC; border-radius:14px; padding:14px; margin-bottom:10px; cursor:pointer; border:2px solid transparent; transition:border-color 0.15s,background 0.15s; display:flex; align-items:center; gap:12px; }
+    .task-card:active { border-color:#CBD5E1; background:#F0F4FF; }
+    .task-card.done { opacity:0.38; pointer-events:none; }
+    .tc-left { display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
+    .tc-emoji { font-size:1.9rem; flex-shrink:0; }
+    .tc-info  { flex:1; min-width:0; }
+    .tc-info strong { display:block; font-weight:700; font-size:0.93rem; }
+    .freq-tag { font-size:0.7rem; padding:2px 7px; border-radius:6px; font-weight:600; margin-top:3px; display:inline-block; }
+    .freq-daily  { background:#DBEAFE; color:#1D4ED8; }
+    .freq-2week  { background:#EDE9FE; color:#6D28D9; }
+    .freq-weekly { background:#FEF3C7; color:#92400E; }
+    .tc-pts { font-weight:800; font-size:1rem; color:#10B981; flex-shrink:0; }
+
+    .task-emoji-display { font-size:5rem; text-align:center; display:block; margin:8px 0 16px; line-height:1.2; letter-spacing:4px; }
+    .td-desc  { color:#475569; line-height:1.65; margin-bottom:14px; font-size:0.95rem; }
+    .td-meta  { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+    .td-meta span { background:#F1F5F9; border-radius:8px; padding:5px 12px; font-size:0.82rem; font-weight:600; color:#475569; }
+    .done-btn { width:100%; padding:18px; background:linear-gradient(135deg,#10B981,#059669); color:white; border:none; border-radius:16px; font-size:1.15rem; font-weight:800; cursor:pointer; font-family:'Heebo',sans-serif; box-shadow:0 4px 16px rgba(16,185,129,0.35); transition:transform 0.1s; }
+    .done-btn:active { transform:scale(0.97); }
+
+    .success-toast { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.8); background:linear-gradient(135deg,#10B981,#059669); color:white; padding:22px 44px; border-radius:22px; font-size:1.5rem; font-weight:800; z-index:3000; opacity:0; transition:opacity 0.25s,transform 0.25s; pointer-events:none; text-align:center; box-shadow:0 8px 40px rgba(16,185,129,0.4); }
+    .success-toast.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+
+    .winner-banner { background:linear-gradient(135deg,#FFF9E6,#FEF3C7); border:2px solid #FCD34D; border-radius:var(--radius); padding:16px 20px; max-width:480px; margin:0 auto 24px; display:flex; align-items:center; gap:14px; box-shadow:0 4px 16px rgba(252,211,77,0.3); }
+    .winner-crown { font-size:2.2rem; }
+    .winner-title { font-size:1rem; font-weight:700; color:var(--text); }
+    .winner-title span { color:#D97706; }
+    .winner-sub { font-size:0.82rem; color:var(--muted); margin-top:2px; }
+    .empty-state { text-align:center; padding:28px; color:var(--muted); font-size:0.92rem; }
+  </style>
+</head>
+<body>
+
+<div id="screen-main" class="screen active visible">
+  <div class="main-header">
+    <h1>משימות משפחתיות 🏠</h1>
+    <p>בחר משתמש להתחיל</p>
+  </div>
+
+  <div class="kids-grid">
+    <div class="user-card" data-user="אמה"><div class="uc-emoji">🙋‍♀️</div><div class="uc-name">אמה המלכה 👑</div><div class="uc-pts" id="cp-אמה">0 נקודות</div></div>
+    <div class="user-card" data-user="ריף"><div class="uc-emoji">🙋‍♂️</div><div class="uc-name">ריף התותח 💥</div><div class="uc-pts" id="cp-ריף">0 נקודות</div></div>
+  </div>
+  <div style="max-width:420px;margin:0 auto 28px;text-align:center;">
+    <div class="parents-btn" id="parents-btn" style="display:inline-flex;flex-direction:column;align-items:center;padding:10px 48px;min-height:auto;gap:2px;border-radius:12px;">
+      <span class="pb-emoji" style="font-size:1.1rem;">🧔👩</span>
+      <span class="pb-name" style="font-size:0.85rem;">אבא / אמא</span>
+      <span class="pb-sub">ניהול</span>
+    </div>
+  </div>
+
+  <div class="section-title">🏆 דירוג שבועי</div>
+  <div class="leaderboard" id="leaderboard"></div>
+
+  <div class="winner-banner" id="winner-banner">
+    <span class="winner-crown">🎉</span>
+    <div class="winner-text">
+      <div class="winner-title" id="winner-title">ברכות ל<span id="winner-name">❓❓❓</span></div>
+      <div class="winner-sub" id="winner-sub">המנצח/ת של שבוע שעבר</div>
+    </div>
+  </div>
+</div>
+
+<div id="screen-user" class="screen">
+  <div class="user-header">
+    <button class="back-btn" id="back-btn">←</button>
+    <h2 id="user-title"></h2>
+  </div>
+
+  <div class="greeting-card" id="greeting-card">
+    <div class="greeting-text" id="greeting-text"></div>
+    <div class="greeting-sub"  id="greeting-sub"></div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="pb-val">0</div>
+      <div class="stat-label">נקודות השבוע 🔥</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="streak-val">0</div>
+      <div class="stat-label">ימים רצופים ⚡</div>
+    </div>
+  </div>
+
+  <div class="progress-card">
+    <div class="progress-header">
+      <span>התקדמות שבועית 🎯</span>
+      <span id="progress-text">0 / 100 נקודות</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width:0%">
+        <span class="progress-pts-label" id="progress-pts-label"></span>
+      </div>
+      <div class="progress-milestone" style="right:0%"></div>
+    </div>
+  </div>
+
+  <div class="categories-grid" id="cats-grid"></div>
+
+  <div class="history-section">
+    <h3>פעולות אחרונות שלך</h3>
+    <div class="history-list" id="user-hist"><div class="empty-state">עדיין לא ביצעת משימות</div></div>
+  </div>
+</div>
+
+<div id="screen-admin" class="screen">
+  <div class="user-header">
+    <button class="back-btn" id="admin-back">←</button>
+    <h2>ניהול 🛠️</h2>
+  </div>
+  <div class="admin-section">
+    <div class="section-title">כל המשימות שבוצעו השבוע</div>
+    <div class="admin-wrap" id="admin-table"></div>
+    <button class="reset-btn" id="reset-btn">🔄 איפוס ידני של כל הנקודות</button>
+  </div>
+</div>
+
+<div class="success-toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
+  authDomain: "kidssapp-izhaki.firebaseapp.com",
+  databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kidssapp-izhaki",
+  storageBucket: "kidssapp-izhaki.firebasestorage.app",
+  messagingSenderId: "663906163746",
+  appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+};
+
+const fbApp  = initializeApp(firebaseConfig);
+const db     = getDatabase(fbApp);
+const stateRef = ref(db, 'matalot/state');
+const TASKS = [
+  {id:"e_bm",  user:"אמה", cat:"היגיינה",     emojis:"🌞🪥🦷",    task:"צחצוח שיניים בוקר",      pts:5,  freq:"daily",          desc:"צחצוח שיניים בבוקר עוזר להוריד חיידקים שהצטברו בלילה. צחצחי 2 דקות לפחות, אל תשכחי את הלשון!"},
+  {id:"e_be",  user:"אמה", cat:"היגיינה",     emojis:"🌙🪥✨",    task:"צחצוח שיניים ערב",       pts:5,  freq:"daily",          desc:"צחצוח לפני השינה חשוב אפילו יותר! הוא מגן על השיניים בזמן שאת ישנה. 2 דקות בסבלנות!"},
+  {id:"e_deo", user:"אמה", cat:"היגיינה",     emojis:"💨🌸✅",    task:"לשים דאודורנט",           pts:5,  freq:"daily",          desc:"שימוש בדאודורנט כל בוקר עוזר להרגיש רעננה ונחמדה לאנשים סביבך כל היום."},
+  {id:"e_sh0", user:"אמה", cat:"היגיינה",     emojis:"🚿💦🧼",    task:"להתקלח",                  pts:10, freq:"daily",          desc:"מקלחת יומית לשמירה על ניקיון הגוף. לשטוף את כל הגוף עם סבון ולצאת רעננה!"},
+  {id:"e_sh",  user:"אמה", cat:"היגיינה",     emojis:"🛁🧴💧",    task:"לחפוף שיער",              pts:15, freq:"2week", limit:2, desc:"מקלחת עם חפיפת שיער מלאה. קצפי את השמפו, שפשפי את הקרקפת בעדינות ושטפי טוב טוב!"},
+  {id:"e_na",  user:"אמה", cat:"היגיינה",     emojis:"✂️💅🌸",    task:"סידור ציפורניים",        pts:15, freq:"weekly",         desc:"ציפורניים מסודרות זה בריא וגם יפה! גזרי בזהירות, ישרות, ואל תגזרי יותר מדי."},
+  {id:"e_bo",  user:"אמה", cat:"היגיינה",     emojis:"🧼🫧💦",    task:"ניקיון גוף יסודי",       pts:15, freq:"weekly",         desc:"ניקיון יסודי של כל הגוף, כולל אחורי האוזניים, בין האצבעות, וכל המקומות שנוטים לשכוח!"},
+  {id:"e_hr",  user:"אמה", cat:"היגיינה",     emojis:"💇‍♀️🪮✨", task:"סידור שיער לבד",         pts:10, freq:"daily",          desc:"לסדר את השיער לבד - מסרק, קוקו, או כל תסרוקת שתרצי. חשוב ללמוד להיות עצמאית!"},
+  {id:"e_bed", user:"אמה", cat:"מטלות בית",   emojis:"🛏️☀️✨",    task:"לסדר את המיטה",          pts:5,  freq:"daily",          desc:"מיטה מסודרת עושה את כל החדר להרגיש נקי ומסודר. כרים ישרים, שמיכה מתוחה - מושלם!"},
+  {id:"e_tb",  user:"אמה", cat:"מטלות בית",   emojis:"🍽️🥄🌟",    task:"לערוך שולחן לארוחה",     pts:5,  freq:"daily",          desc:"לסדר את השולחן לפני ארוחה - צלחות, כלים, כוסות. זה עוזר לכל המשפחה להתכונן לאוכל."},
+  {id:"e_cl",  user:"אמה", cat:"מטלות בית",   emojis:"🧹🫧🌿",    task:"לנקות אחרי עצמי",        pts:5,  freq:"daily",          desc:"לאחר הארוחה - לקחת את הצלחת לכיור, לנגב פירורים מהשולחן. כל אחד אחראי על עצמו!"},
+  {id:"e_rm",  user:"אמה", cat:"מטלות בית",   emojis:"🧸🎀🏠",    task:"סדר חדר משחקים",         pts:10, freq:"weekly",         desc:"לסדר את כל החדר - צעצועים למקומם, בגדים לארון, רצפה פנויה. חדר מסודר = ראש מסודר!"},
+  {id:"e_ar",  user:"אמה", cat:"מטלות בית",   emojis:"🎨🖌️✏️",   task:"סדר ביצירות",            pts:10, freq:"weekly",         desc:"לסדר את שולחן היצירות וארגז הצבעים. כל עיפרון, צבע, ומספריים - למקומם!"},
+  {id:"e_lw",  user:"אמה", cat:"מטלות בית",   emojis:"👕🧺🌈",    task:"לקפל כביסה",             pts:15, freq:"weekly",         desc:"לקפל כביסה מסודרת - חולצות, מכנסיים, גרביים בזוגות. זה עוזר מאוד להורים!"},
+  {id:"e_tr",  user:"אמה", cat:"מטלות בית",   emojis:"🗑️🌍♻️",   task:"להוריד זבל",             pts:5,  freq:"daily",          desc:"לקחת את שקית הזבל מהמטבח ולהוריד לפח. זה עוזר לשמור על הבית נקי ונעים!"},
+  {id:"e_en",  user:"אמה", cat:"לימודים",     emojis:"🔤📖🌍",    task:"תרגול אנגלית",           pts:15, freq:"daily",          desc:"10-15 דקות של תרגול אנגלית - מילים חדשות, משפטים, או אפליקציית לימוד. קצת כל יום = הרבה בסוף!"},
+  {id:"e_ma",  user:"אמה", cat:"לימודים",     emojis:"🧮➕🔢",    task:"תרגול חשבון",            pts:15, freq:"daily",          desc:"תרגול חשבון יומי - כפל, חיבור, חיסור. המוח שלך הוא שריר - ככל שמתרגלים יותר, הוא חזק יותר!"},
+  {id:"e_rd",  user:"אמה", cat:"לימודים",     emojis:"📚🌙💫",    task:"קריאה",                  pts:15, freq:"daily",          desc:"לקרוא לפחות 15 דקות מספר שאוהבים. קריאה מרחיבה את הדמיון, אוצר המילים, והידע!"},
+  {id:"e_jn",  user:"אמה", cat:"לימודים",     emojis:"📓💜🌟",    task:"יומן תודות",             pts:10, freq:"daily",          desc:"לכתוב 3 דברים טובים שקרו היום. זה עוזר לראות את החיים בצורה חיובית ולהרגיש שמחה!"},
+  {id:"e_tbl", user:"אמה", cat:"לימודים",     emojis:"💻🎓✅",    task:"משימה חינוכית בטבלט",   pts:5,  freq:"weekly",         desc:"לבצע משימה לימודית בטבלט - אפליקציה חינוכית, סרטון מלמד, או תרגול מקוון."},
+  {id:"e_rr",  user:"אמה", cat:"לימודים",     emojis:"🗣️📖❤️",   task:"לקרוא סיפור לריף",       pts:15, freq:"weekly",         desc:"לקחת ספר ולקרוא לריף בקול. גם את מתרגלת קריאה וגם הוא נהנה מהסיפור!"},
+  {id:"e_bg",  user:"אמה", cat:"אחריות",       emojis:"🎒📚⏰",    task:"להכין תיק לבד",          pts:10, freq:"daily",          desc:"לארוז את התיק לבד לפני השינה - ספרים, מחברות, אוכל. מי שמוכן מראש - לא מאחר!"},
+  {id:"e_wk",  user:"אמה", cat:"אחריות",       emojis:"⏰🌅💪",    task:"לקום בלי להתעורר",       pts:15, freq:"daily",          desc:"לקום בבוקר לבד לפי השעון, בלי שההורים יצטרכו להעיר. זו אחריות אמיתית של ילדה גדולה!"},
+  {id:"e_pl",  user:"אמה", cat:"אחריות",       emojis:"🌱💧🌿",    task:"לטפל בצמח",              pts:10, freq:"weekly",         desc:"להשקות את הצמח, לבדוק שיש לו אור, ולנקות את העלים אם צריך. יצור חי שתלוי בך!"},
+  {id:"e_mk1", user:"אמה", cat:"מיקה 👶",     emojis:"🤱👶💕",    task:"לשמור על מיקה 10 דקות", pts:20, freq:"daily",          desc:"לשהות עם מיקה 10 דקות בזמן שהורה בקרבת מקום. לדבר אליה, לשיר, לעשות פרצופים מצחיקים!"},
+  {id:"e_mk2", user:"אמה", cat:"מיקה 👶",     emojis:"🎵🎶👶",    task:"לשיר למיקה",             pts:10, freq:"daily",          desc:"תינוקות אוהבות מוזיקה! לשיר שיר רגוע ומתוק למיקה. הקול שלך מרגיע אותה ומשמח אותה!"},
+  {id:"e_mk3", user:"אמה", cat:"מיקה 👶",     emojis:"🚼🧸💝",    task:"לעזור להחליף חיתול",     pts:15, freq:"weekly",         desc:"לעזור להורה בהחלפת חיתול - להביא חיתול נקי, מגבונים, ולעמוד לצד. זו עזרה גדולה!"},
+  {id:"e_mk4", user:"אמה", cat:"מיקה 👶",     emojis:"📖🌙⭐",    task:"לקרוא למיקה סיפור",      pts:15, freq:"weekly",         desc:"לקחת ספר צבעוני ולקרוא למיקה בקול. תינוקות אוהבות לשמוע קולות מוכרים ורגועים!"},
+  {id:"e_ns",  user:"אמה", cat:"מיוחדות ⭐",  emojis:"🌟🕊️💜",    task:"יום בלי צעקות",          pts:25, freq:"daily",          desc:"לעבור יום שלם בלי לצעוק, לא על ריף ולא על ההורים. לדבר בשקט גם כשקשה - זה כוח אמיתי!"},
+  {id:"e_nm",  user:"אמה", cat:"מיוחדות ⭐",  emojis:"📵🌳🎮",    task:"יום בלי מסכים",          pts:30, freq:"weekly",         desc:"יום שלם בלי טלוויזיה, טבלט, או טלפון. לגלות כמה כיף אפשר לעשות בלי מסכים!"},
+  {id:"e_dr",  user:"אמה", cat:"מיוחדות ⭐",  emojis:"🎁🖍️❤️",   task:"לצייר ציור למישהו",      pts:15, freq:"weekly",         desc:"לצייר ציור יפה ולתת אותו במתנה לאחד מבני המשפחה. מתנות מהלב הן הטובות ביותר!"},
+  {id:"e_ck",  user:"אמה", cat:"מיוחדות ⭐",  emojis:"🍳👩‍🍳🌟", task:"לעזור לבשל",             pts:20, freq:"weekly",         desc:"לעזור לאחד ההורים בבישול - לערבב, לשפוך, לסדר. מבשלים ביחד = אוכלים ביחד!"},
+  {id:"r_bm",  user:"ריף", cat:"היגיינה",     emojis:"🌞🪥😁",    task:"צחצוח שיניים בוקר",      pts:5,  freq:"daily",          desc:"לצחצח שיניים כל בוקר! 2 דקות, לכל הצדדים. שיניים נקיות = חיוך יפה!"},
+  {id:"r_be",  user:"ריף", cat:"היגיינה",     emojis:"🌙🪥🦷",    task:"צחצוח שיניים ערב",       pts:5,  freq:"daily",          desc:"לצחצח לפני השינה! זה הכי חשוב. חיידקים לא אוהבים מברשת שיניים!"},
+  {id:"r_hw",  user:"ריף", cat:"היגיינה",     emojis:"🙌🫧🚿",    task:"לשטוף ידיים לפני אוכל",  pts:5,  freq:"daily",          desc:"ידיים עם סבון ומים לפני כל ארוחה! 20 שניות שטיפה מורידות הרבה חיידקים."},
+  {id:"r_sh",  user:"ריף", cat:"היגיינה",     emojis:"🚿💧🧴",    task:"להתקלח",                  pts:10, freq:"daily",          desc:"מקלחת נעימה! לשטוף את כל הגוף עם סבון, לשפשף טוב, ולצאת נקי ורענן!"},
+  {id:"r_sh3", user:"ריף", cat:"היגיינה",     emojis:"🛁🧴💧",    task:"לחפוף שיער",              pts:15, freq:"2week", limit:2, desc:"לחפוף שיער עם שמפו, לקצף טוב ולשטוף. שיער נקי = ראש מסודר!"},
+  {id:"r_pj",  user:"ריף", cat:"היגיינה",     emojis:"😴🌙🛌",    task:"ללבוש פיג'מה לבד",       pts:5,  freq:"daily",          desc:"ללבוש פיג'מה לבד לפני השינה. ילד שמתלבש לבד הוא ילד עצמאי ומגניב!"},
+  {id:"r_na",  user:"ריף", cat:"היגיינה",     emojis:"✂️🖐️✨",   task:"סידור ציפורניים",        pts:10, freq:"weekly",         desc:"לגזור ציפורניים קצרות ונקיות. ציפורניים קצרות = פחות חיידקים = יותר בריאות!"},
+  {id:"r_bed", user:"ריף", cat:"מטלות בית",   emojis:"🛏️🌅💪",    task:"לסדר את המיטה",          pts:5,  freq:"daily",          desc:"לסדר את המיטה בבוקר - לשים את הכרית ולפרוש את השמיכה. זה לוקח 2 דקות ונראה מגניב!"},
+  {id:"r_sh2", user:"ריף", cat:"מטלות בית",   emojis:"👟🚪✅",    task:"לסדר נעליים",            pts:5,  freq:"daily",          desc:"להניח נעליים במקומן ליד הדלת - לא לזרוק אותן בכניסה. כולם יודים לך!"},
+  {id:"r_tr",  user:"ריף", cat:"מטלות בית",   emojis:"🗑️♻️🌍",   task:"לזרוק אשפה לפח",         pts:5,  freq:"daily",          desc:"לקחת אשפה ולזרוק לפח - לא לשכוח, לא להשאיר על הרצפה. פח הוא הבית של האשפה!"},
+  {id:"r_rm",  user:"ריף", cat:"מטלות בית",   emojis:"🧸🚂🏠",    task:"סדר חדר משחקים",         pts:10, freq:"weekly",         desc:"לסדר את כל הצעצועים למקומם. כל דבר יש לו מקום - חייל אצל חיילים, לגו אצל לגו!"},
+  {id:"r_tb",  user:"ריף", cat:"מטלות בית",   emojis:"🍽️🥄🌟",    task:"לעזור לערוך שולחן",      pts:5,  freq:"daily",          desc:"לעזור לשים צלחות, כוסות וכלים על השולחן לפני הארוחה. עזרה גדולה למשפחה!"},
+  {id:"r_ab",  user:"ריף", cat:"כיתה א' 📝",  emojis:"✏️📝🔡",    task:"תרגול אותיות",           pts:15, freq:"daily",          desc:"לתרגל כתיבה וזיהוי אותיות. כל יום מעט - ועד כיתה א' תהיה מוכן לגמרי!"},
+  {id:"r_cn",  user:"ריף", cat:"כיתה א' 📝",  emojis:"🔢➕🧠",    task:"תרגול ספירה וחשבון",     pts:15, freq:"daily",          desc:"לספור עד 20, לחבר מספרים קטנים, לפתור תרגילים פשוטים. מוח חשבון מתאמן כמו שריר!"},
+  {id:"r_sp",  user:"ריף", cat:"כיתה א' 📝",  emojis:"🔷🟡🎨",    task:"תרגול צורות וצבעים",     pts:10, freq:"weekly",         desc:"לזהות צורות ולצייר אותן - עיגול, ריבוע, משולש. וגם לשחק עם צבעים ולמזג אותם!"},
+  {id:"r_mk1", user:"ריף", cat:"מיקה 👶",     emojis:"😄👶🎭",    task:"להצחיק את מיקה",         pts:10, freq:"daily",          desc:"לעשות למיקה פרצופים מצחיקים, לצחוק איתה, לגרום לה לחייך. אחים גדולים הם הכי טובים!"},
+  {id:"r_mk2", user:"ריף", cat:"מיקה 👶",     emojis:"🚼👶💨",    task:"להביא חיתול",             pts:5,  freq:"daily",          desc:"כשאמא או אבא צריכים להחליף חיתול - לרוץ ולהביא חיתול נקי. עזרה מהירה חשובה!"},
+  {id:"r_mk3", user:"ריף", cat:"מיקה 👶",     emojis:"🎵🎤👶",    task:"לשיר למיקה שיר",         pts:10, freq:"weekly",         desc:"לשיר שיר שקט ויפה למיקה. תינוקות אוהבות לשמוע את הקול של האחים הגדולים שלהן!"},
+  {id:"r_ns",  user:"ריף", cat:"מיוחדות ⭐",  emojis:"🌟🕊️💙",    task:"יום בלי צעקות",          pts:25, freq:"daily",          desc:"יום שלם בלי לצעוק ובלי כעסים גדולים. לדבר בשקט ולפתור דברים בצורה נחמדה!"},
+  {id:"r_nm",  user:"ריף", cat:"מיוחדות ⭐",  emojis:"📵⚽🌳",    task:"יום בלי מסכים",          pts:30, freq:"weekly",         desc:"יום שלם בלי טלוויזיה ובלי טבלט! לשחק בצעצועים, לצייר, לבנות - כל כך כיף!"},
+  {id:"r_dr",  user:"ריף", cat:"מיוחדות ⭐",  emojis:"🖍️🎨❤️",   task:"לצייר ציור למישהו",      pts:15, freq:"weekly",         desc:"לצייר ציור יפה ולהעניק אותו לאמא, אבא, או אמה. ציורים מהלב הם המתנות הכי מיוחדות!"},
+  {id:"r_ck",  user:"ריף", cat:"מיוחדות ⭐",  emojis:"🍳👨‍🍳⭐", task:"לעזור לבשל",             pts:20, freq:"weekly",         desc:"לעזור בבישול - לערבב, לשפוך, לסדר. מבשלים ביחד זה כיף וגם טעים יותר!"},
+];
+
+const CATS = {
+  "אמה": ["היגיינה","מטלות בית","לימודים","אחריות","מיקה 👶","מיוחדות ⭐"],
+  "ריף": ["היגיינה","מטלות בית","כיתה א' 📝","מיקה 👶","מיוחדות ⭐"]
+};
+const CAT_ICONS = {"היגיינה":"🧼","מטלות בית":"🏠","לימודים":"📚","אחריות":"🎯","מיקה 👶":"👶","מיוחדות ⭐":"⭐","כיתה א' 📝":"📝"};
+const FREQ_LABEL = {daily:"יומי","2week":"פעמיים בשבוע",weekly:"שבועי"};
+const FREQ_CLS   = {daily:"freq-daily","2week":"freq-2week",weekly:"freq-weekly"};
+const DAYS = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+const GREETINGS = {
+  "אמה": ["יאללה נתחילי! 💪","בואי נעשה את זה! 🚀","היום תהיי מדהימה! ✨","מוכנה לאסוף נקודות? 🔥","הגיבורה שלנו הגיעה! 🦸‍♀️"],
+  "ריף": ["יאללה נתחיל! 💪","בוא נעשה את זה! 🚀","היום תהיה מדהים! ✨","מוכן לאסוף נקודות? 🔥","הגיבור שלנו הגיע! 🦸‍♂️"]
+};
+
+let state, currentUser = "";
+
+function weekKey() {
+  const d = new Date(), day = d.getDay();
+  const sat = new Date(d); sat.setDate(d.getDate() - ((day-6+7)%7));
+  return `${sat.getFullYear()}-${sat.getMonth()}-${sat.getDate()}`;
+}
+function todayKey() { const d=new Date(); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
+
+function checkStreaks() {
+  const yesterday=(()=>{const d=new Date();d.setDate(d.getDate()-1);return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;})();
+  ["אמה","ריף"].forEach(u=>{
+    const last=state.lastActive[u];
+    if(last && last!==todayKey() && last!==yesterday){ state.streaks[u]=0; }
+  });
+  save();
+}
+
+function defaultState() {
+  return {pts:{"אמה":0,"ריף":0},comp:{},hist:[],streaks:{"אמה":0,"ריף":0},lastActive:{"אמה":"","ריף":""},wk:weekKey(),lastWinner:null};
+}
+
+function loadState() {
+  // Firebase — נטען async, מחזיר defaultState עד שמגיע
+  return defaultState();
+}
+
+function save() {
+  remoteUpdatePending = true;
+  set(stateRef, JSON.parse(JSON.stringify(state)));
+}
+
+// האזן ל-Firebase — עדכן state כשמשתנה ממכשיר אחר
+let remoteUpdatePending = false;
+onValue(stateRef, (snap) => {
+  const s = snap.val();
+  if (!s) return;
+  if (remoteUpdatePending) { remoteUpdatePending = false; return; }
+  state = s;
+  checkStreaks();
+  renderMain();
+  if (currentUser) renderUser(currentUser);
+});
+
+function isDone(t) {
+  const c=state.comp[t.id]; if(!c) return false;
+  if(t.freq==="daily") return c.d===todayKey();
+  if(t.freq==="2week"){
+    if(c.wc>=(t.limit||2)) return true;
+    if(!c.d) return false;
+    const last=new Date(c.lastTs||0);
+    const diffDays=Math.floor((new Date()-last)/(1000*60*60*24));
+    return diffDays < 2;
+  }
+  if(t.freq==="weekly") return c.wc>=1;
+  return false;
+}
+
+function complete(t) {
+  const d=new Date();
+  const time=`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+  const day=DAYS[d.getDay()];
+  state.pts[t.user]=(state.pts[t.user]||0)+t.pts;
+  const c=state.comp[t.id]||{wc:0,d:"",count:0,lastTs:0};
+  c.wc++;c.d=todayKey();c.count++;c.lastTs=Date.now();
+  state.comp[t.id]=c;
+  const yesterday=(()=>{const d2=new Date();d2.setDate(d2.getDate()-1);return `${d2.getFullYear()}-${d2.getMonth()}-${d2.getDate()}`;})();
+  const last=state.lastActive[t.user];
+  if(last!==todayKey()){state.streaks[t.user]=last===yesterday?(state.streaks[t.user]||0)+1:1;}
+  state.lastActive[t.user]=todayKey();
+  state.hist.unshift({user:t.user,id:t.id,task:t.task,emojis:t.emojis,pts:t.pts,time,day,ts:Date.now()});
+  if(state.hist.length>60) state.hist.pop();
+  save();
+}
+
+function show(id) {
+  document.querySelectorAll(".screen").forEach(s=>{s.classList.remove("active","visible");});
+  const next=document.getElementById(id);
+  next.classList.add("active");
+  requestAnimationFrame(()=>requestAnimationFrame(()=>next.classList.add("visible")));
+}
+
+function renderMain() {
+  ["אמה","ריף"].forEach(u=>{
+    const el=document.getElementById("cp-"+u);
+    if(el) el.textContent=(state.pts[u]||0)+" נקודות";
+  });
+  const wn=document.getElementById("winner-name");
+  const ws=document.getElementById("winner-sub");
+  if(state.lastWinner){
+    const isFemale=state.lastWinner==="אמה";
+    wn.textContent=state.lastWinner==="אמה"?"אמה המלכה 👑":"ריף התותח 💥";
+    const winnerPts=state.lastWinnerPts||"";
+    ws.textContent=(isFemale?"המנצחת של שבוע שעבר 🎊":"המנצח של שבוע שעבר 🎊")+(winnerPts?` · ${winnerPts} נקודות`:"");
+  } else {
+    wn.textContent="❓❓❓";
+    ws.textContent="המנצח/ת של שבוע שעבר";
+  }
+  const titles={"אמה":"אמה המלכה 👑","ריף":"ריף התותח 💥"};
+  const sorted=["אמה","ריף"].sort((a,b)=>(state.pts[b]||0)-(state.pts[a]||0));
+  document.getElementById("leaderboard").innerHTML=sorted.map((u,i)=>`
+    <div class="lb-row ${i===0&&(state.pts[u]||0)>0?"first":""}">
+      <span class="lb-rank">${i===0&&(state.pts[u]||0)>0?"🏆":"🥈"}</span>
+      <span class="lb-name">${titles[u]}</span>
+      <span class="lb-pts" id="lb-pts-${u}" style="color:${u==="אמה"?"var(--emma)":"var(--rif)"}">${state.pts[u]||0} נק'</span>
+    </div>`).join("");
+  // אנימציית ספירה בדירוג
+  sorted.forEach(u=>{
+    const el=document.getElementById(`lb-pts-${u}`);
+    if(!el) return;
+    const target=state.pts[u]||0;
+    let s=0; const steps=15;
+    const timer=setInterval(()=>{
+      s++;
+      el.textContent=(s===steps?target:Math.round(target*s/steps))+" נק'";
+      if(s===steps) clearInterval(timer);
+    },400/15);
+  });
+}
+
+function renderUser(user) {
+  currentUser=user;
+  if(user==="אבא"||user==="אמא"){renderAdmin();show("screen-admin");return;}
+  checkStreaks();
+  const backBtn=document.getElementById("back-btn");
+  backBtn.style.borderColor=user==="אמה"?"var(--emma)":"var(--rif)";
+  backBtn.style.color=user==="אמה"?"var(--emma)":"var(--rif)";
+  const nicknames={"אמה":"אמה המלכה 👑","ריף":"ריף התותח 💥"};
+  document.getElementById("user-title").textContent=nicknames[user];
+  const gc=document.getElementById("greeting-card"); gc.dataset.user=user;
+  document.getElementById("greeting-text").textContent=`שלום ${user}! ${GREETINGS[user][Math.floor(Math.random()*GREETINGS[user].length)]}`;
+  const todayDone=TASKS.filter(t=>t.user===user&&isDone(t)&&state.comp[t.id]?.d===todayKey()).length;
+  document.getElementById("greeting-sub").textContent=todayDone>0?`ביצעת ${todayDone} משימות היום - כל הכבוד! 🎉`:(user==="אמה"?"בחרי קטגוריה והתחילי!":"בחר קטגוריה והתחל!");
+  const pv=document.getElementById("pb-val");
+  pv.textContent=state.pts[user]||0;
+  pv.style.color=user==="אמה"?"var(--emma)":"var(--rif)";
+  document.getElementById("streak-val").textContent=state.streaks[user]||0;
+  const pts=state.pts[user]||0;
+  const pct=Math.min(100,Math.round(pts/100*100));
+  document.getElementById("progress-text").textContent=`${pts} / 100 נקודות`;
+  const pf=document.getElementById("progress-fill"); pf.dataset.user=user; pf.style.width="0%";
+  const pl=document.getElementById("progress-pts-label");
+  if(pl) pl.textContent=pts>10?`${pts} נק'`:"";
+  setTimeout(()=>pf.style.width=pct+"%",100);
+  const grid=document.getElementById("cats-grid");
+  grid.innerHTML=(CATS[user]||[]).map(cat=>{
+    const ts=TASKS.filter(t=>t.user===user&&t.cat===cat);
+    const dn=ts.filter(t=>isDone(t)).length;
+    return `<button class="cat-btn" data-cat="${cat}">
+      <span class="cat-icon">${CAT_ICONS[cat]||"📋"}</span>
+      <span class="cat-name">${cat}</span>
+      ${dn===ts.length?'<span class="cat-done">✅ הושלם!</span>':`<span class="cat-count">${dn}/${ts.length} בוצעו</span>`}
+    </button>`;
+  }).join("");
+  grid.querySelectorAll(".cat-btn").forEach(b=>b.onclick=()=>showCatModal(user,b.dataset.cat));
+  const hl=document.getElementById("user-hist");
+  const items=state.hist.filter(h=>h.user===user).slice(0,8);
+  hl.innerHTML=items.length?items.map(h=>`
+    <div class="hi-item"><span class="hi-emoji">${(h.emojis||"").split("")[0]||"⭐"}</span>
+      <div class="hi-info"><strong>${h.task}</strong><span>${h.day} ${h.time}</span></div>
+      <span class="hi-pts">+${h.pts}</span>
+    </div>`).join(""):'<div class="empty-state">עדיין לא ביצעת משימות</div>';
+  show("screen-user");
+}
+
+function renderAdmin() {
+  const tbl=document.getElementById("admin-table");
+  const items=state.hist.slice(0,30);
+  tbl.innerHTML=items.length?items.map((h,i)=>`
+    <div class="ar-row">
+      <span class="ar-user">${h.user}</span>
+      <span class="ar-task">${(h.emojis||"").split("")[0]||""} ${h.task}</span>
+      <span class="ar-pts">+${h.pts}</span>
+      <span class="ar-time">${h.day} ${h.time}</span>
+      <button class="ar-del" data-i="${i}">✕</button>
+    </div>`).join(""):'<div class="empty-state">אין פעילות</div>';
+  tbl.querySelectorAll(".ar-del").forEach(b=>b.onclick=()=>{
+    const i=parseInt(b.dataset.i),h=state.hist[i];
+    if(h){
+      // הורד נקודות
+      state.pts[h.user]=Math.max(0,(state.pts[h.user]||0)-h.pts);
+      // החזר משימה לרשימה
+      const c=state.comp[h.id];
+      if(c){
+        c.wc=Math.max(0,c.wc-1);
+        if(c.wc===0){ delete state.comp[h.id]; }
+        else { c.d=""; c.lastTs=0; }
+      }
+      state.hist.splice(i,1);
+      // בדוק אם streak צריך להתעדכן
+      const userHist=state.hist.filter(x=>x.user===h.user);
+      if(userHist.length===0){ state.streaks[h.user]=0; state.lastActive[h.user]=""; }
+      save();renderAdmin();renderMain();
+    }
+  });
+}
+
+function closeModals(){document.querySelectorAll(".modal-overlay").forEach(m=>m.remove());}
+
+function makeModal(title){
+  const ov=document.createElement("div"); ov.className="modal-overlay";
+  const sh=document.createElement("div"); sh.className="modal-sheet";
+  sh.innerHTML=`<div class="modal-handle"></div>
+    <div class="modal-header"><h2>${title}</h2><button class="modal-close">✕</button></div>
+    <div class="modal-body"></div>`;
+  sh.querySelector(".modal-close").onclick=()=>ov.remove();
+  ov.appendChild(sh); ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  document.body.appendChild(ov);
+  return sh.querySelector(".modal-body");
+}
+
+function showCatModal(user,cat){
+  const body=makeModal(`${CAT_ICONS[cat]||""} ${cat}`);
+  TASKS.filter(t=>t.user===user&&t.cat===cat).forEach(t=>{
+    const done=isDone(t);
+    const d=document.createElement("div"); d.className=`task-card${done?" done":""}`;
+    d.innerHTML=`<div class="tc-left">
+      <span class="tc-emoji">${t.emojis.split(" ")[0]}</span>
+      <div class="tc-info"><strong>${t.task}</strong><span class="freq-tag ${FREQ_CLS[t.freq]}">${FREQ_LABEL[t.freq]}</span></div>
+    </div>
+    <span class="tc-pts">${done?"✅":`+${t.pts}`}</span>`;
+    if(!done) d.onclick=()=>showDetail(t);
+    body.appendChild(d);
+  });
+}
+
+function showDetail(t){
+  closeModals();
+  const body=makeModal(`${t.task}`);
+  const emojiDisplay=document.createElement("span");
+  emojiDisplay.className="task-emoji-display";
+  emojiDisplay.textContent=t.emojis;
+  body.appendChild(emojiDisplay);
+  const desc=document.createElement("p"); desc.className="td-desc"; desc.textContent=t.desc;
+  const meta=document.createElement("div"); meta.className="td-meta";
+  meta.innerHTML=`<span>🏅 ${t.pts} נקודות</span><span>🔁 ${FREQ_LABEL[t.freq]}</span>`;
+  const btn=document.createElement("button"); btn.className="done-btn"; btn.textContent="✅ בוצע!";
+  btn.onclick=()=>{
+    complete(t);
+    const pv=document.getElementById("pb-val");
+    if(pv){
+      const oldVal=parseInt(pv.textContent)||0;
+      const newVal=state.pts[t.user]||0;
+      const duration=600;
+      const steps=20;
+      const increment=(newVal-oldVal)/steps;
+      let current=oldVal;
+      let step=0;
+      const timer=setInterval(()=>{
+        step++;
+        current+=increment;
+        pv.textContent=step===steps?newVal:Math.round(current);
+        if(step===steps) clearInterval(timer);
+      },duration/steps);
+    }
+    // אנימציית streak
+    const sv=document.getElementById("streak-val");
+    if(sv){
+      const oldStreak=parseInt(sv.textContent)||0;
+      const newStreak=state.streaks[t.user]||0;
+      if(newStreak>oldStreak){
+        let s=0; const steps2=15;
+        const timer2=setInterval(()=>{
+          s++;
+          sv.textContent=s===steps2?newStreak:Math.round(oldStreak+(newStreak-oldStreak)*s/steps2);
+          if(s===steps2) clearInterval(timer2);
+        },400/15);
+      }
+    }
+    const catBtn=document.querySelector(`#cats-grid .cat-btn[data-cat="${t.cat}"]`);
+    if(catBtn){
+      const ts=TASKS.filter(t2=>t2.user===t.user&&t2.cat===t.cat);
+      const dn=ts.filter(t2=>isDone(t2)).length;
+      const countEl=catBtn.querySelector(".cat-count,.cat-done");
+      if(countEl){
+        if(dn===ts.length){
+          countEl.className="cat-done"; countEl.textContent="✅ הושלם!";
+          catBtn.style.transition="transform 0.15s";
+          catBtn.style.transform="scale(1.08)";
+          setTimeout(()=>catBtn.style.transform="scale(1)",150);
+        }
+        else{ countEl.className="cat-count"; countEl.textContent=`${dn}/${ts.length} בוצעו`; }
+      }
+    }
+    // עדכון פס התקדמות מיידי
+
+    const pt=document.getElementById("progress-text");
+    const pf=document.getElementById("progress-fill");
+    const pl=document.getElementById("progress-pts-label");
+    if(pt&&pf){
+      const pts2=state.pts[t.user]||0;
+      const pct2=Math.min(100,Math.round(pts2/100*100));
+      pt.textContent=`${pts2} / 100 נקודות`;
+      pf.style.width=pct2+"%";
+      if(pl) pl.textContent=pts2>10?`${pts2} נק'`:"";
+    }
+    closeModals();showToast(t.pts,t.user);renderUser(t.user);renderMain();
+  };
+  body.append(desc,meta,btn);
+}
+
+function showToast(pts,user) {
+  const el=document.getElementById("toast");
+  el.innerHTML=`כל הכבוד! 🎉<br><span style="font-size:1rem">+${pts} נקודות</span>`;
+  el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"),1800);
+  const colors=user==="אמה"
+    ?["#8B5CF6","#6D28D9","#EC4899","#F9A8D4","#FCD34D"]
+    :["#3B82F6","#1D4ED8","#06B6D4","#A5F3FC","#FCD34D"];
+  confetti({particleCount:80,spread:70,origin:{y:0.6},colors});
+  setTimeout(()=>confetti({particleCount:50,angle:60,spread:55,origin:{x:0,y:0.65},colors}),200);
+  setTimeout(()=>confetti({particleCount:50,angle:120,spread:55,origin:{x:1,y:0.65},colors}),400);
+  setTimeout(()=>confetti({particleCount:30,spread:100,origin:{y:0.3},colors,scalar:1.4}),600);
+}
+
+function showPinModal() {
+  const ov=document.createElement("div"); ov.className="modal-overlay";
+  const sh=document.createElement("div"); sh.className="modal-sheet";
+  sh.innerHTML=`
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h2>🔐 כניסת הורים</h2><button class="modal-close">✕</button></div>
+    <div class="modal-body" style="text-align:center;">
+      <p style="color:var(--muted);margin-bottom:20px;font-size:0.95rem;">הזן קוד כניסה</p>
+      <div style="display:flex;justify-content:center;gap:14px;margin-bottom:24px;">
+        ${[0,1,2,3].map(i=>`<div id="dot-${i}" style="width:18px;height:18px;border-radius:50%;background:#E2E8F0;transition:background 0.2s;"></div>`).join("")}
+      </div>
+      <div id="pin-error" style="color:#EF4444;font-size:0.88rem;min-height:20px;margin-bottom:12px;"></div>
+      <div dir="ltr" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:240px;margin:0 auto;">
+        ${[1,2,3,4,5,6,7,8,9,"DEL",0,"⌫"].map(k=>`
+          <button class="pin-key" data-key="${k}" style="padding:18px 0;font-size:${k==="DEL"?"1rem":"1.4rem"};font-weight:700;background:${k==="DEL"?"#FEE2E2":"var(--card)"};border:2px solid ${k==="DEL"?"#FECACA":"#E2E8F0"};border-radius:14px;cursor:pointer;box-shadow:var(--shadow);font-family:'Heebo',sans-serif;color:${k==="DEL"?"#EF4444":"var(--text)"};">${k}</button>`).join("")}
+      </div>
+    </div>`;
+  sh.querySelector(".modal-close").onclick=()=>ov.remove();
+  ov.appendChild(sh); ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  document.body.appendChild(ov);
+  let pin="";
+  const updateDots=()=>[0,1,2,3].forEach(i=>document.getElementById(`dot-${i}`).style.background=i<pin.length?"#8B5CF6":"#E2E8F0");
+  sh.querySelectorAll(".pin-key").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const k=btn.dataset.key;
+      if(k==="DEL"){ pin=""; document.getElementById("pin-error").textContent=""; }
+      else if(k==="⌫"){ pin=pin.slice(0,-1); document.getElementById("pin-error").textContent=""; }
+      else if(pin.length<4){ pin+=k; }
+      updateDots();
+      if(pin.length===4){
+        if(pin==="9487"){ ov.remove(); renderAdmin(); show("screen-admin"); }
+        else{ document.getElementById("pin-error").textContent="קוד שגוי, נסה שוב"; pin=""; updateDots(); }
+      }
+    });
+  });
+}
+
+document.querySelectorAll(".user-card").forEach(c=>c.onclick=()=>renderUser(c.dataset.user));
+document.getElementById("parents-btn").onclick=()=>showPinModal();
+document.getElementById("back-btn").onclick=()=>{renderMain();show("screen-main");};
+document.getElementById("admin-back").onclick=()=>{renderMain();show("screen-main");};
+document.getElementById("reset-btn").onclick=()=>{
+  if(confirm("לאפס את כל הנקודות והמשימות?")){
+    const lw=state.lastWinner||null;
+    const lwp=state.lastWinnerPts||null;
+    state={...defaultState(),lastWinner:lw,lastWinnerPts:lwp};
+    save();renderAdmin();renderMain();
+  }
+};
+
+// כפתור דף הבית
+document.querySelectorAll(".back-btn").forEach(btn => {
+  const homeBtn = document.createElement('button');
+  homeBtn.textContent = '🏠';
+  homeBtn.style.cssText = 'background:none;border:none;font-size:1.2rem;cursor:pointer;margin-right:8px;';
+  homeBtn.onclick = () => window.location.href = 'index.html';
+});
+
+// הוסף כפתור בית למסך הראשי
+const mainHeader = document.querySelector('#screen-main');
+if (mainHeader) {
+  const homeBtn = document.createElement('button');
+  homeBtn.textContent = '🏠 דף הבית';
+  homeBtn.style.cssText = 'position:fixed;top:12px;left:12px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.2);color:white;padding:6px 12px;border-radius:20px;font-size:0.8rem;cursor:pointer;z-index:100;';
+  homeBtn.onclick = () => window.location.href = 'index.html';
+  mainHeader.appendChild(homeBtn);
+}
+
+// טעינה ראשונית מ-Firebase
+state = defaultState();
+import { get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+get(stateRef).then(snap => {
+  if (snap.val()) state = snap.val();
+  checkStreaks();
+  renderMain();
+}).catch(() => {
+  renderMain();
+});
+
+setInterval(()=>{
+  if(state.wk!==weekKey()){
+    const winner=["אמה","ריף"].sort((a,b)=>(state.pts[b]||0)-(state.pts[a]||0))[0];
+    const lastWinner=(state.pts[winner]||0)>0?winner:state.lastWinner||null;
+    const lastWinnerPts=lastWinner?state.pts[lastWinner]||0:null;
+    state={...defaultState(),lastWinner,lastWinnerPts};
+    save();renderMain();if(currentUser)renderUser(currentUser);
+  }
+},60000);
+</script>
+</body>
+</html>
