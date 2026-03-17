@@ -1019,8 +1019,9 @@ window.joinGame = (gameId) => {
     onValue(ref(db, `rooms_v3/${gameId}`), (snap) => {
         const players = Object.values(snap.val() || {});
         
+        // אם יש כבר 2 שחקנים - הצטרף כצופה עם gameId
         if (players.length >= 2) {
-            window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}&view=true`;
+            window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}&game=${gameId}`;
         } else {
             startWaiting(gameId);
         }
@@ -1099,9 +1100,9 @@ function startWaiting(gameId) {
                     statusElement.textContent = countdown;
                 } else {
                     clearInterval(countdownInterval);
-                    // עבור למשחק
+                    // עבור למשחק - העבר gameId
                     if (roomListener) roomListener();
-                    window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}`;
+                    window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}&game=${gameId}`;
                 }
             }, 1000);
         } else {
