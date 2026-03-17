@@ -859,7 +859,7 @@
             
             <div style="display: flex; gap: 10px; margin-top: 20px; width: 100%;">
                 <button class="btn-main" id="waiting-btn" onclick="cancelWaiting()" style="flex: 1;">ביטול</button>
-                <button class="btn-main" onclick="playWithAI()" style="flex: 1; background: linear-gradient(135deg, #4DB8FF 0%, #3DB8FF 100%); box-shadow: 0 5px 20px rgba(77, 184, 255, 0.3);">🤖 שחק לבד</button>
+                <button class="btn-main" onclick="playWithAI_XO()" style="flex: 1; background: linear-gradient(135deg, #4DB8FF 0%, #3DB8FF 100%); box-shadow: 0 5px 20px rgba(77, 184, 255, 0.3);">🤖 שחק לבד</button>
             </div>
         </div>
     </div>
@@ -1204,6 +1204,46 @@ window.playWithAI_Race = () => {
     
     // נווט ל-Race.html עם AI mode
     window.location.href = `Race.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
+};
+
+// משחק Bingo עם AI
+window.playWithAI_Bingo = () => {
+    if (!myUser) return;
+    
+    sessionStorage.setItem('myUser', JSON.stringify(myUser));
+    sessionStorage.setItem('myName', myUser.name);
+    
+    window.location.href = `Bingo.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
+};
+
+// משחק Draw Game עם AI
+window.playWithAI_DrawGame = () => {
+    if (!myUser) return;
+    
+    sessionStorage.setItem('myUser', JSON.stringify(myUser));
+    sessionStorage.setItem('myName', myUser.name);
+    
+    window.location.href = `Draw_game.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
+};
+
+// משחק Memory עם AI
+window.playWithAI_Memory = () => {
+    if (!myUser) return;
+    
+    sessionStorage.setItem('myUser', JSON.stringify(myUser));
+    sessionStorage.setItem('myName', myUser.name);
+    
+    window.location.href = `Memory.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
+};
+
+// משחק Snakes עם AI
+window.playWithAI_Snakes = () => {
+    if (!myUser) return;
+    
+    sessionStorage.setItem('myUser', JSON.stringify(myUser));
+    sessionStorage.setItem('myName', myUser.name);
+    
+    window.location.href = `Snakes.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
 };
 
 // ========== עזיבה ==========
