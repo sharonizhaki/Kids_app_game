@@ -1240,8 +1240,8 @@ setInterval(async () => {
             for (const [playerId, player] of Object.entries(players)) {
                 const timeSinceLastBeat = now - (player.timestamp || 0);
                 
-                // אם heartbeat מת יותר מ-10 שניות - הסר
-                if (timeSinceLastBeat > 10000) {
+                // אם heartbeat מת יותר מ-5 שניות - הסר (אופציה 1)
+                if (timeSinceLastBeat > 5000) {
                     await remove(ref(db, `rooms_v3/${gameId}/${playerId}`));
                 }
             }

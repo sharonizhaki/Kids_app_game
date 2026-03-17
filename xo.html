@@ -777,11 +777,13 @@ async function autoNextRound() {
 
 window.goHome = async () => {
     try {
-        // הסר מה-room בלבד - משחק נשמר לכולם
-        await remove(ref(db, `rooms_v3/xo${isAIMode ? '_ai' : ''}/${myName}`));
+        // מחק משחק מ-DB (אופציה 1)
+        if (gameRef && !isAIMode) {
+            await remove(gameRef);
+        }
         
-        // אל תמחק משחקים! כל משתמש ואורח יכול לחזור
-        // (רק כפתור "איפוס משחק ותוצאה" מוחק)
+        // מחק את עצמך מ-room
+        await remove(ref(db, `rooms_v3/xo${isAIMode ? '_ai' : ''}/${myName}`));
     } catch (error) {
         console.error('Error in goHome:', error);
     }
