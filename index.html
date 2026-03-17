@@ -1183,7 +1183,7 @@ window.cancelWaiting = async () => {
     showScreen('screen-games');
 };
 
-window.playWithAI = () => {
+window.playWithAI_XO = () => {
     if (roomListener) roomListener();
     if (window.stopHeartbeat) window.stopHeartbeat();
     
@@ -1195,7 +1195,7 @@ window.playWithAI = () => {
 };
 
 // משחק מרוץ עם AI
-window.playWithAI = () => {
+window.playWithAI_Race = () => {
     if (!myUser) return;
     
     // שמור את myUser ב-sessionStorage
