@@ -1179,7 +1179,7 @@ window.addEventListener('load', () => {
 // ============= ניקוי heartbeat - בדוק כל 5 שניות =============
 setInterval(async () => {
     try {
-        // בדוק את כל המשחקים
+        // בדוק את כל המשחקים - Non-AI
         const gamesSnap = await get(ref(db, 'rooms_v3'));
         const games = gamesSnap.val() || {};
         const now = Date.now();
@@ -1198,10 +1198,28 @@ setInterval(async () => {
                 }
             }
         }
+        
+        // בדוק גם AI mode אורחים
+        const aiGamesSnap = await get(ref(db, 'rooms_v3/xo_ai'));
+        const aiGames = aiGamesSnap.val() || {};
+        
+        // לכל אורח ב-AI mode
+        for (const [playerId, player] of Object.entries(aiGames)) {
+            if (!player || typeof player !== 'object') continue;
+            
+            const timeSinceLastBeat = now - (player.timestamp || 0);
+            
+            // אם heartbeat מת יותר מ-15 שניות - הסר אורח
+            // (15 כי heartbeat כל 10, אז 15 זה 1.5 missed beats)
+            if (timeSinceLastBeat > 15000) {
+                await remove(ref(db, `rooms_v3/xo_ai/${playerId}`));
+                console.log(`🗑️ Removed inactive guest: ${playerId}`);
+            }
+        }
     } catch (error) {
         console.error('Error in heartbeat cleanup:', error);
     }
-}, 2000);  // בדוק כל 2 שניות
+}, 5000);  // בדוק כל 5 שניות
 </script>
 </body>
 </html>
