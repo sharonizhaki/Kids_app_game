@@ -1076,6 +1076,32 @@ window.joinGame = (gameId) => {
 function startWaiting(gameId) {
     document.getElementById('wait-game-icon').textContent = currentGame.icon;
     document.getElementById('wait-game-name').textContent = currentGame.name;
+    
+    // שנה את onclick של כפתור "שחק לבד" לפי המשחק
+    const aiButton = document.querySelector('[onclick="playWithAI_XO()"]');
+    if (aiButton) {
+        switch(currentGame.id) {
+            case 'xo':
+                aiButton.onclick = playWithAI_XO;
+                break;
+            case 'race':
+                aiButton.onclick = playWithAI_Race;
+                break;
+            case 'bingo':
+                aiButton.onclick = playWithAI_Bingo;
+                break;
+            case 'drawgame':
+                aiButton.onclick = playWithAI_DrawGame;
+                break;
+            case 'memory':
+                aiButton.onclick = playWithAI_Memory;
+                break;
+            case 'snakes':
+                aiButton.onclick = playWithAI_Snakes;
+                break;
+        }
+    }
+    
     showScreen('screen-waiting');
     
     const myPlayerRef = ref(db, `rooms_v3/${gameId}/${myUser.id}`);
