@@ -777,18 +777,11 @@ async function autoNextRound() {
 
 window.goHome = async () => {
     try {
-        // הסר מה-room (פרט לNon-AI צופים שלא נמחקים)
-        if (!isViewer || isAIMode) {
-            await remove(ref(db, `rooms_v3/xo${isAIMode ? '_ai' : ''}/${myName}`));
-        }
+        // הסר מה-room בלבד - משחק נשמר לכולם
+        await remove(ref(db, `rooms_v3/xo${isAIMode ? '_ai' : ''}/${myName}`));
         
-        // אם זה משחקן (לא צופה) ב-AI mode ואורח - גם מחק את המשחק
-        if (isAIMode && !isViewer && (!userData?.id || userData?.color === '#FFFFFF')) {
-            await remove(gameStateRef);
-        }
-        
-        // אם זה צופה ב-Non-AI - פשוט הסר מ-room בלבד
-        // המשחק המלא נשמר ופעיל
+        // אל תמחק משחקים! כל משתמש ואורח יכול לחזור
+        // (רק כפתור "איפוס משחק ותוצאה" מוחק)
     } catch (error) {
         console.error('Error in goHome:', error);
     }
