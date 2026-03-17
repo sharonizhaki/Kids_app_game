@@ -345,7 +345,21 @@ function startListeners() {
     onValue(gameStateRef, (snap) => {
         const data = snap.val();
         console.log('📊 gameState:', data);
-        if (data) { currentGameState = data; render(); }
+        // עדכן currentGameState תמיד, גם אם null
+        if (data) { 
+            currentGameState = data; 
+        } else {
+            currentGameState = null;
+        }
+        
+        // עדכן תוצאות גם כשאין משחק פעיל (כל משחק שעבר)
+        if (data && data.scores) {
+            document.getElementById('wins-X').textContent = data.scores.X;
+            document.getElementById('wins-O').textContent = data.scores.O;
+            document.getElementById('draws').textContent = data.scores.draws;
+        }
+        
+        render(); 
     });
 
     // עדכון רשימת משחקנים
@@ -488,7 +502,19 @@ function resetFirebaseGame(fullReset = false) {
 }
 
 function render() {
-    if (!currentGameState) return;
+    // אם אין משחק - הצג תוצאות וחכה למשחק חדש
+    if (!currentGameState) {
+        // נקה את הלוח
+        document.querySelectorAll('.cell').forEach((cell) => {
+            cell.textContent = '';
+            cell.className = 'cell';
+        });
+        
+        // הצג את התוצאות שנשמרו (אם יש)
+        // זה יעדכן בזמן שה-render קורא מ-startListeners
+        return;
+    }
+    
     const { board, currentPlayer, scores, gameOver } = currentGameState;
 
     document.querySelectorAll('.cell').forEach((cell, i) => {
