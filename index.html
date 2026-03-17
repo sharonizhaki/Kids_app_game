@@ -736,6 +736,34 @@
         .logout-btn:active {
             transform: scale(0.97);
         }
+
+        .tasks-button {
+            margin-top: 12px;
+            margin-bottom: 8px;
+            padding: 12px 24px;
+            border-radius: 14px;
+            border: 2px solid var(--gold);
+            background: linear-gradient(135deg, rgba(245, 200, 66, 0.1) 0%, rgba(245, 200, 66, 0.05) 100%);
+            color: var(--gold);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 700;
+            font-size: 0.95rem;
+            user-select: none;
+            -webkit-user-select: none;
+            flex-shrink: 0;
+            box-shadow: 0 0 15px rgba(245, 200, 66, 0.15);
+        }
+
+        .tasks-button:hover {
+            background: linear-gradient(135deg, rgba(245, 200, 66, 0.2) 0%, rgba(245, 200, 66, 0.1) 100%);
+            box-shadow: 0 0 25px rgba(245, 200, 66, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .tasks-button:active {
+            transform: scale(0.96);
+        }
     </style>
 </head>
 <body>
@@ -807,6 +835,12 @@
         
         <div class="games-container">
             <div class="game-grid" id="game-list"></div>
+            
+            <!-- כפתור מטלות בית - רק למשתמשים -->
+            <button id="tasks-btn" class="tasks-button" onclick="goToTasks()" style="display: none;">
+                🏠 מטלות בית
+            </button>
+            
             <button class="logout-btn" onclick="logout()">🔄 החלף משתמש</button>
         </div>
     </div>
@@ -862,7 +896,9 @@ const games = [
     { id: 'race', name: 'מרוץ מכוניות', url: 'Race.html', icon: '🏎️' },
     { id: 'memory', name: 'משחק זיכרון', url: 'Memory.html', icon: '🧩' },
     { id: 'bingo', name: 'בינגו', url: 'Bingo.html', icon: '🔢' },
-    { id: 'snakes', name: 'סולמות ונחשים', url: 'Snakes.html', icon: '🐍' }
+    { id: 'snakes', name: 'סולמות ונחשים', url: 'Snakes.html', icon: '🐍' },
+    { id: 'checkers', name: 'דמקה', url: 'Checkers.html', icon: '♟️' },
+    { id: 'connect4', name: '4 בשורה', url: 'Connect4.html', icon: '🔴' }
 ];
 
 // ========== צפייה בחדרים ==========
@@ -904,6 +940,14 @@ function startApp() {
     ge.textContent = myUser.emoji;
     gn.textContent = myUser.name;
     gn.style.color = myUser.color;
+
+    // הצג כפתור מטלות בית רק למשתמשים, לא לאורחים
+    const tasksBtn = document.getElementById('tasks-btn');
+    if (myUser.id && (myUser.id === 'emma' || myUser.id === 'rif' || myUser.id === 'dad' || myUser.id === 'mom')) {
+        tasksBtn.style.display = 'block';
+    } else {
+        tasksBtn.style.display = 'none';
+    }
 
     const list = document.getElementById('game-list');
     list.innerHTML = '';
@@ -1154,6 +1198,10 @@ window.playWithAI = () => {
 window.logout = () => { 
     sessionStorage.removeItem('myUser'); 
     location.reload(); 
+};
+
+window.goToTasks = () => {
+    window.location.href = 'tasks.html';
 };
 
 // ========== תצוגת מסך ==========
