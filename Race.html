@@ -130,6 +130,71 @@
             animation: heartBreak 0.5s ease;
         }
         
+        /* Countdown Modal */
+        .countdown-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .countdown-modal.hidden {
+            display: none;
+        }
+        
+        .countdown-content {
+            text-align: center;
+        }
+        
+        .countdown-number {
+            font-size: 120px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            animation: countdownPulse 1s ease;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .countdown-go {
+            font-size: 80px;
+            font-weight: bold;
+            color: #4DB8FF;
+            text-shadow: 0 0 30px rgba(77, 184, 255, 0.8);
+            animation: countdownGo 0.8s ease;
+        }
+        
+        .countdown-flag {
+            font-size: 60px;
+            display: inline-block;
+            margin: 0 20px;
+            animation: flagWave 0.5s ease infinite;
+        }
+        
+        @keyframes countdownPulse {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes countdownGo {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes flagWave {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(15deg); }
+            75% { transform: rotate(-15deg); }
+        }
+        
         /* אנימציות */
         @keyframes fadeIn {
             from {
@@ -384,6 +449,13 @@
 <body>
 
 <div class="game-container">
+    <!-- Countdown Modal -->
+    <div class="countdown-modal hidden" id="countdownModal">
+        <div class="countdown-content">
+            <div id="countdownNumber" class="countdown-number">3</div>
+        </div>
+    </div>
+    
     <!-- בר נתונים עליון -->
     <div class="stats-bar">
         <div class="home-button" id="home-btn">🏠</div>
@@ -562,8 +634,20 @@ initSession();
 
 // יצירת משבצות קו זינוק
 function createStartLine() {
+    // המתן שDOC נטען לגמרי
+    if (!document.getElementById('row1')) {
+        console.warn('⚠️ row1 עדיין לא בDOC, ניסיון חוזר...');
+        setTimeout(() => createStartLine(), 500);
+        return;
+    }
+    
     const row1 = document.getElementById('row1');
     const row2 = document.getElementById('row2');
+    
+    if (!row1 || !row2) {
+        console.error('❌ row1 או row2 לא נמצאו!');
+        return;
+    }
     
     // חשב כמה משבצות צריך (כל משבצת ~40px)
     const squareSize = 40;
@@ -584,9 +668,23 @@ function createStartLine() {
         square.style.width = squareSize + 'px';
         row2.appendChild(square);
     }
+    
+    console.log('✅ קו הזינוק נוצר!');
 }
 
-createStartLine();
+// קו הזינוק - קרא לאחרי שDOC טעון
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        createStartLine();
+    }, 100);
+});
+
+// כחיסוי - קרא גם ישירות
+setTimeout(() => {
+    if (!document.getElementById('row1').hasChildNodes()) {
+        createStartLine();
+    }
+}, 500);
 
 // ========== Multiplayer Game Logic ==========
 
@@ -683,17 +781,32 @@ function assignLaneToPlayer(playersList) {
     }
 }
 
-// התחל משחק עם AI
-function startGameWithAI() {
-    gameMode = 'ai';
-    playerCar.lane = 2;
-    playerCar.targetLane = 2;
-    aiCar.lane = 4;
-    aiCar.targetLane = 4;
-    startGame();
-    createAICar();
-    updateAIPosition();
-    console.log('🤖 משחק עם AI התחיל!');
+// התחל משחק עם ספירה לאחור
+function startGameWithCountdown() {
+    const countdownModal = document.getElementById('countdownModal');
+    const countdownNumber = document.getElementById('countdownNumber');
+    
+    countdownModal.classList.remove('hidden');
+    
+    let count = 3;
+    
+    const countdownInterval = setInterval(() => {
+        if (count > 0) {
+            countdownNumber.textContent = count;
+            countdownNumber.className = 'countdown-number';
+            count--;
+        } else if (count === 0) {
+            // הצג "סעו" עם דגלים
+            countdownNumber.innerHTML = '🏁 סעו 🏁';
+            countdownNumber.className = 'countdown-go';
+            count--;
+        } else {
+            // הסתר modal והתחל משחק
+            clearInterval(countdownInterval);
+            countdownModal.classList.add('hidden');
+            gameState.isRunning = true;
+        }
+    }, 1000);
 }
 
 // יצירת מכונית בנתיב המתאים
@@ -877,11 +990,13 @@ document.addEventListener('keydown', (e) => {
 
 // התחל משחק
 function startGame() {
-    gameState.isRunning = true;
     createPlayerCar();
     updatePlayerPosition();
     
     console.log(`🎮 משחק התחיל! ${myName} בנתיב ${playerCar.lane}`);
+    
+    // הצג ספירה לאחור
+    startGameWithCountdown();
     
     // משתנה לתנועה אנכית
     let carBottomPosition = 11; // התחלה ב-11%
@@ -927,7 +1042,15 @@ function getGameId() {
 
 // התחל
 setTimeout(() => {
-    joinGameRoom();
+    // בדוק אם זה mode AI
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    
+    if (mode === 'ai') {
+        startGameWithAI();
+    } else {
+        joinGameRoom();
+    }
 }, 500);
 </script>
 </body>
