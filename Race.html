@@ -23,108 +23,363 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            padding: 20px;
+            padding: 0;
         }
-        .header {
-            text-align: center;
-            padding-bottom: 20px;
-        }
+        
         .track-container {
             flex: 1;
+            position: relative;
             display: flex;
             flex-direction: column;
-            justify-content: space-around;
-            background: rgba(255,255,255,0.03);
-            border-radius: 20px;
-            position: relative;
-            padding: 20px 0;
-            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+            background: linear-gradient(to bottom, #0F1320, #1a1f35);
         }
-        .track {
-            height: 80px;
-            width: 100%;
-            position: relative;
-            border-bottom: 2px dashed rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-        }
-        .car {
+        
+        /* קו זינוק בשלב 1 - לאורך המסך */
+        .start-line {
             position: absolute;
-            font-size: 45px;
-            transition: left 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
-            z-index: 10;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 15px;
+            background: repeating-linear-gradient(90deg, #fff 0, #fff 10px, #000 10px, #000 20px);
+            z-index: 5;
+            display: none;
         }
+        
+        .start-line.active {
+            display: block;
+        }
+        
+        /* קו סיום בשלב 5 - לאורך המסך */
         .finish-line {
             position: absolute;
-            right: 20px;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 15px;
+            background: repeating-linear-gradient(90deg, #fff 0, #fff 10px, #000 10px, #000 20px);
+            z-index: 5;
+            display: none;
+        }
+        
+        .finish-line.active {
+            display: block;
+        }
+        
+        /* 5 נתיבים בלבד - P1, P2, P3, P4, P5 */
+        .lanes {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            width: 100%;
+            height: 100%;
+            position: relative;
+            gap: 0;
+        }
+        
+        /* הצג את כל הנתיבים */
+        .lane:nth-child(1),
+        .lane:nth-child(2),
+        .lane:nth-child(3),
+        .lane:nth-child(4),
+        .lane:nth-child(5) {
+            display: flex;
+        }
+        
+        /* גבולות נתיבים (אבני שפה) */
+        .lane-borders {
+            position: absolute;
+            left: 0;
+            right: 0;
             top: 0;
             bottom: 0;
-            width: 10px;
-            background: repeating-linear-gradient(0deg, #fff 0, #fff 10px, #000 10px, #000 20px);
+            pointer-events: none;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            width: 100%;
+            height: 100%;
         }
-        .controls {
-            padding: 30px 0;
-            display: flex;
-            justify-content: center;
+        
+        /* קווים מקווקוים רחבים בין נתיבים */
+        .lane-border {
+            position: relative;
+            border-right: 4px dashed rgba(255,255,255,0.3);
         }
-        .push-button {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            border: none;
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
-            color: white;
-            font-family: 'Fredoka One', cursive;
-            font-size: 24px;
-            font-weight: bold;
-            box-shadow: 0 8px 0 #4a69bd, 0 15px 25px rgba(0,0,0,0.3);
-            cursor: pointer;
-            active: transform: translateY(4px);
-            transition: 0.1s;
+        
+        /* הצג את כל ה-borders */
+        .lane-border:nth-child(1),
+        .lane-border:nth-child(2),
+        .lane-border:nth-child(3),
+        .lane-border:nth-child(4),
+        .lane-border:nth-child(5) {
+            display: block;
         }
-        .push-button:active {
-            transform: translateY(6px);
-            box-shadow: 0 2px 0 #4a69bd;
+        
+        .lane-border:last-child {
+            border-right: none;
         }
-        .status-tag {
+        
+        /* אבני שפה - צד שמאל */
+        .left-border {
             position: absolute;
-            top: -25px;
-            font-size: 14px;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 15px;
+            background: repeating-linear-gradient(180deg, #FF0000 0, #FF0000 15px, #FFFFFF 15px, #FFFFFF 30px);
+            z-index: 1;
+        }
+        
+        /* אבני שפה - צד ימין */
+        .right-border {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 15px;
+            background: repeating-linear-gradient(180deg, #FF0000 0, #FF0000 15px, #FFFFFF 15px, #FFFFFF 30px);
+            z-index: 1;
+        }
+        
+        /* נתיב יחיד */
+        .lane {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 0;
+        }
+        
+        /* מכונית */
+        .car {
+            position: absolute;
+            font-size: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 0;
+            transition: bottom 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+        
+        .car-name {
+            font-size: 11px;
             font-weight: bold;
             white-space: nowrap;
         }
-        #emma-car .status-tag { color: var(--emma); }
-        #rif-car .status-tag { color: var(--rif); }
+        
+        .start-position {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 3px dashed rgba(255,255,255,0.3);
+            border-radius: 50%;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: rgba(255,255,255,0.3);
+        }
+        
+        .header {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            text-align: right;
+            z-index: 20;
+        }
+        
+        .header h1 {
+            font-family: 'Fredoka One';
+            font-size: 18px;
+            color: #FFD700;
+            margin: 0;
+            font-weight: bold;
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 140px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            z-index: 20;
+        }
+        
+        .push-button {
+            display: none;
+        }
+        
+        /* נקודת התחלה למכונית */
+        .start-position {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 3px dashed rgba(255,255,255,0.3);
+            border-radius: 50%;
+            left: 30px;
+            bottom: -40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: rgba(255,255,255,0.3);
+        }
+        
+        /* מודל הזנקה */
+        .countdown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 100;
+            gap: 20px;
+            display: none;
+        }
+        
+        .countdown-overlay.active {
+            display: flex;
+        }
+        
+        .countdown-number {
+            font-family: 'Fredoka One';
+            font-size: 120px;
+            font-weight: bold;
+            background: linear-gradient(to right, var(--emma), var(--rif));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: countdownPulse 1s ease-out;
+        }
+        
+        .countdown-message {
+            font-family: 'Fredoka One';
+            font-size: 60px;
+            font-weight: bold;
+            color: #FFD700;
+            animation: goAnimation 0.8s ease-out;
+        }
+        
+        @keyframes countdownPulse {
+            0% {
+                transform: scale(1.5);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+        }
+        
+        @keyframes goAnimation {
+            0% {
+                transform: scale(0.5);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.3);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.9;
+            }
+        }
     </style>
 </head>
 <body>
 
-<div class="game-container">
-    <div class="header">
-        <h1 style="font-family:'Fredoka One'; font-size: 32px; background: linear-gradient(to right, var(--emma), var(--rif)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">RACING STAGE <span id="stage-num">1</span></h1>
-    </div>
+<!-- ספירה לאחור בהזנקה -->
+<div class="countdown-overlay" id="countdown-overlay">
+    <div class="countdown-number" id="countdown-number">3</div>
+    <div class="countdown-message" id="countdown-message" style="display: none;">סעו!</div>
+</div>
 
+<div class="game-container">
     <div class="track-container">
+        <!-- קו זינוק בשלב 1 -->
+        <div class="start-line"></div>
+        
+        <!-- קו סיום בשלב 5 -->
         <div class="finish-line"></div>
         
-        <div class="track">
-            <div id="emma-car" class="car" style="left: 0;">
-                <span class="status-tag">אמה</span>
-                🏎️
+        <!-- אבני שפה -->
+        <div class="left-border"></div>
+        <div class="right-border"></div>
+        
+        <!-- 5 נתיבים -->
+        <div class="lanes">
+            <!-- נתיב 1 -->
+            <div class="lane">
+                <div class="start-position">🚩</div>
+                <div id="car-1" class="car" style="bottom: 0;">
+                    <span>🏎️</span>
+                    <span class="car-name">P1</span>
+                </div>
+            </div>
+            
+            <!-- נתיב 2 - משחקן 1 -->
+            <div class="lane">
+                <div class="start-position">🚩</div>
+                <div id="car-2" class="car" style="bottom: 0;">
+                    <span>🏎️</span>
+                    <span class="car-name">משחקן 1</span>
+                </div>
+            </div>
+            
+            <!-- נתיב 3 -->
+            <div class="lane">
+                <div class="start-position">🚩</div>
+                <div id="car-3" class="car" style="bottom: 0;">
+                    <span>🏎️</span>
+                    <span class="car-name">P3</span>
+                </div>
+            </div>
+            
+            <!-- נתיב 4 - משחקן 2 -->
+            <div class="lane">
+                <div class="start-position">🚩</div>
+                <div id="car-4" class="car" style="bottom: 0;">
+                    <span>🏎️</span>
+                    <span class="car-name">משחקן 2</span>
+                </div>
+            </div>
+            
+            <!-- נתיב 5 -->
+            <div class="lane">
+                <div class="start-position">🚩</div>
+                <div id="car-5" class="car" style="bottom: 0;">
+                    <span>🏎️</span>
+                    <span class="car-name">P5</span>
+                </div>
             </div>
         </div>
-
-        <div class="track">
-            <div id="rif-car" class="car" style="left: 0;">
-                <span class="status-tag">ריף</span>
-                🏎️
-            </div>
+        
+        <!-- שדות של גבולות -->
+        <div class="lane-borders">
+            <div class="lane-border"></div>
+            <div class="lane-border"></div>
+            <div class="lane-border"></div>
+            <div class="lane-border"></div>
+            <div class="lane-border"></div>
         </div>
     </div>
 
-    <div class="controls">
-        <button class="push-button" id="gas-btn">GAS!</button>
+    <!-- Header בפינה עליונה -->
+    <div class="header">
+        <h1><span id="stage-num">1</span>/5</h1>
     </div>
 </div>
 
@@ -146,24 +401,105 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 const params = new URLSearchParams(location.search);
-const myId = params.get('player') || 'emma';
-const otherId = myId === 'emma' ? 'rif' : 'emma';
-const gameId = 'racing';
-const gameRef = ref(db, `game/${gameId}`);
+const displayName = params.get('player') || "אורח";
+const userDataStr = sessionStorage.getItem('myUser');
+const userData = userDataStr ? JSON.parse(userDataStr) : null;
+const myName = userData?.id || displayName;
+const myColor = userData?.color || '#EEF0FF';
+const myEmoji = userData?.emoji || '👤';
 
+const roomRef = ref(db, 'rooms_v3/race');
+let currentGameId = null;
+let gameRef = null;
 let hasLeft = false;
 let leaveTimeout = null;
 let currentPos = 0;
 let currentStage = 1;
+let mySymbol = null;
+let otherPlayerName = null;
 
-// --- 1. נוכחות ועזיבה ---
-async function initPresence() {
-    const myPresence = ref(db, `presence/${gameId}/${myId}`);
-    set(myPresence, true);
-    onDisconnect(myPresence).remove();
+// --- 1. אתחול Session ---
+async function initSession() {
+    try {
+        console.log('🎮 initSession started, myName:', myName);
+        
+        // רישום בחדר
+        const roomPath = `rooms_v3/race/${myName}`;
+        await set(ref(db, roomPath), { 
+            name: displayName,
+            color: myColor,
+            emoji: myEmoji,
+            timestamp: Date.now(),
+            active: true 
+        });
 
-    onValue(ref(db, `presence/${gameId}/${otherId}`), (snap) => {
-        if (!snap.val()) {
+        // שמור heartbeat כל 10 שניות
+        setInterval(() => {
+            set(ref(db, roomPath), { 
+                name: displayName,
+                color: myColor,
+                emoji: myEmoji,
+                timestamp: Date.now(),
+                active: true 
+            });
+        }, 10000);
+
+        // קביעת תפקיד
+        const snapAfter = await get(roomRef);
+        const playersAfter = snapAfter.val() || {};
+        const playerNamesAfter = Object.keys(playersAfter).sort();
+
+        if (playerNamesAfter.length === 1) {
+            mySymbol = 'player1';
+            currentGameId = myName + '_' + Date.now();
+            gameRef = ref(db, `game/race/${currentGameId}`);
+            startWaiting();
+        } else if (playerNamesAfter.length === 2) {
+            mySymbol = playerNamesAfter[0] === myName ? 'player1' : 'player2';
+            otherPlayerName = playerNamesAfter[0] === myName ? playerNamesAfter[1] : playerNamesAfter[0];
+            currentGameId = playerNamesAfter.slice(0, 2).join('_');
+            gameRef = ref(db, `game/race/${currentGameId}`);
+            
+            const gameSnap = await get(gameRef);
+            if (!gameSnap.val()) {
+                initGame();
+            } else {
+                startGame();
+            }
+        }
+        
+        startListeners();
+    } catch (error) {
+        console.error('Error in initSession:', error);
+    }
+}
+
+// --- חדר המתנה ---
+function startWaiting() {
+    console.log('⏳ Waiting for second player...');
+    let waitingInterval = setInterval(() => {
+        get(roomRef).then(snap => {
+            const players = snap.val() || {};
+            const names = Object.keys(players).sort();
+            
+            if (names.length === 2) {
+                clearInterval(waitingInterval);
+                otherPlayerName = names[0] === myName ? names[1] : names[0];
+                initGame();
+                startGame();
+                startListeners();
+            }
+        });
+    }, 500);
+}
+
+// --- 2. נוכחות ועזיבה ---
+function startListeners() {
+    onValue(roomRef, (snap) => {
+        const players = snap.val() || {};
+        const names = Object.keys(players).sort();
+
+        if (names.length < 2 && mySymbol === 'player1') {
             if (!leaveTimeout && !hasLeft) {
                 leaveTimeout = setTimeout(() => {
                     hasLeft = true;
@@ -180,84 +516,205 @@ async function initPresence() {
     });
 }
 
-// --- 2. לוגיקת משחק ---
-async function initGame() {
-    // אתחול נתונים אם המשחק חדש
-    const snap = await get(gameRef);
-    if (!snap.val()) {
-        set(gameRef, {
-            emma: 0,
-            rif: 0,
-            stage: 1,
-            ts: Date.now()
-        });
-    }
+// --- 3. לוגיקת משחק ---
+function initGame() {
+    set(gameRef, {
+        player1: 0,
+        player2: 0,
+        stage: 1,
+        ts: Date.now()
+    });
+    updateStartFinishLines(1); // הצג קו זינוק בשלב 1
+}
 
+function startGame() {
     onValue(gameRef, (snap) => {
         const data = snap.val();
         if (!data) return;
 
         // עדכון מיקומי מכוניות
-        updateCarPos('emma', data.emma);
-        updateCarPos('rif', data.rif);
+        updateCarPos('player1', data.player1);
+        updateCarPos('player2', data.player2);
         
         // עדכון שלב
         if (data.stage !== currentStage) {
             currentStage = data.stage;
             document.getElementById('stage-num').textContent = currentStage;
-            currentPos = 0; // איפוס מקומי לשלב חדש
+            currentPos = 0;
+            updateStartFinishLines(currentStage); // עדכן קווים
+            
+            // התחל ספירה לאחור לשלב החדש
+            stopAutoMove();
+            startCountdown();
+        } else if (currentPos === 0 && currentStage === data.stage) {
+            // התחל ספירה לאחור אם זה השלב הראשון
+            if (!autoMoveInterval) {
+                stopAutoMove();
+                startCountdown();
+            }
         }
 
         // בדיקת ניצחון בשלב
-        if (data.emma >= 85 || data.rif >= 85) {
-            handleStageWin(data.emma >= 85 ? 'אמה' : 'ריף');
+        if (data.player1 >= 85 || data.player2 >= 85) {
+            stopAutoMove();
+            const winner = data.player1 >= 85 ? 'player1' : 'player2';
+            handleStageWin(winner);
         }
     });
 }
 
-function updateCarPos(id, pos) {
-    const car = document.getElementById(`${id}-car`);
-    car.style.left = pos + '%';
+function updateCarPos(playerId, pos) {
+    // playerId: 'player1' או 'player2'
+    // player1 -> car-2 (משחקן ראשון)
+    // player2 -> car-4 (משחקן שני)
+    
+    let carIndex = playerId === 'player1' ? 2 : 4;
+    
+    const car = document.getElementById(`car-${carIndex}`);
+    if (car) {
+        // נסיעה מתחתית (0) לעליון (100)
+        const bottomPercent = Math.min(100, pos);
+        car.style.bottom = bottomPercent + '%';
+    }
 }
 
 function handleGas() {
     if (hasLeft) return;
-    currentPos += 2.5; // מהירות התקדמות
+    currentPos += 2.5;
     update(gameRef, {
-        [myId]: currentPos,
+        [mySymbol === 'player1' ? 'player1' : 'player2']: currentPos,
         ts: Date.now()
     });
 }
 
 function handleStageWin(winner) {
-    // כאן אפשר להוסיף אפקטים של ניצחון שלב
     if (currentStage < 5) {
-        if (myId === 'emma') { // רק שחקן אחד מעדכן את השלב הבא
+        if (mySymbol === 'player1') {
             setTimeout(() => {
+                // עדכן קו הזינוק/סיום
+                updateStartFinishLines(currentStage + 1);
+                
                 update(gameRef, {
-                    emma: 0,
-                    rif: 0,
+                    player1: 0,
+                    player2: 0,
                     stage: currentStage + 1,
                     ts: Date.now()
                 });
             }, 2000);
         }
     } else {
-        alert(`סוף המרוץ! ${winner} ניצח/ה בכל השלבים!`);
+        const winnerName = winner === 'player1' ? 'משחקן 1' : 'משחקן 2';
+        alert(`סוף המרוץ! ${winnerName} ניצח/ה בכל השלבים!`);
         window.location.href = 'index.html';
     }
 }
 
-// אירועים
-document.getElementById('gas-btn').addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    handleGas();
-});
-document.getElementById('gas-btn').addEventListener('mousedown', handleGas);
+function updateStartFinishLines(stage) {
+    const startLine = document.querySelector('.start-line');
+    const finishLine = document.querySelector('.finish-line');
+    
+    // קו זינוק רק בשלב 1
+    if (startLine) {
+        startLine.classList.toggle('active', stage === 1);
+    }
+    
+    // קו סיום רק בשלב 5
+    if (finishLine) {
+        finishLine.classList.toggle('active', stage === 5);
+    }
+}
+
+// תנועה אוטומטית של המכוניות
+let autoMoveInterval = null;
+
+function startAutoMove() {
+    if (autoMoveInterval) clearInterval(autoMoveInterval);
+    
+    autoMoveInterval = setInterval(() => {
+        if (gameRef && !hasLeft) {
+            currentPos += 0.5; // מהירות נמוכה יותר - תנועה חלקה
+            
+            if (currentPos >= 85) {
+                // הגע לסוף השלב
+                clearInterval(autoMoveInterval);
+                update(gameRef, {
+                    [mySymbol === 'player1' ? 'player1' : 'player2']: 100,
+                    ts: Date.now()
+                });
+            } else {
+                update(gameRef, {
+                    [mySymbol === 'player1' ? 'player1' : 'player2']: currentPos,
+                    ts: Date.now()
+                });
+            }
+        }
+    }, 100);
+}
+
+function stopAutoMove() {
+    if (autoMoveInterval) {
+        clearInterval(autoMoveInterval);
+        autoMoveInterval = null;
+    }
+}
+
+// ספירה לאחור בהזנקה
+function startCountdown() {
+    const overlay = document.getElementById('countdown-overlay');
+    const numberEl = document.getElementById('countdown-number');
+    const messageEl = document.getElementById('countdown-message');
+    
+    overlay.classList.add('active');
+    let count = 3;
+    
+    // צליל ספירה קטן
+    playBeep(0.1, 400);
+    
+    const countdownInterval = setInterval(() => {
+        count--;
+        
+        if (count > 0) {
+            numberEl.textContent = count;
+            numberEl.style.display = 'block';
+            messageEl.style.display = 'none';
+            playBeep(0.1, 400);
+        } else if (count === 0) {
+            numberEl.style.display = 'none';
+            messageEl.style.display = 'block';
+            messageEl.textContent = 'סעו!';
+            playBeep(0.2, 600); // צליל גבוה יותר ל"סעו"
+        } else {
+            clearInterval(countdownInterval);
+            overlay.classList.remove('active');
+            // התחל תנועה אוטומטית
+            startAutoMove();
+        }
+    }, 1000);
+}
+
+// ייצור צליל קטן
+function playBeep(duration = 0.1, frequency = 400) {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = frequency;
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+    } catch (e) {
+        // אם AudioContext לא זמין, פשוט המשך
+    }
+}
 
 // התחלה
-initPresence();
-initGame();
+initSession();
 </script>
 </body>
 </html>
