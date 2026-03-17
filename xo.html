@@ -370,8 +370,8 @@ function startListeners() {
         // אל תמחק צופים! הם חלק חוקי מהמשחק
         // (הערה: Non-AI mode תמיד יהיה עד 2 שחקנים + צופים)
 
-        // אם אין שחקנים כלל - נקה את המשחק
-        if (names.length === 0) {
+        // אם אין שחקנים כלל - נקה את המשחק (רק Non-AI)
+        if (names.length === 0 && !isAIMode) {
             if (gameStateRef) {
                 set(gameStateRef, null);
             }
