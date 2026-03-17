@@ -1194,6 +1194,18 @@ window.playWithAI = () => {
     window.location.href = `xo.html?player=${encodeURIComponent(myUser.name)}&ai=true`;
 };
 
+// משחק מרוץ עם AI
+window.playWithAI = () => {
+    if (!myUser) return;
+    
+    // שמור את myUser ב-sessionStorage
+    sessionStorage.setItem('myUser', JSON.stringify(myUser));
+    sessionStorage.setItem('myName', myUser.name);
+    
+    // נווט ל-Race.html עם AI mode
+    window.location.href = `Race.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
+};
+
 // ========== עזיבה ==========
 window.logout = () => { 
     sessionStorage.removeItem('myUser'); 
