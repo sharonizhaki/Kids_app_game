@@ -440,6 +440,47 @@
         window.location.href = 'index.html';
     });
 
+    // ========== משתנים לניתוק ==========
+    let heartbeatInterval = null;
+    let unsubscribeListener = null;
+
+    // ========== Cleanup & Niתוק ==========
+    function cleanup() {
+        console.log('🧹 Cleanup...');
+        
+        // עצור heartbeat
+        if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+            console.log('⏹️ Heartbeat עצור');
+        }
+        
+        // ביטול listener
+        if (unsubscribeListener) {
+            unsubscribeListener();
+            console.log('🔌 Listener בוטל');
+        }
+        
+        // מחק מFirebase
+        if (mode === 'ai') {
+            remove(ref(db, `rooms_v3/race_ai/${myName}`));
+            console.log('🗑️ מחק מ-race_ai');
+        } else {
+            remove(ref(db, `rooms_v3/race/${gameId}/${myName}`));
+            console.log('🗑️ מחק מ-race');
+        }
+    }
+
+    // Cleanup כשמשאירים דף
+    window.addEventListener('beforeunload', cleanup);
+
+    // Cleanup כשלוחצים בית
+    document.getElementById('homeBtn').addEventListener('click', () => {
+        cleanup();
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 300);
+    });
+
     // ========== צבעי משתמשים ==========
     const userColors = {
         emma:  { main: '#FF6B85', dark: '#C2184C', light: '#FF8FA3' },
@@ -526,6 +567,23 @@
     if (mode === 'ai') {
         console.log('🤖 התחל משחק מול AI');
         placePlayerCar(myName, 2); // נתיב 2
+        
+        // כתוב ל-Firebase
+        set(ref(db, `rooms_v3/race_ai/${myName}`), {
+            name: myName,
+            timestamp: Date.now(),
+            active: true
+        });
+        
+        // Heartbeat - כל 10 שניות
+        heartbeatInterval = setInterval(() => {
+            set(ref(db, `rooms_v3/race_ai/${myName}`), {
+                name: myName,
+                timestamp: Date.now(),
+                active: true
+            });
+        }, 10000);
+        
         startCountdown();
     }
     // ========== משחק משותף ==========
@@ -539,9 +597,18 @@
             timestamp: Date.now(),
             active: true
         });
+        
+        // Heartbeat - כל 10 שניות
+        heartbeatInterval = setInterval(() => {
+            set(ref(db, `rooms_v3/race/${gameId}/${myName}`), {
+                name: myName,
+                timestamp: Date.now(),
+                active: true
+            });
+        }, 10000);
 
         // האזן לFirebase - כמה שחקנים בחדר?
-        onValue(ref(db, `rooms_v3/race/${gameId}`), (snapshot) => {
+        unsubscribeListener = onValue(ref(db, `rooms_v3/race/${gameId}`), (snapshot) => {
             const players = snapshot.val() || {};
             const playerCount = Object.keys(players).length;
             
