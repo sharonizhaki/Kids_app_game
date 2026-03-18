@@ -575,8 +575,7 @@
 
     // ========== הצבת רכבים ==========
     function placePlayerCar(playerName, laneNumber) {
-        const colors = userColors[playerName] || userColors.guest;
-        const carSVG = createCarSVG(playerName, colors.main, colors.dark, colors.light);
+        const carSVG = createCarSVG(playerName);
         
         carSVG.style.bottom = '7%';
         carSVG.style.left = '50%';
@@ -590,7 +589,7 @@
     }
 
     function placeAICar(laneNumber) {
-        const carSVG = createCarSVG('ai', aiColor.main, aiColor.dark, aiColor.light);
+        const carSVG = createCarSVG('ai');
         
         carSVG.style.bottom = '7%';
         carSVG.style.left = '50%';
