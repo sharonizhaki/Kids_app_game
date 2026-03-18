@@ -159,7 +159,7 @@
         }
 
         .car-moving {
-            animation: moveCarUp 10s linear forwards !important;
+            animation: moveCarUp 7s linear forwards !important;
         }
 
         /* אבני שפה */
@@ -542,7 +542,66 @@
         }, 300);
     });
 
-    // ========== צבעי משתמשים ==========
+    // ========== משתנים לקטעים ==========
+    let currentSegment = 1; // קטע 1, 2, או 3
+    let gameFinished = false;
+
+    // ========== עדכון קו זינוק לפי קטע ==========
+    function updateStartLine() {
+        const startLine = document.querySelector('.start-line');
+        if (!startLine) return;
+        
+        if (currentSegment === 1) {
+            startLine.style.display = 'flex'; // הצג קו זינוק
+            startLine.style.bottom = '21%';
+            console.log('📍 קטע 1 - קו זינוק');
+        } else if (currentSegment === 2) {
+            startLine.style.display = 'none'; // הסתר קו זינוק
+            console.log('📍 קטע 2 - אין קו זינוק');
+        } else if (currentSegment === 3) {
+            startLine.style.display = 'flex'; // הצג קו סיום
+            startLine.style.bottom = '21%';
+            console.log('📍 קטע 3 - קו סיום');
+        }
+    }
+
+    // ========== Reset מכוניות בין קטעים ==========
+    function resetCarsForNextSegment() {
+        const cars = document.querySelectorAll('.lane svg');
+        cars.forEach(car => {
+            car.classList.remove('car-moving');
+            car.style.bottom = '7%';
+        });
+        
+        console.log('🔄 Reset - מכוניות חזרו ל-bottom 7%');
+        
+        if (currentSegment < 3) {
+            currentSegment++;
+            updateStartLine();
+            
+            // התחל תנועה שוב אחרי 500ms
+            setTimeout(() => {
+                moveCarWithAnimation();
+            }, 500);
+        } else {
+            // קטע 3 סיים - Game Over
+            gameFinished = true;
+            console.log('🏁 משחק סיים!');
+            showGameOverModal();
+        }
+    }
+
+    // ========== Game Over Modal ==========
+    function showGameOverModal() {
+        const countdownModal = document.getElementById('countdownModal');
+        const countdownNumber = document.getElementById('countdownNumber');
+        
+        countdownModal.classList.remove('hidden');
+        countdownNumber.innerHTML = '🏆 ניצחת!';
+        countdownNumber.className = 'countdown-go';
+        
+        console.log('🎉 Game Over!');
+    }
     const userColors = {
         emma:  { main: '#FF6B85', dark: '#C2184C', light: '#FF8FA3' },
         rif:   { main: '#5EC8FF', dark: '#1E5F9E', light: '#87CEEB' },
@@ -647,6 +706,8 @@
 
     // ========== תנועת רכב עם CSS Animation ==========
     function moveCarWithAnimation() {
+        if (gameFinished) return;
+        
         // תנועת משתמש
         const playerCar = document.querySelectorAll('.lane')[1].querySelector('svg');
         if (playerCar) {
@@ -659,7 +720,12 @@
             aiCar.classList.add('car-moving');
         }
         
-        console.log('🚗 שני הרכבים התחילו לנוע!');
+        console.log(`🚗 קטע ${currentSegment} - רכבים התחילו לנוע!`);
+        
+        // אחרי 7 שניות - reset או Game Over
+        setTimeout(() => {
+            resetCarsForNextSegment();
+        }, 7000);
     }
 
     // ========== משחק מול AI ==========
@@ -667,6 +733,7 @@
         console.log('🤖 התחל משחק מול AI');
         placePlayerCar(myName, 1); // משתמש בנתיב 1
         placeAICar(3); // AI בנתיב 3
+        updateStartLine(); // עדכן קו זינוק
         
         // כתוב ל-Firebase
         set(ref(db, `rooms_v3/race_ai/${myName}`), {
