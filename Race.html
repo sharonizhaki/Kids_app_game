@@ -440,6 +440,31 @@
         window.location.href = 'index.html';
     });
 
+    // ========== צבעי משתמשים ==========
+    const userColors = {
+        emma:  { main: '#FF6B85', dark: '#C2184C', light: '#FF8FA3' },
+        rif:   { main: '#5EC8FF', dark: '#1E5F9E', light: '#87CEEB' },
+        dad:   { main: '#52D273', dark: '#0B8C2F', light: '#7FDB82' },
+        mom:   { main: '#BA68C8', dark: '#4A148C', light: '#CE93D8' },
+        guest: { main: '#D0D0D0', dark: '#666666', light: '#EFEFEF' }
+    };
+
+    // ========== הצבת רכבים ==========
+    function placePlayerCar(playerName, laneNumber) {
+        const colors = userColors[playerName] || userColors.guest;
+        const carSVG = createCarSVG(playerName, colors.main, colors.dark, colors.light);
+        
+        carSVG.style.bottom = '7%';
+        carSVG.style.left = '50%';
+        carSVG.style.transform = 'translateX(-50%)';
+        carSVG.style.zIndex = '30';
+        
+        const lane = document.querySelectorAll('.lane')[laneNumber];
+        if (lane) {
+            lane.appendChild(carSVG);
+        }
+    }
+
     // ========== יצירת קו זינוק ==========
     function createStartLine() {
         const row1 = document.getElementById('row1');
@@ -500,11 +525,13 @@
     // ========== משחק מול AI ==========
     if (mode === 'ai') {
         console.log('🤖 התחל משחק מול AI');
+        placePlayerCar(myName, 2); // נתיב 2
         startCountdown();
     }
     // ========== משחק משותף ==========
     else {
         console.log('👥 חכה לשחקן שני...');
+        placePlayerCar(myName, 2); // נתיב 2 לשחקן ראשון
         
         // כתוב לFirebase - הודע שנכנסת
         set(ref(db, `rooms_v3/race/${gameId}/${myName}`), {
