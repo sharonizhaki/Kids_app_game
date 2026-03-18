@@ -348,9 +348,66 @@
     console.log('👤 שחקן:', myName);
     console.log('🎮 Game ID:', gameId);
 
-    // ========== בדוק מצב ==========
-    const urlParams = new URLSearchParams(window.location.search);
-    const mode = urlParams.get('mode');
+    // ========== משתנים לקטעים נפרדים ==========
+    let playerSegment = 1;
+    let aiSegment = 1;
+    let gameFinished = false;
+
+    // ========== עקיבה אחרי רכבים ותנועה בין קטעים ==========
+    function trackAndMoveCars() {
+        const playerCar = document.querySelectorAll('.lane')[1].querySelector('svg');
+        const aiCar = document.querySelectorAll('.lane')[3].querySelector('svg');
+        
+        const trackInterval = setInterval(() => {
+            if (!playerCar || !aiCar || gameFinished) {
+                clearInterval(trackInterval);
+                return;
+            }
+            
+            const playerBottom = parseFloat(playerCar.style.bottom) || 7;
+            const aiBottom = parseFloat(aiCar.style.bottom) || 7;
+            
+            // בדוק אם משתמש הגיע ל-100% (סיים קטע)
+            if (playerBottom >= 100 && playerSegment < 3) {
+                playerSegment++;
+                playerCar.style.bottom = '4%'; // Reset ל-4% בקטע הבא
+                updateStartLineForSegment(playerSegment);
+                console.log(`✅ משתמש עבר לקטע ${playerSegment}`);
+            }
+            
+            // בדוק אם AI הגיע ל-100% (סיים קטע)
+            if (aiBottom >= 100 && aiSegment < 3) {
+                aiSegment++;
+                aiCar.style.bottom = '4%'; // Reset ל-4% בקטע הבא
+                console.log(`✅ AI עבר לקטע ${aiSegment}`);
+            }
+            
+            // בדוק אם שניהם הגיעו לקטע 3 ויותר
+            if (playerSegment > 3 || aiSegment > 3) {
+                clearInterval(trackInterval);
+                gameFinished = true;
+                console.log('🏁 משחק סיים!');
+                showGameOverModal();
+            }
+        }, 50); // בדוק כל 50ms
+    }
+    function updateStartLineForSegment(segment) {
+        const startLine = document.querySelector('.start-line');
+        if (!startLine) return;
+        
+        if (segment === 1) {
+            startLine.style.display = 'flex'; // הצג קו זינוק
+            startLine.style.bottom = '21%';
+            console.log('📍 קטע 1 - קו זינוק');
+        } else if (segment === 2) {
+            startLine.style.display = 'none'; // הסתר קו זינוק
+            console.log('📍 קטע 2 - אין קו זינוק');
+        } else if (segment === 3) {
+            startLine.style.display = 'flex'; // הצג קו סיום
+            startLine.style.bottom = '85%'; // עליון במסך
+            console.log('📍 קטע 3 - קו סיום');
+        }
+    }
 
     // ========== יצירת SVG רכב דינמי ==========
     function createCarSVG(userName) {
@@ -660,6 +717,9 @@
         }
         
         console.log('🚗 שני הרכבים התחילו לנוע!');
+        
+        // התחל לעקוב אחרי הרכבים
+        trackAndMoveCars();
     }
 
     // ========== משחק מול AI ==========
@@ -667,6 +727,7 @@
         console.log('🤖 התחל משחק מול AI');
         placePlayerCar(myName, 1); // משתמש בנתיב 1
         placeAICar(3); // AI בנתיב 3
+        updateStartLineForSegment(1); // עדכן קו זינוק לקטע 1
         
         // כתוב ל-Firebase
         set(ref(db, `rooms_v3/race_ai/${myName}`), {
