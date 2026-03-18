@@ -504,10 +504,26 @@
         guest: { main: '#D0D0D0', dark: '#666666', light: '#EFEFEF' }
     };
 
+    const aiColor = { main: '#FFA500', dark: '#FF8C00', light: '#FFB84D' };
+
     // ========== הצבת רכבים ==========
     function placePlayerCar(playerName, laneNumber) {
         const colors = userColors[playerName] || userColors.guest;
         const carSVG = createCarSVG(playerName, colors.main, colors.dark, colors.light);
+        
+        carSVG.style.bottom = '7%';
+        carSVG.style.left = '50%';
+        carSVG.style.transform = 'translateX(-50%)';
+        carSVG.style.zIndex = '30';
+        
+        const lane = document.querySelectorAll('.lane')[laneNumber];
+        if (lane) {
+            lane.appendChild(carSVG);
+        }
+    }
+
+    function placeAICar(laneNumber) {
+        const carSVG = createCarSVG('ai', aiColor.main, aiColor.dark, aiColor.light);
         
         carSVG.style.bottom = '7%';
         carSVG.style.left = '50%';
@@ -584,17 +600,26 @@
 
     // ========== תנועת רכב עם CSS Animation ==========
     function moveCarWithAnimation() {
-        const carSVG = document.querySelector('.lane svg');
-        if (!carSVG) return;
+        // תנועת משתמש
+        const playerCar = document.querySelectorAll('.lane')[1].querySelector('svg');
+        if (playerCar) {
+            playerCar.classList.add('car-moving');
+        }
         
-        carSVG.classList.add('car-moving');
-        console.log('🚗 רכב התחיל לנוע!');
+        // תנועת AI
+        const aiCar = document.querySelectorAll('.lane')[3].querySelector('svg');
+        if (aiCar) {
+            aiCar.classList.add('car-moving');
+        }
+        
+        console.log('🚗 שני הרכבים התחילו לנוע!');
     }
 
     // ========== משחק מול AI ==========
     if (mode === 'ai') {
         console.log('🤖 התחל משחק מול AI');
-        placePlayerCar(myName, 2); // נתיב 2
+        placePlayerCar(myName, 1); // משתמש בנתיב 1
+        placeAICar(3); // AI בנתיב 3
         
         // כתוב ל-Firebase
         set(ref(db, `rooms_v3/race_ai/${myName}`), {
