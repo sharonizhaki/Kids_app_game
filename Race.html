@@ -148,20 +148,6 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
-        /* אנימציית תנועת רכב */
-        @keyframes moveCarUp {
-            0% {
-                bottom: 7%;
-            }
-            100% {
-                bottom: 100%;
-            }
-        }
-
-        .car-moving {
-            animation: moveCarUp 10s linear forwards !important;
-        }
-
         /* אבני שפה */
         .left-border {
             position: fixed;
@@ -353,44 +339,7 @@
     let aiSegment = 1;
     let gameFinished = false;
 
-    // ========== עקיבה אחרי רכבים ותנועה בין קטעים ==========
-    function trackAndMoveCars() {
-        const playerCar = document.querySelectorAll('.lane')[1].querySelector('svg');
-        const aiCar = document.querySelectorAll('.lane')[3].querySelector('svg');
-        
-        const trackInterval = setInterval(() => {
-            if (!playerCar || !aiCar || gameFinished) {
-                clearInterval(trackInterval);
-                return;
-            }
-            
-            const playerBottom = parseFloat(playerCar.style.bottom) || 7;
-            const aiBottom = parseFloat(aiCar.style.bottom) || 7;
-            
-            // בדוק אם משתמש הגיע ל-100% (סיים קטע)
-            if (playerBottom >= 100 && playerSegment < 3) {
-                playerSegment++;
-                playerCar.style.bottom = '4%'; // Reset ל-4% בקטע הבא
-                updateStartLineForSegment(playerSegment);
-                console.log(`✅ משתמש עבר לקטע ${playerSegment}`);
-            }
-            
-            // בדוק אם AI הגיע ל-100% (סיים קטע)
-            if (aiBottom >= 100 && aiSegment < 3) {
-                aiSegment++;
-                aiCar.style.bottom = '4%'; // Reset ל-4% בקטע הבא
-                console.log(`✅ AI עבר לקטע ${aiSegment}`);
-            }
-            
-            // בדוק אם שניהם הגיעו לקטע 3 ויותר
-            if (playerSegment > 3 || aiSegment > 3) {
-                clearInterval(trackInterval);
-                gameFinished = true;
-                console.log('🏁 משחק סיים!');
-                showGameOverModal();
-            }
-        }, 50); // בדוק כל 50ms
-    }
+    // ========== עדכון קו זינוק לפי קטע ==========
     function updateStartLineForSegment(segment) {
         const startLine = document.querySelector('.start-line');
         if (!startLine) return;
@@ -672,7 +621,41 @@
         setTimeout(() => createStartLine(), 100);
     });
 
-    // ========== ספירה לאחור ==========
+    // ========== תנועת רכבים עם setInterval ==========
+    function startCarsMovement() {
+        const playerCar = document.querySelectorAll('.lane')[1].querySelector('svg');
+        const aiCar = document.querySelectorAll('.lane')[3].querySelector('svg');
+        
+        if (!playerCar || !aiCar) {
+            console.error('❌ רכבים לא נטענו!');
+            return;
+        }
+        
+        let playerBottom = 7;
+        let aiBottom = 7;
+        
+        const moveInterval = setInterval(() => {
+            // משתמש - מהירות גבוהה יותר
+            if (playerBottom < 100) {
+                playerBottom += 1.2; // כל frame: +1.2%
+                playerCar.style.bottom = playerBottom + '%';
+            }
+            
+            // AI - מהירות נמוכה יותר
+            if (aiBottom < 100) {
+                aiBottom += 0.9; // כל frame: +0.9%
+                aiCar.style.bottom = aiBottom + '%';
+            }
+            
+            // כששניהם הגיעו ל-100%
+            if (playerBottom >= 100 && aiBottom >= 100) {
+                clearInterval(moveInterval);
+                console.log('🏁 שניהם הגיעו לסוף!');
+            }
+        }, 50); // כל 50ms
+        
+        console.log('🚗 רכבים מתחילים לנוע!');
+    }
     function startCountdown() {
         const countdownModal = document.getElementById('countdownModal');
         const countdownNumber = document.getElementById('countdownNumber');
@@ -696,30 +679,10 @@
                 countdownModal.classList.add('hidden');
                 console.log('🎮 משחק התחיל!');
                 
-                // התחל תנועה עם animation
-                moveCarWithAnimation();
+                // התחל תנועה עם setInterval
+                startCarsMovement();
             }
         }, 1000);
-    }
-
-    // ========== תנועת רכב עם CSS Animation ==========
-    function moveCarWithAnimation() {
-        // תנועת משתמש
-        const playerCar = document.querySelectorAll('.lane')[1].querySelector('svg');
-        if (playerCar) {
-            playerCar.classList.add('car-moving');
-        }
-        
-        // תנועת AI
-        const aiCar = document.querySelectorAll('.lane')[3].querySelector('svg');
-        if (aiCar) {
-            aiCar.classList.add('car-moving');
-        }
-        
-        console.log('🚗 שני הרכבים התחילו לנוע!');
-        
-        // התחל לעקוב אחרי הרכבים
-        trackAndMoveCars();
     }
 
     // ========== משחק מול AI ==========
