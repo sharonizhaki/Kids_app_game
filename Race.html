@@ -567,53 +567,99 @@
         }, 300);
     });
 
-    // ========== משתנים לקטעים ==========
-    let currentSegment = 1; // קטע 1, 2, או 3
+    // ========== משתנים לקטעים נפרדים ==========
+    let playerSegment = 1;
+    let aiSegment = 1;
+    let currentSegment = 1; // לעדכון UI
     let gameFinished = false;
 
     // ========== עדכון קו זינוק לפי קטע ==========
-    function updateStartLine() {
+    function updateStartLineForSegment(segment) {
         const startLine = document.querySelector('.start-line');
         if (!startLine) return;
         
-        if (currentSegment === 1) {
+        if (segment === 1) {
             startLine.style.display = 'flex'; // הצג קו זינוק
             startLine.style.bottom = '21%';
             console.log('📍 קטע 1 - קו זינוק');
-        } else if (currentSegment === 2) {
+        } else if (segment === 2) {
             startLine.style.display = 'none'; // הסתר קו זינוק
             console.log('📍 קטע 2 - אין קו זינוק');
-        } else if (currentSegment === 3) {
+        } else if (segment === 3) {
             startLine.style.display = 'flex'; // הצג קו סיום
             startLine.style.bottom = '85%'; // עליון במסך
             console.log('📍 קטע 3 - קו סיום');
         }
     }
 
-    // ========== Reset מכוניות בין קטעים ==========
-    function resetCarsForNextSegment() {
-        const cars = document.querySelectorAll('.lane svg');
-        cars.forEach(car => {
-            car.classList.remove('car-moving');
-            car.style.bottom = '7%';
-        });
+    // ========== תנועת רכב עם setInterval ומהירויות ==========
+    function moveCarWithInterval() {
+        if (gameFinished) return;
         
-        console.log('🔄 Reset - מכוניות חזרו ל-bottom 7%');
+        const playerCar = document.querySelectorAll('.lane')[1].querySelector('svg');
+        const aiCar = document.querySelectorAll('.lane')[3].querySelector('svg');
         
-        if (currentSegment < 3) {
-            currentSegment++;
-            updateStartLine();
+        let playerBottom = 7;
+        let aiBottom = 7;
+        let playerFinished = false;
+        let aiFinished = false;
+        
+        const frameInterval = setInterval(() => {
+            // משתמש - מהירות גבוהה יותר
+            if (playerCar && !playerFinished && playerBottom < 100) {
+                playerBottom += 1.2; // כל frame: +1.2%
+                playerCar.style.bottom = playerBottom + '%';
+                
+                // בדוק אם הגיע ל-100%
+                if (playerBottom >= 100) {
+                    playerFinished = true;
+                    playerBottom = 7; // Reset
+                    playerSegment++;
+                    console.log(`✅ משתמש הגיע לקטע ${playerSegment}`);
+                    
+                    // עדכן UI אם זה הקטע של משתמש
+                    if (playerSegment <= 3) {
+                        updateStartLineForSegment(playerSegment);
+                    }
+                }
+            }
             
-            // התחל תנועה שוב אחרי 500ms
-            setTimeout(() => {
-                moveCarWithAnimation();
-            }, 500);
-        } else {
-            // קטע 3 סיים - Game Over
-            gameFinished = true;
-            console.log('🏁 משחק סיים!');
-            showGameOverModal();
-        }
+            // AI - מהירות נמוכה יותר
+            if (aiCar && !aiFinished && aiBottom < 100) {
+                aiBottom += 0.9; // כל frame: +0.9%
+                aiCar.style.bottom = aiBottom + '%';
+                
+                // בדוק אם הגיע ל-100%
+                if (aiBottom >= 100) {
+                    aiFinished = true;
+                    aiBottom = 7; // Reset
+                    aiSegment++;
+                    console.log(`✅ AI הגיע לקטע ${aiSegment}`);
+                }
+            }
+            
+            // בדוק אם משחק סיים (קטע 3)
+            if ((playerSegment > 3 || aiSegment > 3)) {
+                clearInterval(frameInterval);
+                gameFinished = true;
+                showGameOverModal();
+            }
+            
+            // המשך תנועה אם רכבים עדיין בקטע 1-3
+            if (playerFinished) {
+                playerBottom = 7;
+                playerCar.style.bottom = '7%';
+                playerFinished = false;
+            }
+            
+            if (aiFinished) {
+                aiBottom = 7;
+                aiCar.style.bottom = '7%';
+                aiFinished = false;
+            }
+        }, 50); // כל 50ms
+        
+        console.log('🚗 רכבים התחילו לנוע!');
     }
 
     // ========== זיהוי נצחונות ==========
@@ -825,7 +871,7 @@
         console.log('🤖 התחל משחק מול AI');
         placePlayerCar(myName, 1); // משתמש בנתיב 1
         placeAICar(3); // AI בנתיב 3
-        updateStartLine(); // עדכן קו זינוק
+        updateStartLineForSegment(1); // עדכן קו זינוק
         
         // כתוב ל-Firebase
         set(ref(db, `rooms_v3/race_ai/${myName}`), {
