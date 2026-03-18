@@ -505,7 +505,32 @@
     let heartbeatInterval = null;
     let unsubscribeListener = null;
 
-    // ========== Cleanup & Niתוק ==========
+    // ========== Restart Game ==========
+    function restartGame() {
+        console.log('🔄 משחק חדש מתחיל...');
+        
+        currentSegment = 1;
+        gameFinished = false;
+        
+        // Reset מכוניות
+        const cars = document.querySelectorAll('.lane svg');
+        cars.forEach(car => {
+            car.style.animation = 'none';
+            car.style.bottom = '7%';
+        });
+        
+        // עדכן קו זינוק
+        updateStartLine();
+        
+        // הסתר modal
+        const countdownModal = document.getElementById('countdownModal');
+        countdownModal.classList.add('hidden');
+        
+        // התחל ספירה לאחור שוב
+        setTimeout(() => {
+            startCountdown();
+        }, 500);
+    }
     function cleanup() {
         console.log('🧹 Cleanup...');
         
@@ -560,7 +585,7 @@
             console.log('📍 קטע 2 - אין קו זינוק');
         } else if (currentSegment === 3) {
             startLine.style.display = 'flex'; // הצג קו סיום
-            startLine.style.bottom = '21%';
+            startLine.style.bottom = '85%'; // עליון במסך
             console.log('📍 קטע 3 - קו סיום');
         }
     }
@@ -591,16 +616,61 @@
         }
     }
 
+    // ========== זיהוי נצחונות ==========
+    function checkWinner() {
+        const playerCar = document.querySelectorAll('.lane')[1].querySelector('svg');
+        const aiCar = document.querySelectorAll('.lane')[3].querySelector('svg');
+        
+        if (!playerCar || !aiCar) return null;
+        
+        const playerBottom = parseFloat(playerCar.style.bottom) || 7;
+        const aiBottom = parseFloat(aiCar.style.bottom) || 7;
+        
+        console.log(`🏁 משתמש: ${playerBottom}%, AI: ${aiBottom}%`);
+        
+        // מי מגיע ראשון ל-top 85% (או יותר)?
+        if (playerBottom >= 85 && aiBottom < 85) {
+            return 'player';
+        } else if (aiBottom >= 85 && playerBottom < 85) {
+            return 'ai';
+        } else if (playerBottom >= 85 && aiBottom >= 85) {
+            // שניהם הגיעו - מי הגיע קודם? (בדוק עם tolerance קטנה)
+            return playerBottom > aiBottom ? 'player' : 'ai';
+        }
+        
+        return null;
+    }
+
     // ========== Game Over Modal ==========
     function showGameOverModal() {
+        const winner = checkWinner();
         const countdownModal = document.getElementById('countdownModal');
         const countdownNumber = document.getElementById('countdownNumber');
         
         countdownModal.classList.remove('hidden');
-        countdownNumber.innerHTML = '🏆 ניצחת!';
+        
+        if (winner === 'player') {
+            console.log('🎉 משתמש ניצח!');
+            countdownNumber.innerHTML = '🏆 ניצחת!';
+        } else if (winner === 'ai') {
+            console.log('😢 AI ניצח');
+            countdownNumber.innerHTML = '😢 הפסדת!';
+        } else {
+            countdownNumber.innerHTML = '🏁 תיקו!';
+        }
+        
         countdownNumber.className = 'countdown-go';
         
-        console.log('🎉 Game Over!');
+        // אם AI - הצג כפתורים (בעתיד)
+        // אם Multiplayer - ספור לאחור ל-משחק חדש
+        if (mode === 'ai') {
+            console.log('🤖 המתן לבחירת משתמש (שוב / בחזרה)');
+        } else {
+            console.log('👥 משחק חדש בעוד 2 שניות');
+            setTimeout(() => {
+                restartGame();
+            }, 2000);
+        }
     }
     const userColors = {
         emma:  { main: '#FF6B85', dark: '#C2184C', light: '#FF8FA3' },
@@ -708,19 +778,19 @@
     function moveCarWithAnimation() {
         if (gameFinished) return;
         
-        // תנועת משתמש
+        // תנועת משתמש - יותר מהיר (5 שניות)
         const playerCar = document.querySelectorAll('.lane')[1].querySelector('svg');
         if (playerCar) {
-            playerCar.classList.add('car-moving');
+            playerCar.style.animation = 'moveCarUp 5s linear forwards';
         }
         
-        // תנועת AI
+        // תנועת AI - יותר איטי (7 שניות)
         const aiCar = document.querySelectorAll('.lane')[3].querySelector('svg');
         if (aiCar) {
-            aiCar.classList.add('car-moving');
+            aiCar.classList.add('car-moving'); // 7 שניות
         }
         
-        console.log(`🚗 קטע ${currentSegment} - רכבים התחילו לנוע!`);
+        console.log(`🚗 קטע ${currentSegment} - משתמש: 5s, AI: 7s`);
         
         // אחרי 7 שניות - reset או Game Over
         setTimeout(() => {
