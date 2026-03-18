@@ -558,8 +558,10 @@
         const countdownNumber = document.getElementById('countdownNumber');
         
         countdownModal.classList.remove('hidden');
+        countdownNumber.textContent = '🚘 מוכנים?';
+        countdownNumber.className = 'countdown-number';
         
-        let count = 3;
+        let count = 2; // ספירה מ-2
         const countdownInterval = setInterval(() => {
             if (count > 0) {
                 countdownNumber.textContent = count;
