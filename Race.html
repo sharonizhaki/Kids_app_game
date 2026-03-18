@@ -768,34 +768,56 @@
                 countdownModal.classList.add('hidden');
                 console.log('🎮 משחק התחיל!');
                 
-                // התחל תנועה עם animation
-                moveCarWithAnimation();
+                // התחל תנועה
+                moveCarWithInterval();
             }
         }, 1000);
     }
 
-    // ========== תנועת רכב עם CSS Animation ==========
-    function moveCarWithAnimation() {
+    // ========== תנועת רכב עם setInterval ומהירויות ==========
+    function moveCarWithInterval() {
         if (gameFinished) return;
         
-        // תנועת משתמש - יותר מהיר (5 שניות)
         const playerCar = document.querySelectorAll('.lane')[1].querySelector('svg');
-        if (playerCar) {
-            playerCar.style.animation = 'moveCarUp 5s linear forwards';
-        }
-        
-        // תנועת AI - יותר איטי (7 שניות)
         const aiCar = document.querySelectorAll('.lane')[3].querySelector('svg');
-        if (aiCar) {
-            aiCar.classList.add('car-moving'); // 7 שניות
-        }
         
-        console.log(`🚗 קטע ${currentSegment} - משתמש: 5s, AI: 7s`);
+        let playerBottom = 7;
+        let aiBottom = 7;
         
-        // אחרי 7 שניות - reset או Game Over
-        setTimeout(() => {
-            resetCarsForNextSegment();
-        }, 7000);
+        const frameInterval = setInterval(() => {
+            // משתמש - מהירות גבוהה יותר
+            if (playerCar && playerBottom < 100) {
+                playerBottom += 1.2; // כל frame: +1.2%
+                playerCar.style.bottom = playerBottom + '%';
+                
+                // בדוק אם הגיע ל-100%
+                if (playerBottom >= 100) {
+                    playerBottom = 7; // Reset
+                    console.log('✅ משתמש הגיע לסוף קטע');
+                }
+            }
+            
+            // AI - מהירות נמוכה יותר
+            if (aiCar && aiBottom < 100) {
+                aiBottom += 0.9; // כל frame: +0.9%
+                aiCar.style.bottom = aiBottom + '%';
+                
+                // בדוק אם הגיע ל-100%
+                if (aiBottom >= 100) {
+                    aiBottom = 7; // Reset
+                    console.log('✅ AI הגיע לסוף קטע');
+                }
+            }
+            
+            // בדוק אם משחק סיים (קטע 3)
+            if (currentSegment === 3 && (playerBottom >= 100 || aiBottom >= 100)) {
+                clearInterval(frameInterval);
+                gameFinished = true;
+                showGameOverModal();
+            }
+        }, 50); // כל 50ms
+        
+        console.log(`🚗 קטע ${currentSegment} - משתמש מהיר, AI איטי`);
     }
 
     // ========== משחק מול AI ==========
