@@ -353,98 +353,145 @@
     const mode = urlParams.get('mode');
 
     // ========== יצירת SVG רכב דינמי ==========
-    function createCarSVG(userName, mainColor, darkColor, lightColor) {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('viewBox', '0 0 100 140');
+    function createCarSVG(userName) {
+        // SVGs קבועים לכל משתמש
+        const cars = {
+            emma: `
+                <svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="car-emma" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FF6B85;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#C2184C;stop-opacity:1" />
+                        </linearGradient>
+                        <radialGradient id="hl-emma" cx="50%" cy="0%" r="40%">
+                            <stop offset="0%" style="stop-color:#FFFF00;stop-opacity:0.7" />
+                            <stop offset="100%" style="stop-color:#FFFF00;stop-opacity:0" />
+                        </radialGradient>
+                    </defs>
+                    <path d="M 30 25 L 70 25 L 75 50 L 75 100 Q 75 115 60 120 L 40 120 Q 25 115 25 100 L 25 50 Z" fill="url(#car-emma)" stroke="#C2184C" stroke-width="1.5"/>
+                    <ellipse cx="35" cy="22" rx="25" ry="25" fill="url(#hl-emma)"/>
+                    <ellipse cx="65" cy="22" rx="25" ry="25" fill="url(#hl-emma)"/>
+                    <circle cx="30" cy="50" r="11" fill="#111"/><circle cx="30" cy="50" r="7" fill="#222"/><circle cx="30" cy="50" r="4" fill="#444"/>
+                    <circle cx="70" cy="50" r="11" fill="#111"/><circle cx="70" cy="50" r="7" fill="#222"/><circle cx="70" cy="50" r="4" fill="#444"/>
+                    <circle cx="30" cy="95" r="11" fill="#111"/><circle cx="30" cy="95" r="7" fill="#222"/><circle cx="30" cy="95" r="4" fill="#444"/>
+                    <circle cx="70" cy="95" r="11" fill="#111"/><circle cx="70" cy="95" r="7" fill="#222"/><circle cx="70" cy="95" r="4" fill="#444"/>
+                </svg>
+            `,
+            rif: `
+                <svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="car-rif" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#5EC8FF;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#2B9FD9;stop-opacity:1" />
+                        </linearGradient>
+                        <radialGradient id="hl-rif" cx="50%" cy="0%" r="40%">
+                            <stop offset="0%" style="stop-color:#FFFF00;stop-opacity:0.7" />
+                            <stop offset="100%" style="stop-color:#FFFF00;stop-opacity:0" />
+                        </radialGradient>
+                    </defs>
+                    <path d="M 30 25 L 70 25 L 75 50 L 75 100 Q 75 115 60 120 L 40 120 Q 25 115 25 100 L 25 50 Z" fill="url(#car-rif)" stroke="#1E5F9E" stroke-width="1.5"/>
+                    <ellipse cx="35" cy="22" rx="25" ry="25" fill="url(#hl-rif)"/>
+                    <ellipse cx="65" cy="22" rx="25" ry="25" fill="url(#hl-rif)"/>
+                    <circle cx="30" cy="50" r="11" fill="#111"/><circle cx="30" cy="50" r="7" fill="#222"/><circle cx="30" cy="50" r="4" fill="#444"/>
+                    <circle cx="70" cy="50" r="11" fill="#111"/><circle cx="70" cy="50" r="7" fill="#222"/><circle cx="70" cy="50" r="4" fill="#444"/>
+                    <circle cx="30" cy="95" r="11" fill="#111"/><circle cx="30" cy="95" r="7" fill="#222"/><circle cx="30" cy="95" r="4" fill="#444"/>
+                    <circle cx="70" cy="95" r="11" fill="#111"/><circle cx="70" cy="95" r="7" fill="#222"/><circle cx="70" cy="95" r="4" fill="#444"/>
+                </svg>
+            `,
+            dad: `
+                <svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="car-dad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#52D273;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#1FA853;stop-opacity:1" />
+                        </linearGradient>
+                        <radialGradient id="hl-dad" cx="50%" cy="0%" r="40%">
+                            <stop offset="0%" style="stop-color:#FFFF00;stop-opacity:0.7" />
+                            <stop offset="100%" style="stop-color:#FFFF00;stop-opacity:0" />
+                        </radialGradient>
+                    </defs>
+                    <path d="M 30 25 L 70 25 L 75 50 L 75 100 Q 75 115 60 120 L 40 120 Q 25 115 25 100 L 25 50 Z" fill="url(#car-dad)" stroke="#0B8C2F" stroke-width="1.5"/>
+                    <ellipse cx="35" cy="22" rx="25" ry="25" fill="url(#hl-dad)"/>
+                    <ellipse cx="65" cy="22" rx="25" ry="25" fill="url(#hl-dad)"/>
+                    <circle cx="30" cy="50" r="11" fill="#111"/><circle cx="30" cy="50" r="7" fill="#222"/><circle cx="30" cy="50" r="4" fill="#444"/>
+                    <circle cx="70" cy="50" r="11" fill="#111"/><circle cx="70" cy="50" r="7" fill="#222"/><circle cx="70" cy="50" r="4" fill="#444"/>
+                    <circle cx="30" cy="95" r="11" fill="#111"/><circle cx="30" cy="95" r="7" fill="#222"/><circle cx="30" cy="95" r="4" fill="#444"/>
+                    <circle cx="70" cy="95" r="11" fill="#111"/><circle cx="70" cy="95" r="7" fill="#222"/><circle cx="70" cy="95" r="4" fill="#444"/>
+                </svg>
+            `,
+            mom: `
+                <svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="car-mom" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#BA68C8;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#7B1FA2;stop-opacity:1" />
+                        </linearGradient>
+                        <radialGradient id="hl-mom" cx="50%" cy="0%" r="40%">
+                            <stop offset="0%" style="stop-color:#FFFF00;stop-opacity:0.7" />
+                            <stop offset="100%" style="stop-color:#FFFF00;stop-opacity:0" />
+                        </radialGradient>
+                    </defs>
+                    <path d="M 30 25 L 70 25 L 75 50 L 75 100 Q 75 115 60 120 L 40 120 Q 25 115 25 100 L 25 50 Z" fill="url(#car-mom)" stroke="#4A148C" stroke-width="1.5"/>
+                    <ellipse cx="35" cy="22" rx="25" ry="25" fill="url(#hl-mom)"/>
+                    <ellipse cx="65" cy="22" rx="25" ry="25" fill="url(#hl-mom)"/>
+                    <circle cx="30" cy="50" r="11" fill="#111"/><circle cx="30" cy="50" r="7" fill="#222"/><circle cx="30" cy="50" r="4" fill="#444"/>
+                    <circle cx="70" cy="50" r="11" fill="#111"/><circle cx="70" cy="50" r="7" fill="#222"/><circle cx="70" cy="50" r="4" fill="#444"/>
+                    <circle cx="30" cy="95" r="11" fill="#111"/><circle cx="30" cy="95" r="7" fill="#222"/><circle cx="30" cy="95" r="4" fill="#444"/>
+                    <circle cx="70" cy="95" r="11" fill="#111"/><circle cx="70" cy="95" r="7" fill="#222"/><circle cx="70" cy="95" r="4" fill="#444"/>
+                </svg>
+            `,
+            guest: `
+                <svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="car-guest" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#D0D0D0;stop-opacity:1" />
+                        </linearGradient>
+                        <radialGradient id="hl-guest" cx="50%" cy="0%" r="40%">
+                            <stop offset="0%" style="stop-color:#FFFF00;stop-opacity:0.7" />
+                            <stop offset="100%" style="stop-color:#FFFF00;stop-opacity:0" />
+                        </radialGradient>
+                    </defs>
+                    <path d="M 30 25 L 70 25 L 75 50 L 75 100 Q 75 115 60 120 L 40 120 Q 25 115 25 100 L 25 50 Z" fill="url(#car-guest)" stroke="#666666" stroke-width="1.5"/>
+                    <ellipse cx="35" cy="22" rx="25" ry="25" fill="url(#hl-guest)"/>
+                    <ellipse cx="65" cy="22" rx="25" ry="25" fill="url(#hl-guest)"/>
+                    <circle cx="30" cy="50" r="11" fill="#111"/><circle cx="30" cy="50" r="7" fill="#222"/><circle cx="30" cy="50" r="4" fill="#444"/>
+                    <circle cx="70" cy="50" r="11" fill="#111"/><circle cx="70" cy="50" r="7" fill="#222"/><circle cx="70" cy="50" r="4" fill="#444"/>
+                    <circle cx="30" cy="95" r="11" fill="#111"/><circle cx="30" cy="95" r="7" fill="#222"/><circle cx="30" cy="95" r="4" fill="#444"/>
+                    <circle cx="70" cy="95" r="11" fill="#111"/><circle cx="70" cy="95" r="7" fill="#222"/><circle cx="70" cy="95" r="4" fill="#444"/>
+                </svg>
+            `,
+            ai: `
+                <svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="car-ai" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FFA500;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1" />
+                        </linearGradient>
+                        <radialGradient id="hl-ai" cx="50%" cy="0%" r="40%">
+                            <stop offset="0%" style="stop-color:#FFFF00;stop-opacity:0.7" />
+                            <stop offset="100%" style="stop-color:#FFFF00;stop-opacity:0" />
+                        </radialGradient>
+                    </defs>
+                    <path d="M 30 25 L 70 25 L 75 50 L 75 100 Q 75 115 60 120 L 40 120 Q 25 115 25 100 L 25 50 Z" fill="url(#car-ai)" stroke="#FF8C00" stroke-width="1.5"/>
+                    <ellipse cx="35" cy="22" rx="25" ry="25" fill="url(#hl-ai)"/>
+                    <ellipse cx="65" cy="22" rx="25" ry="25" fill="url(#hl-ai)"/>
+                    <circle cx="30" cy="50" r="11" fill="#111"/><circle cx="30" cy="50" r="7" fill="#222"/><circle cx="30" cy="50" r="4" fill="#444"/>
+                    <circle cx="70" cy="50" r="11" fill="#111"/><circle cx="70" cy="50" r="7" fill="#222"/><circle cx="70" cy="50" r="4" fill="#444"/>
+                    <circle cx="30" cy="95" r="11" fill="#111"/><circle cx="30" cy="95" r="7" fill="#222"/><circle cx="30" cy="95" r="4" fill="#444"/>
+                    <circle cx="70" cy="95" r="11" fill="#111"/><circle cx="70" cy="95" r="7" fill="#222"/><circle cx="70" cy="95" r="4" fill="#444"/>
+                </svg>
+            `
+        };
+        
+        const svgHTML = cars[userName] || cars.guest;
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = svgHTML;
+        const svg = wrapper.querySelector('svg');
+        
         svg.setAttribute('width', '50');
         svg.setAttribute('height', '75');
         svg.style.position = 'absolute';
-        
-        // Defs עם gradients
-        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-        
-        const linearGradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
-        linearGradient.setAttribute('id', `car-${userName}`);
-        linearGradient.setAttribute('x1', '0%');
-        linearGradient.setAttribute('y1', '0%');
-        linearGradient.setAttribute('x2', '100%');
-        linearGradient.setAttribute('y2', '100%');
-        
-        const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-        stop1.setAttribute('offset', '0%');
-        stop1.setAttribute('style', `stop-color:${mainColor};stop-opacity:1`);
-        
-        const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-        stop2.setAttribute('offset', '100%');
-        stop2.setAttribute('style', `stop-color:${darkColor};stop-opacity:1`);
-        
-        linearGradient.appendChild(stop1);
-        linearGradient.appendChild(stop2);
-        
-        // Headlights gradients
-        const headlightLeft = document.createElementNS('http://www.w3.org/2000/svg', 'radialGradient');
-        headlightLeft.setAttribute('id', `headlight-left-${userName}`);
-        headlightLeft.setAttribute('cx', '50%');
-        headlightLeft.setAttribute('cy', '0%');
-        headlightLeft.setAttribute('r', '40%');
-        
-        const hlStop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-        hlStop1.setAttribute('offset', '0%');
-        hlStop1.setAttribute('style', 'stop-color:#FFFF00;stop-opacity:0.7');
-        
-        const hlStop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-        hlStop2.setAttribute('offset', '100%');
-        hlStop2.setAttribute('style', 'stop-color:#FFFF00;stop-opacity:0');
-        
-        headlightLeft.appendChild(hlStop1);
-        headlightLeft.appendChild(hlStop2);
-        
-        const headlightRight = document.createElementNS('http://www.w3.org/2000/svg', 'radialGradient');
-        headlightRight.setAttribute('id', `headlight-right-${userName}`);
-        headlightRight.setAttribute('cx', '50%');
-        headlightRight.setAttribute('cy', '0%');
-        headlightRight.setAttribute('r', '40%');
-        
-        const hrStop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-        hrStop1.setAttribute('offset', '0%');
-        hrStop1.setAttribute('style', 'stop-color:#FFFF00;stop-opacity:0.7');
-        
-        const hrStop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-        hrStop2.setAttribute('offset', '100%');
-        hrStop2.setAttribute('style', 'stop-color:#FFFF00;stop-opacity:0');
-        
-        headlightRight.appendChild(hrStop1);
-        headlightRight.appendChild(hrStop2);
-        
-        defs.appendChild(linearGradient);
-        defs.appendChild(headlightLeft);
-        defs.appendChild(headlightRight);
-        svg.appendChild(defs);
-        
-        // גוף הרכב
-        const body = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        body.setAttribute('d', 'M 30 25 L 70 25 L 75 50 L 75 100 Q 75 115 60 120 L 40 120 Q 25 115 25 100 L 25 50 Z');
-        body.setAttribute('fill', `url(#car-${userName})`);
-        body.setAttribute('stroke', darkColor);
-        body.setAttribute('stroke-width', '1.5');
-        svg.appendChild(body);
-        
-        // פנסים
-        const headlightLeftCircle = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
-        headlightLeftCircle.setAttribute('cx', '35');
-        headlightLeftCircle.setAttribute('cy', '22');
-        headlightLeftCircle.setAttribute('rx', '25');
-        headlightLeftCircle.setAttribute('ry', '25');
-        headlightLeftCircle.setAttribute('fill', `url(#headlight-left-${userName})`);
-        svg.appendChild(headlightLeftCircle);
-        
-        const headlightRightCircle = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
-        headlightRightCircle.setAttribute('cx', '65');
-        headlightRightCircle.setAttribute('cy', '22');
-        headlightRightCircle.setAttribute('rx', '25');
-        headlightRightCircle.setAttribute('ry', '25');
-        headlightRightCircle.setAttribute('fill', `url(#headlight-right-${userName})`);
-        svg.appendChild(headlightRightCircle);
         
         return svg;
     }
