@@ -327,8 +327,8 @@
     console.log('✅ Firebase מחובר');
 
     // ========== קריאת משתמשים ==========
-    let myName = sessionStorage.getItem('myName') || 'guest';
-    let myUser = sessionStorage.getItem('myUser') ? JSON.parse(sessionStorage.getItem('myUser')) : null;
+    let myUser = sessionStorage.getItem('myUser') ? JSON.parse(sessionStorage.getItem('myUser')) : { id: 'guest' };
+    let myName = myUser.id; // השתמש ב-ID
     let gameId = sessionStorage.getItem('gameId') || 'race-game-1';
 
     console.log('👤 שחקן:', myName);
