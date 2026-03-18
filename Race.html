@@ -559,8 +559,31 @@
                 clearInterval(countdownInterval);
                 countdownModal.classList.add('hidden');
                 console.log('🎮 משחק התחיל!');
+                
+                // התחל תנועה
+                moveCarWithSetInterval();
             }
         }, 1000);
+    }
+
+    // ========== תנועת רכב עם setInterval ==========
+    function moveCarWithSetInterval() {
+        const carSVG = document.querySelector('.lane svg');
+        if (!carSVG) return;
+        
+        let bottomPercent = 7; // התחל ב-bottom 7%
+        const step = 0.7; // כל frame זז 0.7% (10 שניות ≈ 100 frames)
+        const interval = 100; // כל 100ms
+        
+        const moveInterval = setInterval(() => {
+            bottomPercent += step;
+            carSVG.style.bottom = bottomPercent + '%';
+            
+            if (bottomPercent >= 100) {
+                clearInterval(moveInterval);
+                console.log('✅ הרכב הגיע לעלה!');
+            }
+        }, interval);
     }
 
     // ========== משחק מול AI ==========
