@@ -148,6 +148,20 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
+        /* אנימציית תנועת רכב */
+        @keyframes moveCarUp {
+            0% {
+                bottom: 7%;
+            }
+            100% {
+                bottom: 100%;
+            }
+        }
+
+        .car-moving {
+            animation: moveCarUp 10s linear forwards !important;
+        }
+
         /* אבני שפה */
         .left-border {
             position: fixed;
@@ -621,41 +635,7 @@
         setTimeout(() => createStartLine(), 100);
     });
 
-    // ========== תנועת רכבים עם setInterval ==========
-    function startCarsMovement() {
-        const playerCar = document.querySelectorAll('.lane')[1].querySelector('svg');
-        const aiCar = document.querySelectorAll('.lane')[3].querySelector('svg');
-        
-        if (!playerCar || !aiCar) {
-            console.error('❌ רכבים לא נטענו!');
-            return;
-        }
-        
-        let playerBottom = 7;
-        let aiBottom = 7;
-        
-        const moveInterval = setInterval(() => {
-            // משתמש - מהירות גבוהה יותר
-            if (playerBottom < 100) {
-                playerBottom += 1.2; // כל frame: +1.2%
-                playerCar.style.bottom = playerBottom + '%';
-            }
-            
-            // AI - מהירות נמוכה יותר
-            if (aiBottom < 100) {
-                aiBottom += 0.9; // כל frame: +0.9%
-                aiCar.style.bottom = aiBottom + '%';
-            }
-            
-            // כששניהם הגיעו ל-100%
-            if (playerBottom >= 100 && aiBottom >= 100) {
-                clearInterval(moveInterval);
-                console.log('🏁 שניהם הגיעו לסוף!');
-            }
-        }, 50); // כל 50ms
-        
-        console.log('🚗 רכבים מתחילים לנוע!');
-    }
+    // ========== ספירה לאחור ==========
     function startCountdown() {
         const countdownModal = document.getElementById('countdownModal');
         const countdownNumber = document.getElementById('countdownNumber');
@@ -679,10 +659,27 @@
                 countdownModal.classList.add('hidden');
                 console.log('🎮 משחק התחיל!');
                 
-                // התחל תנועה עם setInterval
-                startCarsMovement();
+                // התחל תנועה עם animation
+                moveCarWithAnimation();
             }
         }, 1000);
+    }
+
+    // ========== תנועת רכב עם CSS Animation ==========
+    function moveCarWithAnimation() {
+        // תנועת משתמש
+        const playerCar = document.querySelectorAll('.lane')[1].querySelector('svg');
+        if (playerCar) {
+            playerCar.classList.add('car-moving');
+        }
+        
+        // תנועת AI
+        const aiCar = document.querySelectorAll('.lane')[3].querySelector('svg');
+        if (aiCar) {
+            aiCar.classList.add('car-moving');
+        }
+        
+        console.log('🚗 שני הרכבים התחילו לנוע!');
     }
 
     // ========== משחק מול AI ==========
