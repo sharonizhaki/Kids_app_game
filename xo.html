@@ -210,9 +210,9 @@ const displayName = params.get('player') || "משתמש";
 const userDataStr = sessionStorage.getItem('myUser');
 const userData = userDataStr ? JSON.parse(userDataStr) : null;
 
-// אם אין userData - יוצר userData זמני עם צבע אדום (משתמש רגיל, לא אורח)
+// אם אין userData - יוצר userData זמני על בסיס שם ה-player
 const finalUserData = userData || {
-    id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: displayName,  // השתמש בשם ה-player כ-ID (זה יהיה emma, rif, dad, mom, או guest_...)
     name: displayName,
     color: '#FF5C7A',  // אדום = משתמש רגיל (לא לבן שזה אורח!)
     emoji: '👤'
