@@ -261,7 +261,7 @@ async function initSession() {
             active: true 
         });
 
-        // 3. שמור heartbeat כל 10 שניות
+        // 3. שמור heartbeat כל שנייה
         setInterval(() => {
             set(ref(db, roomPath), { 
                 name: displayName,  // שם דיספליי בעברית
@@ -270,7 +270,7 @@ async function initSession() {
                 timestamp: Date.now(),
                 active: true 
             });
-        }, 10000);
+        }, 1000);
 
         // 4. קביעת תפקיד
         const snapAfter = await get(roomRef);
