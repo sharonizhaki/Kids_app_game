@@ -902,7 +902,7 @@ const games = [
 ];
 
 // ========== צפייה בחדרים ==========
-function watchAllRooms() {
+window.watchAllRooms = function() {
     onValue(ref(db, 'rooms_v3'), (snap) => {
         const allRooms = snap.val() || {};
         games.forEach(game => {
@@ -931,7 +931,7 @@ function watchAllRooms() {
 }
 
 // ========== התחלת האפליקציה ==========
-function startApp() {
+window.startApp = function() {
     window.showScreen('screen-games');
     
     const ge = document.getElementById('greeting-emoji');
@@ -963,7 +963,7 @@ function startApp() {
         list.appendChild(card);
     });
     
-    watchAllRooms();
+    window.watchAllRooms();
 }
 
 // ========== בחירת משתמש ==========
@@ -1073,7 +1073,7 @@ window.joinGame = (gameId) => {
 };
 
 // ========== המתנה לשחקן שני ==========
-function startWaiting(gameId) {
+window.startWaiting = function(gameId) {
     document.getElementById('wait-game-icon').textContent = currentGame.icon;
     document.getElementById('wait-game-name').textContent = currentGame.name;
     
