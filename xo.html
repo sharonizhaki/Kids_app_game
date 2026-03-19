@@ -184,7 +184,7 @@
 
 <div class="controls">
     <button class="btn btn-home" onclick="goHome()">🏠 בית</button>
-    <button class="btn btn-home" id="reset-btn" onclick="resetGameAndScores()" style="background: linear-gradient(135deg, rgba(255,215,0,0.12) 0%, rgba(255,215,0,0.05) 100%); border: 1.5px solid rgba(255,215,0,0.3);">🔄 איפוס משחק ותוצאה</button>
+    <button class="btn btn-home" id="reset-btn" onclick="resetGameAndScores()" style="background: linear-gradient(135deg, rgba(255,215,0,0.12) 0%, rgba(255,215,0,0.05) 100%); border: 1.5px solid rgba(255,215,0,0.3);">🔄 איפוס תוצאה</button>
 </div>
 
 <script type="module">
@@ -591,7 +591,8 @@ function render() {
             document.getElementById('win-modal').style.display = 'flex';
             document.getElementById('win-title').textContent = 'תיקו!';
             document.getElementById('win-title').style.color = '#F5C842';
-            document.getElementById('win-name').textContent = '🤝 כולם אתם כמלכים!';
+            document.getElementById('win-name').textContent = '🤝';
+            document.getElementById('win-name').style.fontSize = '4rem';
             document.getElementById('win-name').style.color = '#F5C842';
             
             // הסתר ב-2 שניות והתחל משחק חדש
@@ -809,7 +810,7 @@ window.goHome = async () => {
 
 window.resetGameAndScores = async () => {
     try {
-        // אפס את הלוח והתוצאה - מתחיל משחק מחדש ללא ניקוד
+        // אפס את הלוח והתוצאה
         const newState = {
             board: Array(9).fill(''),
             currentPlayer: 'X',
@@ -819,7 +820,7 @@ window.resetGameAndScores = async () => {
         };
         await set(gameStateRef, newState);
     } catch (error) {
-        console.error('Error resetting game:', error);
+        console.error('Error resetting game and scores:', error);
     }
 };
 

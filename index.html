@@ -951,7 +951,7 @@ function startApp() {
 
     const list = document.getElementById('game-list');
     list.innerHTML = '';
-    games.forEach((game) => {
+    games.forEach(async (game) => {
         const card = document.createElement('div');
         card.className = 'game-card';
         card.onclick = () => joinGame(game.id);
@@ -965,22 +965,24 @@ function startApp() {
         
         // אם זה אורח ויש לו משחק פעיל בxo_ai - הצג "המשך משחק" בstatus
         if (game.id === 'xo' && myUser && myUser.rawId === 'guest') {
-            onValue(ref(db, `game/xo_ai/${myUser.id}`), (snap) => {
-                if (snap.val()) {
+            try {
+                const gameSnap = await get(ref(db, `game/xo_ai/${myUser.id}`));
+                if (gameSnap.val()) {
                     // משחק קיים - הצג "המשך משחק" בstatus
                     const statusDiv = document.getElementById(`status-${game.id}`);
                     if (statusDiv) {
                         statusDiv.innerHTML = `<span style="color: var(--gold);">⏮️ המשך משחק</span>`;
                         
                         // שנה את onclick כדי ללכת ישירות ל-xo.html
-                        const gameCard = card;
-                        gameCard.onclick = () => {
+                        card.onclick = () => {
                             sessionStorage.setItem('myUser', JSON.stringify(myUser));
                             window.location.href = `xo.html?player=${encodeURIComponent(myUser.name)}&ai=true`;
                         };
                     }
                 }
-            }, { onlyOnce: true });
+            } catch (error) {
+                console.error('Error checking guest game:', error);
+            }
         }
     });
     
