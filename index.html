@@ -1129,7 +1129,12 @@ function startWaiting(gameId) {
     };
     
     roomListener = onValue(ref(db, `rooms_v3/${gameId}`), (snap) => {
-        const players = Object.values(snap.val() || {});
+        const playersObj = snap.val() || {};
+        
+        // מיין לפי timestamp - סדר כניסה
+        const players = Object.keys(playersObj)
+            .sort((a, b) => (playersObj[a].timestamp || 0) - (playersObj[b].timestamp || 0))
+            .map(key => playersObj[key]);
         
         for (let i = 0; i < 2; i++) {
             const slot = document.getElementById(`slot-${i}`);
