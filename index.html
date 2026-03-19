@@ -909,8 +909,9 @@ function watchAllRooms() {
             const statusDiv = document.getElementById(`status-${game.id}`);
             if (!statusDiv) return;
             
-            const players = Object.values(allRooms[game.id] || {})
-                .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+            const players = Object.keys(allRooms[game.id] || {})
+                .sort((a, b) => ((allRooms[game.id][a] || {}).timestamp || 0) - ((allRooms[game.id][b] || {}).timestamp || 0))
+                .map(key => allRooms[game.id][key]);
             
             if (players.length === 0) {
                 statusDiv.innerHTML = '';
