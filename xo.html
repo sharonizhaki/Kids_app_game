@@ -361,8 +361,35 @@ async function initSession() {
                 gameStateRef = ref(db, `game/xo/${currentGameId}`);
                 
                 // מחק את שני השחקנים מחדר המתנה - המשחק התחיל!
+                // אבל קודם עדכן את הריבועים עם השמות!
+                if (players[firstPlayer]) {
+                    const p1 = players[firstPlayer];
+                    playerColors.X = p1.color || '#FF5C7A';
+                    playerNames.X = p1.name;
+                    playerNames.X_emoji = p1.emoji;
+                    document.getElementById('name-X').innerHTML = `${p1.emoji || '❌'} ${p1.name}`;
+                    document.getElementById('name-X').style.color = p1.color || 'white';
+                    document.getElementById('card-X').style.borderColor = p1.color || 'white';
+                }
+                
+                if (players[secondPlayer]) {
+                    const p2 = players[secondPlayer];
+                    playerColors.O = p2.color || '#4DB8FF';
+                    playerNames.O = p2.name;
+                    playerNames.O_emoji = p2.emoji;
+                    document.getElementById('name-O').innerHTML = `${p2.emoji || '⭕'} ${p2.name}`;
+                    document.getElementById('name-O').style.color = p2.color || 'white';
+                    document.getElementById('card-O').style.borderColor = p2.color || 'white';
+                }
+                
+                // עכשיו מחק מחדר
                 await remove(ref(db, `rooms_v3/xo/${firstPlayer}`));
                 await remove(ref(db, `rooms_v3/xo/${secondPlayer}`));
+                
+                // עצור את roomListener כדי שלא תנסה לרוץ שוב
+                if (roomListener) {
+                    roomListener();  // זה בדיוק מה שחוזרת onValue
+                }
                 
                 // בדוק אם משחק קיים
                 const gameSnap = await get(gameStateRef);
