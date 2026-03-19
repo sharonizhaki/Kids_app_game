@@ -967,8 +967,10 @@ function startApp() {
         if (game.id === 'xo' && myUser && myUser.rawId === 'guest') {
             try {
                 const gameSnap = await get(ref(db, `game/xo_ai/${myUser.id}`));
-                if (gameSnap.val()) {
-                    // משחק קיים - הצג "המשך משחק" בstatus
+                const gameData = gameSnap.val();
+                // בדוק אם יש משחק פעיל (gameOver = false)
+                if (gameData && !gameData.gameOver) {
+                    // משחק פעיל - הצג "המשך משחק" בstatus
                     const statusDiv = document.getElementById(`status-${game.id}`);
                     if (statusDiv) {
                         statusDiv.innerHTML = `<span style="color: var(--gold);">⏮️ המשך משחק</span>`;

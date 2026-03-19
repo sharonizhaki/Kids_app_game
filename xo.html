@@ -286,12 +286,8 @@ async function initSession() {
             playerNames.O_emoji = '🤖';
             playerColors.O = '#FFB347';  // צבע כתום ל-AI
             
-            // אם זה אורח - הסתר את כפתור reset (אורח משחק זמני בלבד)
-            if (userData?.id === undefined || userData?.color === '#FFFFFF') {
-                document.getElementById('reset-btn').style.display = 'none';
-            } else {
-                document.getElementById('reset-btn').style.display = 'block';
-            }
+            // בAI mode - הכפתור תמיד גלוי
+            document.getElementById('reset-btn').style.display = 'block';
             
             // בדוק אם כבר יש משחק - אם כן, אל תאתחל אותו מחדש
             const gameSnap = await get(gameStateRef);
@@ -576,7 +572,7 @@ function render() {
             
             document.getElementById('win-modal').classList.add('show');
             document.getElementById('win-modal').style.display = 'flex';
-            document.getElementById('win-name').textContent = `🏅 ${winnerEmoji} ${winnerName} ניצחה!`;
+            document.getElementById('win-name').textContent = `🏅 ${winnerEmoji} ${winnerName}`;
             document.getElementById('win-name').style.color = winnerColor;
             
             // הסתר ב-2 שניות והתחל משחק חדש
