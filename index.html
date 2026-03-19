@@ -1273,21 +1273,8 @@ window.playWithAI_Snakes = () => {
 };
 
 // ========== עזיבה ==========
-window.logout = async () => {
-    // אם זה אורח - מחק את המשחק שלו גם
-    if (myUser && myUser.rawId === 'guest') {
-        try {
-            const guestId = myUser.id;
-            
-            // מחק את game state של האורח
-            await remove(ref(db, `game/xo_ai/${guestId}`));
-            
-            console.log(`🗑️ Deleted guest game: ${guestId}`);
-        } catch (error) {
-            console.error('Error deleting guest game:', error);
-        }
-    }
-    
+window.logout = () => {
+    // מחק את המשתמש מsessionStorage
     sessionStorage.removeItem('myUser'); 
     location.reload(); 
 };
