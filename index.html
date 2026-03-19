@@ -859,7 +859,7 @@
             
             <div style="display: flex; gap: 10px; margin-top: 20px; width: 100%;">
                 <button class="btn-main" id="waiting-btn" onclick="cancelWaiting()" style="flex: 1;">ביטול</button>
-                <button class="btn-main" onclick="playWithAI_XO()" style="flex: 1; background: linear-gradient(135deg, #4DB8FF 0%, #3DB8FF 100%); box-shadow: 0 5px 20px rgba(77, 184, 255, 0.3);">🤖 שחק לבד</button>
+                <button class="btn-main" onclick="playWithAI_XO()" style="flex: 1; background: linear-gradient(135deg, #4DB8FF 0%, #3DB8FF 100%); box-shadow: 0 5px 20px rgba(77, 184, 255, 0.3);">🤖 המשך משחק</button>
             </div>
         </div>
     </div>
@@ -951,7 +951,7 @@ function startApp() {
 
     const list = document.getElementById('game-list');
     list.innerHTML = '';
-    games.forEach(async (game) => {
+    games.forEach((game) => {
         const card = document.createElement('div');
         card.className = 'game-card';
         card.onclick = () => joinGame(game.id);
@@ -962,30 +962,6 @@ function startApp() {
             <div class="game-status" id="status-${game.id}"></div>
         `;
         list.appendChild(card);
-        
-        // אם זה אורח ויש לו משחק פעיל בxo_ai - הצג "המשך משחק" בstatus
-        if (game.id === 'xo' && myUser && myUser.rawId === 'guest') {
-            try {
-                const gameSnap = await get(ref(db, `game/xo_ai/${myUser.id}`));
-                const gameData = gameSnap.val();
-                // בדוק אם יש משחק פעיל (gameOver = false)
-                if (gameData && !gameData.gameOver) {
-                    // משחק פעיל - הצג "המשך משחק" בstatus
-                    const statusDiv = document.getElementById(`status-${game.id}`);
-                    if (statusDiv) {
-                        statusDiv.innerHTML = `<span style="color: var(--gold);">⏮️ המשך משחק</span>`;
-                        
-                        // שנה את onclick כדי ללכת ישירות ל-xo.html
-                        card.onclick = () => {
-                            sessionStorage.setItem('myUser', JSON.stringify(myUser));
-                            window.location.href = `xo.html?player=${encodeURIComponent(myUser.name)}&ai=true`;
-                        };
-                    }
-                }
-            } catch (error) {
-                console.error('Error checking guest game:', error);
-            }
-        }
     });
     
     watchAllRooms();
