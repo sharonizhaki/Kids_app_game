@@ -38,17 +38,17 @@
             border-color: var(--gold);
             transform: scale(1.08);
             box-shadow: 0 0 25px rgba(245, 200, 66, 0.4), inset 0 0 15px rgba(245, 200, 66, 0.1);
-            animation: borderGlow 1.2s ease-in-out infinite;
+            animation: borderGlow 0.8s ease-in-out infinite;
         }
         
         @keyframes borderGlow {
             0%, 100% { 
                 border-color: var(--gold);
-                box-shadow: 0 0 25px rgba(245, 200, 66, 0.4), inset 0 0 15px rgba(245, 200, 66, 0.1);
+                box-shadow: 0 0 15px rgba(245, 200, 66, 0.3), inset 0 0 10px rgba(245, 200, 66, 0.05);
             }
             50% { 
                 border-color: var(--gold);
-                box-shadow: 0 0 40px rgba(245, 200, 66, 0.7), inset 0 0 25px rgba(245, 200, 66, 0.25);
+                box-shadow: 0 0 50px rgba(245, 200, 66, 1), inset 0 0 30px rgba(245, 200, 66, 0.4);
             }
         }
         
@@ -606,9 +606,11 @@ function render() {
     } else if (isViewer) {
         status.textContent = "👁️ אתה צופה בלבד";
     } else {
-        // אם תורך - הצג "ממתין ל-[שם]" של השחקן השני
+        // אם תורך - הצג "תורך!" + שם + אימוג'י
         if (mySymbol === currentPlayer) {
-            status.textContent = "תורך!";
+            const myName = playerNames[mySymbol];
+            const myEmoji = playerNames[mySymbol + '_emoji'];
+            status.textContent = `🎮 תורך! ${myEmoji} ${myName}`;
             
             // אם זה AI mode וזה תור של AI - עשה מהלך אוטומטי
             if (isAIMode && mySymbol === 'X' && currentPlayer === 'O') {
@@ -618,7 +620,7 @@ function render() {
             const otherSymbol = mySymbol === 'X' ? 'O' : 'X';
             const otherName = playerNames[otherSymbol];
             const otherEmoji = playerNames[otherSymbol + '_emoji'];
-            status.textContent = `ממתין ל-${otherEmoji} ${otherName}`;
+            status.textContent = `⏳ ממתין ל-${otherEmoji} ${otherName}`;
             
             // אם זה AI mode וזה תור של AI - עשה מהלך אוטומטי
             if (isAIMode && otherSymbol === 'O' && currentPlayer === 'O') {
@@ -795,10 +797,8 @@ window.goHome = async () => {
             await remove(ref(db, `game/xo/${currentGameId}`));
             // מחק את כל החדר (כל השחקנים)
             await remove(ref(db, `rooms_v3/xo`));
-        } else {
-            // AI mode - פשוט מחק את עצמך
-            await remove(ref(db, `rooms_v3/xo_ai/${myName}`));
         }
+        // AI mode - אל תמחק כלום, רק חזור לindex
     } catch (error) {
         console.error('Error in goHome:', error);
     }
