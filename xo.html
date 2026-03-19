@@ -788,14 +788,14 @@ async function autoNextRound() {
 
 window.goHome = async () => {
     try {
-        // אם זה לא AI mode - מחק את החדר כולו (משחק + room)
         if (!isAIMode && currentGameId) {
-            // מחק את המשחק
+            // Non-AI mode - מחק את החדר כולו (משחק + room)
             await remove(ref(db, `game/xo/${currentGameId}`));
-            // מחק את כל החדר (כל השחקנים)
             await remove(ref(db, `rooms_v3/xo`));
+        } else if (isAIMode && myName) {
+            // AI mode - מחק את עצמך מ-rooms כדי שלא תראה כממתין
+            await remove(ref(db, `rooms_v3/xo_ai/${myName}`));
         }
-        // AI mode - אל תמחק כלום, רק חזור לindex
     } catch (error) {
         console.error('Error in goHome:', error);
     }
