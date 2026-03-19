@@ -381,9 +381,12 @@ async function initSession() {
                 currentGameId = `${firstPlayer}_${secondPlayer}`;
                 gameStateRef = ref(db, `game/xo/${currentGameId}`);
                 
+                alert(`gameId: ${currentGameId}\nmySymbol: ${mySymbol}\ngameStateRef set`);
+                
                 // מחק את שני השחקנים מחדר המתנה - המשחק התחיל!
                 // אבל קודם עדכן את הריבועים עם השמות!
                 if (players[firstPlayer]) {
+                    alert(`Updating name-X with: ${players[firstPlayer].name}`);
                     const p1 = players[firstPlayer];
                     playerColors.X = p1.color || '#FF5C7A';
                     playerNames.X = p1.name;
@@ -394,6 +397,7 @@ async function initSession() {
                 }
                 
                 if (players[secondPlayer]) {
+                    alert(`Updating name-O with: ${players[secondPlayer].name}`);
                     const p2 = players[secondPlayer];
                     playerColors.O = p2.color || '#4DB8FF';
                     playerNames.O = p2.name;
@@ -403,9 +407,13 @@ async function initSession() {
                     document.getElementById('card-O').style.borderColor = p2.color || 'white';
                 }
                 
+                alert(`About to delete players from room...`);
+                
                 // עכשיו מחק מחדר
                 await remove(ref(db, `rooms_v3/xo/${firstPlayer}`));
                 await remove(ref(db, `rooms_v3/xo/${secondPlayer}`));
+                
+                alert(`Players deleted from room. About to reset game...`);
                 
                 // עצור את roomListener כדי שלא תנסה לרוץ שוב
                 // בטל את ה-listener עם off
@@ -417,9 +425,13 @@ async function initSession() {
                 const gameSnap = await get(gameStateRef);
                 const gameExists = gameSnap.val() !== null;
                 
+                alert(`gameExists: ${gameExists}`);
+                
                 // אם אין משחק - אתחל
                 if (!gameExists) {
+                    alert(`Creating new game...`);
                     resetFirebaseGame(true);
+                    alert(`Game created!`);
                 }
             }
         }
