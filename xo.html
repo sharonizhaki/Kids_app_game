@@ -324,9 +324,34 @@ async function initSession() {
                 gameStateRef = ref(db, 'game/xo/pending');  // זמני
                 resetFirebaseGame(true);
             } else if (playerNamesAfter.length === 2) {
-                // משחקן שני - עדכן gameId בסדר א-לפבתי
+                // משחקן שני - יצור debug list
+                const firstPlayer = playerNamesAfter[0];
+                const secondPlayer = playerNamesAfter[1];
+                
+                const debugDiv = document.createElement('div');
+                debugDiv.style.position = 'fixed';
+                debugDiv.style.bottom = '0';
+                debugDiv.style.left = '0';
+                debugDiv.style.width = '100%';
+                debugDiv.style.backgroundColor = '#000';
+                debugDiv.style.color = '#0f0';
+                debugDiv.style.padding = '10px';
+                debugDiv.style.fontSize = '10px';
+                debugDiv.style.fontFamily = 'monospace';
+                debugDiv.style.zIndex = '10000';
+                debugDiv.style.maxHeight = '50vh';
+                debugDiv.style.overflowY = 'auto';
+                debugDiv.style.whiteSpace = 'pre-wrap';
+                debugDiv.style.wordBreak = 'break-all';
+                
+                let log = '=== MULTIPLAYER DEBUG ===\n\n';
+                log += `1️⃣ PLAYERS: ${firstPlayer} vs ${secondPlayer}\n`;
+                log += `2️⃣ myName: ${myName}\n`;
+                log += `3️⃣ mySymbol: ${playerNamesAfter[0] === myName ? 'X' : 'O'}\n`;
+                log += `4️⃣ gameId: ${firstPlayer}_${secondPlayer}\n`;
+                log += `5️⃣ gameStateRef path: game/xo/${firstPlayer}_${secondPlayer}\n\n`;
+                
                 mySymbol = playerNamesAfter[0] === myName ? 'X' : 'O';
-                // גנרט gameId מהשניים בסדר א-לפבתי
                 currentGameId = playerNamesAfter.slice(0, 2).join('_');
                 gameStateRef = ref(db, `game/xo/${currentGameId}`);
                 
@@ -334,10 +359,23 @@ async function initSession() {
                 const gameSnap = await get(gameStateRef);
                 const gameExists = gameSnap.val() !== null;
                 
+                log += `6️⃣ Checking Firebase:\n`;
+                log += `   gameExists: ${gameExists}\n`;
+                log += `   gameSnap.val(): ${JSON.stringify(gameSnap.val())}\n\n`;
+                
                 // אם אין משחק - אתחל
                 if (!gameExists) {
+                    log += `7️⃣ Creating new game...\n`;
                     resetFirebaseGame(true);
+                    log += `✅ Game created!\n`;
+                } else {
+                    log += `7️⃣ Game exists - no need to create\n`;
                 }
+                
+                log += `\n🎮 startListeners will now be called\n`;
+                
+                debugDiv.innerHTML = log.replace(/\n/g, '<br>');
+                document.body.appendChild(debugDiv);
             }
         }
 
@@ -499,6 +537,23 @@ function startListeners() {
 }
 
 function resetFirebaseGame(fullReset = false) {
+    // VISUAL DEBUG - צבע ירוק אם קוראת
+    const indicator = document.createElement('div');
+    indicator.style.position = 'fixed';
+    indicator.style.top = '50%';
+    indicator.style.left = '50%';
+    indicator.style.transform = 'translate(-50%, -50%)';
+    indicator.style.backgroundColor = '#00ff00';
+    indicator.style.color = '#000';
+    indicator.style.padding = '20px';
+    indicator.style.fontSize = '20px';
+    indicator.style.fontWeight = 'bold';
+    indicator.style.zIndex = '10000';
+    indicator.style.borderRadius = '10px';
+    indicator.innerHTML = '🎮 resetFirebaseGame CALLED!';
+    document.body.appendChild(indicator);
+    setTimeout(() => indicator.remove(), 3000);
+    
     const newState = {
         board: Array(9).fill(''),
         currentPlayer: 'X',
@@ -506,6 +561,7 @@ function resetFirebaseGame(fullReset = false) {
         gameOver: false,
         scores: fullReset ? { X: 0, O: 0, draws: 0 } : (currentGameState?.scores || { X: 0, O: 0, draws: 0 })
     };
+    
     set(gameStateRef, newState);
 }
 
