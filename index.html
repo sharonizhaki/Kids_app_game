@@ -1112,7 +1112,7 @@ function startWaiting(gameId) {
         timestamp: Date.now()
     });
     
-    // שמור heartbeat כל 10 שניות
+    // שמור heartbeat כל 5 שניות
     const heartbeatInterval = setInterval(() => {
         set(myPlayerRef, { 
             name: myUser.name, 
@@ -1120,7 +1120,7 @@ function startWaiting(gameId) {
             color: myUser.color,
             timestamp: Date.now()
         });
-    }, 10000);
+    }, 5000);
     
     // בעת ביטול המתנה, הפסק את heartbeat
     window.stopHeartbeat = () => {
@@ -1318,8 +1318,8 @@ setInterval(async () => {
             for (const [playerId, player] of Object.entries(players)) {
                 const timeSinceLastBeat = now - (player.timestamp || 0);
                 
-                // אם heartbeat מת יותר מ-5 שניות - הסר (אופציה 1)
-                if (timeSinceLastBeat > 5000) {
+                // אם heartbeat מת יותר מ-20 שניות - הסר
+                if (timeSinceLastBeat > 20000) {
                     await remove(ref(db, `rooms_v3/${gameId}/${playerId}`));
                 }
             }
