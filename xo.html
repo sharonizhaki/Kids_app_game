@@ -262,7 +262,7 @@ async function initSession() {
         });
 
         // 3. שמור heartbeat כל שנייה
-        setInterval(() => {
+        let heartbeatInterval = setInterval(() => {
             set(ref(db, roomPath), { 
                 name: displayName,  // שם דיספליי בעברית
                 color: myColor,
@@ -271,6 +271,9 @@ async function initSession() {
                 active: true 
             });
         }, 1000);
+        
+        // שמור את heartbeatInterval globally כדי שנוכל לעצור אותו
+        window.heartbeatInterval = heartbeatInterval;
 
         // 4. קביעת תפקיד
         const snapAfter = await get(roomRef);
@@ -795,6 +798,11 @@ async function autoNextRound() {
 
 window.goHome = async () => {
     try {
+        // עצור את heartbeat
+        if (window.heartbeatInterval) {
+            clearInterval(window.heartbeatInterval);
+        }
+        
         if (!isAIMode && currentGameId) {
             // Non-AI mode - מחק את החדר כולו (משחק + room)
             await remove(ref(db, `game/xo/${currentGameId}`));
