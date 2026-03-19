@@ -429,15 +429,44 @@ function startListeners() {
 
         // עדכן את gameStateRef אם משחקן שני הצטרף (Non-AI mode)
         if (!isAIMode && !isViewer && names.length === 2 && !currentGameId) {
-            // משחקן שני הצטרף - עדכן את gameId
-            currentGameId = names.slice(0, 2).join('_');
-            gameStateRef = ref(db, `game/xo/${currentGameId}`);
+            // משחקן שני הצטרף - מיין לפי timestamp
+            const sortedNames = Object.keys(players)
+                .sort((a, b) => (players[a].timestamp || 0) - (players[b].timestamp || 0));
+            
+            // עדכן את gameId לפי סדר כניסה
+            currentGameId = `${sortedNames[0]}_${sortedNames[1]}`;
+            
+            // עדכן את gameStateRef
+            const newGameStateRef = ref(db, `game/xo/${currentGameId}`);
             
             // בדוק אם משחק קיים (אם לא, יוצרים חדש)
-            get(gameStateRef).then(snap => {
+            get(newGameStateRef).then(snap => {
                 if (!snap.val()) {
                     resetFirebaseGame(true);
                 }
+                
+                // עדכן את gameStateRef וrestart את listener
+                gameStateRef = newGameStateRef;
+                
+                // הסר listener ישן (on gameStateRef)
+                // ויצור listener חדש
+                onValue(gameStateRef, (snap) => {
+                    const data = snap.val();
+                    console.log('📊 gameState updated:', data);
+                    if (data) { 
+                        currentGameState = data; 
+                    } else {
+                        currentGameState = null;
+                    }
+                    
+                    if (data && data.scores) {
+                        document.getElementById('wins-X').textContent = data.scores.X;
+                        document.getElementById('wins-O').textContent = data.scores.O;
+                        document.getElementById('draws').textContent = data.scores.draws;
+                    }
+                    
+                    render(); 
+                });
             });
         }
 
