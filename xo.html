@@ -288,6 +288,9 @@ async function initSession() {
         const snapAfter = await get(roomRef);
         const playersAfter = snapAfter.val() || {};
         
+        console.log('🎲 Players in room:', playersAfter);
+        console.log('📊 playerNamesAfter.length:', Object.keys(playersAfter).length);
+        
         // מיין לפי timestamp - מי הקדום (נכנס ראשון) למי החדש
         const playerNamesAfter = Object.keys(playersAfter)
             .sort((a, b) => (playersAfter[a].timestamp || 0) - (playersAfter[b].timestamp || 0));
@@ -353,6 +356,8 @@ async function initSession() {
                 // משחקן שני - הראשון בסדר כניסה (timestamp) הוא X
                 const firstPlayer = playerNamesAfter[0];
                 const secondPlayer = playerNamesAfter[1];
+                
+                console.log('✅ 2 players detected!', { firstPlayer, secondPlayer, myName });
                 
                 mySymbol = myName === firstPlayer ? 'X' : 'O';
                 
