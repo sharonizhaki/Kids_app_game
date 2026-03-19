@@ -859,7 +859,7 @@
             
             <div style="display: flex; gap: 10px; margin-top: 20px; width: 100%;">
                 <button class="btn-main" id="waiting-btn" onclick="cancelWaiting()" style="flex: 1;">ביטול</button>
-                <button class="btn-main" onclick="playWithAI_XO()" style="flex: 1; background: linear-gradient(135deg, #4DB8FF 0%, #3DB8FF 100%); box-shadow: 0 5px 20px rgba(77, 184, 255, 0.3);">🤖 המשך משחק</button>
+                <button class="btn-main" onclick="playWithAI_XO()" style="flex: 1; background: linear-gradient(135deg, #4DB8FF 0%, #3DB8FF 100%); box-shadow: 0 5px 20px rgba(77, 184, 255, 0.3);">🤖 שחק מול מחשב</button>
             </div>
         </div>
     </div>
@@ -955,7 +955,6 @@ function startApp() {
         const card = document.createElement('div');
         card.className = 'game-card';
         card.onclick = () => joinGame(game.id);
-        card.setAttribute('data-game', game.id);
         card.innerHTML = `
             <i>${game.icon}</i>
             <span>${game.name}</span>
@@ -1113,7 +1112,7 @@ function startWaiting(gameId) {
         timestamp: Date.now()
     });
     
-    // שמור heartbeat כל שנייה
+    // שמור heartbeat כל 10 שניות
     const heartbeatInterval = setInterval(() => {
         set(myPlayerRef, { 
             name: myUser.name, 
@@ -1121,7 +1120,7 @@ function startWaiting(gameId) {
             color: myUser.color,
             timestamp: Date.now()
         });
-    }, 1000);
+    }, 10000);
     
     // בעת ביטול המתנה, הפסק את heartbeat
     window.stopHeartbeat = () => {
@@ -1129,19 +1128,7 @@ function startWaiting(gameId) {
     };
     
     roomListener = onValue(ref(db, `rooms_v3/${gameId}`), (snap) => {
-        const playersObj = snap.val();
-        
-        // אם החדר נמחק לחלוטין (null) - חזור לתפריט
-        if (playersObj === null) {
-            console.log('🚪 חדר המשחק נמחק');
-            if (roomListener) roomListener();
-            if (window.stopHeartbeat) window.stopHeartbeat();
-            alert('😢 המשחק הסתיים. המשחקן השני עזב את המשחק.');
-            window.location.href = 'index.html';
-            return;
-        }
-        
-        const players = Object.values(playersObj || {});
+        const players = Object.values(snap.val() || {});
         
         for (let i = 0; i < 2; i++) {
             const slot = document.getElementById(`slot-${i}`);
@@ -1183,9 +1170,9 @@ function startWaiting(gameId) {
                     statusElement.textContent = countdown;
                 } else {
                     clearInterval(countdownInterval);
-                    // עבור למשחק - בלי gameId (יוגדר ב-xo.html)
+                    // עבור למשחק - העבר gameId
                     if (roomListener) roomListener();
-                    window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}`;
+                    window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}&game=${gameId}`;
                 }
             }, 1000);
         } else {
@@ -1286,27 +1273,9 @@ window.playWithAI_Snakes = () => {
 };
 
 // ========== עזיבה ==========
-window.logout = async () => {
-    // אם זה אורח - מחק מכל החדרים וגם את game state
-    if (myUser && myUser.rawId === 'guest') {
-        try {
-            const guestId = myUser.id;
-            
-            // מחק מ-rooms (חדרים)
-            await remove(ref(db, `rooms_v3/xo/${guestId}`));
-            await remove(ref(db, `rooms_v3/xo_ai/${guestId}`));
-            
-            // מחק את game state של האורח
-            await remove(ref(db, `game/xo_ai/${guestId}`));
-            
-            console.log(`🗑️ Removed guest completely: ${guestId}`);
-        } catch (error) {
-            console.error('Error removing guest from database:', error);
-        }
-    }
-    
-    sessionStorage.removeItem('myUser');
-    location.reload();
+window.logout = () => { 
+    sessionStorage.removeItem('myUser'); 
+    location.reload(); 
 };
 
 window.goToTasks = () => {
@@ -1333,7 +1302,7 @@ window.addEventListener('load', () => {
     }
 });
 
-// ============= ניקוי heartbeat - בדוק כל 0.5 שניות =============
+// ============= ניקוי heartbeat - בדוק כל 5 שניות =============
 setInterval(async () => {
     try {
         // בדוק את כל המשחקים - Non-AI
@@ -1349,10 +1318,9 @@ setInterval(async () => {
             for (const [playerId, player] of Object.entries(players)) {
                 const timeSinceLastBeat = now - (player.timestamp || 0);
                 
-                // אם heartbeat מת יותר מ-2 שניות - הסר שחקן
-                if (timeSinceLastBeat > 2000) {
+                // אם heartbeat מת יותר מ-5 שניות - הסר (אופציה 1)
+                if (timeSinceLastBeat > 5000) {
                     await remove(ref(db, `rooms_v3/${gameId}/${playerId}`));
-                    console.log(`🗑️ Removed inactive player: ${playerId} from ${gameId}`);
                 }
             }
         }
@@ -1367,8 +1335,9 @@ setInterval(async () => {
             
             const timeSinceLastBeat = now - (player.timestamp || 0);
             
-            // אם heartbeat מת יותר מ-2 שניות - הסר אורח
-            if (timeSinceLastBeat > 2000) {
+            // אם heartbeat מת יותר מ-15 שניות - הסר אורח
+            // (15 כי heartbeat כל 10, אז 15 זה 1.5 missed beats)
+            if (timeSinceLastBeat > 15000) {
                 await remove(ref(db, `rooms_v3/xo_ai/${playerId}`));
                 console.log(`🗑️ Removed inactive guest: ${playerId}`);
             }
@@ -1376,7 +1345,7 @@ setInterval(async () => {
     } catch (error) {
         console.error('Error in heartbeat cleanup:', error);
     }
-}, 500);  // בדוק כל 0.5 שניות
+}, 5000);  // בדוק כל 5 שניות
 </script>
 </body>
 </html>
