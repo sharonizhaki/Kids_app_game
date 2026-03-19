@@ -932,7 +932,7 @@ function watchAllRooms() {
 
 // ========== התחלת האפליקציה ==========
 function startApp() {
-    showScreen('screen-games');
+    window.showScreen('screen-games');
     
     const ge = document.getElementById('greeting-emoji');
     const gn = document.getElementById('greeting-name');
@@ -1284,7 +1284,7 @@ window.goToTasks = () => {
 };
 
 // ========== תצוגת מסך ==========
-function showScreen(screenId) {
+window.showScreen = (screenId) => {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
 }
