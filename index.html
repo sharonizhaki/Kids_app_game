@@ -859,7 +859,7 @@
             
             <div style="display: flex; gap: 10px; margin-top: 20px; width: 100%;">
                 <button class="btn-main" id="waiting-btn" onclick="cancelWaiting()" style="flex: 1;">ביטול</button>
-                <button class="btn-main" onclick="playWithAI_XO()" style="flex: 1; background: linear-gradient(135deg, #4DB8FF 0%, #3DB8FF 100%); box-shadow: 0 5px 20px rgba(77, 184, 255, 0.3);">🤖 שחק מול מחשב</button>
+                <button class="btn-main" onclick="playWithAI_XO()" style="flex: 1; background: linear-gradient(135deg, #4DB8FF 0%, #3DB8FF 100%); box-shadow: 0 5px 20px rgba(77, 184, 255, 0.3);">🤖 שחק לבד</button>
             </div>
         </div>
     </div>
@@ -902,7 +902,7 @@ const games = [
 ];
 
 // ========== צפייה בחדרים ==========
-window.watchAllRooms = function() {
+function watchAllRooms() {
     onValue(ref(db, 'rooms_v3'), (snap) => {
         const allRooms = snap.val() || {};
         games.forEach(game => {
@@ -931,8 +931,8 @@ window.watchAllRooms = function() {
 }
 
 // ========== התחלת האפליקציה ==========
-window.startApp = function() {
-    window.showScreen('screen-games');
+function startApp() {
+    showScreen('screen-games');
     
     const ge = document.getElementById('greeting-emoji');
     const gn = document.getElementById('greeting-name');
@@ -963,7 +963,7 @@ window.startApp = function() {
         list.appendChild(card);
     });
     
-    window.watchAllRooms();
+    watchAllRooms();
 }
 
 // ========== בחירת משתמש ==========
@@ -1073,7 +1073,7 @@ window.joinGame = (gameId) => {
 };
 
 // ========== המתנה לשחקן שני ==========
-window.startWaiting = function(gameId) {
+function startWaiting(gameId) {
     document.getElementById('wait-game-icon').textContent = currentGame.icon;
     document.getElementById('wait-game-name').textContent = currentGame.name;
     
@@ -1273,8 +1273,7 @@ window.playWithAI_Snakes = () => {
 };
 
 // ========== עזיבה ==========
-window.logout = () => {
-    // מחק את המשתמש מsessionStorage
+window.logout = () => { 
     sessionStorage.removeItem('myUser'); 
     location.reload(); 
 };
@@ -1284,7 +1283,7 @@ window.goToTasks = () => {
 };
 
 // ========== תצוגת מסך ==========
-window.showScreen = (screenId) => {
+function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
 }
@@ -1336,30 +1335,11 @@ setInterval(async () => {
             
             const timeSinceLastBeat = now - (player.timestamp || 0);
             
-            // אם heartbeat מת יותר מ-15 שניות - הסר משתמש
-            // (heartbeat כל 1 שנייה, אז 15 שניות = 15 missed beats = ודאי מת)
-            if (timeSinceLastBeat > 15000) {
-                await remove(ref(db, `rooms_v3/xo/${playerId}`));
-                console.log(`🗑️ Removed inactive player: ${playerId}`);
-            }
-        }
-        
-        // בדוק גם AI mode אורחים
-        const aiGamesSnap = await get(ref(db, 'rooms_v3/xo_ai'));
-        const aiGames = aiGamesSnap.val() || {};
-        
-        // לכל אורח ב-AI mode
-        for (const [playerId, player] of Object.entries(aiGames)) {
-            if (!player || typeof player !== 'object') continue;
-            
-            const timeSinceLastBeat = now - (player.timestamp || 0);
-            
-            // אם heartbeat מת יותר מ-15 שניות - הסר אורח וגם משחק שלו
+            // אם heartbeat מת יותר מ-15 שניות - הסר אורח
+            // (15 כי heartbeat כל 10, אז 15 זה 1.5 missed beats)
             if (timeSinceLastBeat > 15000) {
                 await remove(ref(db, `rooms_v3/xo_ai/${playerId}`));
-                // מחק גם את משחק ה-AI שלו
-                await remove(ref(db, `game/xo_ai/${playerId}`));
-                console.log(`🗑️ Removed inactive guest and game: ${playerId}`);
+                console.log(`🗑️ Removed inactive guest: ${playerId}`);
             }
         }
     } catch (error) {
