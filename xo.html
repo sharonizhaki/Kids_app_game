@@ -16,7 +16,7 @@
             padding: 18px 15px 16px; 
             border-radius: 25px; 
             text-align: center; 
-            min-width: 100px;
+            width: 100px;
             height: 135px;
             border: 2.5px solid transparent; 
             transition: all 0.3s ease;
@@ -38,6 +38,18 @@
             border-color: var(--gold);
             transform: scale(1.08);
             box-shadow: 0 0 25px rgba(245, 200, 66, 0.4), inset 0 0 15px rgba(245, 200, 66, 0.1);
+            animation: borderGlow 1.2s ease-in-out infinite;
+        }
+        
+        @keyframes borderGlow {
+            0%, 100% { 
+                border-color: var(--gold);
+                box-shadow: 0 0 25px rgba(245, 200, 66, 0.4), inset 0 0 15px rgba(245, 200, 66, 0.1);
+            }
+            50% { 
+                border-color: var(--gold);
+                box-shadow: 0 0 40px rgba(245, 200, 66, 0.7), inset 0 0 25px rgba(245, 200, 66, 0.25);
+            }
         }
         
         .name { font-weight: 900; font-size: 0.95rem; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 25px; }
@@ -764,13 +776,21 @@ async function autoNextRound() {
 
 window.goHome = async () => {
     try {
-        // מחק משחק מ-DB (אופציה 1)
-        if (gameRef && !isAIMode) {
-            await remove(gameRef);
-        }
-        
-        // מחק את עצמך מ-room
+        // מחק את עצמך מ-room תחילה
         await remove(ref(db, `rooms_v3/xo${isAIMode ? '_ai' : ''}/${myName}`));
+        
+        // אם זה לא AI mode - בדוק אם יש עוד שחקנים בחדר
+        if (!isAIMode && currentGameId) {
+            const roomRef = ref(db, `rooms_v3/xo`);
+            const roomSnap = await get(roomRef);
+            const players = roomSnap.val() || {};
+            
+            // אם אין עוד שחקנים בחדר - מחק את המשחק
+            if (Object.keys(players).length === 0) {
+                console.log(`🗑️ No players left in room, deleting game: ${currentGameId}`);
+                await remove(ref(db, `game/xo/${currentGameId}`));
+            }
+        }
     } catch (error) {
         console.error('Error in goHome:', error);
     }

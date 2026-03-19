@@ -1323,10 +1323,21 @@ setInterval(async () => {
             for (const [playerId, player] of Object.entries(players)) {
                 const timeSinceLastBeat = now - (player.timestamp || 0);
                 
-                // אם heartbeat מת יותר מ-5 שניות - הסר (אופציה 1)
+                // אם heartbeat מת יותר מ-5 שניות - הסר שחקן
                 if (timeSinceLastBeat > 5000) {
                     await remove(ref(db, `rooms_v3/${gameId}/${playerId}`));
+                    console.log(`🗑️ Removed inactive player: ${playerId} from ${gameId}`);
                 }
+            }
+            
+            // לאחר ניקוי שחקנים, בדוק אם החדר ריק
+            const updatedRoomSnap = await get(ref(db, `rooms_v3/${gameId}`));
+            const updatedPlayers = updatedRoomSnap.val() || {};
+            
+            // אם אין שחקנים בחדר - מחק את המשחק המקביל
+            if (Object.keys(updatedPlayers).length === 0 && gameId !== 'xo' && gameId !== 'xo_ai') {
+                console.log(`🗑️ Deleting empty game: ${gameId}`);
+                await remove(ref(db, `game/xo/${gameId}`));
             }
         }
         
