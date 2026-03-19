@@ -16,7 +16,7 @@
             padding: 18px 15px 16px; 
             border-radius: 25px; 
             text-align: center; 
-            width: 100px;
+            min-width: 100px;
             height: 135px;
             border: 2.5px solid transparent; 
             transition: all 0.3s ease;
@@ -38,18 +38,6 @@
             border-color: var(--gold);
             transform: scale(1.08);
             box-shadow: 0 0 25px rgba(245, 200, 66, 0.4), inset 0 0 15px rgba(245, 200, 66, 0.1);
-            animation: borderGlow 1.2s ease-in-out infinite;
-        }
-        
-        @keyframes borderGlow {
-            0%, 100% { 
-                border-color: var(--gold);
-                box-shadow: 0 0 25px rgba(245, 200, 66, 0.4), inset 0 0 15px rgba(245, 200, 66, 0.1);
-            }
-            50% { 
-                border-color: var(--gold);
-                box-shadow: 0 0 40px rgba(245, 200, 66, 0.7), inset 0 0 25px rgba(245, 200, 66, 0.25);
-            }
         }
         
         .name { font-weight: 900; font-size: 0.95rem; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 25px; }
@@ -212,19 +200,20 @@ const userData = userDataStr ? JSON.parse(userDataStr) : null;
 const myName = userData?.id || displayName;  // ID מ-sessionStorage או displayName
 const isAIMode = params.get('ai') === 'true';  // בדוק אם זה משחק מול AI
 
-// Non-AI multiplayer יוגדר ב-initSession בהתאם למספר השחקנים בחדר
+// קבל gameId מ-URL (למשחקי צפייה)
+const gameIdParam = params.get('game');
+
+// הסתר את כפתור איפוס אם זה לא AI mode
+if (!isAIMode) {
+    document.getElementById('reset-btn').style.display = 'none';
+}
 
 // בחר room בהתאם לmode
 const roomRef = ref(db, isAIMode ? 'rooms_v3/xo_ai' : 'rooms_v3/xo');
 
 // gameStateRef יוגדר בהמשך כשנדע את gameId
 let gameStateRef = null;
-let currentGameId = null;  // יוגדר בהתאם למספר השחקנים
-
-// הסתר את כפתור איפוס אם זה לא AI mode
-if (!isAIMode) {
-    document.getElementById('reset-btn').style.display = 'none';
-}
+let currentGameId = gameIdParam || null;  // אם צפייה - יהיה gameId, אחרת null
 
 // ב-AI mode - כל משתמש יהיה לו משחק משלו
 // אורחים יקבלו משחק זמני (ephemeral) שימחק כשהם יוצאים
@@ -274,10 +263,7 @@ async function initSession() {
         // 4. קביעת תפקיד
         const snapAfter = await get(roomRef);
         const playersAfter = snapAfter.val() || {};
-        
-        // מיין לפי timestamp - מי הקדום (נכנס ראשון) למי החדש
-        const playerNamesAfter = Object.keys(playersAfter)
-            .sort((a, b) => (playersAfter[a].timestamp || 0) - (playersAfter[b].timestamp || 0));
+        const playerNamesAfter = Object.keys(playersAfter).sort();
 
         if (isAIMode) {
             // במצב AI - תמיד יש AI כ-O וכמשחקן כ-X
@@ -302,23 +288,38 @@ async function initSession() {
                 resetFirebaseGame(true);
             }
         } else {
-            // Non-AI mode - הגדר gameId בהתאם למספר השחקנים
-            if (playerNamesAfter.length === 1) {
+            // Non-AI mode - טפל בgameId וצפייה
+            
+            // אם כבר יש gameId - זה צפייה
+            if (currentGameId) {
+                isViewer = true;
+                mySymbol = null;
+                gameStateRef = ref(db, `game/xo/${currentGameId}`);
+                // הסתר את reset button
+                document.getElementById('reset-btn').style.display = 'none';
+            } else if (playerNamesAfter.length > 2) {
+                // יותר מ-2 שחקנים - זה צפייה
+                isViewer = true;
+                mySymbol = null;
+                // גנרט gameId מהראשונים שניים (בסדר א-לפבתי)
+                currentGameId = playerNamesAfter.slice(0, 2).join('_');
+                gameStateRef = ref(db, `game/xo/${currentGameId}`);
+                // הסתר את reset button
+                document.getElementById('reset-btn').style.display = 'none';
+            } else if (playerNamesAfter.length === 1) {
                 // משחקן ראשון
                 mySymbol = 'X';
-                // gameId יוגדר כשמשחקן שני יצטרף
-                currentGameId = null;  // זמני
+                // gameId יהיה בסדר א-לפבתי כשמשחקן שני יצטרף
+                // כרגע, אנחנו לא יודעים את שמו, אז נשמור gameId זמני
+                // זה יעדכן כשמשחקן שני יצטרף
+                currentGameId = null;  // ינוסה בעדכון roomListener
                 gameStateRef = ref(db, 'game/xo/pending');  // זמני
                 resetFirebaseGame(true);
-            } else if (playerNamesAfter.length >= 2) {
-                // משחקן שני או יותר - הראשון בסדר כניסה הוא X
-                const firstPlayer = playerNamesAfter[0];  // הראשון שנכנס
-                const secondPlayer = playerNamesAfter[1];  // השני שנכנס
-                
-                mySymbol = myName === firstPlayer ? 'X' : 'O';
-                
-                // גנרט gameId מהשניים בסדר כניסה
-                currentGameId = `${firstPlayer}_${secondPlayer}`;
+            } else if (playerNamesAfter.length === 2) {
+                // משחקן שני - עדכן gameId בסדר א-לפבתי
+                mySymbol = playerNamesAfter[0] === myName ? 'X' : 'O';
+                // גנרט gameId מהשניים בסדר א-לפבתי
+                currentGameId = playerNamesAfter.slice(0, 2).join('_');
                 gameStateRef = ref(db, `game/xo/${currentGameId}`);
                 
                 // בדוק אם משחק קיים
@@ -776,20 +777,15 @@ async function autoNextRound() {
 
 window.goHome = async () => {
     try {
-        // מחק את עצמך מ-room תחילה
-        await remove(ref(db, `rooms_v3/xo${isAIMode ? '_ai' : ''}/${myName}`));
-        
-        // אם זה לא AI mode - בדוק אם יש עוד שחקנים בחדר
+        // אם זה לא AI mode - מחק את החדר כולו (משחק + room)
         if (!isAIMode && currentGameId) {
-            const roomRef = ref(db, `rooms_v3/xo`);
-            const roomSnap = await get(roomRef);
-            const players = roomSnap.val() || {};
-            
-            // אם אין עוד שחקנים בחדר - מחק את המשחק
-            if (Object.keys(players).length === 0) {
-                console.log(`🗑️ No players left in room, deleting game: ${currentGameId}`);
-                await remove(ref(db, `game/xo/${currentGameId}`));
-            }
+            // מחק את המשחק
+            await remove(ref(db, `game/xo/${currentGameId}`));
+            // מחק את כל החדר (כל השחקנים)
+            await remove(ref(db, `rooms_v3/xo`));
+        } else {
+            // AI mode - פשוט מחק את עצמך
+            await remove(ref(db, `rooms_v3/xo_ai/${myName}`));
         }
     } catch (error) {
         console.error('Error in goHome:', error);
