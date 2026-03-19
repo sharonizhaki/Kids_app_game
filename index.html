@@ -1347,8 +1347,8 @@ setInterval(async () => {
             
             const timeSinceLastBeat = now - (player.timestamp || 0);
             
-            // אם heartbeat מת יותר מ-60 שניות - הסר אורח וגם משחק שלו
-            if (timeSinceLastBeat > 60000) {
+            // אם heartbeat מת יותר מ-30 שניות - הסר אורח וגם משחק שלו
+            if (timeSinceLastBeat > 30000) {
                 await remove(ref(db, `rooms_v3/xo_ai/${playerId}`));
                 
                 // מחק game רק אם זה אורח (starts with 'guest_'), לא משחקן קבוע
