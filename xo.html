@@ -275,7 +275,10 @@ async function initSession() {
         // 4. קביעת תפקיד
         const snapAfter = await get(roomRef);
         const playersAfter = snapAfter.val() || {};
-        const playerNamesAfter = Object.keys(playersAfter).sort();
+        
+        // מיין לפי timestamp - מי הקדום (נכנס ראשון) למי החדש
+        const playerNamesAfter = Object.keys(playersAfter)
+            .sort((a, b) => (playersAfter[a].timestamp || 0) - (playersAfter[b].timestamp || 0));
 
         if (isAIMode) {
             // במצב AI - תמיד יש AI כ-O וכמשחקן כ-X
@@ -324,10 +327,14 @@ async function initSession() {
                 gameStateRef = ref(db, 'game/xo/pending');  // זמני
                 resetFirebaseGame(true);
             } else if (playerNamesAfter.length === 2) {
-                // משחקן שני - עדכן gameId בסדר א-לפבתי
-                mySymbol = playerNamesAfter[0] === myName ? 'X' : 'O';
-                // גנרט gameId מהשניים בסדר א-לפבתי
-                currentGameId = playerNamesAfter.slice(0, 2).join('_');
+                // משחקן שני - הראשון בסדר כניסה הוא X
+                const firstPlayer = playerNamesAfter[0];  // הראשון שנכנס
+                const secondPlayer = playerNamesAfter[1];  // השני שנכנס
+                
+                mySymbol = myName === firstPlayer ? 'X' : 'O';
+                
+                // גנרט gameId מהשניים בסדר כניסה
+                currentGameId = `${firstPlayer}_${secondPlayer}`;
                 gameStateRef = ref(db, `game/xo/${currentGameId}`);
                 
                 // בדוק אם משחק קיים
