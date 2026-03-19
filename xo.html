@@ -387,8 +387,9 @@ async function initSession() {
                 await remove(ref(db, `rooms_v3/xo/${secondPlayer}`));
                 
                 // עצור את roomListener כדי שלא תנסה לרוץ שוב
+                // בטל את ה-listener עם off
                 if (roomListener) {
-                    roomListener();  // זה בדיוק מה שחוזרת onValue
+                    off(roomRef);
                 }
                 
                 // בדוק אם משחק קיים
