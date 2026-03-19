@@ -496,11 +496,16 @@ function startListeners() {
             document.getElementById('card-O').style.borderColor = playerColors.O;
         } else {
             // עדכון רגיל - שני שחקנים אנושיים
-            if (players[names[0]]) {
-                const p1 = players[names[0]];
-                playerColors.X = p1.color || '#FF5C7A';  // שמור צבע של X
-                playerNames.X = p1.name;  // שמור שם של X
-                playerNames.X_emoji = p1.emoji;  // שמור אימוג'י של X
+            // השתמש ב-gameId כדי לדעת מי הוא X ומי הוא O
+            const gameIdParts = currentGameId ? currentGameId.split('_') : [null, null];
+            const firstPlayerInGame = gameIdParts[0];
+            const secondPlayerInGame = gameIdParts[1];
+            
+            if (firstPlayerInGame && players[firstPlayerInGame]) {
+                const p1 = players[firstPlayerInGame];
+                playerColors.X = p1.color || '#FF5C7A';
+                playerNames.X = p1.name;
+                playerNames.X_emoji = p1.emoji;
                 document.getElementById('name-X').innerHTML = `${p1.emoji || '❌'} ${p1.name}`;
                 document.getElementById('name-X').style.color = p1.color || 'white';
                 document.getElementById('card-X').style.borderColor = p1.color || 'white';
@@ -509,11 +514,11 @@ function startListeners() {
                 document.getElementById('name-X').style.color = 'white';
             }
             
-            if (players[names[1]]) {
-                const p2 = players[names[1]];
-                playerColors.O = p2.color || '#4DB8FF';  // שמור צבע של O
-                playerNames.O = p2.name;  // שמור שם של O
-                playerNames.O_emoji = p2.emoji;  // שמור אימוג'י של O
+            if (secondPlayerInGame && players[secondPlayerInGame]) {
+                const p2 = players[secondPlayerInGame];
+                playerColors.O = p2.color || '#4DB8FF';
+                playerNames.O = p2.name;
+                playerNames.O_emoji = p2.emoji;
                 document.getElementById('name-O').innerHTML = `${p2.emoji || '⭕'} ${p2.name}`;
                 document.getElementById('name-O').style.color = p2.color || 'white';
                 document.getElementById('card-O').style.borderColor = p2.color || 'white';
