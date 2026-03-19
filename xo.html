@@ -304,6 +304,9 @@ async function initSession() {
             // בAI mode - הכפתור תמיד גלוי
             document.getElementById('reset-btn').style.display = 'block';
             
+            // הסר את משתמש מחדר המתנה (rooms_v3/xo_ai) - הוא משחק עכשיו
+            await remove(ref(db, `rooms_v3/xo_ai/${myName}`));
+            
             // בדוק אם כבר יש משחק - אם כן, אל תאתחל אותו מחדש
             const gameSnap = await get(gameStateRef);
             if (!gameSnap.val()) {
