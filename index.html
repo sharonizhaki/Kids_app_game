@@ -1347,12 +1347,17 @@ setInterval(async () => {
             
             const timeSinceLastBeat = now - (player.timestamp || 0);
             
-            // אם heartbeat מת יותר מ-15 שניות - הסר אורח וגם משחק שלו
-            if (timeSinceLastBeat > 15000) {
+            // אם heartbeat מת יותר מ-60 שניות - הסר אורח וגם משחק שלו
+            if (timeSinceLastBeat > 60000) {
                 await remove(ref(db, `rooms_v3/xo_ai/${playerId}`));
-                // מחק גם את משחק ה-AI שלו
-                await remove(ref(db, `game/xo_ai/${playerId}`));
-                console.log(`🗑️ Removed inactive guest and game: ${playerId}`);
+                
+                // מחק game רק אם זה אורח (starts with 'guest_'), לא משחקן קבוע
+                if (playerId.startsWith('guest_')) {
+                    await remove(ref(db, `game/xo_ai/${playerId}`));
+                    console.log(`🗑️ Removed inactive guest and game: ${playerId}`);
+                } else {
+                    console.log(`🗑️ Removed inactive player from waiting room: ${playerId}`);
+                }
             }
         }
     } catch (error) {
