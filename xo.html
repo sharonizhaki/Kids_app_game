@@ -360,6 +360,10 @@ async function initSession() {
                 currentGameId = `${firstPlayer}_${secondPlayer}`;
                 gameStateRef = ref(db, `game/xo/${currentGameId}`);
                 
+                // מחק את שני השחקנים מחדר המתנה - המשחק התחיל!
+                await remove(ref(db, `rooms_v3/xo/${firstPlayer}`));
+                await remove(ref(db, `rooms_v3/xo/${secondPlayer}`));
+                
                 // בדוק אם משחק קיים
                 const gameSnap = await get(gameStateRef);
                 const gameExists = gameSnap.val() !== null;
