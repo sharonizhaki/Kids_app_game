@@ -38,6 +38,18 @@
             border-color: var(--gold);
             transform: scale(1.08);
             box-shadow: 0 0 25px rgba(245, 200, 66, 0.4), inset 0 0 15px rgba(245, 200, 66, 0.1);
+            animation: borderGlow 1.2s ease-in-out infinite;
+        }
+        
+        @keyframes borderGlow {
+            0%, 100% { 
+                border-color: var(--gold);
+                box-shadow: 0 0 25px rgba(245, 200, 66, 0.4), inset 0 0 15px rgba(245, 200, 66, 0.1);
+            }
+            50% { 
+                border-color: var(--gold);
+                box-shadow: 0 0 40px rgba(245, 200, 66, 0.7), inset 0 0 25px rgba(245, 200, 66, 0.25);
+            }
         }
         
         .name { font-weight: 900; font-size: 0.95rem; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 25px; }
@@ -270,7 +282,7 @@ async function initSession() {
             mySymbol = 'X';
             playerNames.X = displayName;
             playerNames.X_emoji = myEmoji;
-            playerNames.O = 'מחשב חכם';  // שם ל-AI בעברית
+            playerNames.O = 'מחשב';  // שם ל-AI בעברית
             playerNames.O_emoji = '🤖';
             playerColors.O = '#FFB347';  // צבע כתום ל-AI
             
