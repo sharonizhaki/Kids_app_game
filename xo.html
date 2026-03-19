@@ -307,6 +307,9 @@ async function initSession() {
             // הסר את משתמש מחדר המתנה (rooms_v3/xo_ai) - הוא משחק עכשיו
             await remove(ref(db, `rooms_v3/xo_ai/${myName}`));
             
+            // מחק גם מ-multiplayer room אם הוא שם
+            await remove(ref(db, `rooms_v3/xo/${myName}`));
+            
             // עצור את heartbeat כדי שלא ישלח אותו בחזרה לחדר המתנה
             if (window.heartbeatInterval) {
                 clearInterval(window.heartbeatInterval);
