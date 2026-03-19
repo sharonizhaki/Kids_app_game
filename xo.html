@@ -234,7 +234,7 @@ const roomRef = ref(db, isAIMode ? 'rooms_v3/xo_ai' : 'rooms_v3/xo');
 
 // gameStateRef יוגדר בהמשך כשנדע את gameId
 let gameStateRef = null;
-let currentGameId = gameIdParam || null;  // אם צפייה - יהיה gameId, אחרת null
+let currentGameId = null;  // זה יוגדר אחרי בinitSession כשנדע firstPlayer_secondPlayer
 
 // ב-AI mode - כל משתמש יהיה לו משחק משלו
 // אורחים יקבלו משחק זמני (ephemeral) שימחק כשהם יוצאים
@@ -373,8 +373,7 @@ async function initSession() {
                 const firstPlayer = playerNamesAfter[0];
                 const secondPlayer = playerNamesAfter[1];
                 
-                // DEBUG
-                debugDiv.innerHTML += `<br>✅ 2 PLAYERS!<br>${firstPlayer} vs ${secondPlayer}`;
+                alert(`✅ 2 PLAYERS!\n${firstPlayer} vs ${secondPlayer}`);
                 
                 mySymbol = myName === firstPlayer ? 'X' : 'O';
                 
