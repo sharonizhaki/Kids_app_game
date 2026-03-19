@@ -288,8 +288,19 @@ async function initSession() {
         const snapAfter = await get(roomRef);
         const playersAfter = snapAfter.val() || {};
         
-        console.log('🎲 Players in room:', playersAfter);
-        console.log('📊 playerNamesAfter.length:', Object.keys(playersAfter).length);
+        // DEBUG - הצג בדף
+        const debugDiv = document.createElement('div');
+        debugDiv.style.position = 'fixed';
+        debugDiv.style.top = '10px';
+        debugDiv.style.left = '10px';
+        debugDiv.style.backgroundColor = 'rgba(0,0,0,0.8)';
+        debugDiv.style.color = '#0f0';
+        debugDiv.style.padding = '10px';
+        debugDiv.style.fontSize = '12px';
+        debugDiv.style.zIndex = '9999';
+        debugDiv.style.maxWidth = '200px';
+        debugDiv.innerHTML = `Players: ${Object.keys(playersAfter).length}<br>Names: ${Object.keys(playersAfter).join(', ')}`;
+        document.body.appendChild(debugDiv);
         
         // מיין לפי timestamp - מי הקדום (נכנס ראשון) למי החדש
         const playerNamesAfter = Object.keys(playersAfter)
@@ -357,7 +368,8 @@ async function initSession() {
                 const firstPlayer = playerNamesAfter[0];
                 const secondPlayer = playerNamesAfter[1];
                 
-                console.log('✅ 2 players detected!', { firstPlayer, secondPlayer, myName });
+                // DEBUG
+                debugDiv.innerHTML += `<br>✅ 2 PLAYERS!<br>${firstPlayer} vs ${secondPlayer}`;
                 
                 mySymbol = myName === firstPlayer ? 'X' : 'O';
                 
