@@ -307,6 +307,7 @@ async function initSession() {
             .sort((a, b) => (playersAfter[a].timestamp || 0) - (playersAfter[b].timestamp || 0));
 
         if (isAIMode) {
+            debugDiv.innerHTML += `<br>AI MODE`;
             // במצב AI - תמיד יש AI כ-O וכמשחקן כ-X
             mySymbol = 'X';
             playerNames.X = displayName;
@@ -337,9 +338,11 @@ async function initSession() {
             }
         } else {
             // Non-AI mode - טפל בgameId וצפייה
+            debugDiv.innerHTML += `<br>NON-AI MODE<br>playerNamesAfter.length: ${playerNamesAfter.length}`;
             
             // אם כבר יש gameId - זה צפייה
             if (currentGameId) {
+                debugDiv.innerHTML += `<br>VIEWER MODE (gameId=${currentGameId})`;
                 isViewer = true;
                 mySymbol = null;
                 gameStateRef = ref(db, `game/xo/${currentGameId}`);
@@ -347,6 +350,7 @@ async function initSession() {
                 document.getElementById('reset-btn').style.display = 'none';
             } else if (playerNamesAfter.length > 2) {
                 // יותר מ-2 שחקנים - זה צפייה
+                debugDiv.innerHTML += `<br>VIEWER (${playerNamesAfter.length} players)`;
                 isViewer = true;
                 mySymbol = null;
                 // גנרט gameId מהראשונים שניים (בסדר א-לפבתי)
@@ -356,6 +360,7 @@ async function initSession() {
                 document.getElementById('reset-btn').style.display = 'none';
             } else if (playerNamesAfter.length === 1) {
                 // משחקן ראשון
+                debugDiv.innerHTML += `<br>PLAYER 1 (waiting for player 2)`;
                 mySymbol = 'X';
                 // gameId יהיה בסדר א-לפבתי כשמשחקן שני יצטרף
                 // כרגע, אנחנו לא יודעים את שמו, אז נשמור gameId זמני
