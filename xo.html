@@ -10,6 +10,52 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Heebo', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: linear-gradient(135deg, #0F1320 0%, #1a2942 100%); color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; overflow-y: auto; }
         
+        /* רקע אנימציה */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse at 20% 30%, rgba(255, 92, 122, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(77, 184, 255, 0.1) 0%, transparent 50%);
+        }
+
+        /* כוכבים */
+        .stars {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image: radial-gradient(white 1px, transparent 1px);
+            background-size: 60px 60px;
+            opacity: 0.08;
+            pointer-events: none;
+        }
+
+        /* אלמנטים זזים */
+        .floating-emoji {
+            position: fixed;
+            font-size: 5rem;
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(2px);
+            user-select: none;
+            -webkit-user-select: none;
+            animation: float-all 26s infinite ease-in-out;
+        }
+        @keyframes float-all {
+            0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            12.5% { transform: translate(110px, -95px) rotate(35deg) scale(1.05); }
+            25% { transform: translate(85px, 75px) rotate(15deg) scale(0.98); }
+            37.5% { transform: translate(-95px, 110px) rotate(-30deg) scale(0.95); }
+            50% { transform: translate(-110px, -80px) rotate(-20deg) scale(1.02); }
+            62.5% { transform: translate(-70px, -120px) rotate(40deg) scale(1.08); }
+            75% { transform: translate(100px, -65px) rotate(-10deg) scale(0.97); }
+            87.5% { transform: translate(75px, 90px) rotate(25deg) scale(1.03); }
+        }
+        
         .header { display: flex; justify-content: space-around; width: 100%; max-width: 500px; padding: 20px; margin-top: 10px; gap: 10px; }
         .score-box { 
             background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
@@ -171,6 +217,11 @@
     </style>
 </head>
 <body>
+
+<div class="stars"></div>
+<div class="floating-emoji" style="top: 15%; left: 5%; animation-delay: 0s;">❌</div>
+<div class="floating-emoji" style="top: 50%; right: 8%; animation-delay: -6.7s;">⭕</div>
+<div class="floating-emoji" style="bottom: 20%; left: 10%; animation-delay: -13.3s;">🏆</div>
 
 <div id="alert-modal">
     <div class="modal-content">
@@ -725,7 +776,7 @@ function render() {
                 winBanner.style.borderColor = winnerColor;
                 winBanner.style.color = winnerColor;
                 winBanner.style.boxShadow = `0 0 30px ${winnerColor}40`;
-                winBanner.innerHTML = `🏅 ${winnerEmoji} ${winnerName} ניצח!`;
+                winBanner.innerHTML = `🏅 ${winnerEmoji} ${winnerName}`;
             }, 700);
             
             setTimeout(() => {
