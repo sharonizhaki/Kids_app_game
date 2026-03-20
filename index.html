@@ -1360,53 +1360,33 @@ window.addEventListener('load', () => {
 // ============= ניקוי heartbeat - בדוק כל 5 שניות =============
 setInterval(async () => {
     try {
-        // בדוק את כל המשחקים - Non-AI
         const gamesSnap = await get(ref(db, 'rooms_v3'));
-        const games = gamesSnap.val() || {};
+        const allRooms = gamesSnap.val() || {};
         const now = Date.now();
         
-        // לכל משחק
-        for (const [gameId, players] of Object.entries(games)) {
+        for (const [gameId, players] of Object.entries(allRooms)) {
             if (!players || typeof players !== 'object') continue;
             
-            // לכל שחקן בחדר
             for (const [playerId, player] of Object.entries(players)) {
+                if (!player || typeof player !== 'object') continue;
+                
                 const timeSinceLastBeat = now - (player.timestamp || 0);
                 
                 // אם heartbeat מת יותר מ-20 שניות - הסר
                 if (timeSinceLastBeat > 20000) {
                     await remove(ref(db, `rooms_v3/${gameId}/${playerId}`));
-                }
-            }
-        }
-        
-        // בדוק גם AI mode אורחים
-        const aiGamesSnap = await get(ref(db, 'rooms_v3/xo_ai'));
-        const aiGames = aiGamesSnap.val() || {};
-        
-        // לכל אורח ב-AI mode
-        for (const [playerId, player] of Object.entries(aiGames)) {
-            if (!player || typeof player !== 'object') continue;
-            
-            const timeSinceLastBeat = now - (player.timestamp || 0);
-            
-            // אם heartbeat מת יותר מ-30 שניות - הסר אורח וגם משחק שלו
-            if (timeSinceLastBeat > 30000) {
-                await remove(ref(db, `rooms_v3/xo_ai/${playerId}`));
-                
-                // מחק game רק אם זה אורח (starts with 'guest_'), לא משחקן קבוע
-                if (playerId.startsWith('guest_')) {
-                    await remove(ref(db, `game/xo_ai/${playerId}`));
-                    console.log(`🗑️ Removed inactive guest and game: ${playerId}`);
-                } else {
-                    console.log(`🗑️ Removed inactive player from waiting room: ${playerId}`);
+                    
+                    // אם זה אורח ב-AI mode - מחק גם את המשחק שלו
+                    if (gameId === 'xo_ai' && playerId.startsWith('guest_')) {
+                        await remove(ref(db, `game/xo_ai/${playerId}`));
+                    }
                 }
             }
         }
     } catch (error) {
         console.error('Error in heartbeat cleanup:', error);
     }
-}, 5000);  // בדוק כל 5 שניות
+}, 5000);
 </script>
 </body>
 </html>

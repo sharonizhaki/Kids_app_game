@@ -90,6 +90,56 @@
         .cell.x { color: var(--x-color); text-shadow: 0 0 15px rgba(255, 92, 122, 0.5); }
         .cell.o { color: var(--o-color); text-shadow: 0 0 15px rgba(77, 184, 255, 0.5); }
         
+        /* אנימציית pop-in כשמניחים סימן */
+        .cell.just-placed {
+            animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        
+        /* סימון קו מנצח */
+        .cell.winner-cell {
+            animation: winnerPulse 0.8s ease-in-out infinite;
+            border-color: var(--gold) !important;
+            box-shadow: 0 0 25px rgba(245, 200, 66, 0.6);
+            z-index: 1;
+        }
+        @keyframes winnerPulse {
+            0%, 100% { 
+                box-shadow: 0 0 15px rgba(245, 200, 66, 0.4);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 35px rgba(245, 200, 66, 0.8);
+                transform: scale(1.05);
+            }
+        }
+        
+        /* confetti */
+        .confetti-container {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1002;
+            overflow: hidden;
+        }
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            border-radius: 2px;
+            animation: confettiFall linear forwards;
+        }
+        @keyframes confettiFall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        
         .controls { display: flex; gap: 12px; margin-top: 20px; width: 90vw; max-width: 350px; }
         .btn { flex: 1; padding: 16px; border-radius: 20px; border: none; font-weight: 900; cursor: pointer; transition: all 0.2s; text-align: center; font-size: 1rem; }
         .btn-home { background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%); color: white; border: 1.5px solid rgba(255,255,255,0.2); box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3); }
@@ -98,43 +148,25 @@
         #alert-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
         .modal-content { background: linear-gradient(135deg, #1a2942 0%, #0F1320 100%); color: white; padding: 40px 30px; border-radius: 30px; text-align: center; width: 100%; max-width: 320px; border: 2px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
         
-        #win-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1001; align-items: center; justify-content: center; padding: 20px; }
-        #win-modal.show { animation: winBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes winBounce {
-            0% { opacity: 0; transform: scale(0.5); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-        .win-content { 
-            background: linear-gradient(135deg, rgba(245,200,66,0.1) 0%, rgba(77,184,255,0.1) 100%);
-            color: white; 
-            padding: 50px 30px; 
-            border-radius: 30px; 
-            text-align: center; 
-            width: 100%; 
-            max-width: 350px; 
-            border: 3px solid var(--gold);
+        /* באנר ניצחון/תיקו - בין הכותרת ללוח */
+        #win-banner {
+            width: 90vw;
+            max-width: 350px;
+            text-align: center;
+            padding: 14px 20px;
+            border-radius: 20px;
+            font-weight: 900;
+            font-size: 1.3rem;
+            margin: 0;
+            border: 2.5px solid var(--gold);
+            background: linear-gradient(135deg, rgba(245,200,66,0.12) 0%, rgba(245,200,66,0.04) 100%);
             backdrop-filter: blur(10px);
-            box-shadow: 0 0 50px rgba(245, 200, 66, 0.3);
+            box-shadow: 0 0 30px rgba(245, 200, 66, 0.25);
+            animation: bannerIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .win-trophy { font-size: 4rem; margin-bottom: 15px; animation: trophy-float 2s ease-in-out infinite; }
-        @keyframes trophy-float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-        .win-title { font-size: 2rem; font-weight: 900; margin: 15px 0; color: var(--gold); text-shadow: 0 0 20px rgba(245, 200, 66, 0.5); }
-        .win-name { font-size: 1.5rem; margin: 10px 0; }
-        .glow-circle { 
-            position: absolute; 
-            width: 150px; 
-            height: 150px; 
-            border: 3px solid; 
-            border-radius: 50%; 
-            animation: glow-pulse 1.5s ease-in-out infinite;
-            pointer-events: none;
-        }
-        @keyframes glow-pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.1); opacity: 1; }
+        @keyframes bannerIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
         }
     </style>
 </head>
@@ -145,14 +177,6 @@
         <div style="font-size: 3rem; margin-bottom: 10px;">😢</div>
         <p id="modal-msg" style="font-size: 1.1rem; font-weight: 600; margin: 0;">אמה עזבה את המשחק</p>
         <button class="btn btn-reset" onclick="goHome()" style="margin-top: 20px;">חזרה לתפריט</button>
-    </div>
-</div>
-
-<div id="win-modal">
-    <div class="win-content">
-        <div class="win-trophy">🏅</div>
-        <div class="win-title" id="win-title">ניצחון!</div>
-        <div class="win-name" id="win-name">🏅 אמה ניצחה!</div>
     </div>
 </div>
 
@@ -175,6 +199,8 @@
 </div>
 
 <div id="status-bar">מתחבר...</div>
+
+<div id="win-banner" style="display:none;"></div>
 
 <div class="board" id="board">
     <div class="cell" data-idx="0"></div><div class="cell" data-idx="1"></div><div class="cell" data-idx="2"></div>
@@ -221,9 +247,6 @@ const finalUserData = userData || {
 const myName = finalUserData.id;
 const isAIMode = params.get('ai') === 'true';  // בדוק אם זה משחק מול AI
 
-// קבל gameId מ-URL (למשחקי צפייה)
-const gameIdParam = params.get('game');
-
 // הסתר את כפתור איפוס אם זה לא AI mode
 if (!isAIMode) {
     document.getElementById('reset-btn').style.display = 'none';
@@ -234,16 +257,15 @@ const roomRef = ref(db, isAIMode ? 'rooms_v3/xo_ai' : 'rooms_v3/xo');
 
 // gameStateRef יוגדר בהמשך כשנדע את gameId
 let gameStateRef = null;
-let currentGameId = gameIdParam || null;  // אם צפייה - יהיה gameId, אחרת null
+let currentGameId = null;
 
 // ב-AI mode - כל משתמש יהיה לו משחק משלו
 // אורחים יקבלו משחק זמני (ephemeral) שימחק כשהם יוצאים
 if (isAIMode) {
     gameStateRef = ref(db, `game/xo_ai/${myName}`);  // per-user game state
 } else {
-    // Non-AI - gameStateRef יוגדר אחרי שנדע את gameId
-    // כרגע קבע לערך זמני
-    gameStateRef = ref(db, 'game/xo');
+    // Non-AI - gameStateRef יוגדר ב-initSession כשנדע את gameId
+    gameStateRef = null;
 }
 
 let mySymbol = null; 
@@ -284,10 +306,6 @@ async function initSession() {
             if (!gameSnap.val()) {
                 resetFirebaseGame(true);
             }
-        } else if (currentGameId) {
-            // יש gameId מ-URL - המשחק כבר מלא, הצג הודעה וחזור
-            showFullGameMessage();
-            return;
         } else {
             // שחקן רגיל - בדוק אם כבר רשום ב-room (מגיע מ-index waiting)
             const existingSnap = await get(ref(db, roomPath));
@@ -341,6 +359,9 @@ async function initSession() {
 
         // הפעל listeners
         startListeners();
+        
+        // הפעל בדיקת heartbeat של היריב (non-AI בלבד)
+        startOpponentCheck();
     } catch (error) {
         console.error('Error in initSession:', error);
     }
@@ -400,40 +421,105 @@ function startGameStateListener() {
     });
 }
 
+let roomListenerUnsubscribe = null;
+
+let opponentCheckInterval = null;
+
+function handleOpponentLeft(leftPlayerName, leftPlayerEmoji) {
+    // עצור הכל
+    stopHeartbeat();
+    stopOpponentCheck();
+    if (roomListenerUnsubscribe) { roomListenerUnsubscribe(); roomListenerUnsubscribe = null; }
+    if (gameStateUnsubscribe) { gameStateUnsubscribe(); gameStateUnsubscribe = null; }
+    remove(ref(db, `rooms_v3/xo/${myName}`));
+    
+    // מחק את הלוח
+    if (gameStateRef && currentGameId) {
+        set(gameStateRef, null);
+    }
+    
+    // הצג הודעה
+    document.getElementById('alert-modal').style.display = 'flex';
+    document.getElementById('modal-msg').innerHTML = `${leftPlayerEmoji} ${leftPlayerName} עזב את המשחק`;
+    document.getElementById('alert-modal').querySelector('.btn-reset').onclick = () => goHome();
+}
+
+function startOpponentCheck() {
+    if (isAIMode || opponentCheckInterval) return;
+    
+    opponentCheckInterval = setInterval(async () => {
+        try {
+            const snap = await get(roomRef);
+            const players = snap.val() || {};
+            const names = Object.keys(players);
+            
+            // אם אני לבד ב-room והיה משחק פעיל - היריב עזב
+            if (names.length === 1 && names[0] === myName && currentGameId) {
+                // מצא את שם היריב מ-snapshot האחרון
+                let leftName = '';
+                let leftEmoji = '';
+                if (window.lastPlayersSnapshot) {
+                    for (const [id, player] of Object.entries(window.lastPlayersSnapshot)) {
+                        if (id !== myName) {
+                            leftName = player.name;
+                            leftEmoji = player.emoji;
+                            break;
+                        }
+                    }
+                }
+                handleOpponentLeft(leftName, leftEmoji);
+                return;
+            }
+            
+            // אם יש 2 שחקנים - בדוק timestamp של היריב
+            if (names.length === 2 && currentGameId) {
+                const opponentId = names.find(n => n !== myName);
+                if (opponentId && players[opponentId]) {
+                    const timeSinceLastBeat = Date.now() - (players[opponentId].timestamp || 0);
+                    if (timeSinceLastBeat > 5000) {
+                        // היריב לא שלח heartbeat כבר 5 שניות - כנראה עזב
+                        // מחק אותו מה-room
+                        await remove(ref(db, `rooms_v3/xo/${opponentId}`));
+                        handleOpponentLeft(
+                            players[opponentId].name || '',
+                            players[opponentId].emoji || ''
+                        );
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error in opponent check:', error);
+        }
+    }, 3000);
+}
+
+function stopOpponentCheck() {
+    if (opponentCheckInterval) {
+        clearInterval(opponentCheckInterval);
+        opponentCheckInterval = null;
+    }
+}
+
 function startListeners() {
     console.log('🎧 startListeners called');
     startGameStateListener();
 
     // עדכון רשימת משחקנים
-    onValue(roomRef, (snap) => {
+    roomListenerUnsubscribe = onValue(roomRef, (snap) => {
         const players = snap.val() || {};
         
         // מיין לפי joinedAt (קבוע) - מי שנכנס ראשון נשאר ראשון
         const names = Object.keys(players)
             .sort((a, b) => (players[a].joinedAt || players[a].timestamp || 0) - (players[b].joinedAt || players[b].timestamp || 0));
 
-        // אל תמחק צופים! הם חלק חוקי מהמשחק
-        // (הערה: Non-AI mode תמיד יהיה עד 2 שחקנים + צופים)
-
-        // אם אין שחקנים כלל - נקה את המשחק (רק Non-AI)
-        if (names.length === 0 && !isAIMode) {
-            if (gameStateRef) {
-                set(gameStateRef, null);
-            }
+        // אם אין שחקנים כלל - נקה את המשחק (רק Non-AI, רק אם יש gameStateRef ו-gameId)
+        if (names.length === 0 && !isAIMode && gameStateRef && currentGameId) {
+            set(gameStateRef, null);
         }
 
         // בדוק אם משחקן עזב (רק בNon-AI ויש משחק פעיל)
         if (!isAIMode) {
             if (lastPlayerCount === 2 && names.length < 2) {
-                // משחקן עזב! עצור heartbeat ומחק את עצמנו מהroom
-                stopHeartbeat();
-                remove(ref(db, `rooms_v3/xo/${myName}`));
-                
-                // מחק את הלוח מיד
-                if (gameStateRef) {
-                    set(gameStateRef, null);
-                }
-                
                 // מצא את השם של השחקן שעזב
                 let leftPlayerName = '';
                 let leftPlayerEmoji = '';
@@ -449,10 +535,7 @@ function startListeners() {
                     }
                 }
                 
-                // הצג הודעה - לכל אחד (משחקן או צופה)
-                document.getElementById('alert-modal').style.display = 'flex';
-                document.getElementById('modal-msg').innerHTML = `${leftPlayerEmoji} ${leftPlayerName} עזב את המשחק`;
-                document.getElementById('alert-modal').querySelector('.btn-reset').onclick = () => goHome();
+                handleOpponentLeft(leftPlayerName, leftPlayerEmoji);
             }
         }
 
@@ -479,6 +562,9 @@ function startListeners() {
                     resetFirebaseGame(true);
                 }
             });
+            
+            // הפעל בדיקת heartbeat של היריב
+            startOpponentCheck();
         }
 
         // עדכן את רשימת השחקנים בהכותרת עם אימוג'י וצבעים
@@ -550,33 +636,62 @@ function resetFirebaseGame(fullReset = false) {
     set(gameStateRef, newState);
 }
 
+let lastRenderedBoard = Array(9).fill('');
+
 function render() {
     // אם אין משחק - הצג תוצאות וחכה למשחק חדש
     if (!currentGameState) {
-        // נקה את הלוח
         document.querySelectorAll('.cell').forEach((cell) => {
             cell.textContent = '';
             cell.className = 'cell';
+            cell.style.color = '';
         });
-        
-        // הצג את התוצאות שנשמרו (אם יש)
-        // זה יעדכן בזמן שה-render קורא מ-startListeners
+        lastRenderedBoard = Array(9).fill('');
         return;
     }
     
     const { board, currentPlayer, scores, gameOver } = currentGameState;
+    
+    // מצא קו מנצח אם יש
+    let winningCells = [];
+    if (gameOver && checkWinner(board)) {
+        const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+        for (const l of lines) {
+            if (board[l[0]] && board[l[0]] === board[l[1]] && board[l[0]] === board[l[2]]) {
+                winningCells = l;
+                break;
+            }
+        }
+    }
 
     document.querySelectorAll('.cell').forEach((cell, i) => {
         cell.textContent = board[i];
-        cell.className = `cell ${board[i] ? board[i].toLowerCase() : ''}`;
+        let classes = 'cell';
+        if (board[i]) classes += ` ${board[i].toLowerCase()}`;
+        
+        // אנימציית pop-in רק לסימן חדש
+        if (board[i] && board[i] !== lastRenderedBoard[i]) {
+            classes += ' just-placed';
+        }
+        
+        // סימון קו מנצח
+        if (winningCells.includes(i)) {
+            classes += ' winner-cell';
+        }
+        
+        cell.className = classes;
         
         // עדכן צבע דינמי
         if (board[i] === 'X') {
             cell.style.color = playerColors.X;
         } else if (board[i] === 'O') {
             cell.style.color = playerColors.O;
+        } else {
+            cell.style.color = '';
         }
     });
+    
+    lastRenderedBoard = [...board];
 
     document.getElementById('wins-X').textContent = scores.X;
     document.getElementById('wins-O').textContent = scores.O;
@@ -586,68 +701,52 @@ function render() {
     document.getElementById('card-O').classList.toggle('active', currentPlayer === 'O' && !gameOver);
 
     const status = document.getElementById('status-bar');
+    const winBanner = document.getElementById('win-banner');
     
-    // בדוק אם יש ניצחון או תיקו
     if (gameOver) {
-        // אם כבר הצגנו modal - לא נציג שוב
         if (winModalShown) {
             status.textContent = "סיבוב הסתיים!";
             return;
         }
         winModalShown = true;
         
-        // השתמש ב-checkWinner כדי למצוא מי ניצח
-        let winner = null;
-        if (checkWinner(board)) {
-            const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-            for (const l of lines) {
-                if (board[l[0]] && board[l[0]] === board[l[1]] && board[l[0]] === board[l[2]]) {
-                    winner = board[l[0]];
-                    break;
-                }
-            }
-        }
-        
-        const winModal = document.getElementById('win-modal');
-        const winTitle = document.getElementById('win-title');
-        const winName = document.getElementById('win-name');
+        const winner = winningCells.length > 0 ? board[winningCells[0]] : null;
         
         if (winner) {
             const winnerName = playerNames[winner];
             const winnerEmoji = playerNames[winner + '_emoji'];
             const winnerColor = playerColors[winner];
             
-            // אפס סגנונות מתיקו קודם
-            winTitle.textContent = 'ניצחון!';
-            winTitle.style.color = '';
-            winName.style.fontSize = '';
+            launchConfetti(winnerColor);
             
-            winModal.classList.add('show');
-            winModal.style.display = 'flex';
-            winName.textContent = `🏅 ${winnerEmoji} ${winnerName}`;
-            winName.style.color = winnerColor;
+            // הצג באנר אחרי השהייה לראות את הקו המנצח
+            setTimeout(() => {
+                winBanner.style.display = 'block';
+                winBanner.style.borderColor = winnerColor;
+                winBanner.style.color = winnerColor;
+                winBanner.style.boxShadow = `0 0 30px ${winnerColor}40`;
+                winBanner.innerHTML = `🏅 ${winnerEmoji} ${winnerName} ניצח!`;
+            }, 700);
+            
+            setTimeout(() => {
+                winBanner.style.display = 'none';
+            }, 4000);
         } else {
-            // תיקו
-            winTitle.textContent = 'תיקו!';
-            winTitle.style.color = '#F5C842';
-            winName.textContent = '🤝';
-            winName.style.fontSize = '4rem';
-            winName.style.color = '#F5C842';
+            winBanner.style.display = 'block';
+            winBanner.style.borderColor = 'var(--gold)';
+            winBanner.style.color = 'var(--gold)';
+            winBanner.style.boxShadow = '0 0 30px rgba(245, 200, 66, 0.25)';
+            winBanner.innerHTML = '🤝 תיקו!';
             
-            winModal.classList.add('show');
-            winModal.style.display = 'flex';
+            setTimeout(() => {
+                winBanner.style.display = 'none';
+            }, 2500);
         }
-        
-        // הסתר ב-2 שניות
-        setTimeout(() => {
-            winModal.style.display = 'none';
-            winModal.classList.remove('show');
-        }, 2000);
         
         status.textContent = "סיבוב הסתיים!";
     } else {
-        // המשחק לא gameOver - אפס את הguard
         winModalShown = false;
+        winBanner.style.display = 'none';
         
         if (mySymbol === currentPlayer) {
             const myName = playerNames[mySymbol];
@@ -688,7 +787,7 @@ document.querySelectorAll('.cell').forEach(cell => {
             if (win) newScores[mySymbol]++;
             else newScores.draws++;
             updates.scores = newScores;
-            if (mySymbol === 'X') setTimeout(autoNextRound, 2500);
+            if (mySymbol === 'X') setTimeout(autoNextRound, 4300);
         } else {
             updates.currentPlayer = mySymbol === 'X' ? 'O' : 'X';
             // אם זה משחק מול AI והתור של AI - עשה מהלך
@@ -723,7 +822,7 @@ async function makeAIMove() {
                 const newScores = {...currentGameState.scores};
                 newScores['O']++;
                 await update(gameStateRef, { board, gameOver: true, scores: newScores });
-                setTimeout(autoNextRound, 2500);
+                setTimeout(autoNextRound, 4300);
                 return;
             }
             board[i] = '';
@@ -743,7 +842,7 @@ async function makeAIMove() {
                     const newScores = {...currentGameState.scores};
                     newScores.draws++;
                     await update(gameStateRef, { board, gameOver: true, scores: newScores });
-                    setTimeout(autoNextRound, 2500);
+                    setTimeout(autoNextRound, 4300);
                 } else {
                     await update(gameStateRef, { board, currentPlayer: 'X' });
                 }
@@ -762,7 +861,7 @@ async function makeAIMove() {
             const newScores = {...currentGameState.scores};
             newScores.draws++;
             await update(gameStateRef, { board, gameOver: true, scores: newScores });
-            setTimeout(autoNextRound, 2500);
+            setTimeout(autoNextRound, 4300);
         } else {
             await update(gameStateRef, { board, currentPlayer: 'X' });
         }
@@ -780,7 +879,7 @@ async function makeAIMove() {
             const newScores = {...currentGameState.scores};
             newScores.draws++;
             await update(gameStateRef, { board, gameOver: true, scores: newScores });
-            setTimeout(autoNextRound, 2500);
+            setTimeout(autoNextRound, 4300);
         } else {
             await update(gameStateRef, { board, currentPlayer: 'X' });
         }
@@ -797,7 +896,7 @@ async function makeAIMove() {
                 const newScores = {...currentGameState.scores};
                 newScores.draws++;
                 await update(gameStateRef, { board, gameOver: true, scores: newScores });
-                setTimeout(autoNextRound, 2500);
+                setTimeout(autoNextRound, 4300);
             } else {
                 await update(gameStateRef, { board, currentPlayer: 'X' });
             }
@@ -837,8 +936,8 @@ async function autoNextRound() {
 
 window.goHome = async () => {
     try {
-        // עצור heartbeat קודם כל
         stopHeartbeat();
+        stopOpponentCheck();
         
         if (!isAIMode) {
             // Non-AI mode - מחק רק את עצמך מה-room
@@ -876,9 +975,34 @@ window.resetGameAndScores = async () => {
     }
 };
 
+function launchConfetti(color) {
+    const container = document.createElement('div');
+    container.className = 'confetti-container';
+    document.body.appendChild(container);
+    
+    const colors = [color, '#F5C842', '#3DD68C', '#FF5C7A', '#4DB8FF', '#FFB347', '#E879F9'];
+    
+    for (let i = 0; i < 50; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDuration = `${1.5 + Math.random() * 2}s`;
+        piece.style.animationDelay = `${Math.random() * 0.5}s`;
+        piece.style.width = `${6 + Math.random() * 8}px`;
+        piece.style.height = `${6 + Math.random() * 8}px`;
+        piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        container.appendChild(piece);
+    }
+    
+    // הסר אחרי 4 שניות
+    setTimeout(() => container.remove(), 4000);
+}
+
 // ניקוי כשסוגרים טאב/דפדפן
 window.addEventListener('beforeunload', () => {
     stopHeartbeat();
+    stopOpponentCheck();
     // שלח מחיקה מיד - navigator.sendBeacon לא עובד עם Firebase,
     // אז נסמך על ה-heartbeat cleanup ב-index.html כ-fallback
     if (!isAIMode) {
