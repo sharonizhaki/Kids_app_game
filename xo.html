@@ -490,8 +490,11 @@ function handleOpponentLeft(leftPlayerName, leftPlayerEmoji) {
     }
     
     // הצג הודעה
+    const displayMsg = (leftPlayerName && leftPlayerEmoji) 
+        ? `${leftPlayerEmoji} ${leftPlayerName} עזב/ה את המשחק`
+        : 'השחקן השני עזב/ה את המשחק';
     document.getElementById('alert-modal').style.display = 'flex';
-    document.getElementById('modal-msg').innerHTML = `${leftPlayerEmoji} ${leftPlayerName} עזב את המשחק`;
+    document.getElementById('modal-msg').innerHTML = displayMsg;
     document.getElementById('alert-modal').querySelector('.btn-reset').onclick = () => goHome();
 }
 

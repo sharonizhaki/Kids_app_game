@@ -465,6 +465,19 @@
             box-shadow: 0 6px 20px rgba(61, 214, 140, 0.4);
         }
 
+        /* אנימציית מעבר מביטול למתחילים */
+        .btn-main.starting {
+            background: linear-gradient(135deg, var(--gold) 0%, #FFB347 100%);
+            color: #0F1320;
+            box-shadow: 0 4px 20px rgba(245, 200, 66, 0.4);
+            animation: btnPulseStart 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes btnPulseStart {
+            0% { transform: scale(0.9); opacity: 0.5; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
         .btn-cancel { 
             background: none; 
             border: none; 
@@ -1107,25 +1120,40 @@ function startWaiting(gameId) {
     // שנה את onclick של כפתור "שחק לבד" לפי המשחק
     const aiButton = document.getElementById('ai-play-btn');
     if (aiButton) {
-        switch(currentGame.id) {
-            case 'xo':
-                aiButton.onclick = playWithAI_XO;
-                break;
-            case 'race':
-                aiButton.onclick = playWithAI_Race;
-                break;
-            case 'bingo':
-                aiButton.onclick = playWithAI_Bingo;
-                break;
-            case 'draw':
-                aiButton.onclick = playWithAI_DrawGame;
-                break;
-            case 'memory':
-                aiButton.onclick = playWithAI_Memory;
-                break;
-            case 'snakes':
-                aiButton.onclick = playWithAI_Snakes;
-                break;
+        // משחקים שתומכים ב-AI
+        const aiGames = ['xo', 'race', 'bingo', 'draw', 'memory', 'snakes', 'checkers', 'connect4'];
+        
+        if (aiGames.includes(currentGame.id)) {
+            aiButton.style.display = 'block';
+            switch(currentGame.id) {
+                case 'xo':
+                    aiButton.onclick = playWithAI_XO;
+                    break;
+                case 'race':
+                    aiButton.onclick = playWithAI_Race;
+                    break;
+                case 'bingo':
+                    aiButton.onclick = playWithAI_Bingo;
+                    break;
+                case 'draw':
+                    aiButton.onclick = playWithAI_DrawGame;
+                    break;
+                case 'memory':
+                    aiButton.onclick = playWithAI_Memory;
+                    break;
+                case 'snakes':
+                    aiButton.onclick = playWithAI_Snakes;
+                    break;
+                case 'checkers':
+                    aiButton.onclick = playWithAI_Checkers;
+                    break;
+                case 'connect4':
+                    aiButton.onclick = playWithAI_Connect4;
+                    break;
+            }
+        } else {
+            // משחקים בלי AI - הסתר את הכפתור
+            aiButton.style.display = 'none';
         }
     }
     
@@ -1195,14 +1223,15 @@ function startWaiting(gameId) {
             // אם כבר רץ countdown - אל תתחיל חדש
             if (countdownInterval) return;
             
-            let countdown = 3;
+            let countdown = 5;
             const statusElement = document.getElementById('waiting-status');
             const btnElement = document.getElementById('waiting-btn');
             
-            // הפוך את הכפתור לא פעיל
-            btnElement.disabled = true;
-            btnElement.textContent = 'מתחילים...';
-            btnElement.style.opacity = '0.5';
+            // כפתור ביטול עדיין פעיל - עם אנימציה
+            btnElement.disabled = false;
+            btnElement.textContent = `ביטול (${countdown})`;
+            btnElement.classList.remove('starting');
+            btnElement.style.opacity = '1';
             
             // הצג countdown
             statusElement.textContent = countdown;
@@ -1210,14 +1239,21 @@ function startWaiting(gameId) {
             
             countdownInterval = setInterval(() => {
                 countdown--;
-                if (countdown > 0) {
+                if (countdown > 1) {
                     statusElement.textContent = countdown;
+                    btnElement.textContent = `ביטול (${countdown})`;
+                } else if (countdown === 1) {
+                    // שנייה אחרונה - הפוך ל"מתחילים!"
+                    statusElement.textContent = countdown;
+                    btnElement.disabled = true;
+                    btnElement.textContent = '🎮 מתחילים!';
+                    btnElement.classList.add('starting');
                 } else {
                     clearInterval(countdownInterval);
                     countdownInterval = null;
                     navigatingToGame = true;
                     // נתק listener ועצור heartbeat - אבל אל תמחק מ-room!
-                    // xo.html ירשם מחדש ב-room בעצמו
+                    // דף המשחק ירשם מחדש ב-room בעצמו
                     if (roomListener) roomListener();
                     if (window.stopHeartbeat) window.stopHeartbeat();
                     sessionStorage.setItem('myUser', JSON.stringify(myUser));
@@ -1234,9 +1270,11 @@ function startWaiting(gameId) {
             // עדכן את הסטטוס
             document.getElementById('waiting-status').textContent = 'ממתין לשחקן שני...';
             document.getElementById('waiting-status').classList.remove('countdown');
-            document.getElementById('waiting-btn').disabled = false;
-            document.getElementById('waiting-btn').textContent = 'ביטול';
-            document.getElementById('waiting-btn').style.opacity = '1';
+            const resetBtn = document.getElementById('waiting-btn');
+            resetBtn.disabled = false;
+            resetBtn.textContent = 'ביטול';
+            resetBtn.style.opacity = '1';
+            resetBtn.classList.remove('starting');
         }
     });
 }
@@ -1247,16 +1285,8 @@ window.cancelWaiting = async () => {
     if (window.stopHeartbeat) window.stopHeartbeat();
     
     try {
-        // בדוק כמה שחקנים יש בחדר
-        const snap = await get(ref(db, `rooms_v3/${currentGame.id}`));
-        const players = snap.val() || {};
-        const playerCount = Object.keys(players).length;
-        
-        // אם רק אני בחדר - מחק אותי
-        if (playerCount <= 1) {
-            await remove(ref(db, `rooms_v3/${currentGame.id}/${myUser.id}`));
-        }
-        // אם יש עוד אחד - אל תמחק! (המשחק עלול להתחיל)
+        // תמיד מחק את עצמך מהחדר
+        await remove(ref(db, `rooms_v3/${currentGame.id}/${myUser.id}`));
     } catch (error) {
         console.error('Error in cancelWaiting:', error);
     }
@@ -1314,6 +1344,20 @@ window.playWithAI_Snakes = () => {
     if (!myUser) return;
     cleanupBeforeAI();
     window.location.href = `Snakes.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
+};
+
+// משחק דמקה עם AI
+window.playWithAI_Checkers = () => {
+    if (!myUser) return;
+    cleanupBeforeAI();
+    window.location.href = `Checkers.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
+};
+
+// משחק 4 בשורה עם AI
+window.playWithAI_Connect4 = () => {
+    if (!myUser) return;
+    cleanupBeforeAI();
+    window.location.href = `Connect4.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
 };
 
 // ========== עזיבה ==========
