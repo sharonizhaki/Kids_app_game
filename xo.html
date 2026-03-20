@@ -262,20 +262,23 @@ async function initSession() {
         
         // 2. רישום בחדר עם נתונים מלאים
         const roomPath = isAIMode ? `rooms_v3/xo_ai/${myName}` : `rooms_v3/xo/${myName}`;
+        const myJoinedAt = Date.now();
         await set(ref(db, roomPath), { 
             name: displayName,  // שם דיספליי בעברית
             color: myColor,
             emoji: myEmoji,
-            timestamp: Date.now(),
+            joinedAt: myJoinedAt,
+            timestamp: myJoinedAt,
             active: true 
         });
 
-        // 3. שמור heartbeat כל שנייה
+        // 3. שמור heartbeat כל שנייה - עדכן רק timestamp, לא joinedAt
         let heartbeatInterval = setInterval(() => {
             set(ref(db, roomPath), { 
                 name: displayName,  // שם דיספליי בעברית
                 color: myColor,
                 emoji: myEmoji,
+                joinedAt: myJoinedAt,
                 timestamp: Date.now(),
                 active: true 
             });
@@ -288,9 +291,9 @@ async function initSession() {
         const snapAfter = await get(roomRef);
         const playersAfter = snapAfter.val() || {};
         
-        // מיין לפי timestamp - מי הקדום (נכנס ראשון) למי החדש
+        // מיין לפי joinedAt (קבוע) - מי שנכנס ראשון נשאר ראשון
         const playerNamesAfter = Object.keys(playersAfter)
-            .sort((a, b) => (playersAfter[a].timestamp || 0) - (playersAfter[b].timestamp || 0));
+            .sort((a, b) => (playersAfter[a].joinedAt || playersAfter[a].timestamp || 0) - (playersAfter[b].joinedAt || playersAfter[b].timestamp || 0));
 
         if (isAIMode) {
             // במצב AI - תמיד יש AI כ-O וכמשחקן כ-X
@@ -393,9 +396,9 @@ function startListeners() {
     onValue(roomRef, (snap) => {
         const players = snap.val() || {};
         
-        // מיין לפי timestamp (אותו סדר כמו ב-initSession)
+        // מיין לפי joinedAt (קבוע) - מי שנכנס ראשון נשאר ראשון
         const names = Object.keys(players)
-            .sort((a, b) => (players[a].timestamp || 0) - (players[b].timestamp || 0));
+            .sort((a, b) => (players[a].joinedAt || players[a].timestamp || 0) - (players[b].joinedAt || players[b].timestamp || 0));
 
         // אל תמחק צופים! הם חלק חוקי מהמשחק
         // (הערה: Non-AI mode תמיד יהיה עד 2 שחקנים + צופים)
@@ -575,7 +578,6 @@ function render() {
         // השתמש ב-checkWinner כדי למצוא מי ניצח
         let winner = null;
         if (checkWinner(board)) {
-            // מצא איזה סימן ניצח
             const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
             for (const l of lines) {
                 if (board[l[0]] && board[l[0]] === board[l[1]] && board[l[0]] === board[l[2]]) {
@@ -604,7 +606,6 @@ function render() {
             winName.textContent = `🏅 ${winnerEmoji} ${winnerName}`;
             winName.style.color = winnerColor;
             
-            // הסתר ב-2 שניות
             setTimeout(() => {
                 winModal.style.display = 'none';
                 winModal.classList.remove('show');
@@ -620,7 +621,6 @@ function render() {
             winModal.classList.add('show');
             winModal.style.display = 'flex';
             
-            // הסתר ב-2 שניות
             setTimeout(() => {
                 winModal.style.display = 'none';
                 winModal.classList.remove('show');

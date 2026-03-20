@@ -1107,19 +1107,22 @@ function startWaiting(gameId) {
     showScreen('screen-waiting');
     
     const myPlayerRef = ref(db, `rooms_v3/${gameId}/${myUser.id}`);
+    const myJoinedAt = Date.now();
     set(myPlayerRef, { 
         name: myUser.name, 
         emoji: myUser.emoji, 
         color: myUser.color,
-        timestamp: Date.now()
+        joinedAt: myJoinedAt,
+        timestamp: myJoinedAt
     });
     
-    // שמור heartbeat כל 5 שניות
+    // שמור heartbeat כל 5 שניות - עדכן רק timestamp, לא joinedAt
     const heartbeatInterval = setInterval(() => {
         set(myPlayerRef, { 
             name: myUser.name, 
             emoji: myUser.emoji, 
             color: myUser.color,
+            joinedAt: myJoinedAt,
             timestamp: Date.now()
         });
     }, 5000);
@@ -1135,9 +1138,9 @@ function startWaiting(gameId) {
     roomListener = onValue(ref(db, `rooms_v3/${gameId}`), (snap) => {
         const playersObj = snap.val() || {};
         
-        // מיין לפי timestamp - סדר כניסה
+        // מיין לפי joinedAt (קבוע) - מי שנכנס ראשון נשאר ראשון
         const players = Object.keys(playersObj)
-            .sort((a, b) => (playersObj[a].timestamp || 0) - (playersObj[b].timestamp || 0))
+            .sort((a, b) => (playersObj[a].joinedAt || playersObj[a].timestamp || 0) - (playersObj[b].joinedAt || playersObj[b].timestamp || 0))
             .map(key => playersObj[key]);
         
         for (let i = 0; i < 2; i++) {
