@@ -1150,8 +1150,12 @@ function startWaiting(gameId) {
     
     // משתנה לשמירת countdown interval כדי למנוע כפילויות
     let countdownInterval = null;
+    let navigatingToGame = false;
     
     roomListener = onValue(ref(db, `rooms_v3/${gameId}`), (snap) => {
+        // אם כבר בדרך למשחק - התעלם מכל עדכון
+        if (navigatingToGame) return;
+        
         const playersObj = snap.val() || {};
         
         // מיין לפי joinedAt (קבוע) - מי שנכנס ראשון נשאר ראשון
@@ -1202,6 +1206,7 @@ function startWaiting(gameId) {
                 } else {
                     clearInterval(countdownInterval);
                     countdownInterval = null;
+                    navigatingToGame = true;
                     // עצור heartbeat ומחק מ-room לפני ניווט
                     if (roomListener) roomListener();
                     if (window.stopHeartbeat) window.stopHeartbeat();

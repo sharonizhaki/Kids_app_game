@@ -844,12 +844,8 @@ window.goHome = async () => {
             // נקה pending אם קיים
             remove(ref(db, 'game/xo/pending'));
         } else if (isAIMode && myName) {
-            // AI mode - מחק את עצמך מ-rooms
+            // AI mode - מחק את עצמך מ-rooms בלבד (המשחק נשמר)
             await remove(ref(db, `rooms_v3/xo_ai/${myName}`));
-            // אם אורח - מחק גם את המשחק שלו
-            if (myName.startsWith('guest_')) {
-                await remove(ref(db, `game/xo_ai/${myName}`));
-            }
         }
     } catch (error) {
         console.error('Error in goHome:', error);
@@ -884,9 +880,6 @@ window.addEventListener('beforeunload', () => {
         remove(ref(db, `rooms_v3/xo/${myName}`));
     } else {
         remove(ref(db, `rooms_v3/xo_ai/${myName}`));
-        if (myName.startsWith('guest_')) {
-            remove(ref(db, `game/xo_ai/${myName}`));
-        }
     }
 });
 
