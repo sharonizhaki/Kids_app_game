@@ -8,7 +8,7 @@
     <style>
         :root { --bg: #0F1320; --surface: rgba(255, 255, 255, 0.05); --x-color: #FF5C7A; --o-color: #4DB8FF; --gold: #F5C842; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Heebo', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: linear-gradient(135deg, #0F1320 0%, #1a2942 100%); color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+        body { background: linear-gradient(135deg, #0F1320 0%, #1a2942 100%); color: white; min-height: 100vh; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; overflow-y: auto; }
         
         .header { display: flex; justify-content: space-around; width: 100%; max-width: 500px; padding: 20px; margin-top: 10px; gap: 10px; }
         .score-box { 
@@ -250,7 +250,6 @@ let mySymbol = null;
 let currentGameState = null;
 let myColor = finalUserData.color;
 let myEmoji = finalUserData.emoji;
-let isViewer = false;
 let lastPlayerCount = 0;
 let playerColors = { X: '#FF5C7A', O: '#4DB8FF' };  // צבעי X ו-O
 let playerNames = { X: '', O: '', X_emoji: '', O_emoji: '' };  // שמות ואימוג'יים
@@ -263,12 +262,6 @@ async function initSession() {
         
         const roomPath = isAIMode ? `rooms_v3/xo_ai/${myName}` : `rooms_v3/xo/${myName}`;
         const myJoinedAt = Date.now();
-        
-        // בדוק כמה שחקנים כבר בחדר לפני שנרשם
-        const snapBefore = await get(roomRef);
-        const playersBefore = snapBefore.val() || {};
-        const playerKeysBefore = Object.keys(playersBefore)
-            .sort((a, b) => (playersBefore[a].joinedAt || playersBefore[a].timestamp || 0) - (playersBefore[b].joinedAt || playersBefore[b].timestamp || 0));
 
         if (isAIMode) {
             // במצב AI - תמיד נרשם ומתחילים
@@ -295,46 +288,45 @@ async function initSession() {
             // יש gameId מ-URL - המשחק כבר מלא, הצג הודעה וחזור
             showFullGameMessage();
             return;
-        } else if (playerKeysBefore.length >= 2) {
-            // כבר 2+ שחקנים - המשחק מלא, הצג הודעה וחזור
-            showFullGameMessage();
-            return;
         } else {
-            // שחקן פעיל - נרשם ב-room
+            // שחקן רגיל - נרשם ב-room קודם
             await set(ref(db, roomPath), { 
                 name: displayName, color: myColor, emoji: myEmoji,
                 joinedAt: myJoinedAt, timestamp: myJoinedAt, active: true 
             });
             startHeartbeat(roomPath, myJoinedAt);
             
-            // קרא שוב אחרי רישום
+            // קרא אחרי רישום
             const snapAfter = await get(roomRef);
             const playersAfter = snapAfter.val() || {};
             const playerNamesAfter = Object.keys(playersAfter)
                 .sort((a, b) => (playersAfter[a].joinedAt || playersAfter[a].timestamp || 0) - (playersAfter[b].joinedAt || playersAfter[b].timestamp || 0));
             
-            if (playerNamesAfter.length === 1) {
-                mySymbol = 'X';
-                currentGameId = null;
-                gameStateRef = ref(db, 'game/xo/pending');
-                resetFirebaseGame(true);
-            } else if (playerNamesAfter.length === 2) {
-                const firstPlayer = playerNamesAfter[0];
-                const secondPlayer = playerNamesAfter[1];
-                
-                mySymbol = myName === firstPlayer ? 'X' : 'O';
-                currentGameId = `${firstPlayer}_${secondPlayer}`;
-                gameStateRef = ref(db, `game/xo/${currentGameId}`);
-                
-                // מחק pending אם קיים
-                remove(ref(db, 'game/xo/pending'));
-                
-                const gameSnap = await get(gameStateRef);
-                if (!gameSnap.val()) {
+            if (playerNamesAfter.length <= 2) {
+                // 1 או 2 שחקנים - אני שחקן פעיל
+                if (playerNamesAfter.length === 1) {
+                    mySymbol = 'X';
+                    currentGameId = null;
+                    gameStateRef = ref(db, 'game/xo/pending');
                     resetFirebaseGame(true);
+                } else {
+                    const firstPlayer = playerNamesAfter[0];
+                    const secondPlayer = playerNamesAfter[1];
+                    
+                    mySymbol = myName === firstPlayer ? 'X' : 'O';
+                    currentGameId = `${firstPlayer}_${secondPlayer}`;
+                    gameStateRef = ref(db, `game/xo/${currentGameId}`);
+                    
+                    // מחק pending אם קיים
+                    remove(ref(db, 'game/xo/pending'));
+                    
+                    const gameSnap = await get(gameStateRef);
+                    if (!gameSnap.val()) {
+                        resetFirebaseGame(true);
+                    }
                 }
-            } else if (playerNamesAfter.length > 2) {
-                // race condition - המשחק מלא
+            } else {
+                // 3+ שחקנים - אני שלישי, המשחק מלא
                 stopHeartbeat();
                 await remove(ref(db, roomPath));
                 showFullGameMessage();
@@ -426,7 +418,7 @@ function startListeners() {
         }
 
         // בדוק אם משחקן עזב (רק בNon-AI ויש משחק פעיל)
-        if (!isAIMode && !isViewer) {
+        if (!isAIMode) {
             if (lastPlayerCount === 2 && names.length < 2) {
                 // משחקן עזב! עצור heartbeat ומחק את עצמנו מהroom
                 stopHeartbeat();
@@ -463,7 +455,7 @@ function startListeners() {
         window.lastPlayersSnapshot = players;
 
         // עדכן את gameStateRef אם משחקן שני הצטרף (Non-AI mode)
-        if (!isAIMode && !isViewer && names.length === 2 && !currentGameId) {
+        if (!isAIMode && names.length === 2 && !currentGameId) {
             // משחקן שני הצטרף - עדכן את gameId לפי סדר כניסה
             const firstPlayer = names[0];
             const secondPlayer = names[1];
@@ -676,9 +668,6 @@ function render() {
 
 document.querySelectorAll('.cell').forEach(cell => {
     cell.onclick = () => {
-        // צופים לא יכולים לשחק
-        if (isViewer) return;
-        
         const idx = cell.dataset.idx;
         if (!mySymbol || mySymbol !== currentGameState.currentPlayer || currentGameState.board[idx] !== '' || currentGameState.gameOver) return;
 
@@ -883,16 +872,6 @@ window.resetGameAndScores = async () => {
         await set(gameStateRef, newState);
     } catch (error) {
         console.error('Error resetting game and scores:', error);
-    }
-};
-
-window.handleForfeit = () => {
-    if (currentGameState && !currentGameState.gameOver) {
-        const other = mySymbol === 'X' ? 'O' : 'X';
-        const s = {...currentGameState.scores};
-        s[other]++;
-        update(gameStateRef, { scores: s, gameOver: true });
-        if (mySymbol === 'X') setTimeout(autoNextRound, 2000);
     }
 };
 

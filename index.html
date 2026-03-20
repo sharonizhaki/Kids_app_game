@@ -485,9 +485,10 @@
 
         /* ========== מסך בחירת משחק ========== */
         #screen-games {
-            justify-content: center;
+            justify-content: flex-start;
             overflow-y: auto;
             overflow-x: hidden;
+            padding-top: 30px;
             padding-bottom: 20px;
         }
 
@@ -1201,9 +1202,15 @@ function startWaiting(gameId) {
                 } else {
                     clearInterval(countdownInterval);
                     countdownInterval = null;
-                    // עבור למשחק - שחקנים נכנסים בלי game param
+                    // עצור heartbeat ומחק מ-room לפני ניווט
                     if (roomListener) roomListener();
-                    window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}`;
+                    if (window.stopHeartbeat) window.stopHeartbeat();
+                    remove(ref(db, `rooms_v3/${gameId}/${myUser.id}`));
+                    // שמור myUser ונווט אחרי עיכוב קצר כדי שה-remove יספיק
+                    sessionStorage.setItem('myUser', JSON.stringify(myUser));
+                    setTimeout(() => {
+                        window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}`;
+                    }, 300);
                 }
             }, 1000);
         } else {
