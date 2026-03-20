@@ -1201,9 +1201,9 @@ function startWaiting(gameId) {
                 } else {
                     clearInterval(countdownInterval);
                     countdownInterval = null;
-                    // עבור למשחק - העבר gameId
+                    // עבור למשחק - שחקנים נכנסים בלי game param
                     if (roomListener) roomListener();
-                    window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}&game=${gameId}`;
+                    window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}`;
                 }
             }, 1000);
         } else {
@@ -1247,65 +1247,54 @@ window.cancelWaiting = async () => {
 };
 
 window.playWithAI_XO = () => {
-    if (roomListener) roomListener();
-    if (window.stopHeartbeat) window.stopHeartbeat();
-    
-    // שמור את myUser ב-sessionStorage
-    sessionStorage.setItem('myUser', JSON.stringify(myUser));
-    
-    // נווט ל-xo.html עם parameter ai=true
+    if (!myUser) return;
+    cleanupBeforeAI();
     window.location.href = `xo.html?player=${encodeURIComponent(myUser.name)}&ai=true`;
 };
+
+// פונקציית עזר - ניקוי לפני מעבר ל-AI
+function cleanupBeforeAI() {
+    if (roomListener) roomListener();
+    if (window.stopHeartbeat) window.stopHeartbeat();
+    if (currentGame && myUser) {
+        remove(ref(db, `rooms_v3/${currentGame.id}/${myUser.id}`));
+    }
+    sessionStorage.setItem('myUser', JSON.stringify(myUser));
+    sessionStorage.setItem('myName', myUser.name);
+}
 
 // משחק מרוץ עם AI
 window.playWithAI_Race = () => {
     if (!myUser) return;
-    
-    // שמור את myUser ב-sessionStorage
-    sessionStorage.setItem('myUser', JSON.stringify(myUser));
-    sessionStorage.setItem('myName', myUser.name);
-    
-    // נווט ל-Race.html עם AI mode
+    cleanupBeforeAI();
     window.location.href = `Race.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
 };
 
 // משחק Bingo עם AI
 window.playWithAI_Bingo = () => {
     if (!myUser) return;
-    
-    sessionStorage.setItem('myUser', JSON.stringify(myUser));
-    sessionStorage.setItem('myName', myUser.name);
-    
+    cleanupBeforeAI();
     window.location.href = `Bingo.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
 };
 
 // משחק Draw Game עם AI
 window.playWithAI_DrawGame = () => {
     if (!myUser) return;
-    
-    sessionStorage.setItem('myUser', JSON.stringify(myUser));
-    sessionStorage.setItem('myName', myUser.name);
-    
+    cleanupBeforeAI();
     window.location.href = `Draw_game.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
 };
 
 // משחק Memory עם AI
 window.playWithAI_Memory = () => {
     if (!myUser) return;
-    
-    sessionStorage.setItem('myUser', JSON.stringify(myUser));
-    sessionStorage.setItem('myName', myUser.name);
-    
+    cleanupBeforeAI();
     window.location.href = `Memory.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
 };
 
 // משחק Snakes עם AI
 window.playWithAI_Snakes = () => {
     if (!myUser) return;
-    
-    sessionStorage.setItem('myUser', JSON.stringify(myUser));
-    sessionStorage.setItem('myName', myUser.name);
-    
+    cleanupBeforeAI();
     window.location.href = `Snakes.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
 };
 
