@@ -275,7 +275,8 @@ async function initSession() {
         // 4. קביעת תפקיד
         const snapAfter = await get(roomRef);
         const playersAfter = snapAfter.val() || {};
-        const playerNamesAfter = Object.keys(playersAfter).sort();
+        const playerNamesAfter = Object.keys(playersAfter)
+            .sort((a, b) => (playersAfter[a].timestamp || 0) - (playersAfter[b].timestamp || 0));
 
         if (isAIMode) {
             // במצב AI - תמיד יש AI כ-O וכמשחקן כ-X
