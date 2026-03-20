@@ -572,54 +572,58 @@ function render() {
     
     // בדוק אם יש ניצחון או תיקו
     if (gameOver) {
-        // חשב את המנצח
-        const xWins = board.every((cell, i) => {
-            const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-            return !lines.some(l => board[l[0]] === 'X' && board[l[0]] === board[l[1]] && board[l[0]] === board[l[2]]);
-        });
-        
-        const oWins = board.every((cell, i) => {
-            const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-            return !lines.some(l => board[l[0]] === 'O' && board[l[0]] === board[l[1]] && board[l[0]] === board[l[2]]);
-        });
-        
-        // בדוק מי ניצח
+        // השתמש ב-checkWinner כדי למצוא מי ניצח
         let winner = null;
-        if (!xWins) winner = 'X';
-        else if (!oWins) winner = 'O';
+        if (checkWinner(board)) {
+            // מצא איזה סימן ניצח
+            const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            for (const l of lines) {
+                if (board[l[0]] && board[l[0]] === board[l[1]] && board[l[0]] === board[l[2]]) {
+                    winner = board[l[0]];
+                    break;
+                }
+            }
+        }
         
-        // אם יש ניצח - הצג modal
+        const winModal = document.getElementById('win-modal');
+        const winTitle = document.getElementById('win-title');
+        const winName = document.getElementById('win-name');
+        
         if (winner) {
             const winnerName = playerNames[winner];
             const winnerEmoji = playerNames[winner + '_emoji'];
             const winnerColor = playerColors[winner];
             
-            document.getElementById('win-modal').classList.add('show');
-            document.getElementById('win-modal').style.display = 'flex';
-            document.getElementById('win-name').textContent = `🏅 ${winnerEmoji} ${winnerName}`;
-            document.getElementById('win-name').style.color = winnerColor;
+            // אפס סגנונות מתיקו קודם
+            winTitle.textContent = 'ניצחון!';
+            winTitle.style.color = '';
+            winName.style.fontSize = '';
             
-            // הסתר ב-2 שניות והתחל משחק חדש
+            winModal.classList.add('show');
+            winModal.style.display = 'flex';
+            winName.textContent = `🏅 ${winnerEmoji} ${winnerName}`;
+            winName.style.color = winnerColor;
+            
+            // הסתר ב-2 שניות
             setTimeout(() => {
-                document.getElementById('win-modal').style.display = 'none';
-                document.getElementById('win-modal').classList.remove('show');
-                autoNextRound();
+                winModal.style.display = 'none';
+                winModal.classList.remove('show');
             }, 2000);
         } else {
-            // אין מנצח - זה תיקו!
-            document.getElementById('win-modal').classList.add('show');
-            document.getElementById('win-modal').style.display = 'flex';
-            document.getElementById('win-title').textContent = 'תיקו!';
-            document.getElementById('win-title').style.color = '#F5C842';
-            document.getElementById('win-name').textContent = '🤝';
-            document.getElementById('win-name').style.fontSize = '4rem';
-            document.getElementById('win-name').style.color = '#F5C842';
+            // תיקו
+            winTitle.textContent = 'תיקו!';
+            winTitle.style.color = '#F5C842';
+            winName.textContent = '🤝';
+            winName.style.fontSize = '4rem';
+            winName.style.color = '#F5C842';
             
-            // הסתר ב-2 שניות והתחל משחק חדש
+            winModal.classList.add('show');
+            winModal.style.display = 'flex';
+            
+            // הסתר ב-2 שניות
             setTimeout(() => {
-                document.getElementById('win-modal').style.display = 'none';
-                document.getElementById('win-modal').classList.remove('show');
-                autoNextRound();
+                winModal.style.display = 'none';
+                winModal.classList.remove('show');
             }, 2000);
         }
         
@@ -632,11 +636,6 @@ function render() {
             const myName = playerNames[mySymbol];
             const myEmoji = playerNames[mySymbol + '_emoji'];
             status.textContent = `🎮 תורך! ${myEmoji} ${myName}`;
-            
-            // אם זה AI mode וזה תור של AI - עשה מהלך אוטומטי
-            if (isAIMode && mySymbol === 'X' && currentPlayer === 'O') {
-                setTimeout(makeAIMove, 1000);
-            }
         } else {
             const otherSymbol = mySymbol === 'X' ? 'O' : 'X';
             const otherName = playerNames[otherSymbol];

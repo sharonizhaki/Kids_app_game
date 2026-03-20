@@ -859,7 +859,7 @@
             
             <div style="display: flex; gap: 10px; margin-top: 20px; width: 100%;">
                 <button class="btn-main" id="waiting-btn" onclick="cancelWaiting()" style="flex: 1;">ביטול</button>
-                <button class="btn-main" onclick="playWithAI_XO()" style="flex: 1; background: linear-gradient(135deg, #4DB8FF 0%, #3DB8FF 100%); box-shadow: 0 5px 20px rgba(77, 184, 255, 0.3);">🤖 שחק לבד</button>
+                <button class="btn-main" id="ai-play-btn" onclick="playWithAI_XO()" style="flex: 1; background: linear-gradient(135deg, #4DB8FF 0%, #3DB8FF 100%); box-shadow: 0 5px 20px rgba(77, 184, 255, 0.3);">🤖 שחק לבד</button>
             </div>
         </div>
     </div>
@@ -1080,7 +1080,7 @@ function startWaiting(gameId) {
     document.getElementById('wait-game-name').textContent = currentGame.name;
     
     // שנה את onclick של כפתור "שחק לבד" לפי המשחק
-    const aiButton = document.querySelector('[onclick="playWithAI_XO()"]');
+    const aiButton = document.getElementById('ai-play-btn');
     if (aiButton) {
         switch(currentGame.id) {
             case 'xo':
@@ -1092,7 +1092,7 @@ function startWaiting(gameId) {
             case 'bingo':
                 aiButton.onclick = playWithAI_Bingo;
                 break;
-            case 'Draw_game':
+            case 'draw':
                 aiButton.onclick = playWithAI_DrawGame;
                 break;
             case 'memory':
@@ -1129,6 +1129,9 @@ function startWaiting(gameId) {
         clearInterval(heartbeatInterval);
     };
     
+    // משתנה לשמירת countdown interval כדי למנוע כפילויות
+    let countdownInterval = null;
+    
     roomListener = onValue(ref(db, `rooms_v3/${gameId}`), (snap) => {
         const playersObj = snap.val() || {};
         
@@ -1157,7 +1160,9 @@ function startWaiting(gameId) {
         }
 
         if (players.length >= 2) {
-            // התחל countdown 3 שניות
+            // אם כבר רץ countdown - אל תתחיל חדש
+            if (countdownInterval) return;
+            
             let countdown = 3;
             const statusElement = document.getElementById('waiting-status');
             const btnElement = document.getElementById('waiting-btn');
@@ -1171,18 +1176,25 @@ function startWaiting(gameId) {
             statusElement.textContent = countdown;
             statusElement.classList.add('countdown');
             
-            const countdownInterval = setInterval(() => {
+            countdownInterval = setInterval(() => {
                 countdown--;
                 if (countdown > 0) {
                     statusElement.textContent = countdown;
                 } else {
                     clearInterval(countdownInterval);
+                    countdownInterval = null;
                     // עבור למשחק - העבר gameId
                     if (roomListener) roomListener();
                     window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}&game=${gameId}`;
                 }
             }, 1000);
         } else {
+            // שחקן עזב - בטל countdown אם רץ
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            
             // עדכן את הסטטוס
             document.getElementById('waiting-status').textContent = 'ממתין לשחקן שני...';
             document.getElementById('waiting-status').classList.remove('countdown');
