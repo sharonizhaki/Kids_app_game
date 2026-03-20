@@ -206,10 +206,19 @@ const db = getDatabase(app);
 const params = new URLSearchParams(location.search);
 
 // קבל את myName מ-URL וקבל את ID מ-sessionStorage
-const displayName = params.get('player') || "אורח";
+const displayName = params.get('player') || "משתמש";
 const userDataStr = sessionStorage.getItem('myUser');
 const userData = userDataStr ? JSON.parse(userDataStr) : null;
-const myName = userData?.id || displayName;  // ID מ-sessionStorage או displayName
+
+// אם אין userData - יוצר userData זמני עם צבע אדום (משתמש רגיל, לא אורח)
+const finalUserData = userData || {
+    id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    name: displayName,
+    color: '#FF5C7A',  // אדום = משתמש רגיל (לא לבן שזה אורח!)
+    emoji: '👤'
+};
+
+const myName = finalUserData.id;
 const isAIMode = params.get('ai') === 'true';  // בדוק אם זה משחק מול AI
 
 // קבל gameId מ-URL (למשחקי צפייה)
@@ -240,8 +249,8 @@ if (isAIMode) {
 let mySymbol = null; 
 let currentGameState = null;
 let gameStartTime = Date.now();
-let myColor = userData?.color || '#EEF0FF';
-let myEmoji = userData?.emoji || '👤';
+let myColor = finalUserData.color;
+let myEmoji = finalUserData.emoji;
 let isViewer = false;
 let playerCountHistory = [];
 let playerColors = { X: '#FF5C7A', O: '#4DB8FF' };  // צבעי X ו-O
@@ -262,7 +271,7 @@ async function initSession() {
         });
 
         // 3. שמור heartbeat כל שנייה
-        setInterval(() => {
+        let heartbeatInterval = setInterval(() => {
             set(ref(db, roomPath), { 
                 name: displayName,  // שם דיספליי בעברית
                 color: myColor,
@@ -271,11 +280,17 @@ async function initSession() {
                 active: true 
             });
         }, 1000);
+        
+        // שמור את heartbeatInterval globally כדי שנוכל לעצור אותו
+        window.heartbeatInterval = heartbeatInterval;
 
         // 4. קביעת תפקיד
         const snapAfter = await get(roomRef);
         const playersAfter = snapAfter.val() || {};
-        const playerNamesAfter = Object.keys(playersAfter).sort();
+        
+        // מיין לפי timestamp - מי הקדום (נכנס ראשון) למי החדש
+        const playerNamesAfter = Object.keys(playersAfter)
+            .sort((a, b) => (playersAfter[a].timestamp || 0) - (playersAfter[b].timestamp || 0));
 
         if (isAIMode) {
             // במצב AI - תמיד יש AI כ-O וכמשחקן כ-X
@@ -324,10 +339,14 @@ async function initSession() {
                 gameStateRef = ref(db, 'game/xo/pending');  // זמני
                 resetFirebaseGame(true);
             } else if (playerNamesAfter.length === 2) {
-                // משחקן שני - עדכן gameId בסדר א-לפבתי
-                mySymbol = playerNamesAfter[0] === myName ? 'X' : 'O';
-                // גנרט gameId מהשניים בסדר א-לפבתי
-                currentGameId = playerNamesAfter.slice(0, 2).join('_');
+                // משחקן שני - הראשון בסדר כניסה (timestamp) הוא X
+                const firstPlayer = playerNamesAfter[0];
+                const secondPlayer = playerNamesAfter[1];
+                
+                mySymbol = myName === firstPlayer ? 'X' : 'O';
+                
+                // גנרט gameId מהשניים בסדר כניסה
+                currentGameId = `${firstPlayer}_${secondPlayer}`;
                 gameStateRef = ref(db, `game/xo/${currentGameId}`);
                 
                 // בדוק אם משחק קיים
@@ -373,7 +392,10 @@ function startListeners() {
     // עדכון רשימת משחקנים
     onValue(roomRef, (snap) => {
         const players = snap.val() || {};
-        const names = Object.keys(players).sort();
+        
+        // מיין לפי timestamp (אותו סדר כמו ב-initSession)
+        const names = Object.keys(players)
+            .sort((a, b) => (players[a].timestamp || 0) - (players[b].timestamp || 0));
 
         // אל תמחק צופים! הם חלק חוקי מהמשחק
         // (הערה: Non-AI mode תמיד יהיה עד 2 שחקנים + צופים)
@@ -422,8 +444,10 @@ function startListeners() {
 
         // עדכן את gameStateRef אם משחקן שני הצטרף (Non-AI mode)
         if (!isAIMode && !isViewer && names.length === 2 && !currentGameId) {
-            // משחקן שני הצטרף - עדכן את gameId
-            currentGameId = names.slice(0, 2).join('_');
+            // משחקן שני הצטרף - עדכן את gameId לפי סדר כניסה (timestamp)
+            const firstPlayer = names[0];
+            const secondPlayer = names[1];
+            currentGameId = `${firstPlayer}_${secondPlayer}`;
             gameStateRef = ref(db, `game/xo/${currentGameId}`);
             
             // בדוק אם משחק קיים (אם לא, יוצרים חדש)
@@ -788,6 +812,11 @@ async function autoNextRound() {
 
 window.goHome = async () => {
     try {
+        // עצור את heartbeat
+        if (window.heartbeatInterval) {
+            clearInterval(window.heartbeatInterval);
+        }
+        
         if (!isAIMode && currentGameId) {
             // Non-AI mode - מחק את החדר כולו (משחק + room)
             await remove(ref(db, `game/xo/${currentGameId}`));
