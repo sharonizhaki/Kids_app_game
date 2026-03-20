@@ -17,24 +17,22 @@
         .stat-value { font-size: 18px; font-weight: bold; color: #4DB8FF; font-family: 'Fredoka One', cursive; transition: all 0.3s; }
         .stat-value.pop { animation: statPop 0.4s ease; }
         @keyframes statPop { 0% { transform: scale(1); } 40% { transform: scale(1.4); color: #F5C842; } 100% { transform: scale(1); } }
-
         .speed-indicator { display: flex; gap: 3px; }
         .speed-level { font-size: 11px; filter: grayscale(100%); opacity: 0.3; transition: all 0.3s; }
         .speed-level.active { filter: grayscale(0%); opacity: 1; transform: scale(1.1); }
         .speed-level.just-gained { animation: speedGain 0.5s ease; }
         @keyframes speedGain { 0% { transform: scale(1); } 50% { transform: scale(1.6); } 100% { transform: scale(1.1); } }
-
         .lives-display { display: flex; gap: 3px; font-size: 15px; }
         .heart { transition: all 0.3s; }
         .heart.lost { opacity: 0.15; filter: grayscale(100%); transform: scale(0.8); }
         .heart.just-lost { animation: heartLost 0.5s ease; }
         @keyframes heartLost { 0% { transform: scale(1); } 30% { transform: scale(1.3) rotate(10deg); filter: brightness(2); } 100% { transform: scale(0.8); opacity: 0.15; } }
 
-        /* Countdown */
-        .countdown-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
+        /* Countdown - שקיפות גבוהה יותר */
+        .countdown-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(3px); }
         .countdown-modal.hidden { display: none; }
-        .countdown-text { font-size: 60px; font-weight: bold; color: #FFD700; text-shadow: 0 0 30px rgba(255,215,0,0.8); animation: countPulse 0.8s ease; font-family: 'Fredoka One', cursive; }
-        .countdown-text.go { color: #4DB8FF; text-shadow: 0 0 30px rgba(77,184,255,0.8); }
+        .countdown-text { font-size: 70px; font-weight: bold; color: #FFD700; text-shadow: 0 0 40px rgba(255,215,0,0.9), 0 4px 20px rgba(0,0,0,0.5); animation: countPulse 0.8s ease; font-family: 'Fredoka One', cursive; }
+        .countdown-text.go { color: #4DB8FF; text-shadow: 0 0 40px rgba(77,184,255,0.9), 0 4px 20px rgba(0,0,0,0.5); }
         @keyframes countPulse { 0% { transform: scale(0.3); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
 
         /* Result */
@@ -46,42 +44,60 @@
         .result-sub { font-size: 1rem; opacity: 0.8; margin-bottom: 20px; }
         .result-btn { padding: 12px 30px; border-radius: 15px; border: none; font-weight: 900; font-size: 1rem; cursor: pointer; background: linear-gradient(135deg, #F5C842, #FFB347); color: #0F1320; }
 
-        /* אזור משחק */
-        .game-area { flex: 1; position: relative; overflow: hidden; background: #2d3e5f; }
-        .curb-left, .curb-right { position: absolute; top: 0; bottom: 0; width: 12px; z-index: 50; background: repeating-linear-gradient(180deg, #FF0000 0, #FF0000 25px, #FFFFFF 25px, #FFFFFF 50px); }
-        .curb-left { left: 0; }
-        .curb-right { right: 0; }
-        .lanes-container { position: absolute; top: 0; bottom: 0; left: 12px; right: 12px; display: grid; grid-template-columns: repeat(5, 1fr); }
-        .lane { position: relative; border-left: 2px dashed rgba(255,255,255,0.15); }
-        .lane:first-child { border-left: none; }
+        /* אזור משחק — כביש בהיר יותר */
+        .game-area { flex: 1; position: relative; overflow: hidden; background: #4a5a7a; }
 
-        .race-line { position: absolute; left: 12px; right: 12px; height: 14px; z-index: 40; display: flex; flex-direction: column; }
+        /* אבני שפה */
+        .curb-left, .curb-right { position: absolute; top: 0; bottom: 0; width: 14px; z-index: 50; }
+        .curb-left { left: 0; background: repeating-linear-gradient(180deg, #FF0000 0, #FF0000 25px, #FFFFFF 25px, #FFFFFF 50px); }
+        .curb-right { right: 0; background: repeating-linear-gradient(180deg, #FFFFFF 0, #FFFFFF 25px, #FF0000 25px, #FF0000 50px); }
+
+        /* קווי הפרדה בין נתיבים — מובלטים */
+        .lane-divider {
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 3px;
+            z-index: 10;
+            background: repeating-linear-gradient(180deg,
+                rgba(255,255,255,0.8) 0px,
+                rgba(255,255,255,0.8) 20px,
+                transparent 20px,
+                transparent 35px);
+        }
+
+        /* קו זינוק/סיום */
+        .race-line { position: absolute; left: 14px; right: 14px; height: 14px; z-index: 40; display: flex; flex-direction: column; }
         .race-line.hidden { display: none; }
         .race-line-row { display: flex; flex: 1; }
         .race-line-sq { flex: 1; max-width: 12px; }
         .race-line-sq.w { background: white; }
         .race-line-sq.b { background: black; }
 
-        .car { position: absolute; width: 40px; height: 60px; z-index: 30; transition: left 0.15s ease; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
+        /* רכב */
+        .car { position: absolute; width: 38px; height: 58px; z-index: 30; transition: left 0.15s ease, bottom 0.05s linear; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)); }
         .car.flash { animation: carFlash 0.15s ease 3; }
         .car.frozen { opacity: 0.5; filter: grayscale(50%) drop-shadow(0 0 10px rgba(100,150,255,0.8)); }
         @keyframes carFlash { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
 
-        .item { position: absolute; font-size: 26px; z-index: 25; line-height: 1; text-align: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
-        .item.diamond { animation: diamondSpin 1.5s linear infinite; }
-        @keyframes diamondSpin { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15) rotate(10deg); } }
+        /* אייטמים — עומדים על הכביש */
+        .item { position: absolute; font-size: 24px; z-index: 25; line-height: 1; text-align: center; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); pointer-events: none; }
+        .item.diamond { animation: diamondFloat 1.5s ease-in-out infinite; }
+        @keyframes diamondFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        .item.collected { animation: collectPop 0.3s ease forwards; }
+        @keyframes collectPop { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
 
-        .segment-bar { position: absolute; bottom: 0; left: 12px; right: 12px; height: 3px; background: rgba(255,255,255,0.1); z-index: 45; }
+        /* Progress bar */
+        .segment-bar { position: absolute; bottom: 0; left: 14px; right: 14px; height: 3px; background: rgba(255,255,255,0.15); z-index: 45; }
         .segment-fill { height: 100%; background: linear-gradient(90deg, #4DB8FF, #F5C842); width: 0%; transition: width 0.3s; }
-        .segment-label { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 900; color: rgba(255,255,255,0.4); z-index: 46; }
+        .segment-label { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 900; color: rgba(255,255,255,0.5); z-index: 46; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
 
         /* Float text */
-        .float-text { position: absolute; z-index: 60; font-weight: 900; font-size: 18px; pointer-events: none; animation: floatUp 0.8s ease forwards; }
+        .float-text { position: absolute; z-index: 60; font-weight: 900; font-size: 18px; pointer-events: none; animation: floatUp 0.8s ease forwards; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-50px) scale(1.3); } }
 
         /* Swipe hint */
-        .swipe-hint { position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%); font-size: 14px; color: rgba(255,255,255,0.3); z-index: 55; animation: hintFade 3s ease forwards; pointer-events: none; }
-        @keyframes hintFade { 0% { opacity: 0.6; } 80% { opacity: 0.3; } 100% { opacity: 0; } }
+        .swipe-hint { position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%); font-size: 14px; color: rgba(255,255,255,0.5); z-index: 55; animation: hintFade 3s ease forwards; pointer-events: none; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+        @keyframes hintFade { 0% { opacity: 0.7; } 80% { opacity: 0.3; } 100% { opacity: 0; } }
     </style>
 </head>
 <body>
@@ -128,9 +144,7 @@
 <div class="game-area" id="gameArea">
     <div class="curb-left"></div>
     <div class="curb-right"></div>
-    <div class="lanes-container" id="lanesContainer">
-        <div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div><div class="lane"></div>
-    </div>
+    <!-- קווי הפרדה ייבנו דינמית -->
     <div class="race-line" id="raceLine"></div>
     <div class="segment-bar"><div class="segment-fill" id="segFill"></div></div>
     <div class="segment-label" id="segLabel">קטע 1 / 3</div>
@@ -166,11 +180,11 @@ const myEmoji = finalUserData.emoji;
 // ========== קבועים ==========
 const TOTAL_SEGMENTS = 3;
 const LANE_COUNT = 5;
-const SPEEDS = [1.5, 2.5, 3.5, 4.5, 6]; // 5 מהירויות
-const HIT_RADIUS = 30;
+const CURB_WIDTH = 14;
+const SPEEDS = [1.2, 2.0, 3.0, 4.2, 5.5]; // 5 מהירויות — פיקסלים לפריים
+const HIT_RADIUS = 28;
+const ITEMS_PER_SEGMENT = 12; // כמות אלמנטים בכל קטע
 
-// אייטמים: סוג, אימוג'י, הסתברות
-// diamond=💎, boost=⚡, bomb=💣, rock=🪨
 const ITEM_TABLE = [
     { type: 'diamond', emoji: '💎', weight: 35 },
     { type: 'boost',   emoji: '⚡', weight: 20 },
@@ -185,28 +199,55 @@ let playerSpeed = 0;
 let lives = 3;
 let points = 0;
 let currentSegment = 1;
-let segmentProgress = 0;
 let gameRunning = false;
 let gameFinished = false;
-let frozen = false; // עצירה אחרי פגיעה
+let frozen = false;
 let frozenUntil = 0;
-let items = [];
+let items = []; // אייטמים של הקטע הנוכחי
 let playerCarEl = null;
 let aiCarEl = null;
 let animFrameId = null;
-let spawnTimer = null;
+let playerY = 0; // מיקום Y של הרכב (0 = תחתית, gameH = עליון)
+let aiY = 0;
 
 // AI
 let aiLane = 2;
 let aiSpeed = 1;
 let aiSegment = 1;
-let aiSegmentProgress = 0;
 
 // DOM
 const gameArea = document.getElementById('gameArea');
-const lanesContainer = document.getElementById('lanesContainer');
 const segFill = document.getElementById('segFill');
 const segLabel = document.getElementById('segLabel');
+
+// מידות — ייקבעו ב-init
+let gameW = 0;
+let gameH = 0;
+let roadW = 0; // רוחב הכביש (בין אבני שפה)
+let laneW = 0; // רוחב נתיב בודד
+
+function calcDimensions() {
+    gameW = gameArea.clientWidth;
+    gameH = gameArea.clientHeight;
+    roadW = gameW - CURB_WIDTH * 2;
+    laneW = roadW / LANE_COUNT;
+}
+
+// ========== נתיבים — מיפוי ==========
+function getLaneCenter(laneIdx) {
+    // מרכז הנתיב בפיקסלים מצד שמאל של gameArea
+    return CURB_WIDTH + laneIdx * laneW + laneW / 2;
+}
+
+function buildLaneDividers() {
+    // 4 קווי הפרדה בין 5 נתיבים
+    for (let i = 1; i < LANE_COUNT; i++) {
+        const div = document.createElement('div');
+        div.className = 'lane-divider';
+        div.style.left = `${CURB_WIDTH + i * laneW - 1.5}px`;
+        gameArea.appendChild(div);
+    }
+}
 
 // ========== Firebase ==========
 const roomPath = mode === 'ai' ? `rooms_v3/race_ai/${myName}` : `rooms_v3/race/${myName}`;
@@ -269,47 +310,32 @@ window.addEventListener('beforeunload', () => {
     else remove(ref(db, `rooms_v3/race/${myName}`));
 });
 
-// ========== UI עם אנימציות ==========
+// ========== UI ==========
 function updateLives(justLostIndex) {
     document.querySelectorAll('#livesDisplay .heart').forEach((h, i) => {
         if (i >= lives) {
-            if (i === justLostIndex) {
-                h.classList.add('just-lost');
-                setTimeout(() => h.classList.remove('just-lost'), 500);
-            }
+            if (i === justLostIndex) { h.classList.add('just-lost'); setTimeout(() => h.classList.remove('just-lost'), 500); }
             h.classList.add('lost');
-        } else {
-            h.classList.remove('lost', 'just-lost');
-        }
+        } else { h.classList.remove('lost', 'just-lost'); }
     });
 }
-
 function updateSpeed(gained) {
     document.querySelectorAll('#speedInd .speed-level').forEach((l, i) => {
         const wasActive = l.classList.contains('active');
         l.classList.toggle('active', i <= playerSpeed);
-        if (gained && i === playerSpeed && !wasActive) {
-            l.classList.add('just-gained');
-            setTimeout(() => l.classList.remove('just-gained'), 500);
-        }
+        if (gained && i === playerSpeed && !wasActive) { l.classList.add('just-gained'); setTimeout(() => l.classList.remove('just-gained'), 500); }
     });
 }
-
 function updatePoints(added) {
     const el = document.getElementById('points');
     el.textContent = points;
-    if (added) {
-        el.classList.remove('pop');
-        void el.offsetHeight;
-        el.classList.add('pop');
-    }
+    if (added) { el.classList.remove('pop'); void el.offsetHeight; el.classList.add('pop'); }
 }
-
 function updateSegmentUI() {
     segLabel.textContent = `קטע ${currentSegment} / ${TOTAL_SEGMENTS}`;
-    segFill.style.width = `${Math.min(segmentProgress, 100)}%`;
+    const progress = Math.min((playerY / gameH) * 100, 100);
+    segFill.style.width = `${progress}%`;
 }
-
 function showResult(icon, title, sub) {
     gameFinished = true;
     document.getElementById('resultIcon').textContent = icon;
@@ -317,7 +343,6 @@ function showResult(icon, title, sub) {
     document.getElementById('resultSub').textContent = sub;
     document.getElementById('resultModal').classList.add('show');
 }
-
 function spawnFloatText(x, y, text, color) {
     const el = document.createElement('div');
     el.className = 'float-text';
@@ -336,7 +361,7 @@ function buildRaceLine() {
     for (let r = 0; r < 2; r++) {
         const row = document.createElement('div');
         row.className = 'race-line-row';
-        const count = Math.ceil(gameArea.clientWidth / 12);
+        const count = Math.ceil(roadW / 12);
         for (let i = 0; i < count; i++) {
             const sq = document.createElement('div');
             sq.className = `race-line-sq ${(i+r)%2===0?'w':'b'}`;
@@ -347,44 +372,39 @@ function buildRaceLine() {
 }
 function positionRaceLine() {
     const line = document.getElementById('raceLine');
-    if (currentSegment === 1) { line.classList.remove('hidden'); line.style.bottom = '18%'; }
-    else if (currentSegment === TOTAL_SEGMENTS) { line.classList.remove('hidden'); line.style.bottom = '85%'; }
+    if (currentSegment === 1) { line.classList.remove('hidden'); line.style.bottom = '15%'; }
+    else if (currentSegment === TOTAL_SEGMENTS) { line.classList.remove('hidden'); line.style.top = '10%'; line.style.bottom = 'auto'; }
     else { line.classList.add('hidden'); }
 }
 
-// ========== רכב SVG צבעוני ==========
+// ========== רכב SVG ==========
 const CAR_COLORS = {
-    emma:  { main: '#FF6B85', dark: '#C2184C' },
-    rif:   { main: '#5EC8FF', dark: '#1E5F9E' },
-    dad:   { main: '#52D273', dark: '#0B8C2F' },
-    mom:   { main: '#BA68C8', dark: '#4A148C' },
-    guest: { main: '#D0D0D0', dark: '#666666' },
-    ai:    { main: '#FFA500', dark: '#FF8C00' },
+    emma: { main: '#FF6B85', dark: '#C2184C' },
+    rif:  { main: '#5EC8FF', dark: '#1E5F9E' },
+    dad:  { main: '#52D273', dark: '#0B8C2F' },
+    mom:  { main: '#BA68C8', dark: '#4A148C' },
+    guest:{ main: '#D0D0D0', dark: '#666666' },
+    ai:   { main: '#FFA500', dark: '#FF8C00' },
 };
-
 function getCarColors(userId) {
     if (userId === 'ai') return CAR_COLORS.ai;
-    // בדוק לפי rawId
     const raw = userData?.rawId || userId;
     return CAR_COLORS[raw] || CAR_COLORS.guest;
 }
-
-function createCarSVG(userId, uniqueId) {
+function createCarSVG(userId, uid) {
     const c = getCarColors(userId);
     return `<svg viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
         <defs>
-            <linearGradient id="cg-${uniqueId}" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:${c.main};stop-opacity:1" />
-                <stop offset="100%" style="stop-color:${c.dark};stop-opacity:1" />
+            <linearGradient id="cg-${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:${c.main}" /><stop offset="100%" style="stop-color:${c.dark}" />
             </linearGradient>
-            <radialGradient id="hl-${uniqueId}" cx="50%" cy="0%" r="40%">
-                <stop offset="0%" style="stop-color:#FFFF00;stop-opacity:0.7" />
-                <stop offset="100%" style="stop-color:#FFFF00;stop-opacity:0" />
+            <radialGradient id="hl-${uid}" cx="50%" cy="0%" r="40%">
+                <stop offset="0%" style="stop-color:#FFFF00;stop-opacity:0.7" /><stop offset="100%" style="stop-color:#FFFF00;stop-opacity:0" />
             </radialGradient>
         </defs>
-        <path d="M 30 25 L 70 25 L 75 50 L 75 100 Q 75 115 60 120 L 40 120 Q 25 115 25 100 L 25 50 Z" fill="url(#cg-${uniqueId})" stroke="${c.dark}" stroke-width="1.5"/>
-        <ellipse cx="35" cy="22" rx="25" ry="25" fill="url(#hl-${uniqueId})"/>
-        <ellipse cx="65" cy="22" rx="25" ry="25" fill="url(#hl-${uniqueId})"/>
+        <path d="M 30 25 L 70 25 L 75 50 L 75 100 Q 75 115 60 120 L 40 120 Q 25 115 25 100 L 25 50 Z" fill="url(#cg-${uid})" stroke="${c.dark}" stroke-width="1.5"/>
+        <ellipse cx="35" cy="22" rx="25" ry="25" fill="url(#hl-${uid})"/>
+        <ellipse cx="65" cy="22" rx="25" ry="25" fill="url(#hl-${uid})"/>
         <circle cx="30" cy="50" r="11" fill="#111"/><circle cx="30" cy="50" r="7" fill="#222"/><circle cx="30" cy="50" r="4" fill="#444"/>
         <circle cx="70" cy="50" r="11" fill="#111"/><circle cx="70" cy="50" r="7" fill="#222"/><circle cx="70" cy="50" r="4" fill="#444"/>
         <circle cx="30" cy="95" r="11" fill="#111"/><circle cx="30" cy="95" r="7" fill="#222"/><circle cx="30" cy="95" r="4" fill="#444"/>
@@ -397,40 +417,51 @@ function createCar(userId, laneIdx, id) {
     car.className = 'car';
     car.id = id;
     car.innerHTML = createCarSVG(userId, id);
-    const laneW = lanesContainer.clientWidth / LANE_COUNT;
-    car.style.left = `${12 + laneIdx * laneW + laneW/2 - 20}px`;
-    car.style.bottom = '12%';
+    car.style.left = `${getLaneCenter(laneIdx) - 19}px`;
+    car.style.bottom = '5%';
     gameArea.appendChild(car);
     return car;
 }
 function moveCarToLane(carEl, laneIdx) {
-    const laneW = lanesContainer.clientWidth / LANE_COUNT;
-    carEl.style.left = `${12 + laneIdx * laneW + laneW/2 - 20}px`;
+    carEl.style.left = `${getLaneCenter(laneIdx) - 19}px`;
+}
+function setCarY(carEl, y) {
+    // y = 0 תחתית, gameH = עליון
+    // bottom% מתורגם ממיקום Y
+    const bottomPx = (y / gameH) * (gameH - 70);
+    carEl.style.bottom = `${bottomPx}px`;
 }
 
-// ========== אייטמים ==========
+// ========== אייטמים — פיזור סטטי בקטע ==========
 function pickItemType() {
     let r = Math.random() * TOTAL_WEIGHT;
-    for (const item of ITEM_TABLE) {
-        r -= item.weight;
-        if (r <= 0) return item;
-    }
+    for (const item of ITEM_TABLE) { r -= item.weight; if (r <= 0) return item; }
     return ITEM_TABLE[ITEM_TABLE.length - 1];
 }
 
-function spawnItem() {
-    if (!gameRunning) return;
-    const lane = Math.floor(Math.random() * LANE_COUNT);
-    const itemDef = pickItemType();
-
-    const el = document.createElement('div');
-    el.className = `item${itemDef.type === 'diamond' ? ' diamond' : ''}`;
-    el.textContent = itemDef.emoji;
-    const laneW = lanesContainer.clientWidth / LANE_COUNT;
-    el.style.left = `${12 + lane * laneW + laneW/2 - 13}px`;
-    el.style.top = '-40px';
-    gameArea.appendChild(el);
-    items.push({ el, lane, type: itemDef.type, y: -40 });
+function spawnSegmentItems() {
+    // נקה אייטמים קודמים
+    items.forEach(it => it.el.remove());
+    items = [];
+    
+    // פזר אייטמים על פני גובה המסך
+    const minY = gameH * 0.15; // לא קרוב מדי לתחתית
+    const maxY = gameH * 0.90; // לא מעבר לעליון
+    
+    for (let i = 0; i < ITEMS_PER_SEGMENT; i++) {
+        const itemDef = pickItemType();
+        const lane = Math.floor(Math.random() * LANE_COUNT);
+        const yPos = minY + (maxY - minY) * (i / ITEMS_PER_SEGMENT) + (Math.random() - 0.5) * 40;
+        
+        const el = document.createElement('div');
+        el.className = `item${itemDef.type === 'diamond' ? ' diamond' : ''}`;
+        el.textContent = itemDef.emoji;
+        el.style.left = `${getLaneCenter(lane) - 12}px`;
+        el.style.top = `${yPos}px`;
+        gameArea.appendChild(el);
+        
+        items.push({ el, lane, type: itemDef.type, yPos, collected: false });
+    }
 }
 
 // ========== Freeze ==========
@@ -438,10 +469,7 @@ function freezePlayer(seconds) {
     frozen = true;
     frozenUntil = Date.now() + seconds * 1000;
     playerCarEl.classList.add('frozen');
-    setTimeout(() => {
-        frozen = false;
-        playerCarEl.classList.remove('frozen');
-    }, seconds * 1000);
+    setTimeout(() => { frozen = false; playerCarEl.classList.remove('frozen'); }, seconds * 1000);
 }
 
 // ========== Game loop ==========
@@ -451,95 +479,111 @@ function gameLoop() {
     const now = Date.now();
     const isFrozen = frozen && now < frozenUntil;
     const speed = isFrozen ? 0 : SPEEDS[playerSpeed];
-
-    // הזז אייטמים (גם כשקפוא - העולם ממשיך, הרכב עומד)
-    const moveSpeed = isFrozen ? SPEEDS[0] * 0.5 : speed * 1.5;
     
-    for (let i = items.length - 1; i >= 0; i--) {
-        const it = items[i];
-        it.y += moveSpeed;
-        it.el.style.top = `${it.y}px`;
-
-        // התנגשות
-        if (!isFrozen) {
-            const cr = playerCarEl.getBoundingClientRect();
-            const ir = it.el.getBoundingClientRect();
-            const dx = (cr.left+cr.width/2) - (ir.left+ir.width/2);
-            const dy = (cr.top+cr.height/2) - (ir.top+ir.height/2);
-            const dist = Math.sqrt(dx*dx + dy*dy);
-
-            if (dist < HIT_RADIUS) {
-                const ix = ir.left + ir.width/2 - gameArea.getBoundingClientRect().left;
-                const iy = ir.top - gameArea.getBoundingClientRect().top;
-                
-                if (it.type === 'diamond') {
-                    points += 10;
-                    updatePoints(true);
-                    spawnFloatText(ix, iy, '+10 💎', '#58D9F5');
-                } else if (it.type === 'boost') {
-                    if (playerSpeed < 4) { playerSpeed++; updateSpeed(true); }
-                    spawnFloatText(ix, iy, '⚡ מהירות!', '#FFD700');
-                } else if (it.type === 'bomb') {
-                    // פצצה — חיים -1, מהירות ל-0, עצירה 2 שניות
-                    lives--;
-                    updateLives(lives); // אנימציה על הלב שנפל
-                    if (playerSpeed > 0) { playerSpeed = 0; updateSpeed(false); }
-                    playerCarEl.classList.add('flash');
-                    setTimeout(() => playerCarEl.classList.remove('flash'), 450);
-                    freezePlayer(2);
-                    spawnFloatText(ix, iy, '💥 פצצה!', '#FF4444');
-                    
-                    if (lives <= 0) { stopGame(); showResult('💥', 'התרסקת!', `${points} נקודות`); return; }
-                } else if (it.type === 'rock') {
-                    // אבן — מהירות -1, עצירה שנייה
-                    if (playerSpeed > 0) { playerSpeed--; updateSpeed(false); }
-                    playerCarEl.classList.add('flash');
-                    setTimeout(() => playerCarEl.classList.remove('flash'), 450);
-                    freezePlayer(1);
-                    spawnFloatText(ix, iy, '🪨 אבן!', '#AAA');
-                }
-                
-                it.el.remove(); items.splice(i,1); continue;
-            }
-        }
-
-        if (it.y > gameArea.clientHeight + 50) { it.el.remove(); items.splice(i,1); }
-    }
-
-    // התקדמות (רק אם לא קפוא)
+    // הזז רכב למעלה
     if (!isFrozen) {
-        segmentProgress += speed * 0.04;
-        if (segmentProgress >= 100) {
-            segmentProgress = 0;
-            currentSegment++;
-            if (currentSegment > TOTAL_SEGMENTS) { stopGame(); showResult('🏆', '🏁 סיימת!', `${points} נקודות`); return; }
-            positionRaceLine();
-        }
-        updateSegmentUI();
+        playerY += speed;
     }
-
+    setCarY(playerCarEl, playerY);
+    
+    // בדוק התנגשויות עם אייטמים
+    const carCenterX = getLaneCenter(playerLane);
+    const carScreenY = gameH - ((playerY / gameH) * (gameH - 70)) - 35; // מרכז הרכב על המסך
+    
+    for (let i = 0; i < items.length; i++) {
+        const it = items[i];
+        if (it.collected) continue;
+        
+        const itemCenterX = getLaneCenter(it.lane);
+        const itemCenterY = it.yPos + 13;
+        
+        const dx = carCenterX - itemCenterX;
+        const dy = carScreenY - itemCenterY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        
+        if (dist < HIT_RADIUS) {
+            it.collected = true;
+            
+            const fx = parseFloat(it.el.style.left) + 12;
+            const fy = it.yPos;
+            
+            if (it.type === 'diamond') {
+                points += 10;
+                updatePoints(true);
+                spawnFloatText(fx, fy, '+10 💎', '#58D9F5');
+            } else if (it.type === 'boost') {
+                if (playerSpeed < 4) { playerSpeed++; updateSpeed(true); }
+                spawnFloatText(fx, fy, '⚡ מהירות!', '#FFD700');
+            } else if (it.type === 'bomb') {
+                lives--;
+                updateLives(lives);
+                if (playerSpeed > 0) { playerSpeed = 0; updateSpeed(false); }
+                playerCarEl.classList.add('flash');
+                setTimeout(() => playerCarEl.classList.remove('flash'), 450);
+                freezePlayer(2);
+                spawnFloatText(fx, fy, '💥 פצצה!', '#FF4444');
+                if (lives <= 0) { stopGame(); showResult('💥', 'התרסקת!', `${points} נקודות`); return; }
+            } else if (it.type === 'rock') {
+                if (playerSpeed > 0) { playerSpeed--; updateSpeed(false); }
+                playerCarEl.classList.add('flash');
+                setTimeout(() => playerCarEl.classList.remove('flash'), 450);
+                freezePlayer(1);
+                spawnFloatText(fx, fy, '🪨 אבן!', '#AAA');
+            }
+            
+            it.el.classList.add('collected');
+            setTimeout(() => it.el.remove(), 300);
+        }
+    }
+    
+    // בדוק סיום קטע
+    if (playerY >= gameH) {
+        playerY = 0;
+        currentSegment++;
+        
+        if (currentSegment > TOTAL_SEGMENTS) {
+            stopGame();
+            showResult('🏆', '🏁 סיימת!', `${points} נקודות`);
+            return;
+        }
+        
+        positionRaceLine();
+        spawnSegmentItems();
+        setCarY(playerCarEl, 0);
+    }
+    
+    updateSegmentUI();
+    
     // AI
     if (mode === 'ai' && aiCarEl) {
-        aiSegmentProgress += SPEEDS[aiSpeed] * 0.035;
+        const aiSpd = isFrozen ? SPEEDS[aiSpeed] : SPEEDS[aiSpeed]; // AI לא קופא
+        aiY += aiSpd;
+        setCarY(aiCarEl, aiY);
+        
         if (Math.random() < 0.004 && aiSpeed < 4) aiSpeed++;
-        if (aiSegmentProgress >= 100) {
-            aiSegmentProgress = 0; aiSegment++;
-            if (aiSegment > TOTAL_SEGMENTS && !gameFinished) { stopGame(); showResult('🤖', 'המחשב הגיע ראשון!', `${points} נקודות`); return; }
-        }
         if (Math.random() < 0.012) {
             const dir = Math.random() < 0.5 ? -1 : 1;
             const nl = aiLane + dir;
             if (nl >= 0 && nl < LANE_COUNT) { aiLane = nl; moveCarToLane(aiCarEl, aiLane); }
         }
+        
+        if (aiY >= gameH) {
+            aiY = 0;
+            aiSegment++;
+            if (aiSegment > TOTAL_SEGMENTS && !gameFinished) {
+                stopGame();
+                showResult('🤖', 'המחשב הגיע ראשון!', `${points} נקודות`);
+                return;
+            }
+        }
     }
-
+    
     animFrameId = requestAnimationFrame(gameLoop);
 }
 
 function stopGame() {
     gameRunning = false;
     if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
-    if (spawnTimer) { clearInterval(spawnTimer); spawnTimer = null; }
 }
 
 // ========== Countdown ==========
@@ -568,11 +612,12 @@ function startCountdown(cb) {
 
 function startGame() {
     gameRunning = true;
+    playerY = 0;
+    aiY = 0;
     positionRaceLine();
+    spawnSegmentItems();
     updateSegmentUI();
-    spawnTimer = setInterval(() => { if (gameRunning) spawnItem(); }, 1200);
     
-    // Swipe hint
     const hint = document.createElement('div');
     hint.className = 'swipe-hint';
     hint.textContent = '👆 החלק ימינה ושמאלה';
@@ -585,15 +630,11 @@ function startGame() {
 // ========== Swipe ==========
 let touchStartX = 0;
 let touchStartTime = 0;
-gameArea.addEventListener('touchstart', e => { 
-    touchStartX = e.touches[0].clientX;
-    touchStartTime = Date.now();
-}, { passive: true });
+gameArea.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; touchStartTime = Date.now(); }, { passive: true });
 gameArea.addEventListener('touchend', e => {
     if (!gameRunning || frozen) return;
     const diff = e.changedTouches[0].clientX - touchStartX;
     const elapsed = Date.now() - touchStartTime;
-    // רק swipe מהיר (פחות מ-300ms) עם מרחק מינימלי
     if (elapsed < 300 && Math.abs(diff) > 25) {
         if (diff < 0 && playerLane > 0) { playerLane--; moveCarToLane(playerCarEl, playerLane); }
         else if (diff > 0 && playerLane < LANE_COUNT - 1) { playerLane++; moveCarToLane(playerCarEl, playerLane); }
@@ -602,7 +643,10 @@ gameArea.addEventListener('touchend', e => {
 
 // ========== Init ==========
 async function init() {
+    calcDimensions();
+    buildLaneDividers();
     buildRaceLine();
+    
     const existingSnap = await get(ref(db, roomPath));
     const existingData = existingSnap?.val();
     myJoinedAt = existingData?.joinedAt || Date.now();
@@ -615,6 +659,7 @@ async function init() {
         playerCarEl = createCar(myName, playerLane, 'playerCar');
         aiCarEl = createCar('ai', aiLane, 'aiCar');
         positionRaceLine();
+        spawnSegmentItems();
         startCountdown(startGame);
     } else {
         playerLane = 0;
@@ -636,6 +681,7 @@ async function init() {
                 playerLane = amFirst ? 0 : 2;
                 moveCarToLane(playerCarEl, playerLane);
                 startOpponentCheck();
+                spawnSegmentItems();
                 startCountdown(startGame);
             }
         });
