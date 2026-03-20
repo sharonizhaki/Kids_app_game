@@ -1207,15 +1207,12 @@ function startWaiting(gameId) {
                     clearInterval(countdownInterval);
                     countdownInterval = null;
                     navigatingToGame = true;
-                    // עצור heartbeat ומחק מ-room לפני ניווט
+                    // נתק listener ועצור heartbeat - אבל אל תמחק מ-room!
+                    // xo.html ירשם מחדש ב-room בעצמו
                     if (roomListener) roomListener();
                     if (window.stopHeartbeat) window.stopHeartbeat();
-                    remove(ref(db, `rooms_v3/${gameId}/${myUser.id}`));
-                    // שמור myUser ונווט אחרי עיכוב קצר כדי שה-remove יספיק
                     sessionStorage.setItem('myUser', JSON.stringify(myUser));
-                    setTimeout(() => {
-                        window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}`;
-                    }, 300);
+                    window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}`;
                 }
             }, 1000);
         } else {

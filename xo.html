@@ -289,12 +289,17 @@ async function initSession() {
             showFullGameMessage();
             return;
         } else {
-            // שחקן רגיל - נרשם ב-room קודם
+            // שחקן רגיל - בדוק אם כבר רשום ב-room (מגיע מ-index waiting)
+            const existingSnap = await get(ref(db, roomPath));
+            const existingData = existingSnap.val();
+            const myJoinedAtFinal = existingData?.joinedAt || myJoinedAt;
+            
+            // נרשם/עדכן ב-room עם joinedAt המקורי
             await set(ref(db, roomPath), { 
                 name: displayName, color: myColor, emoji: myEmoji,
-                joinedAt: myJoinedAt, timestamp: myJoinedAt, active: true 
+                joinedAt: myJoinedAtFinal, timestamp: Date.now(), active: true 
             });
-            startHeartbeat(roomPath, myJoinedAt);
+            startHeartbeat(roomPath, myJoinedAtFinal);
             
             // קרא אחרי רישום
             const snapAfter = await get(roomRef);
