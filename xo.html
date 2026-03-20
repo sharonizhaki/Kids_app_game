@@ -248,141 +248,151 @@ if (isAIMode) {
 
 let mySymbol = null; 
 let currentGameState = null;
-let gameStartTime = Date.now();
 let myColor = finalUserData.color;
 let myEmoji = finalUserData.emoji;
 let isViewer = false;
-let playerCountHistory = [];
+let lastPlayerCount = 0;
 let playerColors = { X: '#FF5C7A', O: '#4DB8FF' };  // צבעי X ו-O
 let playerNames = { X: '', O: '', X_emoji: '', O_emoji: '' };  // שמות ואימוג'יים
+let aiMoveScheduled = false;  // guard נגד קריאות כפולות ל-makeAIMove
+let winModalShown = false;  // guard נגד פתיחה כפולה של win-modal
 
 async function initSession() {
     try {
         console.log('🎮 initSession started, myName:', myName, 'AI Mode:', isAIMode);
         
-        // 2. רישום בחדר עם נתונים מלאים
         const roomPath = isAIMode ? `rooms_v3/xo_ai/${myName}` : `rooms_v3/xo/${myName}`;
         const myJoinedAt = Date.now();
-        await set(ref(db, roomPath), { 
-            name: displayName,  // שם דיספליי בעברית
-            color: myColor,
-            emoji: myEmoji,
-            joinedAt: myJoinedAt,
-            timestamp: myJoinedAt,
-            active: true 
-        });
-
-        // 3. שמור heartbeat כל שנייה - עדכן רק timestamp, לא joinedAt
-        let heartbeatInterval = setInterval(() => {
-            set(ref(db, roomPath), { 
-                name: displayName,  // שם דיספליי בעברית
-                color: myColor,
-                emoji: myEmoji,
-                joinedAt: myJoinedAt,
-                timestamp: Date.now(),
-                active: true 
-            });
-        }, 1000);
         
-        // שמור את heartbeatInterval globally כדי שנוכל לעצור אותו
-        window.heartbeatInterval = heartbeatInterval;
-
-        // 4. קביעת תפקיד
-        const snapAfter = await get(roomRef);
-        const playersAfter = snapAfter.val() || {};
-        
-        // מיין לפי joinedAt (קבוע) - מי שנכנס ראשון נשאר ראשון
-        const playerNamesAfter = Object.keys(playersAfter)
-            .sort((a, b) => (playersAfter[a].joinedAt || playersAfter[a].timestamp || 0) - (playersAfter[b].joinedAt || playersAfter[b].timestamp || 0));
+        // בדוק כמה שחקנים כבר בחדר לפני שנרשם
+        const snapBefore = await get(roomRef);
+        const playersBefore = snapBefore.val() || {};
+        const playerKeysBefore = Object.keys(playersBefore)
+            .sort((a, b) => (playersBefore[a].joinedAt || playersBefore[a].timestamp || 0) - (playersBefore[b].joinedAt || playersBefore[b].timestamp || 0));
 
         if (isAIMode) {
-            // במצב AI - תמיד יש AI כ-O וכמשחקן כ-X
+            // במצב AI - תמיד נרשם ומתחילים
+            await set(ref(db, roomPath), { 
+                name: displayName, color: myColor, emoji: myEmoji,
+                joinedAt: myJoinedAt, timestamp: myJoinedAt, active: true 
+            });
+            startHeartbeat(roomPath, myJoinedAt);
+            
             mySymbol = 'X';
             playerNames.X = displayName;
             playerNames.X_emoji = myEmoji;
-            playerNames.O = 'מחשב';  // שם ל-AI בעברית
+            playerNames.O = 'מחשב';
             playerNames.O_emoji = '🤖';
-            playerColors.O = '#FFB347';  // צבע כתום ל-AI
+            playerColors.O = '#FFB347';
             
-            // בAI mode - הכפתור תמיד גלוי
             document.getElementById('reset-btn').style.display = 'block';
             
-            // בדוק אם כבר יש משחק - אם כן, אל תאתחל אותו מחדש
             const gameSnap = await get(gameStateRef);
             if (!gameSnap.val()) {
-                // רק אם אין משחק - אתחל
                 resetFirebaseGame(true);
             }
+        } else if (currentGameId) {
+            // יש gameId מ-URL - המשחק כבר מלא, הצג הודעה וחזור
+            showFullGameMessage();
+            return;
+        } else if (playerKeysBefore.length >= 2) {
+            // כבר 2+ שחקנים - המשחק מלא, הצג הודעה וחזור
+            showFullGameMessage();
+            return;
         } else {
-            // Non-AI mode - טפל בgameId וצפייה
+            // שחקן פעיל - נרשם ב-room
+            await set(ref(db, roomPath), { 
+                name: displayName, color: myColor, emoji: myEmoji,
+                joinedAt: myJoinedAt, timestamp: myJoinedAt, active: true 
+            });
+            startHeartbeat(roomPath, myJoinedAt);
             
-            // אם כבר יש gameId - זה צפייה
-            if (currentGameId) {
-                isViewer = true;
-                mySymbol = null;
-                gameStateRef = ref(db, `game/xo/${currentGameId}`);
-                // הסתר את reset button
-                document.getElementById('reset-btn').style.display = 'none';
-            } else if (playerNamesAfter.length > 2) {
-                // יותר מ-2 שחקנים - זה צפייה
-                isViewer = true;
-                mySymbol = null;
-                // גנרט gameId מהראשונים שניים (בסדר א-לפבתי)
-                currentGameId = playerNamesAfter.slice(0, 2).join('_');
-                gameStateRef = ref(db, `game/xo/${currentGameId}`);
-                // הסתר את reset button
-                document.getElementById('reset-btn').style.display = 'none';
-            } else if (playerNamesAfter.length === 1) {
-                // משחקן ראשון
+            // קרא שוב אחרי רישום
+            const snapAfter = await get(roomRef);
+            const playersAfter = snapAfter.val() || {};
+            const playerNamesAfter = Object.keys(playersAfter)
+                .sort((a, b) => (playersAfter[a].joinedAt || playersAfter[a].timestamp || 0) - (playersAfter[b].joinedAt || playersAfter[b].timestamp || 0));
+            
+            if (playerNamesAfter.length === 1) {
                 mySymbol = 'X';
-                // gameId יהיה בסדר א-לפבתי כשמשחקן שני יצטרף
-                // כרגע, אנחנו לא יודעים את שמו, אז נשמור gameId זמני
-                // זה יעדכן כשמשחקן שני יצטרף
-                currentGameId = null;  // ינוסה בעדכון roomListener
-                gameStateRef = ref(db, 'game/xo/pending');  // זמני
+                currentGameId = null;
+                gameStateRef = ref(db, 'game/xo/pending');
                 resetFirebaseGame(true);
             } else if (playerNamesAfter.length === 2) {
-                // משחקן שני - הראשון בסדר כניסה (timestamp) הוא X
                 const firstPlayer = playerNamesAfter[0];
                 const secondPlayer = playerNamesAfter[1];
                 
                 mySymbol = myName === firstPlayer ? 'X' : 'O';
-                
-                // גנרט gameId מהשניים בסדר כניסה
                 currentGameId = `${firstPlayer}_${secondPlayer}`;
                 gameStateRef = ref(db, `game/xo/${currentGameId}`);
                 
-                // בדוק אם משחק קיים
-                const gameSnap = await get(gameStateRef);
-                const gameExists = gameSnap.val() !== null;
+                // מחק pending אם קיים
+                remove(ref(db, 'game/xo/pending'));
                 
-                // אם אין משחק - אתחל
-                if (!gameExists) {
+                const gameSnap = await get(gameStateRef);
+                if (!gameSnap.val()) {
                     resetFirebaseGame(true);
                 }
+            } else if (playerNamesAfter.length > 2) {
+                // race condition - המשחק מלא
+                stopHeartbeat();
+                await remove(ref(db, roomPath));
+                showFullGameMessage();
+                return;
             }
         }
 
-        // 5. הפעל listeners
+        // הפעל listeners
         startListeners();
     } catch (error) {
         console.error('Error in initSession:', error);
     }
 }
 
-function startListeners() {
-    console.log('🎧 startListeners called');
-    onValue(gameStateRef, (snap) => {
+function startHeartbeat(roomPath, joinedAt) {
+    window.heartbeatInterval = setInterval(() => {
+        set(ref(db, roomPath), { 
+            name: displayName, color: myColor, emoji: myEmoji,
+            joinedAt: joinedAt, timestamp: Date.now(), active: true 
+        });
+    }, 1000);
+}
+
+function stopHeartbeat() {
+    if (window.heartbeatInterval) {
+        clearInterval(window.heartbeatInterval);
+        window.heartbeatInterval = null;
+    }
+}
+
+function showFullGameMessage() {
+    document.getElementById('alert-modal').style.display = 'flex';
+    document.getElementById('alert-modal').querySelector('div[style*="font-size: 3rem"]').textContent = '🚫';
+    document.getElementById('modal-msg').textContent = 'המשחק מלא! כבר משחקים כאן שני שחקנים';
+    document.getElementById('alert-modal').querySelector('.btn-reset').textContent = 'חזרה לתפריט';
+    document.getElementById('alert-modal').querySelector('.btn-reset').onclick = () => {
+        window.location.href = 'index.html';
+    };
+}
+
+let gameStateUnsubscribe = null;
+
+function startGameStateListener() {
+    // הסר listener קודם אם קיים
+    if (gameStateUnsubscribe) {
+        gameStateUnsubscribe();
+        gameStateUnsubscribe = null;
+    }
+    
+    gameStateUnsubscribe = onValue(gameStateRef, (snap) => {
         const data = snap.val();
         console.log('📊 gameState:', data);
-        // עדכן currentGameState תמיד, גם אם null
         if (data) { 
             currentGameState = data; 
         } else {
             currentGameState = null;
         }
         
-        // עדכן תוצאות גם כשאין משחק פעיל (כל משחק שעבר)
         if (data && data.scores) {
             document.getElementById('wins-X').textContent = data.scores.X;
             document.getElementById('wins-O').textContent = data.scores.O;
@@ -391,6 +401,11 @@ function startListeners() {
         
         render(); 
     });
+}
+
+function startListeners() {
+    console.log('🎧 startListeners called');
+    startGameStateListener();
 
     // עדכון רשימת משחקנים
     onValue(roomRef, (snap) => {
@@ -412,10 +427,12 @@ function startListeners() {
 
         // בדוק אם משחקן עזב (רק בNon-AI ויש משחק פעיל)
         if (!isAIMode && !isViewer) {
-            const lastCount = playerCountHistory[playerCountHistory.length - 1];
-            
-            if (lastCount === 2 && names.length < 2) {
-                // משחקן עזב! מחק את הלוח מיד
+            if (lastPlayerCount === 2 && names.length < 2) {
+                // משחקן עזב! עצור heartbeat ומחק את עצמנו מהroom
+                stopHeartbeat();
+                remove(ref(db, `rooms_v3/xo/${myName}`));
+                
+                // מחק את הלוח מיד
                 if (gameStateRef) {
                     set(gameStateRef, null);
                 }
@@ -447,11 +464,17 @@ function startListeners() {
 
         // עדכן את gameStateRef אם משחקן שני הצטרף (Non-AI mode)
         if (!isAIMode && !isViewer && names.length === 2 && !currentGameId) {
-            // משחקן שני הצטרף - עדכן את gameId לפי סדר כניסה (timestamp)
+            // משחקן שני הצטרף - עדכן את gameId לפי סדר כניסה
             const firstPlayer = names[0];
             const secondPlayer = names[1];
             currentGameId = `${firstPlayer}_${secondPlayer}`;
             gameStateRef = ref(db, `game/xo/${currentGameId}`);
+            
+            // מחק pending
+            remove(ref(db, 'game/xo/pending'));
+            
+            // הפעל listener חדש על ה-ref החדש
+            startGameStateListener();
             
             // בדוק אם משחק קיים (אם לא, יוצרים חדש)
             get(gameStateRef).then(snap => {
@@ -511,15 +534,9 @@ function startListeners() {
             }
         }
 
-        // עדכן את מספר השחקנים בהיסטוריה
-        playerCountHistory.push(names.length);
+        // עדכן את מספר השחקנים
+        lastPlayerCount = names.length;
 
-        // בדוק אם אני צריך להיות צופה
-        if (!isViewer && names.length > 2) {
-            isViewer = true;
-            document.getElementById('status-bar').textContent = "👁️ אתה צופה בלבד";
-        }
-        
         // עדכן את ה-UI
         render();
     });
@@ -575,6 +592,13 @@ function render() {
     
     // בדוק אם יש ניצחון או תיקו
     if (gameOver) {
+        // אם כבר הצגנו modal - לא נציג שוב
+        if (winModalShown) {
+            status.textContent = "סיבוב הסתיים!";
+            return;
+        }
+        winModalShown = true;
+        
         // השתמש ב-checkWinner כדי למצוא מי ניצח
         let winner = null;
         if (checkWinner(board)) {
@@ -605,11 +629,6 @@ function render() {
             winModal.style.display = 'flex';
             winName.textContent = `🏅 ${winnerEmoji} ${winnerName}`;
             winName.style.color = winnerColor;
-            
-            setTimeout(() => {
-                winModal.style.display = 'none';
-                winModal.classList.remove('show');
-            }, 2000);
         } else {
             // תיקו
             winTitle.textContent = 'תיקו!';
@@ -620,18 +639,19 @@ function render() {
             
             winModal.classList.add('show');
             winModal.style.display = 'flex';
-            
-            setTimeout(() => {
-                winModal.style.display = 'none';
-                winModal.classList.remove('show');
-            }, 2000);
         }
         
+        // הסתר ב-2 שניות
+        setTimeout(() => {
+            winModal.style.display = 'none';
+            winModal.classList.remove('show');
+        }, 2000);
+        
         status.textContent = "סיבוב הסתיים!";
-    } else if (isViewer) {
-        status.textContent = "👁️ אתה צופה בלבד";
     } else {
-        // אם תורך - הצג "תורך!" + שם + אימוג'י
+        // המשחק לא gameOver - אפס את הguard
+        winModalShown = false;
+        
         if (mySymbol === currentPlayer) {
             const myName = playerNames[mySymbol];
             const myEmoji = playerNames[mySymbol + '_emoji'];
@@ -642,9 +662,13 @@ function render() {
             const otherEmoji = playerNames[otherSymbol + '_emoji'];
             status.textContent = `⏳ ממתין ל-${otherEmoji} ${otherName}`;
             
-            // אם זה AI mode וזה תור של AI - עשה מהלך אוטומטי
-            if (isAIMode && otherSymbol === 'O' && currentPlayer === 'O') {
-                setTimeout(makeAIMove, 1000);
+            // אם זה AI mode וזה תור של AI - עשה מהלך אוטומטי (עם guard)
+            if (isAIMode && currentPlayer === 'O' && !aiMoveScheduled) {
+                aiMoveScheduled = true;
+                setTimeout(() => {
+                    makeAIMove();
+                    aiMoveScheduled = false;
+                }, 1000);
             }
         }
     }
@@ -674,8 +698,12 @@ document.querySelectorAll('.cell').forEach(cell => {
         } else {
             updates.currentPlayer = mySymbol === 'X' ? 'O' : 'X';
             // אם זה משחק מול AI והתור של AI - עשה מהלך
-            if (isAIMode && updates.currentPlayer === 'O') {
-                setTimeout(makeAIMove, 1000);  // עיכוב של שנייה
+            if (isAIMode && updates.currentPlayer === 'O' && !aiMoveScheduled) {
+                aiMoveScheduled = true;
+                setTimeout(() => {
+                    makeAIMove();
+                    aiMoveScheduled = false;
+                }, 1000);
             }
         }
         update(gameStateRef, updates);
@@ -804,25 +832,35 @@ async function autoNextRound() {
     await update(gameStateRef, nextRound);
     
     // אם ה-AI מתחיל במשחק הבא - תן לו זמן להשחק
-    if (isAIMode && nextStarter === 'O') {
-        setTimeout(makeAIMove, 1000);
+    if (isAIMode && nextStarter === 'O' && !aiMoveScheduled) {
+        aiMoveScheduled = true;
+        setTimeout(() => {
+            makeAIMove();
+            aiMoveScheduled = false;
+        }, 1000);
     }
 }
 
 window.goHome = async () => {
     try {
-        // עצור את heartbeat
-        if (window.heartbeatInterval) {
-            clearInterval(window.heartbeatInterval);
-        }
+        // עצור heartbeat קודם כל
+        stopHeartbeat();
         
-        if (!isAIMode && currentGameId) {
-            // Non-AI mode - מחק את החדר כולו (משחק + room)
-            await remove(ref(db, `game/xo/${currentGameId}`));
-            await remove(ref(db, `rooms_v3/xo`));
+        if (!isAIMode) {
+            // Non-AI mode - מחק רק את עצמך מה-room
+            await remove(ref(db, `rooms_v3/xo/${myName}`));
+            if (currentGameId) {
+                await remove(ref(db, `game/xo/${currentGameId}`));
+            }
+            // נקה pending אם קיים
+            remove(ref(db, 'game/xo/pending'));
         } else if (isAIMode && myName) {
-            // AI mode - מחק את עצמך מ-rooms כדי שלא תראה כממתין
+            // AI mode - מחק את עצמך מ-rooms
             await remove(ref(db, `rooms_v3/xo_ai/${myName}`));
+            // אם אורח - מחק גם את המשחק שלו
+            if (myName.startsWith('guest_')) {
+                await remove(ref(db, `game/xo_ai/${myName}`));
+            }
         }
     } catch (error) {
         console.error('Error in goHome:', error);
@@ -857,6 +895,21 @@ window.handleForfeit = () => {
         if (mySymbol === 'X') setTimeout(autoNextRound, 2000);
     }
 };
+
+// ניקוי כשסוגרים טאב/דפדפן
+window.addEventListener('beforeunload', () => {
+    stopHeartbeat();
+    // שלח מחיקה מיד - navigator.sendBeacon לא עובד עם Firebase,
+    // אז נסמך על ה-heartbeat cleanup ב-index.html כ-fallback
+    if (!isAIMode) {
+        remove(ref(db, `rooms_v3/xo/${myName}`));
+    } else {
+        remove(ref(db, `rooms_v3/xo_ai/${myName}`));
+        if (myName.startsWith('guest_')) {
+            remove(ref(db, `game/xo_ai/${myName}`));
+        }
+    }
+});
 
 initSession();
 </script>
