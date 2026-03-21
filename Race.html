@@ -190,7 +190,7 @@
             <div class="stat-item">
                 <div class="stat-label">🏆 נצחונות</div>
                 <div class="wins-display" id="winsDisplay">
-                    <span class="trophy dim">🏆</span><span class="trophy dim">🏆</span><span class="trophy dim">🏆</span><span class="trophy dim">🏆</span><span class="trophy dim">🏆</span>
+                    <span class="trophy dim">🏆</span><span class="trophy dim">🏆</span><span class="trophy dim">🏆</span>
                 </div>
             </div>
             <div class="stat-item">
@@ -264,10 +264,10 @@ const SPEEDS = [1.2, 2.0, 3.0, 4.2, 5.5];
 const HIT_RADIUS = 28;
 const ITEMS_PER_SEGMENT = 18;
 const ITEM_TABLE = [
-    { type: 'diamond', emoji: '💎', weight: 35 },
-    { type: 'boost',   emoji: '⚡', weight: 43 },
-    { type: 'bomb',    emoji: '💣', weight: 20 },
-    { type: 'rock',    emoji: '🪨', weight: 25 },
+    { type: 'diamond', emoji: '💎', weight: 20 },
+    { type: 'boost',   emoji: '⚡', weight: 25 },
+    { type: 'bomb',    emoji: '💣', weight: 10 },
+    { type: 'rock',    emoji: '🪨', weight: 15 },
 ];
 const TOTAL_WEIGHT = ITEM_TABLE.reduce((s, i) => s + i.weight, 0);
 
@@ -466,7 +466,7 @@ let oppName_display = '';
 let oppEmoji_display = '';
 let myWins = 0;
 let oppWins = 0;
-const WINS_TO_SERIES = 5;
+const WINS_TO_SERIES = 3;
 
 async function mpSetStatus(status) {
     if (!multiGameId) return;
