@@ -110,7 +110,7 @@
 
         /* רכב — הטיה + קפיצה + שובל + נדנוד */
         .car {
-            position: absolute; width: 38px; height: 58px; z-index: 30;
+            position: absolute; width: 42px; height: 65px; z-index: 30;
             transition: left 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), bottom 0.05s linear, filter 0.2s ease;
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
         }
@@ -790,25 +790,99 @@ function buildRaceLine() { const line=document.getElementById('raceLine'); line.
 function positionRaceLine() { const line=document.getElementById('raceLine'); line.style.top='auto'; line.style.bottom='auto'; if (currentSegment===1) { line.classList.remove('hidden'); line.style.bottom='15%'; } else if (currentSegment===TOTAL_SEGMENTS) { line.classList.remove('hidden'); line.style.top='10%'; } else { line.classList.add('hidden'); } }
 
 // ========== רכב ==========
-const CAR_COLORS = { emma:{main:'#FF6B85',dark:'#C2184C'}, rif:{main:'#5EC8FF',dark:'#1E5F9E'}, dad:{main:'#52D273',dark:'#0B8C2F'}, mom:{main:'#BA68C8',dark:'#4A148C'}, guest:{main:'#D0D0D0',dark:'#666666'}, ai:{main:'#FFA500',dark:'#FF8C00'} };
+const CAR_COLORS = { emma:{main:'#FF6B85',dark:'#C2184C',accent:'#FFB0C0'}, rif:{main:'#5EC8FF',dark:'#1E5F9E',accent:'#A0E0FF'}, dad:{main:'#52D273',dark:'#0B8C2F',accent:'#90EEA8'}, mom:{main:'#BA68C8',dark:'#4A148C',accent:'#D9A0E8'}, guest:{main:'#C0C0C0',dark:'#606060',accent:'#E0E0E0'}, ai:{main:'#FFA500',dark:'#B86E00',accent:'#FFD080'} };
+
+// יוצר גרסה כהה מ-hex color
+function darkenHex(hex, factor=0.45) {
+    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    return '#' + [r,g,b].map(c => Math.round(c*factor).toString(16).padStart(2,'0')).join('');
+}
+function lightenHex(hex, factor=0.4) {
+    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    return '#' + [r,g,b].map(c => Math.min(255, Math.round(c + (255-c)*factor)).toString(16).padStart(2,'0')).join('');
+}
 
 // מקבל userId או hexColor ומחזיר צבעי רכב
 function getCC(u) { 
     if (u === 'ai') return CAR_COLORS.ai;
-    // בדוק אם זה hex color ישיר
     if (u && u.startsWith('#')) {
-        // צור dark version
-        return { main: u, dark: u };
+        return { main: u, dark: darkenHex(u), accent: lightenHex(u) };
     }
-    // בדוק לפי rawId של המשתמש הנוכחי
     if (u === myName) return CAR_COLORS[userData?.rawId] || CAR_COLORS.guest;
-    // בדוק לפי שם ישיר
     return CAR_COLORS[u] || CAR_COLORS.guest; 
 }
 
-function carSVG(u,uid) { const c=getCC(u); return `<svg viewBox="0 0 100 140"><defs><linearGradient id="cg-${uid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:${c.main}"/><stop offset="100%" style="stop-color:${c.dark}"/></linearGradient><radialGradient id="hl-${uid}" cx="50%" cy="0%" r="40%"><stop offset="0%" style="stop-color:#FFFF00;stop-opacity:0.7"/><stop offset="100%" style="stop-color:#FFFF00;stop-opacity:0"/></radialGradient></defs><path d="M 30 25 L 70 25 L 75 50 L 75 100 Q 75 115 60 120 L 40 120 Q 25 115 25 100 L 25 50 Z" fill="url(#cg-${uid})" stroke="${c.dark}" stroke-width="1.5"/><ellipse cx="35" cy="22" rx="25" ry="25" fill="url(#hl-${uid})"/><ellipse cx="65" cy="22" rx="25" ry="25" fill="url(#hl-${uid})"/><circle cx="30" cy="50" r="11" fill="#111"/><circle cx="30" cy="50" r="7" fill="#222"/><circle cx="30" cy="50" r="4" fill="#444"/><circle cx="70" cy="50" r="11" fill="#111"/><circle cx="70" cy="50" r="7" fill="#222"/><circle cx="70" cy="50" r="4" fill="#444"/><circle cx="30" cy="95" r="11" fill="#111"/><circle cx="30" cy="95" r="7" fill="#222"/><circle cx="30" cy="95" r="4" fill="#444"/><circle cx="70" cy="95" r="11" fill="#111"/><circle cx="70" cy="95" r="7" fill="#222"/><circle cx="70" cy="95" r="4" fill="#444"/></svg>`; }
+function carSVG(u, uid) {
+    const c = getCC(u);
+    const M = c.main, D = c.dark, A = c.accent || lightenHex(M);
+    const W = '#1A2840', WS = 'rgba(120,200,255,0.35)';
+    const CHR = '#D8E8F0', YEL = '#FFD700', RT = '#FF3B4A', RG = '#FF6070';
+    return `<svg viewBox="0 0 110 170" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="bd-${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${A}"/><stop offset="40%" stop-color="${M}"/><stop offset="100%" stop-color="${D}"/></linearGradient>
+<radialGradient id="hl-${uid}" cx="0.35" cy="0.15" r="0.55"><stop offset="0%" stop-color="#fff" stop-opacity="0.35"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<linearGradient id="wd-${uid}" x1="0.5" y1="0" x2="0.5" y2="1"><stop offset="0%" stop-color="#1E3450"/><stop offset="100%" stop-color="#0A1525"/></linearGradient>
+<filter id="gl-${uid}" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.5"/><feComposite in="SourceGraphic"/></filter>
+<linearGradient id="tr-${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a2a2a"/><stop offset="50%" stop-color="#1a1a1a"/><stop offset="100%" stop-color="#0d0d0d"/></linearGradient>
+</defs>
+<!-- גוף -->
+<path d="M 30 18 Q 55 6 80 18 L 85 30 L 88 65 Q 90 72 90 80 L 90 130 Q 88 145 80 150 L 72 155 L 38 155 L 30 150 Q 22 145 20 130 L 20 80 Q 20 72 22 65 L 25 30 Z" fill="url(#bd-${uid})" stroke="${D}" stroke-width="1.8"/>
+<!-- היילייט -->
+<path d="M 35 20 Q 55 10 75 20 L 78 30 L 80 55 Q 55 58 30 55 L 32 30 Z" fill="url(#hl-${uid})"/>
+<!-- קווי מכסה -->
+<line x1="55" y1="14" x2="55" y2="60" stroke="${D}" stroke-width="0.6" opacity="0.3"/>
+<!-- כניסת אוויר -->
+<path d="M 45 35 L 65 35 L 63 45 L 47 45 Z" fill="${W}" stroke="${D}" stroke-width="0.6" opacity="0.7"/>
+<line x1="50" y1="36" x2="49" y2="44" stroke="${D}" stroke-width="0.4" opacity="0.5"/>
+<line x1="55" y1="36" x2="55" y2="44" stroke="${D}" stroke-width="0.4" opacity="0.5"/>
+<line x1="60" y1="36" x2="61" y2="44" stroke="${D}" stroke-width="0.4" opacity="0.5"/>
+<!-- פנסים קדמיים -->
+<path d="M 24 22 L 38 18 L 36 26 L 22 28 Z" fill="#fff" opacity="0.95" filter="url(#gl-${uid})"/>
+<path d="M 24 22 L 38 18 L 36 26 L 22 28 Z" fill="${YEL}" opacity="0.3"/>
+<path d="M 86 22 L 72 18 L 74 26 L 88 28 Z" fill="#fff" opacity="0.95" filter="url(#gl-${uid})"/>
+<path d="M 86 22 L 72 18 L 74 26 L 88 28 Z" fill="${YEL}" opacity="0.3"/>
+<!-- DRL -->
+<line x1="25" y1="27" x2="35" y2="24" stroke="${YEL}" stroke-width="1" opacity="0.7"/>
+<line x1="85" y1="27" x2="75" y2="24" stroke="${YEL}" stroke-width="1" opacity="0.7"/>
+<!-- שמשה קדמית -->
+<path d="M 30 62 Q 55 56 80 62 L 78 85 Q 55 88 32 85 Z" fill="url(#wd-${uid})" stroke="${D}" stroke-width="0.8"/>
+<path d="M 34 64 Q 50 60 60 63 L 58 78 Q 45 80 35 78 Z" fill="${WS}" opacity="0.3"/>
+<line x1="30" y1="62" x2="32" y2="85" stroke="${D}" stroke-width="1.5"/>
+<line x1="80" y1="62" x2="78" y2="85" stroke="${D}" stroke-width="1.5"/>
+<!-- גג -->
+<path d="M 32 85 Q 55 82 78 85 L 76 105 Q 55 108 34 105 Z" fill="${D}" stroke="${D}" stroke-width="0.6"/>
+<rect x="48" y="84" width="14" height="5" rx="2" fill="${D}" stroke="#1a1a1a" stroke-width="0.5"/>
+<!-- חלון אחורי -->
+<path d="M 34 105 Q 55 108 76 105 L 74 118 Q 55 120 36 118 Z" fill="${W}" stroke="${D}" stroke-width="0.6"/>
+<!-- חריצי צד -->
+<g opacity="0.6"><line x1="22" y1="95" x2="28" y2="93" stroke="${D}" stroke-width="0.6"/><line x1="22" y1="99" x2="28" y2="97" stroke="${D}" stroke-width="0.6"/><line x1="22" y1="103" x2="28" y2="101" stroke="${D}" stroke-width="0.6"/><line x1="88" y1="95" x2="82" y2="93" stroke="${D}" stroke-width="0.6"/><line x1="88" y1="99" x2="82" y2="97" stroke="${D}" stroke-width="0.6"/><line x1="88" y1="103" x2="82" y2="101" stroke="${D}" stroke-width="0.6"/></g>
+<!-- מראות -->
+<ellipse cx="18" cy="68" rx="4" ry="3" fill="${M}" stroke="${D}" stroke-width="0.6"/>
+<ellipse cx="92" cy="68" rx="4" ry="3" fill="${M}" stroke="${D}" stroke-width="0.6"/>
+<!-- ספוילר -->
+<rect x="28" y="148" width="54" height="5" rx="1.5" fill="${D}" stroke="${D}" stroke-width="0.8"/>
+<rect x="25" y="153" width="60" height="3" rx="1" fill="${D}"/>
+<rect x="38" y="145" width="2.5" height="8" rx="0.5" fill="${D}"/>
+<rect x="70" y="145" width="2.5" height="8" rx="0.5" fill="${D}"/>
+<!-- פנסים אחוריים — פס LED -->
+<rect x="25" y="142" width="60" height="4" rx="2" fill="${RT}" opacity="0.9"/>
+<rect x="25" y="142" width="60" height="4" rx="2" fill="${RG}" opacity="0.35" filter="url(#gl-${uid})"/>
+<rect x="53" y="142" width="4" height="4" rx="1" fill="${D}" opacity="0.6"/>
+<!-- גלגלים קדמיים -->
+<g><rect x="8" y="22" width="14" height="26" rx="4" fill="url(#tr-${uid})" stroke="#0a0a0a" stroke-width="1"/><circle cx="15" cy="35" r="3" fill="#2a2a2a" stroke="#444" stroke-width="0.5"/><circle cx="15" cy="35" r="1.2" fill="#888"/><line x1="15" y1="31" x2="15" y2="27" stroke="#444" stroke-width="0.5"/><line x1="15" y1="39" x2="15" y2="43" stroke="#444" stroke-width="0.5"/><line x1="12" y1="35" x2="10" y2="35" stroke="#444" stroke-width="0.5"/><line x1="18" y1="35" x2="20" y2="35" stroke="#444" stroke-width="0.5"/></g>
+<g><rect x="88" y="22" width="14" height="26" rx="4" fill="url(#tr-${uid})" stroke="#0a0a0a" stroke-width="1"/><circle cx="95" cy="35" r="3" fill="#2a2a2a" stroke="#444" stroke-width="0.5"/><circle cx="95" cy="35" r="1.2" fill="#888"/><line x1="95" y1="31" x2="95" y2="27" stroke="#444" stroke-width="0.5"/><line x1="95" y1="39" x2="95" y2="43" stroke="#444" stroke-width="0.5"/><line x1="92" y1="35" x2="90" y2="35" stroke="#444" stroke-width="0.5"/><line x1="98" y1="35" x2="100" y2="35" stroke="#444" stroke-width="0.5"/></g>
+<!-- גלגלים אחוריים -->
+<g><rect x="6" y="118" width="16" height="28" rx="5" fill="url(#tr-${uid})" stroke="#0a0a0a" stroke-width="1"/><circle cx="14" cy="132" r="3.5" fill="#2a2a2a" stroke="#444" stroke-width="0.5"/><circle cx="14" cy="132" r="1.5" fill="#888"/><line x1="14" y1="128" x2="14" y2="123" stroke="#444" stroke-width="0.5"/><line x1="14" y1="136" x2="14" y2="141" stroke="#444" stroke-width="0.5"/><line x1="10.5" y1="132" x2="8" y2="132" stroke="#444" stroke-width="0.5"/><line x1="17.5" y1="132" x2="20" y2="132" stroke="#444" stroke-width="0.5"/></g>
+<g><rect x="88" y="118" width="16" height="28" rx="5" fill="url(#tr-${uid})" stroke="#0a0a0a" stroke-width="1"/><circle cx="96" cy="132" r="3.5" fill="#2a2a2a" stroke="#444" stroke-width="0.5"/><circle cx="96" cy="132" r="1.5" fill="#888"/><line x1="96" y1="128" x2="96" y2="123" stroke="#444" stroke-width="0.5"/><line x1="96" y1="136" x2="96" y2="141" stroke="#444" stroke-width="0.5"/><line x1="92.5" y1="132" x2="90" y2="132" stroke="#444" stroke-width="0.5"/><line x1="99.5" y1="132" x2="102" y2="132" stroke="#444" stroke-width="0.5"/></g>
+<!-- פס כרום קדמי -->
+<path d="M 28 16 Q 55 10 82 16" fill="none" stroke="${CHR}" stroke-width="1" opacity="0.5"/>
+<!-- פס מירוץ -->
+<rect x="52" y="14" width="6" height="140" rx="1" fill="#fff" opacity="0.08"/>
+</svg>`;
+}
 
-const CAR_HEIGHT = 58;
+const CAR_HEIGHT = 65;
+const CAR_HALF_W = 21;
 const START_LINE_BOTTOM_PCT = 0.15;
 
 function getCarScreenCenterY(y) {
@@ -821,7 +895,7 @@ function getCarScreenCenterY(y) {
 function createCar(userId, lane, id) {
     const car = document.createElement('div'); car.className = 'car'; car.id = id;
     car.innerHTML = carSVG(userId, id);
-    car.style.left = `${getLaneCenter(lane)-19}px`;
+    car.style.left = `${getLaneCenter(lane)-CAR_HALF_W}px`;
     // הרכב צמוד מתחת לקו הזינוק
     const startLineY = gameH * START_LINE_BOTTOM_PCT;
     car.style.bottom = `${startLineY - CAR_HEIGHT}px`;
@@ -829,7 +903,7 @@ function createCar(userId, lane, id) {
 }
 let tiltActive = false;
 function moveCarToLane(carEl, lane, dir) {
-    carEl.style.left = `${getLaneCenter(lane)-19}px`;
+    carEl.style.left = `${getLaneCenter(lane)-CAR_HALF_W}px`;
     if (dir && carEl === playerCarEl) {
         tiltActive = true;
         const tiltDeg = dir < 0 ? -15 : 15;
