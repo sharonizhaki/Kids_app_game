@@ -247,7 +247,7 @@ const myColor = userData.color;
 const myEmoji = userData.emoji;
 
 // ========== קבועים ==========
-const TOTAL_SEGMENTS = 3;
+const TOTAL_SEGMENTS = 4;
 const LANE_COUNT = 5;
 const SPEEDS = [1.2, 2.0, 3.0, 4.2, 5.5];
 const HIT_RADIUS = 28;
@@ -351,7 +351,8 @@ function resetGameState() {
     gameArea.querySelectorAll('.item, .float-text, .swipe-hint, .collected').forEach(el => el.remove());
     
     // אפס מצב
-    playerSpeed = 0; lives = 3; points = 0; currentSegment = 1;
+    playerSpeed = 0; lives = 3; currentSegment = 1;
+    if (mode !== 'ai') points = 0; // ב-AI נקודות נשמרות בין סיבובים
     gameFinished = false; frozen = false; frozenUntil = 0;
     aiFrozen = false; aiFrozenUntil = 0; aiMoveCooldown = 0;
     playerY = 0; aiY = 0; aiSpeed = 0; aiSegment = 1;
