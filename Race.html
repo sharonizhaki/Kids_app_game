@@ -130,14 +130,6 @@
         .item.collected { animation: collectPop 0.3s ease forwards; }
         @keyframes collectPop { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
 
-        /* קווי מהירות */
-        .speed-streak {
-            position: absolute; width: 2px; z-index: 3; pointer-events: none;
-            background: linear-gradient(180deg, rgba(255,255,255,0.6), transparent);
-            animation: streakMove 0.3s linear forwards;
-        }
-        @keyframes streakMove { 0% { opacity: 0.7; top: -20px; } 100% { opacity: 0; top: 100%; } }
-
         .segment-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.15); z-index: 45; }
         .segment-fill { height: 100%; background: linear-gradient(90deg, #4DB8FF, #F5C842); width: 0%; transition: width 0.3s; }
         .segment-label { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 900; color: rgba(255,255,255,0.5); z-index: 46; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
@@ -268,20 +260,20 @@ const TOTAL_SEGMENTS = 4;
 const LANE_COUNT = 5;
 const SPEEDS = [1.2, 2.0, 3.0, 4.2, 5.5];
 const HIT_RADIUS = 28;
-const ITEMS_PER_SEGMENT = 18;
-const ITEM_TABLE = [
-    { type: 'diamond', emoji: '💎', weight: 25 },
-    { type: 'boost',   emoji: '⚡', weight: 25 },
-    { type: 'bomb',    emoji: '💣', weight: 10 },
-    { type: 'rock',    emoji: '🪨', weight: 10 },
-    { type: 'heart',   emoji: '❤️‍🔥', weight: 4 },
+const ITEMS_PER_SEGMENT = 16;
+// חלוקה קבועה לכל קטע
+const SEGMENT_ITEMS = [
+    ...Array(6).fill({ type: 'diamond', emoji: '💎' }),
+    ...Array(4).fill({ type: 'boost', emoji: '⚡' }),
+    ...Array(3).fill({ type: 'bomb', emoji: '💣' }),
+    ...Array(3).fill({ type: 'rock', emoji: '🪨' }),
 ];
-const TOTAL_WEIGHT = ITEM_TABLE.reduce((s, i) => s + i.weight, 0);
 const MAX_HEARTS_TOTAL = 2;
 
 // ========== מצב ==========
 let playerLane = 0, playerSpeed = 0, lives = 3, points = 0, pointsAtRoundStart = 0;
 let heartsSpawnedTotal = 0;
+let heartSegments = []; // קטעים שבהם יופיעו לבבות (נקבע ב-init)
 let currentSegment = 1, gameRunning = false, gameFinished = false;
 let frozen = false, frozenUntil = 0;
 let playerTransitioning = false;
@@ -378,6 +370,7 @@ function resetGameState() {
     playerSpeed = 0; lives = 3; currentSegment = 1;
     pointsAtRoundStart = points;
     heartsSpawnedTotal = 0;
+    initHeartSegments();
     gameFinished = false; frozen = false; frozenUntil = 0; playerTransitioning = false;
     aiFrozen = false; aiFrozenUntil = 0; aiMoveCooldown = 0; aiBoostCooldownUntil = 0; aiFinished = false;
     playerY = 0; aiY = 0; aiSpeed = 0; aiSegment = 1;
@@ -397,7 +390,7 @@ function resetGameState() {
     moveCarToLane(playerCarEl, playerLane, null);
     playerCarEl.classList.remove('frozen', 'flash', 'speed-3', 'speed-4', 'speed-5');
     playerCarEl.style.transform = '';
-    tiltActive = false; wobbleFrame = 0; streakCounter = 0;
+    tiltActive = false; wobbleFrame = 0;
     
     if (aiCarEl) {
         setCarY(aiCarEl, 0);
@@ -633,21 +626,6 @@ function applyWobble(carEl, speed) {
     carEl.style.transform = `translateX(${offsetX}px) rotate(${offsetR}deg)`;
 }
 
-let streakCounter = 0;
-function spawnSpeedStreaks() {
-    streakCounter++;
-    if (streakCounter % 3 !== 0) return; // כל 3 פריימים
-    if (playerSpeed < 3) return; // רק מהירות 4+
-    
-    const streak = document.createElement('div');
-    streak.className = 'speed-streak';
-    const x = CURB_W + Math.random() * (gameW - CURB_W * 2);
-    streak.style.left = `${x}px`;
-    streak.style.height = `${20 + playerSpeed * 10}px`;
-    gameArea.appendChild(streak);
-    setTimeout(() => streak.remove(), 300);
-}
-
 // ========== אנימציות כביש ==========
 let roadOffset = 0;
 const curbLeft = document.querySelector('.curb-left');
@@ -870,7 +848,23 @@ function setCarY(carEl, y) {
 }
 
 // ========== אייטמים ==========
-function pickItemType() { let r=Math.random()*TOTAL_WEIGHT; for (const i of ITEM_TABLE) { r-=i.weight; if (r<=0) return i; } return ITEM_TABLE[ITEM_TABLE.length-1]; }
+// ערבוב מערך (Fisher-Yates)
+function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function initHeartSegments() {
+    // בחר 2 קטעים שונים מ-2,3,4 (לא קטע 1)
+    const available = [];
+    for (let s = 2; s <= TOTAL_SEGMENTS; s++) available.push(s);
+    const shuffled = shuffle(available);
+    heartSegments = shuffled.slice(0, MAX_HEARTS_TOTAL);
+}
 
 // יצירת נתוני אייטמים (בלי DOM)
 function generateItemsData() {
@@ -879,17 +873,20 @@ function generateItemsData() {
     else if (currentSegment === TOTAL_SEGMENTS) { minY = gameH * 0.15; maxY = gameH * 0.80; }
     else { minY = gameH * 0.15; maxY = gameH * 0.80; }
     
+    // יצור רשימה קבועה מעורבבת
+    let itemList = shuffle(SEGMENT_ITEMS);
+    
+    // הוסף לב אם הקטע הנוכחי ברשימה
+    if (heartSegments.includes(currentSegment)) {
+        itemList.push({ type: 'heart', emoji: '❤️‍🔥' });
+    }
+    
     const MIN_DIST = 50;
     const placed = [];
     const data = [];
     
-    for (let i = 0; i < ITEMS_PER_SEGMENT; i++) {
-        let def = pickItemType();
-        // הגבל לבבות ל-2 סה"כ למרוץ
-        if (def.type === 'heart' && heartsSpawnedTotal >= MAX_HEARTS_TOTAL) {
-            def = ITEM_TABLE[0]; // החלף ביהלום
-        }
-        if (def.type === 'heart') heartsSpawnedTotal++;
+    for (let i = 0; i < itemList.length; i++) {
+        const def = itemList[i];
         let lane, yPos, attempts = 0;
         do {
             lane = Math.floor(Math.random() * LANE_COUNT);
@@ -982,9 +979,8 @@ function gameLoop() {
     const isFrozen = frozen && Date.now() < frozenUntil;
     const speed = isFrozen ? 0 : SPEEDS[playerSpeed];
 
-    // אנימציית כביש + קווי מהירות
+    // אנימציית כביש
     updateRoadAnimation(speed);
-    spawnSpeedStreaks();
 
     if (!isFrozen && !playerTransitioning) playerY += speed;
     setCarY(playerCarEl, playerY);
@@ -1224,7 +1220,7 @@ gameArea.addEventListener('touchend', e=>{
 
 // ========== Init ==========
 async function init() {
-    calcDimensions(); buildLaneDividers(); buildRaceLine(); setupTrackDots();
+    calcDimensions(); buildLaneDividers(); buildRaceLine(); setupTrackDots(); initHeartSegments();
     const existingSnap=await get(ref(db,roomPath)); const existingData=existingSnap?.val();
     myJoinedAt=existingData?.joinedAt||Date.now();
     await set(ref(db,roomPath),{name:displayName,color:myColor,emoji:myEmoji,joinedAt:myJoinedAt,timestamp:Date.now(),active:true});
