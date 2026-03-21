@@ -279,6 +279,8 @@ let items = [], playerCarEl = null, aiCarEl = null, animFrameId = null;
 let playerY = 0, aiY = 0, aiLane = 2, aiSpeed = 0, aiSegment = 1;
 let aiFrozen = false, aiFrozenUntil = 0;
 let aiMoveCooldown = 0;
+let aiBoostCooldownUntil = 0;
+let aiFinished = false;
 let tiltTimeout = null;
 
 const gameArea = document.getElementById('gameArea');
@@ -366,7 +368,7 @@ function resetGameState() {
     playerSpeed = 0; lives = 3; currentSegment = 1;
     pointsAtRoundStart = points;
     gameFinished = false; frozen = false; frozenUntil = 0;
-    aiFrozen = false; aiFrozenUntil = 0; aiMoveCooldown = 0;
+    aiFrozen = false; aiFrozenUntil = 0; aiMoveCooldown = 0; aiBoostCooldownUntil = 0; aiFinished = false;
     playerY = 0; aiY = 0; aiSpeed = 0; aiSegment = 1;
     oppY = 0; oppSegment = 1; oppSpeed = 0;
     
@@ -799,7 +801,7 @@ function generateItemsData() {
     let minY, maxY;
     if (currentSegment === 1) { minY = gameH * 0.05; maxY = gameH * 0.72; }
     else if (currentSegment === TOTAL_SEGMENTS) { minY = gameH * 0.15; maxY = gameH * 0.88; }
-    else { minY = gameH * 0.05; maxY = gameH * 0.88; }
+    else { minY = gameH * 0.15; maxY = gameH * 0.88; }
     
     const MIN_DIST = 50;
     const placed = [];
@@ -923,8 +925,14 @@ function gameLoop() {
     // סיום קטע — עם black flash
     if (playerY>=gameH) {
         if (currentSegment + 1 > TOTAL_SEGMENTS) {
-            // סיום מרוץ
-            stopGame(); showResult('🏆', `🏁 ${myEmoji} ${displayName} 🏆`, `${points} נקודות`); return;
+            // סיום מרוץ — בדוק אם AI כבר סיים
+            stopGame();
+            if (mode === 'ai' && aiFinished) {
+                showResult('😔', 'הפסדת', `${points} נקודות`);
+            } else {
+                showResult('🏆', `🏁 ${myEmoji} ${displayName} 🏆`, `${points} נקודות`);
+            }
+            return;
         }
         // מעבר קטע עם הבזק
         gameRunning = false; // עצור זמנית
@@ -968,6 +976,7 @@ function gameLoop() {
                         // AI לא מקבל נקודות
                     } else if (it.type === 'boost') {
                         if (aiSpeed < 4) aiSpeed++;
+                        aiBoostCooldownUntil = Date.now() + 3000;
                         spawnFloatText(fx, fy, '⚡', '#FFD700');
                     } else if (it.type === 'bomb') {
                         aiSpeed = 0;
@@ -1040,8 +1049,8 @@ function gameLoop() {
                 
                 if (bestLane !== aiLane) { aiLane = bestLane; moveCarToLane(aiCarEl, aiLane, null); moved = true; }
                 
-            } else if (Math.random() < 0.2) {
-                // אין מכשול — חפש ברק בנתיב צמוד (20% סיכוי)
+            } else if (Math.random() < 0.2 && Date.now() > aiBoostCooldownUntil) {
+                // אין מכשול — חפש ברק בנתיב צמוד (20% סיכוי, לא בזמן cooldown)
                 let bestBoostLane = -1;
                 let bestBoostDist = 999;
                 
@@ -1075,10 +1084,9 @@ function gameLoop() {
         // סיום קטע AI
         if (aiY >= gameH) {
             aiY = 0; aiSegment++;
-            if (aiSegment > TOTAL_SEGMENTS && !gameFinished) {
-                stopGame();
-                showResult('😔', 'הפסדת', `${points} נקודות`);
-                return;
+            if (aiSegment > TOTAL_SEGMENTS && !aiFinished) {
+                aiFinished = true;
+                // AI סיים — לא עוצר את המשחק, ממתין לשחקן
             }
         }
         
