@@ -50,8 +50,8 @@
             position: absolute; inset: 0; border-radius: 7px;
             background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
         }
-        .track-marker-start { position: absolute; right: -2px; top: 50%; transform: translateY(-50%); font-size: 8px; }
-        .track-marker-end { position: absolute; left: -2px; top: 50%; transform: translateY(-50%); font-size: 8px; }
+        .track-marker-start { position: absolute; left: -2px; top: 50%; transform: translateY(-50%); font-size: 8px; }
+        .track-marker-end { position: absolute; right: -2px; top: 50%; transform: translateY(-50%); font-size: 8px; }
         .track-dot {
             position: absolute; top: 50%; width: 10px; height: 10px;
             border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.5);
@@ -187,8 +187,8 @@
         <div class="track-progress-fill"></div>
         <div class="track-marker-start">🏁</div>
         <div class="track-marker-end">🚦</div>
-        <div class="track-dot" id="dotPlayer" style="right: 95%;"></div>
-        <div class="track-dot" id="dotOpponent" style="right: 95%; display: none;"></div>
+        <div class="track-dot" id="dotPlayer" style="right: 5%;"></div>
+        <div class="track-dot" id="dotOpponent" style="right: 5%; display: none;"></div>
     </div>
 </div>
 
@@ -250,13 +250,20 @@ const dotPlayer = document.getElementById('dotPlayer');
 const dotOpponent = document.getElementById('dotOpponent');
 
 let gameW = 0, gameH = 0, laneW = 0;
-function calcDimensions() { gameW = gameArea.clientWidth; gameH = gameArea.clientHeight; laneW = gameW / LANE_COUNT; }
-function getLaneCenter(i) { return i * laneW + laneW / 2; }
+const CURB_W = 14;
+function calcDimensions() {
+    gameW = gameArea.clientWidth;
+    gameH = gameArea.clientHeight;
+    laneW = (gameW - CURB_W * 2) / LANE_COUNT; // רוחב נתיב גלוי
+}
+// מרכז נתיב — מחולק שווה בין אבני השפה
+function getLaneCenter(i) { return CURB_W + i * laneW + laneW / 2; }
 
 function buildLaneDividers() {
+    // קווים בגבולות בין הנתיבים — בתוך האזור הגלוי בלבד
     for (let i = 1; i < LANE_COUNT; i++) {
         const d = document.createElement('div'); d.className = 'lane-divider';
-        d.style.left = `${i * laneW - 1.5}px`; gameArea.appendChild(d);
+        d.style.left = `${CURB_W + i * laneW - 1.5}px`; gameArea.appendChild(d);
     }
 }
 
@@ -307,7 +314,9 @@ function resetGameState() {
     gameFinished = false; frozen = false; frozenUntil = 0;
     playerY = 0; aiY = 0; aiSpeed = 0; aiSegment = 1;
     updateLives(-1); updateSpeed(false); updatePoints(false);
-    setCarY(playerCarEl, 0); if (aiCarEl) { setCarY(aiCarEl, 0); aiCarEl.style.display = 'block'; }
+    setCarY(playerCarEl, 0);
+    if (aiCarEl) { setCarY(aiCarEl, 0); aiCarEl.style.display = 'block'; }
+    positionRaceLine();
     updateTrackDots();
 }
 
@@ -358,15 +367,20 @@ const CAR_COLORS = { emma:{main:'#FF6B85',dark:'#C2184C'}, rif:{main:'#5EC8FF',d
 function getCC(u) { if (u==='ai') return CAR_COLORS.ai; return CAR_COLORS[userData?.rawId||u]||CAR_COLORS.guest; }
 function carSVG(u,uid) { const c=getCC(u); return `<svg viewBox="0 0 100 140"><defs><linearGradient id="cg-${uid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:${c.main}"/><stop offset="100%" style="stop-color:${c.dark}"/></linearGradient><radialGradient id="hl-${uid}" cx="50%" cy="0%" r="40%"><stop offset="0%" style="stop-color:#FFFF00;stop-opacity:0.7"/><stop offset="100%" style="stop-color:#FFFF00;stop-opacity:0"/></radialGradient></defs><path d="M 30 25 L 70 25 L 75 50 L 75 100 Q 75 115 60 120 L 40 120 Q 25 115 25 100 L 25 50 Z" fill="url(#cg-${uid})" stroke="${c.dark}" stroke-width="1.5"/><ellipse cx="35" cy="22" rx="25" ry="25" fill="url(#hl-${uid})"/><ellipse cx="65" cy="22" rx="25" ry="25" fill="url(#hl-${uid})"/><circle cx="30" cy="50" r="11" fill="#111"/><circle cx="30" cy="50" r="7" fill="#222"/><circle cx="30" cy="50" r="4" fill="#444"/><circle cx="70" cy="50" r="11" fill="#111"/><circle cx="70" cy="50" r="7" fill="#222"/><circle cx="70" cy="50" r="4" fill="#444"/><circle cx="30" cy="95" r="11" fill="#111"/><circle cx="30" cy="95" r="7" fill="#222"/><circle cx="30" cy="95" r="4" fill="#444"/><circle cx="70" cy="95" r="11" fill="#111"/><circle cx="70" cy="95" r="7" fill="#222"/><circle cx="70" cy="95" r="4" fill="#444"/></svg>`; }
 
+const CAR_HEIGHT = 58;
+const START_LINE_BOTTOM_PCT = 0.15; // קו זינוק ב-15% מלמטה
+
 function createCar(userId, lane, id) {
     const car = document.createElement('div'); car.className = 'car'; car.id = id;
     car.innerHTML = carSVG(userId, id);
-    car.style.left = `${getLaneCenter(lane)-19}px`; car.style.bottom = '5%';
+    car.style.left = `${getLaneCenter(lane)-19}px`;
+    // הרכב צמוד מתחת לקו הזינוק
+    const startLineY = gameH * START_LINE_BOTTOM_PCT;
+    car.style.bottom = `${startLineY - CAR_HEIGHT}px`;
     gameArea.appendChild(car); return car;
 }
 function moveCarToLane(carEl, lane, dir) {
     carEl.style.left = `${getLaneCenter(lane)-19}px`;
-    // אנימציית הטיה
     if (dir) {
         carEl.classList.remove('tilt-left','tilt-right');
         carEl.classList.add(dir < 0 ? 'tilt-left' : 'tilt-right');
@@ -374,7 +388,12 @@ function moveCarToLane(carEl, lane, dir) {
         tiltTimeout = setTimeout(() => carEl.classList.remove('tilt-left','tilt-right'), 200);
     }
 }
-function setCarY(carEl, y) { carEl.style.bottom = `${(y/gameH)*(gameH-70)}px`; }
+function setCarY(carEl, y) {
+    // y=0 = מתחת לקו זינוק, y עולה = רכב עולה
+    const startLineY = gameH * START_LINE_BOTTOM_PCT;
+    const bottomPx = (startLineY - CAR_HEIGHT) + (y / gameH) * (gameH - startLineY);
+    carEl.style.bottom = `${bottomPx}px`;
+}
 
 // ========== אייטמים ==========
 function pickItemType() { let r=Math.random()*TOTAL_WEIGHT; for (const i of ITEM_TABLE) { r-=i.weight; if (r<=0) return i; } return ITEM_TABLE[ITEM_TABLE.length-1]; }
@@ -508,20 +527,20 @@ async function init() {
     startHeartbeat();
 
     if (mode==='ai') {
-        playerLane=0; aiLane=2;
+        playerLane=3; aiLane=1;
         playerCarEl=createCar(myName,playerLane,'playerCar');
         aiCarEl=createCar('ai',aiLane,'aiCar');
         positionRaceLine(); spawnSegmentItems();
         startCountdown(startGame);
     } else {
-        playerLane=0; playerCarEl=createCar(myName,playerLane,'playerCar');
+        playerLane=3; playerCarEl=createCar(myName,playerLane,'playerCar');
         window._ls={}; let lastCount=0;
         roomListenerUnsubscribe=onValue(roomRef,snap=>{
             const players=snap.val()||{}; const names=Object.keys(players).sort((a,b)=>(players[a].joinedAt||0)-(players[b].joinedAt||0));
             if (lastCount===2&&names.length<2){let n='',e='';for(const[id,p]of Object.entries(window._ls)){if(!players[id]){n=p.name||'';e=p.emoji||'';break;}}handleOpponentLeft(n,e);return;}
             window._ls=players; lastCount=names.length;
             if (names.length===2&&!gameRunning&&!gameFinished) {
-                const amFirst=names[0]===myName; playerLane=amFirst?0:2;
+                const amFirst=names[0]===myName; playerLane=amFirst?3:1;
                 moveCarToLane(playerCarEl,playerLane,null);
                 // Setup opponent dot color
                 const oppId=names.find(n=>n!==myName);
