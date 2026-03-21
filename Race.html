@@ -247,6 +247,7 @@ let currentSegment = 1, gameRunning = false, gameFinished = false;
 let frozen = false, frozenUntil = 0;
 let items = [], playerCarEl = null, aiCarEl = null, animFrameId = null;
 let playerY = 0, aiY = 0, aiLane = 2, aiSpeed = 0, aiSegment = 1;
+let aiFrozen = false, aiFrozenUntil = 0;
 let tiltTimeout = null;
 
 const gameArea = document.getElementById('gameArea');
@@ -318,6 +319,7 @@ function resetGameState() {
     items.forEach(it => it.el.remove()); items = [];
     playerSpeed = 0; lives = 3; points = 0; currentSegment = 1;
     gameFinished = false; frozen = false; frozenUntil = 0;
+    aiFrozen = false; aiFrozenUntil = 0;
     playerY = 0; aiY = 0; aiSpeed = 0; aiSegment = 1;
     updateLives(-1); updateSpeed(false); updatePoints(false);
     setCarY(playerCarEl, 0);
@@ -374,7 +376,14 @@ function getCC(u) { if (u==='ai') return CAR_COLORS.ai; return CAR_COLORS[userDa
 function carSVG(u,uid) { const c=getCC(u); return `<svg viewBox="0 0 100 140"><defs><linearGradient id="cg-${uid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:${c.main}"/><stop offset="100%" style="stop-color:${c.dark}"/></linearGradient><radialGradient id="hl-${uid}" cx="50%" cy="0%" r="40%"><stop offset="0%" style="stop-color:#FFFF00;stop-opacity:0.7"/><stop offset="100%" style="stop-color:#FFFF00;stop-opacity:0"/></radialGradient></defs><path d="M 30 25 L 70 25 L 75 50 L 75 100 Q 75 115 60 120 L 40 120 Q 25 115 25 100 L 25 50 Z" fill="url(#cg-${uid})" stroke="${c.dark}" stroke-width="1.5"/><ellipse cx="35" cy="22" rx="25" ry="25" fill="url(#hl-${uid})"/><ellipse cx="65" cy="22" rx="25" ry="25" fill="url(#hl-${uid})"/><circle cx="30" cy="50" r="11" fill="#111"/><circle cx="30" cy="50" r="7" fill="#222"/><circle cx="30" cy="50" r="4" fill="#444"/><circle cx="70" cy="50" r="11" fill="#111"/><circle cx="70" cy="50" r="7" fill="#222"/><circle cx="70" cy="50" r="4" fill="#444"/><circle cx="30" cy="95" r="11" fill="#111"/><circle cx="30" cy="95" r="7" fill="#222"/><circle cx="30" cy="95" r="4" fill="#444"/><circle cx="70" cy="95" r="11" fill="#111"/><circle cx="70" cy="95" r="7" fill="#222"/><circle cx="70" cy="95" r="4" fill="#444"/></svg>`; }
 
 const CAR_HEIGHT = 58;
-const START_LINE_BOTTOM_PCT = 0.15; // קו זינוק ב-15% מלמטה
+const START_LINE_BOTTOM_PCT = 0.15;
+
+function getCarScreenCenterY(y) {
+    // מחזיר את מרכז הרכב על המסך (מלמעלה) לפי y (התקדמות)
+    const startLineY = gameH * START_LINE_BOTTOM_PCT;
+    const bottomPx = (startLineY - CAR_HEIGHT) + (y / gameH) * (gameH - startLineY);
+    return gameH - bottomPx - CAR_HEIGHT / 2;
+} // קו זינוק ב-15% מלמטה
 
 function createCar(userId, lane, id) {
     const car = document.createElement('div'); car.className = 'car'; car.id = id;
@@ -440,6 +449,7 @@ function spawnSegmentItems() {
 }
 
 function freezePlayer(sec) { frozen=true; frozenUntil=Date.now()+sec*1000; playerCarEl.classList.add('frozen'); setTimeout(()=>{frozen=false;playerCarEl.classList.remove('frozen');},sec*1000); }
+function freezeAI(sec) { aiFrozen=true; aiFrozenUntil=Date.now()+sec*1000; aiCarEl.classList.add('frozen'); setTimeout(()=>{aiFrozen=false;aiCarEl.classList.remove('frozen');},sec*1000); }
 
 // ========== Game loop ==========
 function gameLoop() {
@@ -452,7 +462,7 @@ function gameLoop() {
 
     // התנגשויות
     const carCX = getLaneCenter(playerLane);
-    const carSY = gameH - ((playerY/gameH)*(gameH-70)) - 35;
+    const carSY = getCarScreenCenterY(playerY);
     for (let i=0;i<items.length;i++) {
         const it=items[i]; if (it.collected) continue;
         const dx=carCX-getLaneCenter(it.lane); const dy=carSY-(it.yPos+13);
@@ -477,11 +487,70 @@ function gameLoop() {
 
     // AI
     if (mode==='ai' && aiCarEl) {
-        aiY += SPEEDS[aiSpeed];
+        const aiIsFrozen = aiFrozen && Date.now() < aiFrozenUntil;
+        const aiSpd = aiIsFrozen ? 0 : SPEEDS[aiSpeed];
+        
+        if (!aiIsFrozen) aiY += aiSpd;
         setCarY(aiCarEl, aiY);
-        if (Math.random()<0.004 && aiSpeed<4) aiSpeed++;
-        if (Math.random()<0.012) { const nl=aiLane+(Math.random()<0.5?-1:1); if (nl>=0&&nl<LANE_COUNT){aiLane=nl;moveCarToLane(aiCarEl,aiLane,null);} }
-        if (aiY>=gameH) { aiY=0; aiSegment++; if (aiSegment>TOTAL_SEGMENTS&&!gameFinished){stopGame();showResult('🤖','המחשב הגיע ראשון!',`${points} נקודות`);return;} }
+        
+        // AI התנגשויות — רק אם באותו קטע כמו השחקן (אותם אייטמים)
+        if (aiSegment === currentSegment && !aiIsFrozen) {
+            const aiCX = getLaneCenter(aiLane);
+            const aiSY = getCarScreenCenterY(aiY);
+            
+            for (let i = 0; i < items.length; i++) {
+                const it = items[i];
+                if (it.collected) continue;
+                const dx = aiCX - getLaneCenter(it.lane);
+                const dy = aiSY - (it.yPos + 13);
+                if (Math.sqrt(dx*dx + dy*dy) < HIT_RADIUS) {
+                    it.collected = true;
+                    const fx = parseFloat(it.el.style.left) + 12;
+                    const fy = it.yPos;
+                    
+                    if (it.type === 'diamond') {
+                        // AI לא מקבל נקודות
+                    } else if (it.type === 'boost') {
+                        if (aiSpeed < 4) aiSpeed++;
+                        spawnFloatText(fx, fy, '⚡', '#FFD700');
+                    } else if (it.type === 'bomb') {
+                        aiSpeed = 0;
+                        aiCarEl.classList.add('flash');
+                        setTimeout(() => aiCarEl.classList.remove('flash'), 450);
+                        freezeAI(2);
+                        spawnFloatText(fx, fy, '💥', '#FF4444');
+                    } else if (it.type === 'rock') {
+                        if (aiSpeed > 0) aiSpeed--;
+                        aiCarEl.classList.add('flash');
+                        setTimeout(() => aiCarEl.classList.remove('flash'), 450);
+                        freezeAI(1);
+                        spawnFloatText(fx, fy, '🪨', '#AAA');
+                    }
+                    
+                    it.el.classList.add('collected');
+                    setTimeout(() => it.el.remove(), 300);
+                }
+            }
+        }
+        
+        // AI זז בין נתיבים — חכם יותר: מנסה להתחמק ממכשולים
+        if (!aiIsFrozen && Math.random() < 0.02) {
+            const nl = aiLane + (Math.random() < 0.5 ? -1 : 1);
+            if (nl >= 0 && nl < LANE_COUNT) { aiLane = nl; moveCarToLane(aiCarEl, aiLane, null); }
+        }
+        
+        // AI מעלה מהירות לאט אם לא קפוא
+        if (!aiIsFrozen && Math.random() < 0.003 && aiSpeed < 4) aiSpeed++;
+        
+        // סיום קטע AI
+        if (aiY >= gameH) {
+            aiY = 0; aiSegment++;
+            if (aiSegment > TOTAL_SEGMENTS && !gameFinished) {
+                stopGame();
+                showResult('🤖', 'המחשב הגיע ראשון!', `${points} נקודות`);
+                return;
+            }
+        }
         
         // נראות — רק אם באותו קטע
         aiCarEl.style.display = (aiSegment === currentSegment) ? 'block' : 'none';
