@@ -302,8 +302,13 @@ function startOpponentCheck() {
 
 window.goHome = async function() {
     stopHeartbeat(); stopOpponentCheck(); stopGame();
+    if (itemsListenerUnsub) { itemsListenerUnsub(); itemsListenerUnsub = null; }
     if (roomListenerUnsubscribe) { roomListenerUnsubscribe(); roomListenerUnsubscribe = null; }
-    if (mode==='ai') await remove(ref(db,`rooms_v3/race_ai/${myName}`)); else await remove(ref(db,`rooms_v3/race/${myName}`));
+    if (mode==='ai') await remove(ref(db,`rooms_v3/race_ai/${myName}`));
+    else {
+        await remove(ref(db,`rooms_v3/race/${myName}`));
+        if (multiGameId) await remove(ref(db,`game/race/${multiGameId}`));
+    }
     setTimeout(() => { window.location.href = 'index.html'; }, 200);
 };
 document.getElementById('homeBtn').addEventListener('click', () => goHome());
@@ -325,7 +330,7 @@ function resetGameState() {
     setCarY(playerCarEl, 0);
     if (aiCarEl) { setCarY(aiCarEl, 0); aiCarEl.style.display = 'block'; }
     positionRaceLine();
-    spawnSegmentItems();
+    if (multiGameId) mpSpawnSegmentItems(); else spawnSegmentItems();
     updateTrackDots();
 }
 
@@ -413,45 +418,95 @@ function setCarY(carEl, y) {
 
 // ========== אייטמים ==========
 function pickItemType() { let r=Math.random()*TOTAL_WEIGHT; for (const i of ITEM_TABLE) { r-=i.weight; if (r<=0) return i; } return ITEM_TABLE[ITEM_TABLE.length-1]; }
-function spawnSegmentItems() {
-    items.forEach(it=>it.el.remove()); items=[];
-    
-    // אזור מותר לפי קטע
+
+// יצירת נתוני אייטמים (בלי DOM)
+function generateItemsData() {
     let minY, maxY;
-    if (currentSegment === 1) {
-        minY = gameH * 0.05;   // מלמעלה
-        maxY = gameH * 0.72;   // לא ב-25% תחתונים (קו זינוק + רכבים)
-    } else if (currentSegment === TOTAL_SEGMENTS) {
-        minY = gameH * 0.15;   // אחרי קו סיום (10% עליון)
-        maxY = gameH * 0.88;   // לא ב-10% תחתונים
-    } else {
-        minY = gameH * 0.05;   // מלמעלה
-        maxY = gameH * 0.88;   // לא ב-10% תחתונים
-    }
+    if (currentSegment === 1) { minY = gameH * 0.05; maxY = gameH * 0.72; }
+    else if (currentSegment === TOTAL_SEGMENTS) { minY = gameH * 0.15; maxY = gameH * 0.88; }
+    else { minY = gameH * 0.05; maxY = gameH * 0.88; }
     
-    const MIN_DIST = 50; // מרחק מינימלי בין אלמנטים באותו נתיב
-    const placed = []; // [{lane, y}]
+    const MIN_DIST = 50;
+    const placed = [];
+    const data = [];
     
     for (let i = 0; i < ITEMS_PER_SEGMENT; i++) {
         const def = pickItemType();
         let lane, yPos, attempts = 0;
-        
         do {
             lane = Math.floor(Math.random() * LANE_COUNT);
-            yPos = minY + Math.random() * (maxY - minY);
+            yPos = Math.round(minY + Math.random() * (maxY - minY));
             attempts++;
         } while (attempts < 40 && placed.some(p => p.lane === lane && Math.abs(p.y - yPos) < MIN_DIST));
-        
         placed.push({ lane, y: yPos });
-        
-        const el = document.createElement('div');
-        el.className = `item${def.type === 'diamond' ? ' diamond' : ''}`;
-        el.textContent = def.emoji;
-        el.style.left = `${getLaneCenter(lane) - 12}px`;
-        el.style.top = `${yPos}px`;
-        gameArea.appendChild(el);
-        items.push({ el, lane, type: def.type, yPos, collected: false });
+        data.push({ lane, type: def.type, emoji: def.emoji, yPos, collected: false });
     }
+    return data;
+}
+
+// רינדור אייטמים מנתונים
+function renderItems(data) {
+    items.forEach(it => it.el.remove());
+    items = [];
+    for (const d of data) {
+        if (d.collected) continue;
+        const el = document.createElement('div');
+        el.className = `item${d.type === 'diamond' ? ' diamond' : ''}`;
+        el.textContent = d.emoji;
+        el.style.left = `${getLaneCenter(d.lane) - 12}px`;
+        el.style.top = `${d.yPos}px`;
+        gameArea.appendChild(el);
+        items.push({ el, lane: d.lane, type: d.type, yPos: d.yPos, collected: false });
+    }
+}
+
+// AI/Solo: יצור + רינדור מקומי
+function spawnSegmentItems() {
+    const data = generateItemsData();
+    renderItems(data);
+}
+
+// Multiplayer: שמירה/קריאה מ-Firebase
+let multiGameId = null;
+let multiAmFirst = false;
+let itemsListenerUnsub = null;
+
+async function mpSaveItems(segment) {
+    const data = generateItemsData();
+    await set(ref(db, `game/race/${multiGameId}/items_${segment}`), data);
+    renderItems(data);
+}
+
+function mpListenItems(segment) {
+    if (itemsListenerUnsub) itemsListenerUnsub();
+    itemsListenerUnsub = onValue(ref(db, `game/race/${multiGameId}/items_${segment}`), snap => {
+        const data = snap.val();
+        if (!data) return;
+        // עדכן אלמנטים שנאספו
+        for (let i = 0; i < items.length && i < data.length; i++) {
+            if (data[i].collected && !items[i].collected) {
+                items[i].collected = true;
+                items[i].el.classList.add('collected');
+                setTimeout(() => items[i].el.remove(), 300);
+            }
+        }
+        // אם עדיין אין אלמנטים (טעינה ראשונית) — רנדר
+        if (items.length === 0 && data.length > 0) {
+            renderItems(data);
+        }
+    });
+}
+
+async function mpCollectItem(index) {
+    const seg = currentSegment;
+    await set(ref(db, `game/race/${multiGameId}/items_${seg}/${index}/collected`), true);
+}
+
+async function mpSpawnSegmentItems() {
+    if (multiAmFirst) {
+        await mpSaveItems(currentSegment);
+    }
+    mpListenItems(currentSegment);
 }
 
 function freezePlayer(sec) { frozen=true; frozenUntil=Date.now()+sec*1000; playerCarEl.classList.add('frozen'); setTimeout(()=>{frozen=false;playerCarEl.classList.remove('frozen');},sec*1000); }
@@ -474,6 +529,7 @@ function gameLoop() {
         const dx=carCX-getLaneCenter(it.lane); const dy=carSY-(it.yPos+13);
         if (Math.sqrt(dx*dx+dy*dy)<HIT_RADIUS) {
             it.collected=true;
+            if (multiGameId) mpCollectItem(i); // סנכרן ב-multiplayer
             const fx=parseFloat(it.el.style.left)+12; const fy=it.yPos;
             if (it.type==='diamond') { points+=10; updatePoints(true); spawnFloatText(fx,fy,'+10 💎','#58D9F5'); }
             else if (it.type==='boost') { if (playerSpeed<4) { playerSpeed++; updateSpeed(true); } spawnFloatText(fx,fy,'⚡ מהירות!','#FFD700'); }
@@ -487,7 +543,9 @@ function gameLoop() {
     if (playerY>=gameH) {
         playerY=0; currentSegment++;
         if (currentSegment>TOTAL_SEGMENTS) { stopGame(); showResult('🏆','🏁 סיימת!',`${points} נקודות`); return; }
-        positionRaceLine(); spawnSegmentItems(); setCarY(playerCarEl,0);
+        positionRaceLine();
+        if (multiGameId) mpSpawnSegmentItems(); else spawnSegmentItems();
+        setCarY(playerCarEl,0);
     }
     updateSegmentUI();
 
@@ -590,19 +648,31 @@ function gameLoop() {
                 
                 if (bestLane !== aiLane) { aiLane = bestLane; moveCarToLane(aiCarEl, aiLane, null); }
                 
-            } else if (Math.random() < 0.4) {
-                // אין מכשול — בדוק אם יש ברק בנתיב צמוד (40% סיכוי לחפש)
-                const leftLane = aiLane - 1;
-                const rightLane = aiLane + 1;
-                const leftHasBoost = leftLane >= 0 && scanLane(leftLane).hasBoost && !scanLane(leftLane).threat;
-                const rightHasBoost = rightLane < LANE_COUNT && scanLane(rightLane).hasBoost && !scanLane(rightLane).threat;
+            } else if (Math.random() < 0.8) {
+                // אין מכשול — חפש ברק עד 2 נתיבים הצידה (80% סיכוי)
+                let bestBoostLane = -1;
+                let bestBoostDist = 999;
                 
-                if (leftHasBoost && !rightHasBoost) { aiLane = leftLane; moveCarToLane(aiCarEl, aiLane, null); }
-                else if (rightHasBoost && !leftHasBoost) { aiLane = rightLane; moveCarToLane(aiCarEl, aiLane, null); }
-                else if (leftHasBoost && rightHasBoost) {
-                    // שניהם — בחר אקראי
-                    aiLane = Math.random() < 0.5 ? leftLane : rightLane;
-                    moveCarToLane(aiCarEl, aiLane, null);
+                for (let offset = -2; offset <= 2; offset++) {
+                    if (offset === 0) continue;
+                    const checkLane = aiLane + offset;
+                    if (checkLane < 0 || checkLane >= LANE_COUNT) continue;
+                    const scan = scanLane(checkLane);
+                    if (scan.hasBoost && !scan.threat && Math.abs(offset) < bestBoostDist) {
+                        bestBoostDist = Math.abs(offset);
+                        bestBoostLane = checkLane;
+                    }
+                }
+                
+                if (bestBoostLane >= 0) {
+                    // זוז צעד אחד לכיוון הברק (לא קופץ 2 נתיבים בבת אחת)
+                    const step = bestBoostLane > aiLane ? 1 : -1;
+                    const nextLane = aiLane + step;
+                    // וודא שהנתיב הבא בטוח
+                    if (nextLane >= 0 && nextLane < LANE_COUNT && !scanLane(nextLane).threat) {
+                        aiLane = nextLane;
+                        moveCarToLane(aiCarEl, aiLane, null);
+                    }
                 }
             }
         }
@@ -680,12 +750,16 @@ async function init() {
             if (lastCount===2&&names.length<2){let n='',e='';for(const[id,p]of Object.entries(window._ls)){if(!players[id]){n=p.name||'';e=p.emoji||'';break;}}handleOpponentLeft(n,e);return;}
             window._ls=players; lastCount=names.length;
             if (names.length===2&&!gameRunning&&!gameFinished) {
-                const amFirst=names[0]===myName; playerLane=amFirst?3:1;
+                multiAmFirst = names[0]===myName;
+                playerLane = multiAmFirst ? 3 : 1;
+                multiGameId = `${names[0]}_${names[1]}`;
                 moveCarToLane(playerCarEl,playerLane,null);
                 // Setup opponent dot color
                 const oppId=names.find(n=>n!==myName);
                 if (oppId&&players[oppId]) { dotOpponent.style.display='block'; dotOpponent.style.background=players[oppId].color||'#4DB8FF'; dotOpponent.style.borderColor=players[oppId].color||'#4DB8FF'; }
-                startOpponentCheck(); spawnSegmentItems(); startCountdown(startGame);
+                startOpponentCheck();
+                mpSpawnSegmentItems();
+                startCountdown(startGame);
             }
         });
     }
