@@ -1141,7 +1141,7 @@ function gameLoop() {
                 let bestBoostLane = -1;
                 let bestBoostDist = 999;
                 
-                for (let offset = -1; offset <= 1; offset++) {
+                for (let offset = -2; offset <= 2; offset++) {
                     if (offset === 0) continue;
                     const checkLane = aiLane + offset;
                     if (checkLane < 0 || checkLane >= LANE_COUNT) continue;
