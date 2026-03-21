@@ -148,22 +148,6 @@
             position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%);
             width: 50px; height: 20px; pointer-events: none; z-index: -1;
         }
-
-        /* אורות לטווח רחוק */
-        .headlight-beam {
-            position: absolute; top: -90px; left: 50%; transform: translateX(-50%);
-            width: 30px; height: 90px; pointer-events: none; z-index: -1;
-            opacity: 0; transition: opacity 0.4s;
-            background: radial-gradient(ellipse 50% 100% at 50% 100%,
-                rgba(255,255,200,0.12) 0%,
-                rgba(255,255,200,0.06) 40%,
-                transparent 100%);
-            clip-path: polygon(30% 100%, 70% 100%, 100% 0%, 0% 0%);
-        }
-        .headlight-beam.level-1 { opacity: 0.3; height: 50px; top: -50px; width: 26px; }
-        .headlight-beam.level-2 { opacity: 0.5; height: 70px; top: -70px; width: 30px; }
-        .headlight-beam.level-3 { opacity: 0.7; height: 95px; top: -95px; width: 36px; }
-        .headlight-beam.level-4 { opacity: 1; height: 120px; top: -120px; width: 42px; }
         .smoke-puff {
             position: absolute; bottom: 0;
             border-radius: 50%;
@@ -175,79 +159,6 @@
             50% { opacity: 0.5; }
             100% { opacity: 0; transform: scale(2.5) translateY(8px); }
         }
-
-        /* ========== מצב גשם ========== */
-        .game-area.rain-mode { background: #2e3a52; }
-        .game-area.rain-mode .lane-divider {
-            background: repeating-linear-gradient(180deg, rgba(255,255,255,0.45) 0px, rgba(255,255,255,0.45) 20px, transparent 20px, transparent 35px);
-            background-size: 3px 35px;
-        }
-        /* כביש רטוב */
-        .wet-overlay {
-            display: none; position: absolute; inset: 0; z-index: 2; pointer-events: none;
-            background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(40,60,100,0.08) 30%, rgba(60,80,120,0.12) 60%, rgba(0,0,0,0.2) 100%);
-        }
-        .puddles {
-            display: none; position: absolute; inset: 0; z-index: 3; pointer-events: none;
-            background:
-                radial-gradient(ellipse 80px 15px at 25% 40%, rgba(100,140,200,0.08) 0%, transparent 100%),
-                radial-gradient(ellipse 60px 10px at 65% 65%, rgba(100,140,200,0.06) 0%, transparent 100%),
-                radial-gradient(ellipse 90px 12px at 40% 80%, rgba(100,140,200,0.07) 0%, transparent 100%);
-            animation: puddleShimmer 3s ease-in-out infinite alternate;
-        }
-        @keyframes puddleShimmer { 0% { opacity: 0.6; } 100% { opacity: 1; } }
-        .rain-container { display: none; position: absolute; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
-        .raindrop {
-            position: absolute; width: 1.5px;
-            background: linear-gradient(180deg, transparent, rgba(170,200,255,0.5), rgba(170,200,255,0.15));
-            border-radius: 0 0 2px 2px;
-            animation: rainFall linear infinite;
-        }
-        @keyframes rainFall {
-            0% { transform: translateY(-100%) translateX(0); opacity: 1; }
-            85% { opacity: 0.6; }
-            100% { transform: translateY(calc(100vh + 20px)) translateX(-8px); opacity: 0; }
-        }
-        .rain-splash { display: none; position: absolute; bottom: 0; left: 0; right: 0; height: 60px; z-index: 4; pointer-events: none; overflow: hidden; }
-        .splash-dot {
-            position: absolute; width: 3px; height: 1.5px;
-            background: rgba(150,180,220,0.4); border-radius: 50%;
-            animation: splashPop 0.6s ease-out infinite;
-        }
-        @keyframes splashPop { 0% { transform: scale(0); opacity: 0.8; } 50% { transform: scale(2.5); opacity: 0.4; } 100% { transform: scale(0); opacity: 0; } }
-        .road-mist { display: none; position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(0deg, rgba(100,120,160,0.15), transparent); z-index: 5; pointer-events: none; }
-        .lightning-flash { position: absolute; inset: 0; z-index: 200; background: rgba(200,210,255,0.15); pointer-events: none; opacity: 0; }
-        .lightning-flash.active { animation: lightningAnim 0.3s ease-out; }
-        @keyframes lightningAnim { 0% { opacity: 0.7; } 10% { opacity: 0; } 15% { opacity: 0.5; } 20% { opacity: 0; } 25% { opacity: 0.3; } 100% { opacity: 0; } }
-
-        .game-area.rain-mode .wet-overlay,
-        .game-area.rain-mode .puddles,
-        .game-area.rain-mode .rain-container,
-        .game-area.rain-mode .rain-splash,
-        .game-area.rain-mode .road-mist { display: block; }
-
-        /* השתקפות אורות על כביש רטוב */
-        .headlight-reflect {
-            display: none;
-            position: absolute; top: -55px; left: 50%; transform: translateX(-50%);
-            width: 60px; height: 55px; pointer-events: none; z-index: -1;
-            background: radial-gradient(ellipse at 50% 100%, rgba(255,255,200,0.08) 0%, rgba(255,255,200,0.03) 50%, transparent 100%);
-        }
-        /* התזת מים מגלגלים */
-        .wheel-spray {
-            display: none;
-            position: absolute; bottom: -6px; width: 18px; height: 14px; pointer-events: none; z-index: -1; overflow: hidden;
-        }
-        .wheel-spray.left { left: -2px; }
-        .wheel-spray.right { right: -2px; }
-        .spray-particle {
-            position: absolute; bottom: 0; width: 2px; height: 2px;
-            background: rgba(170,200,240,0.4); border-radius: 50%;
-            animation: sprayUp 0.35s ease-out infinite;
-        }
-        @keyframes sprayUp { 0% { transform: translateY(0) scale(1); opacity: 0.7; } 100% { transform: translateY(-12px) translateX(var(--sx)) scale(0.3); opacity: 0; } }
-        .game-area.rain-mode .headlight-reflect,
-        .game-area.rain-mode .wheel-spray { display: block; }
 
         /* סימני חריקה */
         .skid-mark {
@@ -370,13 +281,6 @@
     <div class="race-line" id="raceLine"></div>
     <div class="segment-bar"><div class="segment-fill" id="segFill"></div></div>
     <div class="segment-label" id="segLabel">קטע 1 / 3</div>
-    <!-- Rain elements (hidden by default, shown in rain-mode) -->
-    <div class="wet-overlay"></div>
-    <div class="puddles"></div>
-    <div class="rain-container" id="rainContainer"></div>
-    <div class="rain-splash" id="rainSplash"></div>
-    <div class="road-mist"></div>
-    <div class="lightning-flash" id="lightningFlash"></div>
 </div>
 
 <script type="module">
@@ -437,8 +341,6 @@ let aiMoveCooldown = 0;
 let aiBoostCooldownUntil = 0;
 let aiFinished = false;
 let tiltTimeout = null;
-let isRainMode = false;
-let lightningTimeout = null;
 
 const gameArea = document.getElementById('gameArea');
 const segFill = document.getElementById('segFill');
@@ -544,7 +446,7 @@ function resetGameState() {
     setCarY(playerCarEl, 0);
     moveCarToLane(playerCarEl, playerLane, null);
     playerCarEl.classList.remove('frozen', 'flash', 'speed-3', 'speed-4', 'speed-5');
-    updateExhaust(playerCarEl, 0); updateHeadlights(playerCarEl, 0);
+    updateExhaust(playerCarEl, 0);
     playerCarEl.style.transform = '';
     tiltActive = false; wobbleFrame = 0;
     
@@ -553,7 +455,7 @@ function resetGameState() {
         moveCarToLane(aiCarEl, aiLane, null);
         aiCarEl.style.display = 'block';
         aiCarEl.classList.remove('frozen', 'flash', 'tilt-left', 'tilt-right');
-        updateExhaust(aiCarEl, 0); updateHeadlights(aiCarEl, 0);
+        updateExhaust(aiCarEl, 0);
     }
     if (oppCarEl) {
         setCarY(oppCarEl, 0);
@@ -769,7 +671,7 @@ function updateCarSpeedClass() {
     if (playerSpeed >= 4) playerCarEl.classList.add('speed-5');
     else if (playerSpeed >= 3) playerCarEl.classList.add('speed-4');
     else if (playerSpeed >= 2) playerCarEl.classList.add('speed-3');
-    updateExhaust(playerCarEl, playerSpeed); updateHeadlights(playerCarEl, playerSpeed);
+    updateExhaust(playerCarEl, playerSpeed);
 }
 
 let wobbleFrame = 0;
@@ -1074,32 +976,8 @@ function createCar(userId, lane, id) {
     exh.className = 'exhaust';
     exh.innerHTML = `<div class="exhaust-flame" style="background:linear-gradient(180deg,#FFD700,#FFA040,rgba(255,0,0,0.6));animation-delay:0s"></div><div class="exhaust-flame" style="background:linear-gradient(180deg,#FFA040,#FF4500,rgba(255,0,0,0.4));animation-delay:0.04s"></div><div class="exhaust-flame" style="background:linear-gradient(180deg,#FFD700,#FFA040,rgba(255,0,0,0.6));animation-delay:0.02s"></div>`;
     car.appendChild(exh);
-    // אורות לטווח רחוק
-    const beam = document.createElement('div');
-    beam.className = 'headlight-beam';
-    car.appendChild(beam);
-    // השתקפות אורות על כביש רטוב (rain only)
-    const reflect = document.createElement('div');
-    reflect.className = 'headlight-reflect';
-    car.appendChild(reflect);
-    // התזת מים מגלגלים (rain only)
-    function makeSpray(side) {
-        const spray = document.createElement('div');
-        spray.className = `wheel-spray ${side}`;
-        for (let i = 0; i < 5; i++) {
-            const p = document.createElement('div');
-            p.className = 'spray-particle';
-            p.style.left = `${2 + Math.random() * 12}px`;
-            p.style.setProperty('--sx', `${(side === 'left' ? -1 : 1) * (3 + Math.random() * 6)}px`);
-            p.style.animationDelay = `${i * 0.07}s`;
-            p.style.animationDuration = `${0.25 + Math.random() * 0.15}s`;
-            spray.appendChild(p);
-        }
-        return spray;
-    }
-    car.appendChild(makeSpray('left'));
-    car.appendChild(makeSpray('right'));
     car.style.left = `${getLaneCenter(lane)-CAR_HALF_W}px`;
+    // הרכב צמוד מתחת לקו הזינוק
     const startLineY = gameH * START_LINE_BOTTOM_PCT;
     car.style.bottom = `${startLineY - CAR_HEIGHT}px`;
     gameArea.appendChild(car); return car;
@@ -1112,67 +990,6 @@ function updateExhaust(carEl, speed) {
     if (speed >= 1) {
         exh.classList.add('active', `level-${Math.min(speed, 4)}`);
     }
-}
-
-function updateHeadlights(carEl, speed) {
-    const beam = carEl.querySelector('.headlight-beam');
-    if (!beam) return;
-    beam.classList.remove('level-1','level-2','level-3','level-4');
-    if (isRainMode) {
-        // גשם — אור קבוע מקסימלי תמיד
-        beam.classList.add('level-4');
-    } else {
-        // רגיל — אור קבוע level-2
-        beam.classList.add('level-2');
-    }
-}
-
-// ========== הגדרת מזג אוויר ==========
-function setupWeather() {
-    isRainMode = Math.random() < 0.5;
-    if (isRainMode) {
-        gameArea.classList.add('rain-mode');
-        // יצירת טיפות גשם
-        const rainContainer = document.getElementById('rainContainer');
-        rainContainer.innerHTML = '';
-        for (let i = 0; i < 120; i++) {
-            const drop = document.createElement('div');
-            drop.className = 'raindrop';
-            drop.style.left = `${Math.random() * 100}%`;
-            drop.style.height = `${14 + Math.random() * 22}px`;
-            drop.style.animationDuration = `${0.3 + Math.random() * 0.35}s`;
-            drop.style.animationDelay = `${Math.random() * 1}s`;
-            drop.style.opacity = 0.3 + Math.random() * 0.4;
-            rainContainer.appendChild(drop);
-        }
-        // התזות
-        const rainSplash = document.getElementById('rainSplash');
-        rainSplash.innerHTML = '';
-        for (let i = 0; i < 30; i++) {
-            const splash = document.createElement('div');
-            splash.className = 'splash-dot';
-            splash.style.left = `${14 + Math.random() * (gameW - 28)}px`;
-            splash.style.bottom = `${Math.random() * 50}px`;
-            splash.style.animationDelay = `${Math.random() * 0.6}s`;
-            splash.style.animationDuration = `${0.4 + Math.random() * 0.3}s`;
-            rainSplash.appendChild(splash);
-        }
-        // ברקים
-        triggerLightning();
-    } else {
-        gameArea.classList.remove('rain-mode');
-        if (lightningTimeout) { clearTimeout(lightningTimeout); lightningTimeout = null; }
-    }
-}
-
-function triggerLightning() {
-    if (!isRainMode) return;
-    const flash = document.getElementById('lightningFlash');
-    flash.classList.remove('active');
-    void flash.offsetHeight;
-    flash.classList.add('active');
-    setTimeout(() => flash.classList.remove('active'), 400);
-    lightningTimeout = setTimeout(triggerLightning, 4000 + Math.random() * 8000);
 }
 let tiltActive = false;
 function moveCarToLane(carEl, lane, dir) {
@@ -1195,16 +1012,14 @@ function moveCarToLane(carEl, lane, dir) {
 function spawnSkidMark(carEl, dir) {
     const mark = document.createElement('div');
     mark.className = 'skid-mark';
-    // מיקום — מרכז הרכב הנוכחי
     const carLeft = parseFloat(carEl.style.left);
     const carBottom = parseFloat(carEl.style.bottom);
-    const tiltDeg = dir < 0 ? 8 : -8; // אלכסון הפוך לכיוון התנועה
+    const tiltDeg = dir < 0 ? 8 : -8;
     mark.style.left = `${carLeft + 8}px`;
     mark.style.bottom = `${carBottom - 2}px`;
     mark.style.width = '26px';
     mark.style.height = '28px';
     mark.style.transform = `rotate(${tiltDeg}deg)`;
-    // שני פסים — גלגל שמאל וימין
     const lineL = document.createElement('div');
     lineL.className = 'skid-line left';
     const lineR = document.createElement('div');
@@ -1216,7 +1031,6 @@ function spawnSkidMark(carEl, dir) {
 }
 
 function setCarY(carEl, y) {
-    // y=0 = מתחת לקו זינוק, y עולה = רכב עולה
     const startLineY = gameH * START_LINE_BOTTOM_PCT;
     const bottomPx = (startLineY - CAR_HEIGHT) + (y / gameH) * (gameH - startLineY);
     carEl.style.bottom = `${bottomPx}px`;
@@ -1357,6 +1171,15 @@ function gameLoop() {
     // אנימציית כביש
     updateRoadAnimation(speed);
 
+    // קו זינוק — נע למטה ונעלם (רק בקטע 1)
+    if (currentSegment === 1) {
+        const line = document.getElementById('raceLine');
+        const startBottom = gameH * START_LINE_BOTTOM_PCT;
+        const lineBottom = startBottom - (playerY / gameH) * startBottom * 2.5;
+        line.style.bottom = `${lineBottom}px`;
+        if (lineBottom < -20) line.classList.add('hidden');
+    }
+
     if (!isFrozen && !playerTransitioning) playerY += speed;
     setCarY(playerCarEl, playerY);
     
@@ -1439,17 +1262,17 @@ function gameLoop() {
                     } else if (it.type === 'boost') {
                         if (aiSpeed < 4) aiSpeed++;
                         aiBoostCooldownUntil = Date.now() + 2000;
-                        updateExhaust(aiCarEl, aiSpeed); updateHeadlights(aiCarEl, aiSpeed);
+                        updateExhaust(aiCarEl, aiSpeed);
                         spawnFloatText(fx, fy, '⚡', '#FFD700');
                     } else if (it.type === 'bomb') {
                         aiSpeed = 0;
-                        updateExhaust(aiCarEl, aiSpeed); updateHeadlights(aiCarEl, aiSpeed);
+                        updateExhaust(aiCarEl, aiSpeed);
                         aiCarEl.classList.add('flash');
                         setTimeout(() => aiCarEl.classList.remove('flash'), 450);
                         spawnFloatText(fx, fy, '💥', '#FF4444');
                     } else if (it.type === 'rock') {
                         if (aiSpeed > 0) aiSpeed--;
-                        updateExhaust(aiCarEl, aiSpeed); updateHeadlights(aiCarEl, aiSpeed);
+                        updateExhaust(aiCarEl, aiSpeed);
                         aiCarEl.classList.add('flash');
                         setTimeout(() => aiCarEl.classList.remove('flash'), 450);
                         spawnFloatText(fx, fy, '🪨', '#AAA');
@@ -1576,10 +1399,6 @@ function startCountdown(cb) {
 }
 function startGame() {
     gameRunning=true; positionRaceLine(); updateSegmentUI(); updateTrackDots(); updateWins();
-    // הדלק אורות
-    updateHeadlights(playerCarEl, 0);
-    if (aiCarEl) updateHeadlights(aiCarEl, 0);
-    if (oppCarEl) updateHeadlights(oppCarEl, 0);
     // עשן סטארט
     spawnTireSmoke(playerCarEl);
     if (aiCarEl) spawnTireSmoke(aiCarEl);
@@ -1625,7 +1444,6 @@ gameArea.addEventListener('touchend', e=>{
 // ========== Init ==========
 async function init() {
     calcDimensions(); buildLaneDividers(); buildRaceLine(); setupTrackDots(); initHeartSegments();
-    setupWeather();
     const existingSnap=await get(ref(db,roomPath)); const existingData=existingSnap?.val();
     myJoinedAt=existingData?.joinedAt||Date.now();
     await set(ref(db,roomPath),{name:displayName,color:myColor,emoji:myEmoji,joinedAt:myJoinedAt,timestamp:Date.now(),active:true});
