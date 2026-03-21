@@ -86,11 +86,21 @@
 
         /* ========== אזור משחק ========== */
         .game-area { flex: 1; position: relative; overflow: hidden; background: #4a5a7a; }
-        /* אבני שפה — על כל המסך */
-        .curb-left, .curb-right { position: fixed; top: 0; bottom: 0; width: 14px; z-index: 150; }
+        .game-area.shake { animation: screenShake 0.3s ease; }
+        @keyframes screenShake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+        
+        /* Black flash — מעבר קטע */
+        .segment-flash { position: absolute; inset: 0; background: black; z-index: 200; opacity: 0; pointer-events: none; }
+        .segment-flash.active { animation: blackFlash 0.4s ease; }
+        @keyframes blackFlash { 0% { opacity: 0; } 40% { opacity: 1; } 60% { opacity: 1; } 100% { opacity: 0; } }
+
+        /* אבני שפה — זזות */
+        .curb-left, .curb-right { position: fixed; top: 0; bottom: 0; width: 14px; z-index: 150; background-size: 14px 50px; }
         .curb-left { left: 0; background: repeating-linear-gradient(180deg, #FF0000 0, #FF0000 25px, #FFFFFF 25px, #FFFFFF 50px); }
         .curb-right { right: 0; background: repeating-linear-gradient(180deg, #FFFFFF 0, #FFFFFF 25px, #FF0000 25px, #FF0000 50px); }
-        .lane-divider { position: absolute; top: 0; bottom: 0; width: 3px; z-index: 10; background: repeating-linear-gradient(180deg, rgba(255,255,255,0.8) 0px, rgba(255,255,255,0.8) 20px, transparent 20px, transparent 35px); }
+        
+        /* קווי הפרדה — זזים */
+        .lane-divider { position: absolute; top: 0; bottom: 0; width: 3px; z-index: 10; background: repeating-linear-gradient(180deg, rgba(255,255,255,0.8) 0px, rgba(255,255,255,0.8) 20px, transparent 20px, transparent 35px); background-size: 3px 35px; }
         .race-line { position: absolute; left: 0; right: 0; height: 14px; z-index: 40; display: flex; flex-direction: column; }
         .race-line.hidden { display: none; }
         .race-line-row { display: flex; flex: 1; }
@@ -212,6 +222,7 @@
 </div>
 
 <div class="game-area" id="gameArea">
+    <div class="segment-flash" id="segFlash"></div>
     <div class="race-line" id="raceLine"></div>
     <div class="segment-bar"><div class="segment-fill" id="segFill"></div></div>
     <div class="segment-label" id="segLabel">קטע 1 / 3</div>
@@ -261,7 +272,7 @@ const ITEM_TABLE = [
 const TOTAL_WEIGHT = ITEM_TABLE.reduce((s, i) => s + i.weight, 0);
 
 // ========== מצב ==========
-let playerLane = 0, playerSpeed = 0, lives = 3, points = 0;
+let playerLane = 0, playerSpeed = 0, lives = 3, points = 0, pointsAtRoundStart = 0;
 let currentSegment = 1, gameRunning = false, gameFinished = false;
 let frozen = false, frozenUntil = 0;
 let items = [], playerCarEl = null, aiCarEl = null, animFrameId = null;
@@ -287,10 +298,11 @@ function calcDimensions() {
 function getLaneCenter(i) { return CURB_W + i * laneW + laneW / 2; }
 
 function buildLaneDividers() {
-    // קווים בגבולות בין הנתיבים — בתוך האזור הגלוי בלבד
+    laneDividers = [];
     for (let i = 1; i < LANE_COUNT; i++) {
         const d = document.createElement('div'); d.className = 'lane-divider';
         d.style.left = `${CURB_W + i * laneW - 1.5}px`; gameArea.appendChild(d);
+        laneDividers.push(d);
     }
 }
 
@@ -350,9 +362,9 @@ function resetGameState() {
     items.forEach(it => { if (it.el.parentNode) it.el.remove(); }); items = [];
     gameArea.querySelectorAll('.item, .float-text, .swipe-hint, .collected').forEach(el => el.remove());
     
-    // אפס מצב
+    // אפס מצב — נקודות נשמרות בין סיבובים
     playerSpeed = 0; lives = 3; currentSegment = 1;
-    if (mode !== 'ai') points = 0; // ב-AI נקודות נשמרות בין סיבובים
+    pointsAtRoundStart = points;
     gameFinished = false; frozen = false; frozenUntil = 0;
     aiFrozen = false; aiFrozenUntil = 0; aiMoveCooldown = 0;
     playerY = 0; aiY = 0; aiSpeed = 0; aiSegment = 1;
@@ -383,6 +395,15 @@ function resetGameState() {
         oppCarEl.style.display = 'block';
         oppCarEl.classList.remove('frozen', 'flash');
     }
+    
+    // נקה מיקום ואייטמים ישנים ב-Firebase
+    if (multiGameId) {
+        set(ref(db, `game/race/${multiGameId}/pos_${myName}`), null);
+        for (let s = 1; s <= TOTAL_SEGMENTS; s++) {
+            remove(ref(db, `game/race/${multiGameId}/items_${s}`));
+        }
+    }
+    roadOffset = 0;
     
     positionRaceLine();
     if (multiGameId) mpSpawnSegmentItems(); else spawnSegmentItems();
@@ -429,6 +450,11 @@ function showResult(icon, title, sub, canRetry=true) {
     }
     
     document.getElementById('resultModal').classList.add('show');
+    
+    // אנימציית ספירת נקודות
+    if (sub.includes('נקודות')) {
+        animateScoreCount(points);
+    }
 }
 
 // ========== Multiplayer status + wins ==========
@@ -548,6 +574,7 @@ function mpListenReady(oppId) {
                     remove(ref(db, `game/race/${multiGameId}/wins_${oppId}`));
                     
                     myWins = 0; oppWins = 0;
+                    points = 0; pointsAtRoundStart = 0;
                     updateWins();
                     
                     document.getElementById('resultModal').classList.remove('show');
@@ -565,6 +592,51 @@ function mpListenReady(oppId) {
     });
 }
 function spawnFloatText(x,y,text,color) { const el=document.createElement('div'); el.className='float-text'; el.textContent=text; el.style.left=`${x}px`; el.style.top=`${y}px`; el.style.color=color; gameArea.appendChild(el); setTimeout(()=>el.remove(),800); }
+
+// ========== אנימציות כביש ==========
+let roadOffset = 0;
+const curbLeft = document.querySelector('.curb-left');
+const curbRight = document.querySelector('.curb-right');
+let laneDividers = [];
+
+function updateRoadAnimation(speed) {
+    roadOffset += speed * 1.5;
+    const offset = roadOffset % 50; // 50px = cycle of curb pattern
+    curbLeft.style.backgroundPositionY = `${offset}px`;
+    curbRight.style.backgroundPositionY = `${offset}px`;
+    const divOffset = roadOffset % 35; // 35px = cycle of lane divider pattern
+    laneDividers.forEach(d => { d.style.backgroundPositionY = `${divOffset}px`; });
+}
+
+function shakeScreen() {
+    gameArea.classList.remove('shake');
+    void gameArea.offsetHeight;
+    gameArea.classList.add('shake');
+    setTimeout(() => gameArea.classList.remove('shake'), 300);
+}
+
+function flashSegmentTransition(callback) {
+    const flash = document.getElementById('segFlash');
+    flash.classList.remove('active');
+    void flash.offsetHeight;
+    flash.classList.add('active');
+    // callback ברגע שהמסך שחור (40% מ-400ms = 160ms)
+    setTimeout(callback, 160);
+    setTimeout(() => flash.classList.remove('active'), 400);
+}
+
+function animateScoreCount(finalScore) {
+    const el = document.getElementById('resultSub');
+    let current = pointsAtRoundStart;
+    const diff = finalScore - current;
+    if (diff <= 0) { el.textContent = `${finalScore} נקודות`; return; }
+    const step = Math.max(1, Math.ceil(diff / 30));
+    const iv = setInterval(() => {
+        current += step;
+        if (current >= finalScore) { current = finalScore; clearInterval(iv); }
+        el.textContent = `${current} נקודות`;
+    }, 30);
+}
 
 // ========== מד מסלול ==========
 let oppSegment = 1, oppY = 0, oppLane = 1, oppSpeed = 0;
@@ -604,7 +676,14 @@ function startPositionSync() {
     
     // שלח מיקום כל 80ms
     positionSyncInterval = setInterval(() => {
-        if (!gameRunning && !gameFinished) return;
+        if (!gameRunning) {
+            if (gameFinished) {
+                // שלח מיקום אחרון עם קטע סיום
+                set(myPosRef, { y: Math.round(playerY), seg: currentSegment, lane: playerLane, spd: playerSpeed, t: Date.now() });
+                clearInterval(positionSyncInterval); positionSyncInterval = null;
+            }
+            return;
+        }
         set(myPosRef, {
             y: Math.round(playerY),
             seg: currentSegment,
@@ -799,7 +878,10 @@ async function mpCollectItem(index) {
 }
 
 async function mpSpawnSegmentItems() {
-    if (multiAmFirst) {
+    // בדוק אם כבר יש אייטמים לקטע הזה
+    const snap = await get(ref(db, `game/race/${multiGameId}/items_${currentSegment}`));
+    if (!snap.val()) {
+        // אין — אני יוצר (מי שמגיע ראשון לקטע)
         await mpSaveItems(currentSegment);
     }
     mpListenItems(currentSegment);
@@ -814,6 +896,9 @@ function gameLoop() {
     const isFrozen = frozen && Date.now() < frozenUntil;
     const speed = isFrozen ? 0 : SPEEDS[playerSpeed];
 
+    // אנימציית כביש
+    updateRoadAnimation(speed);
+
     if (!isFrozen) playerY += speed;
     setCarY(playerCarEl, playerY);
 
@@ -825,23 +910,34 @@ function gameLoop() {
         const dx=carCX-getLaneCenter(it.lane); const dy=carSY-(it.yPos+13);
         if (Math.sqrt(dx*dx+dy*dy)<HIT_RADIUS) {
             it.collected=true;
-            if (multiGameId) mpCollectItem(i); // סנכרן ב-multiplayer
+            if (multiGameId) mpCollectItem(i);
             const fx=parseFloat(it.el.style.left)+12; const fy=it.yPos;
             if (it.type==='diamond') { points+=10; updatePoints(true); spawnFloatText(fx,fy,'+10 💎','#58D9F5'); }
             else if (it.type==='boost') { if (playerSpeed<4) { playerSpeed++; updateSpeed(true); } spawnFloatText(fx,fy,'⚡ מהירות!','#FFD700'); }
-            else if (it.type==='bomb') { lives--; updateLives(lives); if (playerSpeed>0){playerSpeed=0;updateSpeed(false);} playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450); freezePlayer(2); spawnFloatText(fx,fy,'💥 פצצה!','#FF4444'); if (lives<=0){stopGame();showResult('💥','התרסקת!',`${points} נקודות`);return;} }
-            else if (it.type==='rock') { if (playerSpeed>0){playerSpeed--;updateSpeed(false);} playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450); freezePlayer(1); spawnFloatText(fx,fy,'🪨 אבן!','#AAA'); }
+            else if (it.type==='bomb') { lives--; updateLives(lives); if (playerSpeed>0){playerSpeed=0;updateSpeed(false);} playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450); freezePlayer(2); shakeScreen(); spawnFloatText(fx,fy,'💥 פצצה!','#FF4444'); if (lives<=0){stopGame();showResult('💥','התרסקת!',`${points} נקודות`);return;} }
+            else if (it.type==='rock') { if (playerSpeed>0){playerSpeed--;updateSpeed(false);} playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450); freezePlayer(1); shakeScreen(); spawnFloatText(fx,fy,'🪨 אבן!','#AAA'); }
             it.el.classList.add('collected'); setTimeout(()=>it.el.remove(),300);
         }
     }
 
-    // סיום קטע
+    // סיום קטע — עם black flash
     if (playerY>=gameH) {
-        playerY=0; currentSegment++;
-        if (currentSegment>TOTAL_SEGMENTS) { stopGame(); showResult('🏆', `🏁 ${myEmoji} ${displayName} 🏆`, `${points} נקודות`); return; }
-        positionRaceLine();
-        if (multiGameId) mpSpawnSegmentItems(); else spawnSegmentItems();
-        setCarY(playerCarEl,0);
+        if (currentSegment + 1 > TOTAL_SEGMENTS) {
+            // סיום מרוץ
+            stopGame(); showResult('🏆', `🏁 ${myEmoji} ${displayName} 🏆`, `${points} נקודות`); return;
+        }
+        // מעבר קטע עם הבזק
+        gameRunning = false; // עצור זמנית
+        flashSegmentTransition(() => {
+            playerY = 0; currentSegment++;
+            positionRaceLine();
+            if (multiGameId) mpSpawnSegmentItems(); else spawnSegmentItems();
+            setCarY(playerCarEl, 0);
+            updateSegmentUI();
+            gameRunning = true;
+            gameLoop(); // המשך
+        });
+        return; // יצא מהלופ — ימשיך אחרי ה-flash
     }
     updateSegmentUI();
 
