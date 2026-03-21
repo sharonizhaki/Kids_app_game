@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0F1320">
+    <title>משחקי אמה וריף</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Heebo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0F1320;
+            --surface: rgba(24, 29, 46, 0.6);
+            --surface-bright: rgba(33, 40, 64, 0.8);
+            --border: rgba(255, 255, 255, 0.15);
+            --emma: #FF5C7A;
+            --rif: #4DB8FF;
+            --guest: #FFFFFF;
+            --text: #EEF0FF;
+            --dim: #6B7299;
+            --gold: #F5C842;
+        }
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        body { 
+            min-height: 100vh; 
+            width: 100vw;
+            background: var(--bg); 
+            color: var(--text); 
+            font-family: 'Heebo', sans-serif; 
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ========== רקע אנימציה עם צפויים ========== */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse at 20% 30%, rgba(255, 92, 122, 0.2) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(77, 184, 255, 0.15) 0%, transparent 50%);
+        }
+
+        /* כוכבים */
+        .stars {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image: 
+                radial-gradient(white 1px, transparent 1px);
+            background-size: 60px 60px;
+            opacity: 0.08;
+            pointer-events: none;
+        }
+
+        /* ========== צפויים - קוביה, בקר, קוביית משחק ========== */
+        .floating-emoji {
+            position: fixed;
+            font-size: 5rem;
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(2px);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .floating-emoji.joystick {
+            animation: float-all 26s infinite ease-in-out;
+        }
+
+        .floating-emoji.cube {
+            animation: float-all 26s infinite ease-in-out;
+        }
+
+        .floating-emoji.controller {
+            animation: float-all 26s infinite ease-in-out;
+        }
+
+        @keyframes float-all {
+            0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+            12.5% { transform: translate(110px, -95px) rotate(35deg) scale(1.05); }
+            25% { transform: translate(85px, 75px) rotate(15deg) scale(0.98); }
+            37.5% { transform: translate(-95px, 110px) rotate(-30deg) scale(0.95); }
+            50% { transform: translate(-110px, -80px) rotate(-20deg) scale(1.02); }
+            62.5% { transform: translate(-70px, -120px) rotate(40deg) scale(1.08); }
+            75% { transform: translate(100px, -65px) rotate(-10deg) scale(0.97); }
+            87.5% { transform: translate(75px, 90px) rotate(25deg) scale(1.03); }
+        }
+
+        /* ========== תוכן ========== */
+        .content-wrapper { 
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* ========== מסכים ========== */
+        .screen { 
+            display: none; 
+            width: 100%; 
+            height: 100%;
+            flex-direction: column; 
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 0 16px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .screen.active { 
+            display: flex; 
+        }
+
+        @keyframes fadeIn { 
+            from { 
+                opacity: 0; 
+                transform: scale(0.98); 
+            } 
+            to { 
+                opacity: 1; 
+                transform: scale(1); 
+            } 
+        }
+
+        /* ========== כותרות ========== */
+        .title-controller {
+            display: inline-block;
+            margin: 0 12px;
+            font-size: 3.5rem;
+            animation: bounce-vertical 1s ease-in-out infinite;
+        }
+
+        @keyframes bounce-vertical {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        h1 .emoji {
+            font-size: 2.8rem;
+            font-style: normal;
+        }
+
+        h2 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+            width: 100%;
+        }
+
+        h2 .greeting-hi {
+            font-style: normal;
+        }
+
+        h2 .greeting-emoji {
+            font-size: 1.9rem;
+            font-style: normal;
+        }
+
+        h2 .greeting-name {
+            font-style: normal;
+        }
+
+        h2 .greeting-question {
+            opacity: 0.85;
+        }
+
+        /* ========== בחירת משתמש - מסך ראשי ========== */
+        #screen-login {
+            justify-content: center;
+        }
+
+        .user-grid { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 10px; 
+            width: 100%; 
+            max-width: 320px;
+            margin-bottom: 14px;
+            flex-shrink: 0;
+        }
+
+        .user-btn { 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 2px solid var(--border);
+            border-radius: 18px; 
+            padding: 16px 6px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 8px; 
+            color: white;
+            backdrop-filter: blur(10px); 
+            -webkit-backdrop-filter: blur(10px); 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+            user-select: none;
+            -webkit-user-select: none;
+            min-height: 110px;
+            justify-content: center;
+            position: relative;
+        }
+
+        .user-btn:active {
+            transform: scale(0.95);
+        }
+
+        .user-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .user-btn.emma { 
+            border-color: var(--emma);
+            box-shadow: 0 0 15px rgba(255, 92, 122, 0.15);
+        }
+
+        .user-btn.emma:active {
+            border-color: var(--emma);
+            box-shadow: 0 0 25px rgba(255, 92, 122, 0.4), inset 0 0 20px rgba(255, 92, 122, 0.1);
+        }
+
+        .user-btn.emma:hover {
+            border-color: var(--emma);
+            box-shadow: 0 0 25px rgba(255, 92, 122, 0.3);
+        }
+
+        .user-btn.rif { 
+            border-color: var(--rif);
+            box-shadow: 0 0 15px rgba(77, 184, 255, 0.15);
+        }
+
+        .user-btn.rif:active {
+            border-color: var(--rif);
+            box-shadow: 0 0 25px rgba(77, 184, 255, 0.4), inset 0 0 20px rgba(77, 184, 255, 0.1);
+        }
+
+        .user-btn.rif:hover {
+            border-color: var(--rif);
+            box-shadow: 0 0 25px rgba(77, 184, 255, 0.3);
+        }
+
+        .user-btn.dad { 
+            border-color: #2ecc71;
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.15);
+        }
+
+        .user-btn.dad:active {
+            border-color: #2ecc71;
+            box-shadow: 0 0 25px rgba(46, 204, 113, 0.4), inset 0 0 20px rgba(46, 204, 113, 0.1);
+        }
+
+        .user-btn.dad:hover {
+            border-color: #2ecc71;
+            box-shadow: 0 0 25px rgba(46, 204, 113, 0.3);
+        }
+
+        .user-btn.mom { 
+            border-color: #9b59b6;
+            box-shadow: 0 0 15px rgba(155, 89, 182, 0.15);
+        }
+
+        .user-btn.mom:active {
+            border-color: #9b59b6;
+            box-shadow: 0 0 25px rgba(155, 89, 182, 0.4), inset 0 0 20px rgba(155, 89, 182, 0.1);
+        }
+
+        .user-btn.mom:hover {
+            border-color: #9b59b6;
+            box-shadow: 0 0 25px rgba(155, 89, 182, 0.3);
+        }
+
+        .user-btn i { 
+            font-size: 2.6rem; 
+            font-style: normal; 
+        }
+
+        .user-btn span { 
+            font-weight: 900; 
+            font-size: 0.95rem; 
+        }
+
+        .user-btn.guest {
+            border: 2px solid white;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2), inset 0 0 15px rgba(61, 214, 140, 0.1);
+        }
+
+        .user-btn.guest:active {
+            border-color: white;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(61, 214, 140, 0.2);
+        }
+
+        .user-btn.guest:hover {
+            border-color: white;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.3), inset 0 0 15px rgba(61, 214, 140, 0.15);
+        }
+
+        /* ========== בקר צד ========== */
+        /* ========== הזנת פרטי אורח ========== */
+        #guest-setup { 
+            width: 100%; 
+            max-width: 320px; 
+            text-align: center;
+            display: none;
+        }
+
+        .guest-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+
+        input { 
+            width: 100%; 
+            padding: 11px; 
+            border-radius: 12px; 
+            border: 2px solid var(--border); 
+            background: rgba(0, 0, 0, 0.3); 
+            color: white; 
+            margin-bottom: 12px; 
+            text-align: center; 
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: 'Heebo', sans-serif;
+        }
+
+        input::placeholder {
+            color: var(--dim);
+        }
+
+        input:focus { 
+            outline: none; 
+            border-color: var(--guest); 
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 0 3px rgba(61, 214, 140, 0.2);
+        }
+
+        input.error {
+            border-color: #EF4444;
+            animation: shake 0.4s ease-in-out;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        @keyframes errorPulse {
+            0% { border-color: #EF4444; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            100% { border-color: #EF4444; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .emoji-section {
+            margin: 12px 0;
+        }
+
+        .emoji-label {
+            font-size: 0.75rem; 
+            color: var(--dim); 
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .emoji-picker { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 8px; 
+            padding: 10px; 
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .emoji-picker.error {
+            border-color: #EF4444;
+            background: rgba(239, 68, 68, 0.05);
+            animation: shake 0.4s ease-in-out, errorPulse 1s ease-in-out;
+        }
+
+        .emoji-opt { 
+            font-size: 1.8rem; 
+            padding: 10px; 
+            cursor: pointer; 
+            border-radius: 10px; 
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+            user-select: none;
+            -webkit-user-select: none;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .emoji-opt:active {
+            transform: scale(0.9);
+        }
+
+        .emoji-opt:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .emoji-opt.selected { 
+            background: rgba(61, 214, 140, 0.2);
+            transform: scale(1.15);
+            border-color: var(--guest);
+            box-shadow: 0 0 15px rgba(61, 214, 140, 0.4);
+        }
+
+        /* ========== כפתורים ========== */
+        .btn-main { 
+            background: var(--guest); 
+            color: #0F1320; 
+            padding: 11px 24px; 
+            border-radius: 12px; 
+            border: none; 
+            font-weight: 900; 
+            cursor: pointer; 
+            width: 100%; 
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(61, 214, 140, 0.3);
+            transition: all 0.2s ease;
+            user-select: none;
+            -webkit-user-select: none;
+            margin-bottom: 6px;
+        }
+
+        .btn-main:active {
+            transform: scale(0.98);
+        }
+
+        .btn-main:hover {
+            box-shadow: 0 6px 20px rgba(61, 214, 140, 0.4);
+        }
+
+        /* אנימציית מעבר מביטול למתחילים */
+        .btn-main.starting {
+            background: linear-gradient(135deg, var(--gold) 0%, #FFB347 100%);
+            color: #0F1320;
+            box-shadow: 0 4px 20px rgba(245, 200, 66, 0.4);
+            animation: btnPulseStart 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes btnPulseStart {
+            0% { transform: scale(0.9); opacity: 0.5; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .btn-cancel { 
+            background: none; 
+            border: none; 
+            color: var(--text); 
+            opacity: 0.6; 
+            margin-top: 8px; 
+            text-decoration: underline; 
+            font-size: 0.8rem; 
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .btn-cancel:active {
+            opacity: 0.8;
+        }
+
+        /* ========== מסך בחירת משחק ========== */
+        #screen-games {
+            justify-content: flex-start;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-top: 30px;
+            padding-bottom: 20px;
+        }
+
+        #screen-games::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #screen-games::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+        }
+
+        .games-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .game-grid { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 10px; 
+            width: 100%; 
+            max-width: 340px;
+            margin-bottom: 16px;
+        }
+
+        .game-card { 
+            background: rgba(255, 255, 255, 0.03); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 16px; 
+            padding: 14px 6px;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 6px; 
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: slideUp 0.4s ease forwards;
+            transition: all 0.2s ease;
+            user-select: none;
+            -webkit-user-select: none;
+            min-height: 100px;
+            justify-content: center;
+        }
+
+        .game-card:nth-child(1) { animation-delay: 0.05s; }
+        .game-card:nth-child(2) { animation-delay: 0.1s; }
+        .game-card:nth-child(3) { animation-delay: 0.15s; }
+        .game-card:nth-child(4) { animation-delay: 0.2s; }
+        .game-card:nth-child(5) { animation-delay: 0.25s; }
+        .game-card:nth-child(6) { animation-delay: 0.3s; }
+
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .game-card:hover {
+            border-color: rgba(245, 200, 66, 0.4);
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245, 200, 66, 0.15);
+        }
+
+        .game-card:active {
+            transform: scale(0.97);
+        }
+
+        .game-card i { 
+            font-size: 2rem; 
+            font-style: normal; 
+        }
+
+        .game-card span { 
+            font-weight: 700; 
+            font-size: 0.95rem;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .game-status { 
+            font-size: 0.6rem; 
+            color: var(--gold); 
+            font-weight: 600; 
+            height: 10px; 
+            text-align: center; 
+            opacity: 0.9;
+        }
+
+        /* ========== מסך המתנה ========== */
+        #screen-waiting {
+            justify-content: center;
+        }
+
+        .waiting-box { 
+            background: rgba(33, 40, 64, 0.25); 
+            border: 1.5px solid rgba(255, 255, 255, 0.08); 
+            border-radius: 22px; 
+            padding: 28px 18px; 
+            width: 100%; 
+            max-width: 340px; 
+            text-align: center; 
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .waiting-icon {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            animation: bounce 1.5s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .waiting-title {
+            font-size: 1.1rem;
+            font-weight: 900;
+            margin-bottom: 6px;
+            color: var(--gold);
+        }
+
+        .waiting-subtitle {
+            font-size: 0.85rem;
+            color: var(--dim);
+            margin-bottom: 16px;
+            min-height: 20px;
+        }
+
+        .waiting-subtitle.countdown {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--gold);
+            animation: pulse 0.6s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .slots { 
+            display: flex; 
+            justify-content: center; 
+            gap: 14px; 
+            margin: 16px 0;
+        }
+
+        .p-slot { 
+            width: 70px; 
+            height: 70px; 
+            border-radius: 50%; 
+            border: 3px dashed var(--dim); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            transition: all 0.3s ease;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .p-slot.active { 
+            border-style: solid; 
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.08);
+        }
+
+        .p-slot.active.emma{
+            border-color: var(--emma);
+            box-shadow: 0 0 20px rgba(255, 92, 122, 0.3);
+        }
+
+        .p-slot.active.rif{
+            border-color: var(--rif);
+            box-shadow: 0 0 20px rgba(77, 184, 255, 0.3);
+        }
+
+        .p-slot.active.dad{
+            border-color: #2ecc71;
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
+        }
+
+        .p-slot.active.mom{
+            border-color: #9b59b6;
+            box-shadow: 0 0 20px rgba(155, 89, 182, 0.3);
+        }
+
+        .p-slot.active.guest{
+            border-color: #FFFFFF;
+            box-shadow: 0 0 20px rgba(61, 214, 140, 0.3);
+        }
+
+        /* עיגול ריק - נושם עם סימן שאלה */
+        .p-slot:not(.active) {
+            animation: breathe 1.6s ease-in-out infinite;
+            border-style: dashed;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .p-slot:not(.active)::after {
+            content: '?';
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.4);
+            animation: blinkQuestion 1.2s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { 
+                transform: scale(0.95); 
+                border-color: rgba(255, 255, 255, 0.15);
+                box-shadow: 0 0 0 rgba(245, 200, 66, 0);
+            }
+            50% { 
+                transform: scale(1.12); 
+                border-color: rgba(245, 200, 66, 0.6);
+                box-shadow: 0 0 25px rgba(245, 200, 66, 0.25);
+            }
+        }
+
+        @keyframes blinkQuestion {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+
+        /* ========== עזיבה =============*/
+        .logout-btn {
+            margin-top: 12px;
+            padding: 8px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: none;
+            color: var(--dim);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            font-size: 0.85rem;
+            user-select: none;
+            -webkit-user-select: none;
+            flex-shrink: 0;
+        }
+
+        .logout-btn:hover {
+            color: var(--text);
+            border-color: var(--text);
+        }
+
+        .logout-btn:active {
+            transform: scale(0.97);
+        }
+
+        .tasks-button {
+            margin-top: 12px;
+            margin-bottom: 8px;
+            padding: 12px 24px;
+            border-radius: 14px;
+            border: 2px solid var(--gold);
+            background: linear-gradient(135deg, rgba(245, 200, 66, 0.1) 0%, rgba(245, 200, 66, 0.05) 100%);
+            color: var(--gold);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 700;
+            font-size: 0.95rem;
+            user-select: none;
+            -webkit-user-select: none;
+            flex-shrink: 0;
+            box-shadow: 0 0 15px rgba(245, 200, 66, 0.15);
+        }
+
+        .tasks-button:hover {
+            background: linear-gradient(135deg, rgba(245, 200, 66, 0.2) 0%, rgba(245, 200, 66, 0.1) 100%);
+            box-shadow: 0 0 25px rgba(245, 200, 66, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .tasks-button:active {
+            transform: scale(0.96);
+        }
+    </style>
+</head>
+<body>
+
+<!-- כוכבים -->
+<div class="stars"></div>
+
+<!-- צפויים אנימציה -->
+<div class="floating-emoji joystick" style="top: 15%; left: 5%; animation-delay: 0s;">🎮</div>
+<div class="floating-emoji cube" style="top: 50%; right: 8%; animation-delay: -6.7s;">🕹️</div>
+<div class="floating-emoji controller" style="bottom: 20%; left: 10%; animation-delay: -13.3s;">🎲</div>
+
+<div class="content-wrapper">
+
+    <!-- ============= מסך ראשון: בחירת משתמש ============= -->
+    <div id="screen-login" class="screen active">
+        <h1>
+            <span class="title-controller">🎮</span>
+            <span>מי משחק?</span>
+        </h1>
+        
+        <div class="user-grid" id="main-user-grid">
+            <div class="user-btn emma" onclick="selectUser('emma', 'אמה', '👧', '#FF5C7A')">
+                <i>👧</i>
+                <span>אמה</span>
+            </div>
+            <div class="user-btn rif" onclick="selectUser('rif', 'ריף', '👦', '#4DB8FF')">
+                <i>👦</i>
+                <span>ריף</span>
+            </div>
+            <div class="user-btn dad" onclick="selectUser('dad', 'אבא', '🧔🏻', '#2ecc71')">
+                <i>🧔🏻</i>
+                <span>אבא</span>
+            </div>
+            <div class="user-btn mom" onclick="selectUser('mom', 'אמא', '👩🏽', '#9b59b6')">
+                <i>👩🏽</i>
+                <span>אמא</span>
+            </div>
+            <div class="user-btn guest" style="grid-column: span 2;" onclick="showGuestSetup()">
+                <i>👤</i>
+                <span>שחקן אורח</span>
+            </div>
+        </div>
+
+        <!-- הזנת פרטי אורח -->
+        <div id="guest-setup">
+            <div class="guest-title">👋 ברוכים הבאים!</div>
+            
+            <input type="text" id="guest-name-input" placeholder="איך קוראים לך?" maxlength="14">
+            
+            <div class="emoji-section">
+                <div class="emoji-label">בחר דמות שתייצג אותך</div>
+                <div class="emoji-picker" id="emoji-picker"></div>
+            </div>
+            
+            <button class="btn-main" onclick="confirmGuest()">✨ הצטרף למשחק</button>
+            <button class="btn-cancel" onclick="cancelGuestSetup()">← חזור</button>
+        </div>
+    </div>
+
+    <!-- ============= מסך שני: בחירת משחק ============= -->
+    <div id="screen-games" class="screen">
+        <h2 id="greeting" style="margin-top: 0;">
+            <span class="greeting-hi">היי</span>
+            <span id="greeting-emoji" class="greeting-emoji"></span>
+            <span id="greeting-name" class="greeting-name"></span>
+            <span class="greeting-question">מה נשחק?</span>
+        </h2>
+        
+        <div class="games-container">
+            <div class="game-grid" id="game-list"></div>
+            
+            <!-- כפתור מטלות בית - רק למשתמשים -->
+            <button id="tasks-btn" class="tasks-button" onclick="goToTasks()" style="display: none;">
+                🏠 מטלות בית
+            </button>
+            
+            <button class="logout-btn" onclick="logout()">🔄 החלף משתמש</button>
+        </div>
+    </div>
+
+    <!-- ============= מסך שלישי: ממתין לשחקן שני ============= -->
+    <div id="screen-waiting" class="screen">
+        <div class="waiting-box">
+            <div class="waiting-icon" id="wait-game-icon">⏳</div>
+            <div class="waiting-title" id="wait-game-name">משחק</div>
+            <div class="waiting-subtitle" id="waiting-status">ממתין לשחקן שני...</div>
+            
+            <div class="slots">
+                <div id="slot-0" class="p-slot"></div>
+                <div id="slot-1" class="p-slot"></div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px; width: 100%;">
+                <button class="btn-main" id="waiting-btn" onclick="cancelWaiting()" style="flex: 1;">ביטול</button>
+                <button class="btn-main" id="ai-play-btn" onclick="playWithAI_XO()" style="flex: 1; background: linear-gradient(135deg, #4DB8FF 0%, #3DB8FF 100%); box-shadow: 0 5px 20px rgba(77, 184, 255, 0.3);">🤖 שחק לבד</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal הודעה -->
+<div id="info-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:linear-gradient(135deg, #1a2942 0%, #0F1320 100%); color:white; padding:40px 30px; border-radius:30px; text-align:center; width:100%; max-width:320px; border:2px solid rgba(255,255,255,0.1);">
+        <div id="info-modal-icon" style="font-size:3rem; margin-bottom:10px;">🚫</div>
+        <p id="info-modal-msg" style="font-size:1.1rem; font-weight:600; margin:0;"></p>
+        <button class="btn-main" id="info-modal-btn" style="margin-top:20px;" onclick="closeInfoModal()">חזרה</button>
+    </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
+    authDomain: "kidssapp-izhaki.firebaseapp.com",
+    databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "kidssapp-izhaki",
+    storageBucket: "kidssapp-izhaki.firebasestorage.app",
+    messagingSenderId: "663906163746",
+    appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ========== משתנים גלובליים ==========
+let myUser = null;
+let currentGame = null;
+let roomListener = null;
+let selectedGuestEmoji = null;
+
+// ========== רשימת משחקים ==========
+const games = [
+    { id: 'xo', name: 'איקס עיגול', url: 'xo.html', icon: '❌|⭕' },
+    { id: 'draw', name: 'צייר ונחש', url: 'Draw_game.html', icon: '🎨' },
+    { id: 'race', name: 'מרוץ מכוניות', url: 'Race.html', icon: '🏎️' },
+    { id: 'memory', name: 'משחק זיכרון', url: 'Memory.html', icon: '🧩' },
+    { id: 'bingo', name: 'בינגו', url: 'Bingo.html', icon: '🔢' },
+    { id: 'snakes', name: 'סולמות ונחשים', url: 'Snakes.html', icon: '🐍' },
+    { id: 'checkers', name: 'דמקה', url: 'Checkers.html', icon: '♟️' },
+    { id: 'connect4', name: '4 בשורה', url: 'Connect4.html', icon: '🔴' }
+];
+
+// ========== צפייה בחדרים ==========
+function watchAllRooms() {
+    onValue(ref(db, 'rooms_v3'), (snap) => {
+        const allRooms = snap.val() || {};
+        games.forEach(game => {
+            const statusDiv = document.getElementById(`status-${game.id}`);
+            if (!statusDiv) return;
+            
+            const players = Object.keys(allRooms[game.id] || {})
+                .sort((a, b) => ((allRooms[game.id][a] || {}).timestamp || 0) - ((allRooms[game.id][b] || {}).timestamp || 0))
+                .map(key => allRooms[game.id][key]);
+            
+            if (players.length === 0) {
+                statusDiv.innerHTML = '';
+            } else if (players.length === 1) {
+                statusDiv.innerHTML = `<span style="color: var(--gold);">${players[0].emoji} ${players[0].name} ממתין...</span>`;
+            } else if (players.length >= 2) {
+                // 2 שחקנים משחקים
+                const p1Color = players[0].color || '#FF5C7A';
+                const p2Color = players[1].color || '#4DB8FF';
+                statusDiv.innerHTML = `
+                    <span style="color: ${p1Color}; font-weight: 900;">${players[0].emoji} ${players[0].name}</span>
+                    <span style="color: var(--dim);">  VS  </span>
+                    <span style="color: ${p2Color}; font-weight: 900;">${players[1].emoji} ${players[1].name}</span>
+                    🎮
+                `;
+            }
+        });
+    });
+}
+
+// ========== התחלת האפליקציה ==========
+function startApp() {
+    showScreen('screen-games');
+    
+    const ge = document.getElementById('greeting-emoji');
+    const gn = document.getElementById('greeting-name');
+    
+    ge.textContent = myUser.emoji;
+    gn.textContent = myUser.name;
+    gn.style.color = myUser.color;
+
+    // הצג כפתור מטלות בית רק למשתמשים, לא לאורחים
+    const tasksBtn = document.getElementById('tasks-btn');
+    if (myUser.id && (myUser.id === 'emma' || myUser.id === 'rif' || myUser.id === 'dad' || myUser.id === 'mom')) {
+        tasksBtn.style.display = 'block';
+    } else {
+        tasksBtn.style.display = 'none';
+    }
+
+    const list = document.getElementById('game-list');
+    list.innerHTML = '';
+    games.forEach((game) => {
+        const card = document.createElement('div');
+        card.className = 'game-card';
+        card.onclick = () => joinGame(game.id);
+        card.innerHTML = `
+            <i>${game.icon}</i>
+            <span>${game.name}</span>
+            <div class="game-status" id="status-${game.id}"></div>
+        `;
+        list.appendChild(card);
+    });
+    
+    watchAllRooms();
+}
+
+// ========== בחירת משתמש ==========
+window.selectUser = (id, name, emoji, color) => {
+    const finalId = (id === 'emma' || id === 'rif' || id === 'dad' || id === 'mom') 
+        ? id 
+        : `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    myUser = { 
+        id: finalId, 
+        name: name, 
+        emoji: emoji, 
+        color: color,
+        rawId: id 
+    };
+    
+    sessionStorage.setItem('myUser', JSON.stringify(myUser));
+    startApp();
+};
+
+// ========== אורח - הראה טופס הזנה ==========
+window.showGuestSetup = () => {
+    document.getElementById('main-user-grid').style.display = 'none';
+    document.getElementById('guest-setup').style.display = 'block';
+    
+    const input = document.getElementById('guest-name-input');
+    input.focus();
+    input.oninput = () => input.classList.remove('error');
+
+    const picker = document.getElementById('emoji-picker');
+    picker.innerHTML = '';
+    const guestEmojis = ['🦊', '🐯', '🐸', '🐼', '🤖', '👾', '🦄', '🐲'];
+    
+    guestEmojis.forEach((emoji) => {
+        const div = document.createElement('div');
+        div.className = 'emoji-opt';
+        div.textContent = emoji;
+        div.onclick = () => {
+            Array.from(picker.children).forEach(c => c.classList.remove('selected'));
+            div.classList.add('selected');
+            selectedGuestEmoji = emoji;
+            picker.classList.remove('error');
+        };
+        picker.appendChild(div);
+    });
+    
+    selectedGuestEmoji = null;
+};
+
+// ========== אורח - בטל ==========
+window.cancelGuestSetup = () => {
+    document.getElementById('main-user-grid').style.display = 'grid';
+    document.getElementById('guest-setup').style.display = 'none';
+    document.getElementById('guest-name-input').classList.remove('error');
+    document.getElementById('emoji-picker').classList.remove('error');
+    selectedGuestEmoji = null;
+};
+
+// ========== אורח - אישור ==========
+window.confirmGuest = () => {
+    const input = document.getElementById('guest-name-input');
+    const picker = document.getElementById('emoji-picker');
+    const name = input.value.trim();
+    let hasError = false;
+
+    // הסר error classes בהתחלה
+    input.classList.remove('error');
+    picker.classList.remove('error');
+
+    if (!name) { 
+        // חכה לmsec אחד, אחרי זה הוסף בחזרה כדי שה-animation תרוץ שוב
+        setTimeout(() => {
+            input.classList.add('error'); 
+            input.placeholder = "חובה לכתוב שם!";
+        }, 10);
+        if (navigator.vibrate) navigator.vibrate(150);
+        hasError = true; 
+    }
+    
+    if (!selectedGuestEmoji) { 
+        // חכה לmsec אחד, אחרי זה הוסף בחזרה כדי שה-animation תרוץ שוב
+        setTimeout(() => {
+            picker.classList.add('error');
+        }, 10);
+        if (navigator.vibrate) navigator.vibrate(150);
+        hasError = true; 
+    }
+    
+    if (!hasError) {
+        window.selectUser('guest', name, selectedGuestEmoji, '#FFFFFF');
+    }
+};
+
+// ========== כניסה למשחק ==========
+window.joinGame = (gameId) => {
+    currentGame = games.find(g => g.id === gameId);
+    onValue(ref(db, `rooms_v3/${gameId}`), (snap) => {
+        const players = Object.values(snap.val() || {});
+        
+        // אם יש כבר 2 שחקנים - המשחק מלא
+        if (players.length >= 2) {
+            document.getElementById('info-modal').style.display = 'flex';
+            document.getElementById('info-modal-icon').textContent = '🚫';
+            document.getElementById('info-modal-msg').textContent = 'המשחק מלא! כבר משחקים כאן שני שחקנים';
+        } else {
+            startWaiting(gameId);
+        }
+    }, { onlyOnce: true });
+};
+
+window.closeInfoModal = () => {
+    document.getElementById('info-modal').style.display = 'none';
+};
+
+// ========== המתנה לשחקן שני ==========
+function startWaiting(gameId) {
+    document.getElementById('wait-game-icon').textContent = currentGame.icon;
+    document.getElementById('wait-game-name').textContent = currentGame.name;
+    
+    // שנה את onclick של כפתור "שחק לבד" לפי המשחק
+    const aiButton = document.getElementById('ai-play-btn');
+    if (aiButton) {
+        // משחקים שתומכים ב-AI
+        const aiGames = ['xo', 'race', 'bingo', 'draw', 'memory', 'snakes', 'checkers', 'connect4'];
+        
+        if (aiGames.includes(currentGame.id)) {
+            aiButton.style.display = 'block';
+            switch(currentGame.id) {
+                case 'xo':
+                    aiButton.onclick = playWithAI_XO;
+                    break;
+                case 'race':
+                    aiButton.onclick = playWithAI_Race;
+                    break;
+                case 'bingo':
+                    aiButton.onclick = playWithAI_Bingo;
+                    break;
+                case 'draw':
+                    aiButton.onclick = playWithAI_DrawGame;
+                    break;
+                case 'memory':
+                    aiButton.onclick = playWithAI_Memory;
+                    break;
+                case 'snakes':
+                    aiButton.onclick = playWithAI_Snakes;
+                    break;
+                case 'checkers':
+                    aiButton.onclick = playWithAI_Checkers;
+                    break;
+                case 'connect4':
+                    aiButton.onclick = playWithAI_Connect4;
+                    break;
+            }
+        } else {
+            // משחקים בלי AI - הסתר את הכפתור
+            aiButton.style.display = 'none';
+        }
+    }
+    
+    showScreen('screen-waiting');
+    
+    const myPlayerRef = ref(db, `rooms_v3/${gameId}/${myUser.id}`);
+    const myJoinedAt = Date.now();
+    set(myPlayerRef, { 
+        name: myUser.name, 
+        emoji: myUser.emoji, 
+        color: myUser.color,
+        joinedAt: myJoinedAt,
+        timestamp: myJoinedAt
+    });
+    
+    // שמור heartbeat כל 5 שניות - עדכן רק timestamp, לא joinedAt
+    const heartbeatInterval = setInterval(() => {
+        set(myPlayerRef, { 
+            name: myUser.name, 
+            emoji: myUser.emoji, 
+            color: myUser.color,
+            joinedAt: myJoinedAt,
+            timestamp: Date.now()
+        });
+    }, 5000);
+    
+    // בעת ביטול המתנה, הפסק את heartbeat
+    window.stopHeartbeat = () => {
+        clearInterval(heartbeatInterval);
+    };
+    
+    // משתנה לשמירת countdown interval כדי למנוע כפילויות
+    let countdownInterval = null;
+    let navigatingToGame = false;
+    
+    roomListener = onValue(ref(db, `rooms_v3/${gameId}`), (snap) => {
+        // אם כבר בדרך למשחק - התעלם מכל עדכון
+        if (navigatingToGame) return;
+        
+        const playersObj = snap.val() || {};
+        
+        // מיין לפי joinedAt (קבוע) - מי שנכנס ראשון נשאר ראשון
+        const players = Object.keys(playersObj)
+            .sort((a, b) => (playersObj[a].joinedAt || playersObj[a].timestamp || 0) - (playersObj[b].joinedAt || playersObj[b].timestamp || 0))
+            .map(key => playersObj[key]);
+        
+        for (let i = 0; i < 2; i++) {
+            const slot = document.getElementById(`slot-${i}`);
+            if (players[i]) {
+                slot.classList.add('active');
+                slot.classList.toggle('emma', players[i].color === '#FF5C7A');
+                slot.classList.toggle('rif', players[i].color === '#4DB8FF');
+                slot.classList.toggle('dad', players[i].color === '#2ecc71');
+                slot.classList.toggle('mom', players[i].color === '#9b59b6');
+                slot.classList.toggle('guest', players[i].color === '#FFFFFF');
+                slot.innerHTML = `
+                    <div style="font-size:1.6rem">${players[i].emoji}</div>
+                    <div style="font-size:0.6rem;font-weight:900;margin-top:3px">${players[i].name}</div>
+                `;
+            } else {
+                slot.classList.remove('active', 'emma', 'rif', 'dad', 'mom', 'guest');
+                slot.innerHTML = '';
+            }
+        }
+
+        if (players.length >= 2) {
+            // אם כבר רץ countdown - אל תתחיל חדש
+            if (countdownInterval) return;
+            
+            let countdown = 5;
+            const statusElement = document.getElementById('waiting-status');
+            const btnElement = document.getElementById('waiting-btn');
+            
+            // כפתור ביטול עדיין פעיל - עם אנימציה
+            btnElement.disabled = false;
+            btnElement.textContent = `ביטול (${countdown})`;
+            btnElement.classList.remove('starting');
+            btnElement.style.opacity = '1';
+            
+            // הצג countdown
+            statusElement.textContent = countdown;
+            statusElement.classList.add('countdown');
+            
+            countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdown > 1) {
+                    statusElement.textContent = countdown;
+                    btnElement.textContent = `ביטול (${countdown})`;
+                } else if (countdown === 1) {
+                    // שנייה אחרונה - הפוך ל"מתחילים!"
+                    statusElement.textContent = countdown;
+                    btnElement.disabled = true;
+                    btnElement.textContent = '🎮 מתחילים!';
+                    btnElement.classList.add('starting');
+                } else {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                    navigatingToGame = true;
+                    // נתק listener ועצור heartbeat - אבל אל תמחק מ-room!
+                    // דף המשחק ירשם מחדש ב-room בעצמו
+                    if (roomListener) roomListener();
+                    if (window.stopHeartbeat) window.stopHeartbeat();
+                    sessionStorage.setItem('myUser', JSON.stringify(myUser));
+                    window.location.href = `${currentGame.url}?player=${encodeURIComponent(myUser.name)}`;
+                }
+            }, 1000);
+        } else {
+            // שחקן עזב - בטל countdown אם רץ
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            
+            // עדכן את הסטטוס
+            document.getElementById('waiting-status').textContent = 'ממתין לשחקן שני...';
+            document.getElementById('waiting-status').classList.remove('countdown');
+            const resetBtn = document.getElementById('waiting-btn');
+            resetBtn.disabled = false;
+            resetBtn.textContent = 'ביטול';
+            resetBtn.style.opacity = '1';
+            resetBtn.classList.remove('starting');
+        }
+    });
+}
+
+// ========== ביטול המתנה ==========
+window.cancelWaiting = async () => {
+    if (roomListener) roomListener();
+    if (window.stopHeartbeat) window.stopHeartbeat();
+    
+    try {
+        // תמיד מחק את עצמך מהחדר
+        await remove(ref(db, `rooms_v3/${currentGame.id}/${myUser.id}`));
+    } catch (error) {
+        console.error('Error in cancelWaiting:', error);
+    }
+    
+    showScreen('screen-games');
+};
+
+window.playWithAI_XO = () => {
+    if (!myUser) return;
+    cleanupBeforeAI();
+    window.location.href = `xo.html?player=${encodeURIComponent(myUser.name)}&ai=true`;
+};
+
+// פונקציית עזר - ניקוי לפני מעבר ל-AI
+function cleanupBeforeAI() {
+    if (roomListener) roomListener();
+    if (window.stopHeartbeat) window.stopHeartbeat();
+    if (currentGame && myUser) {
+        remove(ref(db, `rooms_v3/${currentGame.id}/${myUser.id}`));
+    }
+    sessionStorage.setItem('myUser', JSON.stringify(myUser));
+    sessionStorage.setItem('myName', myUser.name);
+}
+
+// משחק מרוץ עם AI
+window.playWithAI_Race = () => {
+    if (!myUser) return;
+    cleanupBeforeAI();
+    window.location.href = `Race.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
+};
+
+// משחק Bingo עם AI
+window.playWithAI_Bingo = () => {
+    if (!myUser) return;
+    cleanupBeforeAI();
+    window.location.href = `Bingo.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
+};
+
+// משחק Draw Game עם AI
+window.playWithAI_DrawGame = () => {
+    if (!myUser) return;
+    cleanupBeforeAI();
+    window.location.href = `Draw_game.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
+};
+
+// משחק Memory עם AI
+window.playWithAI_Memory = () => {
+    if (!myUser) return;
+    cleanupBeforeAI();
+    window.location.href = `Memory.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
+};
+
+// משחק Snakes עם AI
+window.playWithAI_Snakes = () => {
+    if (!myUser) return;
+    cleanupBeforeAI();
+    window.location.href = `Snakes.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
+};
+
+// משחק דמקה עם AI
+window.playWithAI_Checkers = () => {
+    if (!myUser) return;
+    cleanupBeforeAI();
+    window.location.href = `Checkers.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
+};
+
+// משחק 4 בשורה עם AI
+window.playWithAI_Connect4 = () => {
+    if (!myUser) return;
+    cleanupBeforeAI();
+    window.location.href = `Connect4.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
+};
+
+// ========== עזיבה ==========
+window.logout = async () => {
+    // עצור heartbeat אם רץ
+    if (window.stopHeartbeat) window.stopHeartbeat();
+    if (roomListener) roomListener();
+    
+    // אם זה אורח - מחק את כל העקבות שלו
+    if (myUser && myUser.rawId === 'guest') {
+        try {
+            const guestId = myUser.id;
+            // מחק game state וrooms של האורח מכל סוגי המשחקים
+            const aiGameTypes = ['xo_ai', 'race_ai'];
+            for (const gameType of aiGameTypes) {
+                await remove(ref(db, `game/${gameType}/${guestId}`));
+                await remove(ref(db, `rooms_v3/${gameType}/${guestId}`));
+            }
+            // מחק מ-rooms רגילים
+            const regularGames = ['xo', 'race', 'draw', 'memory', 'bingo', 'snakes', 'checkers', 'connect4'];
+            for (const gameType of regularGames) {
+                await remove(ref(db, `rooms_v3/${gameType}/${guestId}`));
+            }
+            console.log(`🗑️ Deleted all guest traces: ${guestId}`);
+        } catch (error) {
+            console.error('Error deleting guest data:', error);
+        }
+    }
+    
+    sessionStorage.removeItem('myUser'); 
+    location.reload(); 
+};
+
+window.goToTasks = () => {
+    window.location.href = 'tasks.html';
+};
+
+// ========== תצוגת מסך ==========
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+}
+
+// ========== טעינה ==========
+window.addEventListener('load', () => {
+    const saved = sessionStorage.getItem('myUser');
+    if (saved) { 
+        try {
+            myUser = JSON.parse(saved);
+            startApp();
+        } catch (error) {
+            console.error('Error loading user:', error);
+            sessionStorage.removeItem('myUser');
+        }
+    }
+});
+
+// ============= ניקוי heartbeat - בדוק כל 5 שניות =============
+setInterval(async () => {
+    try {
+        const gamesSnap = await get(ref(db, 'rooms_v3'));
+        const allRooms = gamesSnap.val() || {};
+        const now = Date.now();
+        
+        for (const [gameId, players] of Object.entries(allRooms)) {
+            if (!players || typeof players !== 'object') continue;
+            
+            for (const [playerId, player] of Object.entries(players)) {
+                if (!player || typeof player !== 'object') continue;
+                
+                const timeSinceLastBeat = now - (player.timestamp || 0);
+                
+                // אם heartbeat מת יותר מ-20 שניות - הסר
+                if (timeSinceLastBeat > 20000) {
+                    await remove(ref(db, `rooms_v3/${gameId}/${playerId}`));
+                    
+                    // אם זה אורח ב-AI mode - מחק גם את המשחק שלו
+                    if (gameId.endsWith('_ai') && playerId.startsWith('guest_')) {
+                        await remove(ref(db, `game/${gameId}/${playerId}`));
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error in heartbeat cleanup:', error);
+    }
+}, 5000);
+</script>
+</body>
+</html>
