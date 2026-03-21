@@ -989,7 +989,7 @@ function gameLoop() {
                         // AI לא מקבל נקודות
                     } else if (it.type === 'boost') {
                         if (aiSpeed < 4) aiSpeed++;
-                        aiBoostCooldownUntil = Date.now() + 3000;
+                        aiBoostCooldownUntil = Date.now() + 2000;
                         spawnFloatText(fx, fy, '⚡', '#FFD700');
                     } else if (it.type === 'bomb') {
                         aiSpeed = 0;
@@ -1089,8 +1089,8 @@ function gameLoop() {
                 }
             }
             
-            // cooldown אחרי תזוזה — 15 פריימים (~250ms)
-            if (moved) aiMoveCooldown = 15;
+            // cooldown אחרי תזוזה — 10 פריימים (~170ms)
+            if (moved) aiMoveCooldown = 10;
         }
         if (aiMoveCooldown > 0) aiMoveCooldown--;
         
