@@ -248,6 +248,7 @@ let frozen = false, frozenUntil = 0;
 let items = [], playerCarEl = null, aiCarEl = null, animFrameId = null;
 let playerY = 0, aiY = 0, aiLane = 2, aiSpeed = 0, aiSegment = 1;
 let aiFrozen = false, aiFrozenUntil = 0;
+let aiMoveCooldown = 0;
 let tiltTimeout = null;
 
 const gameArea = document.getElementById('gameArea');
@@ -284,8 +285,9 @@ function stopHeartbeat() { if (heartbeatInterval) { clearInterval(heartbeatInter
 function stopOpponentCheck() { if (opponentCheckInterval) { clearInterval(opponentCheckInterval); opponentCheckInterval = null; } }
 
 function handleOpponentLeft(n, e) {
-    stopHeartbeat(); stopOpponentCheck(); stopGame();
+    stopHeartbeat(); stopOpponentCheck(); stopGame(); stopPositionSync();
     if (roomListenerUnsubscribe) { roomListenerUnsubscribe(); roomListenerUnsubscribe = null; }
+    if (itemsListenerUnsub) { itemsListenerUnsub(); itemsListenerUnsub = null; }
     remove(ref(db, `rooms_v3/race/${myName}`));
     showResult('😢', (n&&e) ? `${e} ${n} עזב/ה` : 'השחקן השני עזב/ה', 'המרוץ הסתיים', false);
 }
@@ -301,7 +303,7 @@ function startOpponentCheck() {
 }
 
 window.goHome = async function() {
-    stopHeartbeat(); stopOpponentCheck(); stopGame();
+    stopHeartbeat(); stopOpponentCheck(); stopGame(); stopPositionSync();
     if (itemsListenerUnsub) { itemsListenerUnsub(); itemsListenerUnsub = null; }
     if (roomListenerUnsubscribe) { roomListenerUnsubscribe(); roomListenerUnsubscribe = null; }
     if (mode==='ai') await remove(ref(db,`rooms_v3/race_ai/${myName}`));
@@ -324,11 +326,13 @@ function resetGameState() {
     items.forEach(it => it.el.remove()); items = [];
     playerSpeed = 0; lives = 3; points = 0; currentSegment = 1;
     gameFinished = false; frozen = false; frozenUntil = 0;
-    aiFrozen = false; aiFrozenUntil = 0;
+    aiFrozen = false; aiFrozenUntil = 0; aiMoveCooldown = 0;
     playerY = 0; aiY = 0; aiSpeed = 0; aiSegment = 1;
+    oppY = 0; oppSegment = 1; oppSpeed = 0;
     updateLives(-1); updateSpeed(false); updatePoints(false);
     setCarY(playerCarEl, 0);
     if (aiCarEl) { setCarY(aiCarEl, 0); aiCarEl.style.display = 'block'; }
+    if (oppCarEl) { setCarY(oppCarEl, 0); oppCarEl.style.display = 'block'; }
     positionRaceLine();
     if (multiGameId) mpSpawnSegmentItems(); else spawnSegmentItems();
     updateTrackDots();
@@ -351,6 +355,11 @@ function showResult(icon, title, sub, canRetry=true) {
 function spawnFloatText(x,y,text,color) { const el=document.createElement('div'); el.className='float-text'; el.textContent=text; el.style.left=`${x}px`; el.style.top=`${y}px`; el.style.color=color; gameArea.appendChild(el); setTimeout(()=>el.remove(),800); }
 
 // ========== מד מסלול ==========
+let oppSegment = 1, oppY = 0, oppLane = 1, oppSpeed = 0;
+let oppCarEl = null;
+let positionSyncInterval = null;
+let oppPositionUnsub = null;
+
 function updateTrackDots() {
     const totalProgress = ((currentSegment - 1) + Math.min(playerY / gameH, 1)) / TOTAL_SEGMENTS;
     dotPlayer.style.right = `${5 + totalProgress * 90}%`;
@@ -359,6 +368,10 @@ function updateTrackDots() {
         dotOpponent.style.display = 'block';
         const aiTotal = ((aiSegment - 1) + Math.min(aiY / gameH, 1)) / TOTAL_SEGMENTS;
         dotOpponent.style.right = `${5 + aiTotal * 90}%`;
+    } else if (multiGameId) {
+        dotOpponent.style.display = 'block';
+        const oppTotal = ((oppSegment - 1) + Math.min(oppY / gameH, 1)) / TOTAL_SEGMENTS;
+        dotOpponent.style.right = `${5 + oppTotal * 90}%`;
     }
 }
 
@@ -370,6 +383,76 @@ function setupTrackDots() {
         dotOpponent.style.background = '#FFA500';
         dotOpponent.style.borderColor = '#FFA500';
     }
+}
+
+// ========== Multiplayer position sync ==========
+function startPositionSync() {
+    if (!multiGameId) return;
+    const myPosRef = ref(db, `game/race/${multiGameId}/pos_${myName}`);
+    
+    // שלח מיקום כל 80ms
+    positionSyncInterval = setInterval(() => {
+        if (!gameRunning && !gameFinished) return;
+        set(myPosRef, {
+            y: Math.round(playerY),
+            seg: currentSegment,
+            lane: playerLane,
+            spd: playerSpeed,
+            t: Date.now()
+        });
+    }, 80);
+    
+    // האזן למיקום היריב
+    const oppName = Object.keys(window._ls).find(n => n !== myName);
+    if (!oppName) return;
+    
+    const oppPosRef = ref(db, `game/race/${multiGameId}/pos_${oppName}`);
+    
+    // Interpolation — לחלוקה חלקה
+    let targetOppY = 0, targetOppLane = oppLane;
+    
+    oppPositionUnsub = onValue(oppPosRef, snap => {
+        const d = snap.val();
+        if (!d) return;
+        
+        oppSegment = d.seg || 1;
+        targetOppY = d.y || 0;
+        targetOppLane = d.lane !== undefined ? d.lane : oppLane;
+        oppSpeed = d.spd || 0;
+        
+        // בדוק אם היריב סיים
+        if (oppSegment > TOTAL_SEGMENTS && !gameFinished) {
+            stopGame();
+            showResult('😢', 'היריב הגיע ראשון!', `${points} נקודות`, true);
+        }
+    });
+    
+    // Smooth interpolation loop — עדכן רכב יריב בכל פריים
+    function interpolateOpp() {
+        if (!oppCarEl) { requestAnimationFrame(interpolateOpp); return; }
+        
+        // החלקת Y
+        const diff = targetOppY - oppY;
+        oppY += diff * 0.15; // interpolation factor
+        
+        // עדכן נתיב
+        if (targetOppLane !== oppLane) {
+            oppLane = targetOppLane;
+            moveCarToLane(oppCarEl, oppLane, null);
+        }
+        
+        // עדכן מיקום ונראות
+        setCarY(oppCarEl, oppY);
+        oppCarEl.style.display = (oppSegment === currentSegment) ? 'block' : 'none';
+        
+        requestAnimationFrame(interpolateOpp);
+    }
+    requestAnimationFrame(interpolateOpp);
+}
+
+function stopPositionSync() {
+    if (positionSyncInterval) { clearInterval(positionSyncInterval); positionSyncInterval = null; }
+    if (oppPositionUnsub) { oppPositionUnsub(); oppPositionUnsub = null; }
 }
 
 // ========== קו מירוץ ==========
@@ -597,8 +680,8 @@ function gameLoop() {
             }
         }
         
-        // AI חכם — ראייה קדימה: התחמקות ממכשולים + איסוף ברקים (40% סיכוי)
-        if (!aiIsFrozen) {
+        // AI חכם — ראייה קדימה: התחמקות ממכשולים + איסוף ברקים (50% סיכוי)
+        if (!aiIsFrozen && aiMoveCooldown <= 0) {
             const aiScreenY = getCarScreenCenterY(aiY);
             const LOOK_AHEAD = 150;
             
@@ -619,6 +702,7 @@ function gameLoop() {
             }
             
             const current = scanLane(aiLane);
+            let moved = false;
             
             if (current.threat) {
                 // יש מכשול — התחמק
@@ -633,7 +717,6 @@ function gameLoop() {
                 const leftD = dangerScore(left.threat);
                 const rightD = dangerScore(right.threat);
                 
-                // העדפה: פנוי עם ברק > פנוי > אבן > פצצה > קיר
                 let bestLane = aiLane;
                 let bestScore = stayD * 10;
                 
@@ -646,10 +729,10 @@ function gameLoop() {
                     if (rs < bestScore) { bestScore = rs; bestLane = rightLane; }
                 }
                 
-                if (bestLane !== aiLane) { aiLane = bestLane; moveCarToLane(aiCarEl, aiLane, null); }
+                if (bestLane !== aiLane) { aiLane = bestLane; moveCarToLane(aiCarEl, aiLane, null); moved = true; }
                 
-            } else if (Math.random() < 0.8) {
-                // אין מכשול — חפש ברק עד 2 נתיבים הצידה (80% סיכוי)
+            } else if (Math.random() < 0.5) {
+                // אין מכשול — חפש ברק עד 2 נתיבים הצידה (50% סיכוי)
                 let bestBoostLane = -1;
                 let bestBoostDist = 999;
                 
@@ -665,17 +748,20 @@ function gameLoop() {
                 }
                 
                 if (bestBoostLane >= 0) {
-                    // זוז צעד אחד לכיוון הברק (לא קופץ 2 נתיבים בבת אחת)
                     const step = bestBoostLane > aiLane ? 1 : -1;
                     const nextLane = aiLane + step;
-                    // וודא שהנתיב הבא בטוח
                     if (nextLane >= 0 && nextLane < LANE_COUNT && !scanLane(nextLane).threat) {
                         aiLane = nextLane;
                         moveCarToLane(aiCarEl, aiLane, null);
+                        moved = true;
                     }
                 }
             }
+            
+            // cooldown אחרי תזוזה — 15 פריימים (~250ms)
+            if (moved) aiMoveCooldown = 15;
         }
+        if (aiMoveCooldown > 0) aiMoveCooldown--;
         
         // סיום קטע AI
         if (aiY >= gameH) {
@@ -752,13 +838,32 @@ async function init() {
             if (names.length===2&&!gameRunning&&!gameFinished) {
                 multiAmFirst = names[0]===myName;
                 playerLane = multiAmFirst ? 3 : 1;
+                oppLane = multiAmFirst ? 1 : 3;
                 multiGameId = `${names[0]}_${names[1]}`;
                 moveCarToLane(playerCarEl,playerLane,null);
-                // Setup opponent dot color
-                const oppId=names.find(n=>n!==myName);
-                if (oppId&&players[oppId]) { dotOpponent.style.display='block'; dotOpponent.style.background=players[oppId].color||'#4DB8FF'; dotOpponent.style.borderColor=players[oppId].color||'#4DB8FF'; }
+                
+                // יצור רכב יריב
+                const oppId = names.find(n=>n!==myName);
+                if (oppId && players[oppId]) {
+                    dotOpponent.style.display='block';
+                    dotOpponent.style.background=players[oppId].color||'#4DB8FF';
+                    dotOpponent.style.borderColor=players[oppId].color||'#4DB8FF';
+                    
+                    if (!oppCarEl) {
+                        oppCarEl = createCar(oppId, oppLane, 'oppCar');
+                    } else {
+                        moveCarToLane(oppCarEl, oppLane, null);
+                    }
+                }
+                
                 startOpponentCheck();
+                
+                // אלמנטים — שחקן 1 יוצר, שחקן 2 ממתין ואז מרנדר
                 mpSpawnSegmentItems();
+                
+                // התחל סנכרון מיקום
+                startPositionSync();
+                
                 startCountdown(startGame);
             }
         });
