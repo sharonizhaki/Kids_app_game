@@ -126,12 +126,12 @@
             border-radius: 20px;
             border: 2px solid rgba(245,200,66,0.4);
             z-index: 55;
-            animation: hintFade 4s ease forwards;
+            animation: hintFade 1.5s ease forwards;
             pointer-events: none;
             text-align: center;
             backdrop-filter: blur(4px);
         }
-        @keyframes hintFade { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.8); } 15% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 75% { opacity: 0.9; } 100% { opacity: 0; transform: translate(-50%,-50%) scale(0.95); } }
+        @keyframes hintFade { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.8); } 20% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 60% { opacity: 0.9; } 100% { opacity: 0; transform: translate(-50%,-50%) scale(0.95); } }
     </style>
 </head>
 <body>
@@ -232,10 +232,10 @@ const TOTAL_SEGMENTS = 3;
 const LANE_COUNT = 5;
 const SPEEDS = [1.2, 2.0, 3.0, 4.2, 5.5];
 const HIT_RADIUS = 28;
-const ITEMS_PER_SEGMENT = 12;
+const ITEMS_PER_SEGMENT = 18;
 const ITEM_TABLE = [
     { type: 'diamond', emoji: '💎', weight: 35 },
-    { type: 'boost',   emoji: '⚡', weight: 20 },
+    { type: 'boost',   emoji: '⚡', weight: 43 },
     { type: 'bomb',    emoji: '💣', weight: 20 },
     { type: 'rock',    emoji: '🪨', weight: 25 },
 ];
@@ -325,6 +325,7 @@ function resetGameState() {
     setCarY(playerCarEl, 0);
     if (aiCarEl) { setCarY(aiCarEl, 0); aiCarEl.style.display = 'block'; }
     positionRaceLine();
+    spawnSegmentItems();
     updateTrackDots();
 }
 
@@ -414,34 +415,39 @@ function setCarY(carEl, y) {
 function pickItemType() { let r=Math.random()*TOTAL_WEIGHT; for (const i of ITEM_TABLE) { r-=i.weight; if (r<=0) return i; } return ITEM_TABLE[ITEM_TABLE.length-1]; }
 function spawnSegmentItems() {
     items.forEach(it=>it.el.remove()); items=[];
-    // קטע 1: לא ב-25% תחתונים. קטע 3: לא אחרי קו סיום (10% עליון)
-    let minY = gameH * 0.12;
-    let maxY = gameH * 0.88;
-    if (currentSegment === 1) minY = gameH * 0.30; // 25% תחתון ריק + מרווח
-    if (currentSegment === TOTAL_SEGMENTS) maxY = gameH * 0.10 - 20; // לפני קו סיום
-
-    // אם maxY < minY (קטע 3 קצר), התאם
-    if (maxY < minY) { minY = gameH * 0.15; maxY = gameH * 0.08; }
-    // קטע 3 — אייטמים מתחת לקו סיום
-    if (currentSegment === TOTAL_SEGMENTS) { minY = gameH * 0.15; maxY = gameH * 0.85; }
-
-    for (let i=0; i<ITEMS_PER_SEGMENT; i++) {
+    
+    // אזור מותר לפי קטע
+    let minY, maxY;
+    if (currentSegment === 1) {
+        minY = gameH * 0.05;   // מלמעלה
+        maxY = gameH * 0.72;   // לא ב-25% תחתונים (קו זינוק + רכבים)
+    } else if (currentSegment === TOTAL_SEGMENTS) {
+        minY = gameH * 0.15;   // אחרי קו סיום (10% עליון)
+        maxY = gameH * 0.88;   // לא ב-10% תחתונים
+    } else {
+        minY = gameH * 0.05;   // מלמעלה
+        maxY = gameH * 0.88;   // לא ב-10% תחתונים
+    }
+    
+    const MIN_DIST = 50; // מרחק מינימלי בין אלמנטים באותו נתיב
+    const placed = []; // [{lane, y}]
+    
+    for (let i = 0; i < ITEMS_PER_SEGMENT; i++) {
         const def = pickItemType();
-        const lane = Math.floor(Math.random()*LANE_COUNT);
-        let yPos;
-        if (currentSegment === TOTAL_SEGMENTS) {
-            // קטע אחרון — רק מתחת לקו סיום (10% מלמעלה)
-            yPos = (gameH * 0.15) + ((gameH * 0.80) * (i / ITEMS_PER_SEGMENT)) + (Math.random()-0.5)*30;
-        } else if (currentSegment === 1) {
-            // קטע ראשון — לא ב-25% תחתון
-            yPos = (gameH * 0.05) + ((gameH * 0.68) * (i / ITEMS_PER_SEGMENT)) + (Math.random()-0.5)*30;
-        } else {
-            yPos = (gameH * 0.05) + ((gameH * 0.88) * (i / ITEMS_PER_SEGMENT)) + (Math.random()-0.5)*30;
-        }
+        let lane, yPos, attempts = 0;
+        
+        do {
+            lane = Math.floor(Math.random() * LANE_COUNT);
+            yPos = minY + Math.random() * (maxY - minY);
+            attempts++;
+        } while (attempts < 40 && placed.some(p => p.lane === lane && Math.abs(p.y - yPos) < MIN_DIST));
+        
+        placed.push({ lane, y: yPos });
+        
         const el = document.createElement('div');
-        el.className = `item${def.type==='diamond'?' diamond':''}`;
+        el.className = `item${def.type === 'diamond' ? ' diamond' : ''}`;
         el.textContent = def.emoji;
-        el.style.left = `${getLaneCenter(lane)-12}px`;
+        el.style.left = `${getLaneCenter(lane) - 12}px`;
         el.style.top = `${yPos}px`;
         gameArea.appendChild(el);
         items.push({ el, lane, type: def.type, yPos, collected: false });
@@ -533,14 +539,73 @@ function gameLoop() {
             }
         }
         
-        // AI זז בין נתיבים — חכם יותר: מנסה להתחמק ממכשולים
-        if (!aiIsFrozen && Math.random() < 0.02) {
-            const nl = aiLane + (Math.random() < 0.5 ? -1 : 1);
-            if (nl >= 0 && nl < LANE_COUNT) { aiLane = nl; moveCarToLane(aiCarEl, aiLane, null); }
+        // AI חכם — ראייה קדימה: התחמקות ממכשולים + איסוף ברקים (40% סיכוי)
+        if (!aiIsFrozen) {
+            const aiScreenY = getCarScreenCenterY(aiY);
+            const LOOK_AHEAD = 150;
+            
+            // סרוק נתיב — מחזיר {threat, hasBoost}
+            function scanLane(lane) {
+                let threat = null;
+                let hasBoost = false;
+                for (const it of items) {
+                    if (it.collected || it.lane !== lane) continue;
+                    const dy = aiScreenY - (it.yPos + 13);
+                    if (dy > 0 && dy < LOOK_AHEAD) {
+                        if (it.type === 'bomb') threat = 'bomb';
+                        else if (it.type === 'rock' && threat !== 'bomb') threat = 'rock';
+                        else if (it.type === 'boost') hasBoost = true;
+                    }
+                }
+                return { threat, hasBoost };
+            }
+            
+            const current = scanLane(aiLane);
+            
+            if (current.threat) {
+                // יש מכשול — התחמק
+                const leftLane = aiLane - 1;
+                const rightLane = aiLane + 1;
+                const left = leftLane >= 0 ? scanLane(leftLane) : { threat: 'wall', hasBoost: false };
+                const right = rightLane < LANE_COUNT ? scanLane(rightLane) : { threat: 'wall', hasBoost: false };
+                
+                function dangerScore(t) { if (!t) return 0; if (t==='rock') return 1; if (t==='bomb') return 2; return 3; }
+                
+                const stayD = dangerScore(current.threat);
+                const leftD = dangerScore(left.threat);
+                const rightD = dangerScore(right.threat);
+                
+                // העדפה: פנוי עם ברק > פנוי > אבן > פצצה > קיר
+                let bestLane = aiLane;
+                let bestScore = stayD * 10;
+                
+                if (leftLane >= 0) {
+                    let ls = leftD * 10 - (left.hasBoost ? 3 : 0);
+                    if (ls < bestScore) { bestScore = ls; bestLane = leftLane; }
+                }
+                if (rightLane < LANE_COUNT) {
+                    let rs = rightD * 10 - (right.hasBoost ? 3 : 0);
+                    if (rs < bestScore) { bestScore = rs; bestLane = rightLane; }
+                }
+                
+                if (bestLane !== aiLane) { aiLane = bestLane; moveCarToLane(aiCarEl, aiLane, null); }
+                
+            } else if (Math.random() < 0.4) {
+                // אין מכשול — בדוק אם יש ברק בנתיב צמוד (40% סיכוי לחפש)
+                const leftLane = aiLane - 1;
+                const rightLane = aiLane + 1;
+                const leftHasBoost = leftLane >= 0 && scanLane(leftLane).hasBoost && !scanLane(leftLane).threat;
+                const rightHasBoost = rightLane < LANE_COUNT && scanLane(rightLane).hasBoost && !scanLane(rightLane).threat;
+                
+                if (leftHasBoost && !rightHasBoost) { aiLane = leftLane; moveCarToLane(aiCarEl, aiLane, null); }
+                else if (rightHasBoost && !leftHasBoost) { aiLane = rightLane; moveCarToLane(aiCarEl, aiLane, null); }
+                else if (leftHasBoost && rightHasBoost) {
+                    // שניהם — בחר אקראי
+                    aiLane = Math.random() < 0.5 ? leftLane : rightLane;
+                    moveCarToLane(aiCarEl, aiLane, null);
+                }
+            }
         }
-        
-        // AI מעלה מהירות לאט אם לא קפוא
-        if (!aiIsFrozen && Math.random() < 0.003 && aiSpeed < 4) aiSpeed++;
         
         // סיום קטע AI
         if (aiY >= gameH) {
@@ -574,9 +639,9 @@ function startCountdown(cb) {
     },1000);
 }
 function startGame() {
-    gameRunning=true; positionRaceLine(); spawnSegmentItems(); updateSegmentUI(); updateTrackDots();
+    gameRunning=true; positionRaceLine(); updateSegmentUI(); updateTrackDots();
     const hint=document.createElement('div'); hint.className='swipe-hint'; hint.innerHTML='👆 החליקו ימינה ושמאלה<br>כדי להזיז את הרכב';
-    gameArea.appendChild(hint); setTimeout(()=>hint.remove(),3000);
+    gameArea.appendChild(hint); setTimeout(()=>hint.remove(),1500);
     gameLoop();
 }
 
