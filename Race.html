@@ -122,6 +122,26 @@
         .car.frozen { opacity: 0.5; filter: grayscale(50%) drop-shadow(0 0 10px rgba(100,150,255,0.8)); }
         @keyframes carFlash { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
 
+        /* להבות פליטה */
+        .exhaust {
+            position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 1px; justify-content: center;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: -1;
+        }
+        .exhaust.active { opacity: 1; }
+        .exhaust-flame {
+            width: 4px; height: 8px;
+            border-radius: 50% 50% 30% 30%;
+            animation: flicker 0.08s infinite alternate;
+        }
+        .exhaust.level-2 .exhaust-flame { height: 8px; width: 4px; }
+        .exhaust.level-3 .exhaust-flame { height: 13px; width: 5px; }
+        .exhaust.level-4 .exhaust-flame { height: 19px; width: 6px; }
+        @keyframes flicker {
+            0% { transform: scaleY(1) scaleX(1); opacity: 1; }
+            100% { transform: scaleY(1.35) scaleX(0.75); opacity: 0.7; }
+        }
+
         .item { position: absolute; font-size: 24px; z-index: 25; line-height: 1; text-align: center; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); pointer-events: none; }
         .item.diamond { animation: diamondFloat 1.5s ease-in-out infinite; }
         .item.heart-item { animation: heartPulse 1s ease-in-out infinite; }
@@ -389,6 +409,7 @@ function resetGameState() {
     setCarY(playerCarEl, 0);
     moveCarToLane(playerCarEl, playerLane, null);
     playerCarEl.classList.remove('frozen', 'flash', 'speed-3', 'speed-4', 'speed-5');
+    updateExhaust(playerCarEl, 0);
     playerCarEl.style.transform = '';
     tiltActive = false; wobbleFrame = 0;
     
@@ -515,7 +536,7 @@ async function mpSetStatus(status) {
             
             document.getElementById('resultIcon').textContent = seriesWinner ? '🏆' : '😔';
             document.getElementById('resultTitle').textContent = seriesWinner ? '🎉 ניצחת במרוץ!' : `${winnerEmoji} ${winnerName} ניצח/ה במרוץ!`;
-            document.getElementById('resultSub').textContent = `${myWins} - ${oppWins}`;
+            document.getElementById('resultSub').textContent = seriesWinner ? `${myWins} - ${oppWins} | ${points} נקודות` : `${myWins} - ${oppWins}`;
             waitingEl.style.display = 'none';
             
             // הצג כפתור "שחק שוב" — דורש הסכמה משני השחקנים
@@ -612,6 +633,7 @@ function updateCarSpeedClass() {
     if (playerSpeed >= 4) playerCarEl.classList.add('speed-5');
     else if (playerSpeed >= 3) playerCarEl.classList.add('speed-4');
     else if (playerSpeed >= 2) playerCarEl.classList.add('speed-3');
+    updateExhaust(playerCarEl, playerSpeed);
 }
 
 let wobbleFrame = 0;
@@ -660,14 +682,23 @@ function flashSegmentTransition(callback) {
 
 function animateScoreCount(finalScore) {
     const el = document.getElementById('resultSub');
+    const fullText = el.textContent;
+    // שמור prefix לפני המספר (למשל "3 - 0 | ")
+    const ptsIdx = fullText.indexOf('נקודות');
+    let prefix = '';
+    if (ptsIdx > 0) {
+        const beforePts = fullText.substring(0, ptsIdx).trim();
+        const lastSpace = beforePts.lastIndexOf(' ');
+        if (lastSpace > 0) prefix = beforePts.substring(0, lastSpace + 1);
+    }
     let current = pointsAtRoundStart;
     const diff = finalScore - current;
-    if (diff <= 0) { el.textContent = `${finalScore} נקודות`; return; }
+    if (diff <= 0) { el.textContent = `${prefix}${finalScore} נקודות`; return; }
     const step = Math.max(1, Math.ceil(diff / 30));
     const iv = setInterval(() => {
         current += step;
         if (current >= finalScore) { current = finalScore; clearInterval(iv); }
-        el.textContent = `${current} נקודות`;
+        el.textContent = `${prefix}${current} נקודות`;
     }, 30);
 }
 
@@ -895,11 +926,33 @@ function getCarScreenCenterY(y) {
 function createCar(userId, lane, id) {
     const car = document.createElement('div'); car.className = 'car'; car.id = id;
     car.innerHTML = carSVG(userId, id);
+    // להבות פליטה
+    const exh = document.createElement('div');
+    exh.className = 'exhaust';
+    exh.innerHTML = `<div class="exhaust-flame" style="background:linear-gradient(180deg,#FFD700,#FFA040,rgba(255,0,0,0.6));animation-delay:0s"></div><div class="exhaust-flame" style="background:linear-gradient(180deg,#FFA040,#FF4500,rgba(255,0,0,0.4));animation-delay:0.04s"></div><div class="exhaust-flame" style="background:linear-gradient(180deg,#FFD700,#FFA040,rgba(255,0,0,0.6));animation-delay:0.02s"></div>`;
+    car.appendChild(exh);
     car.style.left = `${getLaneCenter(lane)-CAR_HALF_W}px`;
     // הרכב צמוד מתחת לקו הזינוק
     const startLineY = gameH * START_LINE_BOTTOM_PCT;
     car.style.bottom = `${startLineY - CAR_HEIGHT}px`;
     gameArea.appendChild(car); return car;
+}
+
+function updateExhaust(carEl, speed) {
+    const exh = carEl.querySelector('.exhaust');
+    if (!exh) return;
+    if (speed <= 1) {
+        exh.classList.remove('active','level-2','level-3','level-4');
+    } else if (speed === 2) {
+        exh.classList.add('active','level-2');
+        exh.classList.remove('level-3','level-4');
+    } else if (speed === 3) {
+        exh.classList.add('active','level-3');
+        exh.classList.remove('level-2','level-4');
+    } else {
+        exh.classList.add('active','level-4');
+        exh.classList.remove('level-2','level-3');
+    }
 }
 let tiltActive = false;
 function moveCarToLane(carEl, lane, dir) {
