@@ -925,6 +925,7 @@ function gameLoop() {
         const it=items[i]; if (it.collected) continue;
         const dx=carCX-getLaneCenter(it.lane); const dy=carSY-(it.yPos+13);
         if (Math.sqrt(dx*dx+dy*dy)<HIT_RADIUS) {
+            if (it.type==='boost' && playerSpeed >= 4) continue; // מהירות מקסימלית — עובר מעל הברק
             it.collected=true;
             if (multiGameId) mpCollectItem(i);
             const fx=parseFloat(it.el.style.left)+12; const fy=it.yPos;
