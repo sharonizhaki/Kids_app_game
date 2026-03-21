@@ -275,6 +275,7 @@ const TOTAL_WEIGHT = ITEM_TABLE.reduce((s, i) => s + i.weight, 0);
 let playerLane = 0, playerSpeed = 0, lives = 3, points = 0, pointsAtRoundStart = 0;
 let currentSegment = 1, gameRunning = false, gameFinished = false;
 let frozen = false, frozenUntil = 0;
+let playerTransitioning = false;
 let items = [], playerCarEl = null, aiCarEl = null, animFrameId = null;
 let playerY = 0, aiY = 0, aiLane = 2, aiSpeed = 0, aiSegment = 1;
 let aiFrozen = false, aiFrozenUntil = 0;
@@ -367,10 +368,10 @@ function resetGameState() {
     // אפס מצב — נקודות נשמרות בין סיבובים
     playerSpeed = 0; lives = 3; currentSegment = 1;
     pointsAtRoundStart = points;
-    gameFinished = false; frozen = false; frozenUntil = 0;
+    gameFinished = false; frozen = false; frozenUntil = 0; playerTransitioning = false;
     aiFrozen = false; aiFrozenUntil = 0; aiMoveCooldown = 0; aiBoostCooldownUntil = 0; aiFinished = false;
     playerY = 0; aiY = 0; aiSpeed = 0; aiSegment = 1;
-    oppY = 0; oppSegment = 1; oppSpeed = 0;
+    oppY = 0; oppSegment = 1; oppSpeed = 0; oppFinishedFlag = false;
     
     // אפס UI
     updateLives(-1); updateSpeed(false); updatePoints(false);
@@ -642,6 +643,7 @@ function animateScoreCount(finalScore) {
 
 // ========== מד מסלול ==========
 let oppSegment = 1, oppY = 0, oppLane = 1, oppSpeed = 0;
+let oppFinishedFlag = false;
 let oppCarEl = null;
 let positionSyncInterval = null;
 let oppPositionUnsub = null;
@@ -713,11 +715,9 @@ function startPositionSync() {
         targetOppLane = d.lane !== undefined ? d.lane : oppLane;
         oppSpeed = d.spd || 0;
         
-        // בדוק אם היריב סיים — רק אם אני עדיין משחק
-        if (oppSegment > TOTAL_SEGMENTS && !gameFinished && gameRunning) {
-            // היריב הגיע ראשון, אני עדיין באמצע — סיים את המשחק שלי
-            stopGame();
-            showResult('😢', '😔 הפסדת', `${points} נקודות`, false);
+        // בדוק אם היריב סיים/התרסק — סמן אבל תן לשחקן לסיים
+        if (oppSegment > TOTAL_SEGMENTS && !oppFinishedFlag) {
+            oppFinishedFlag = true; // היריב סיים — השחקן ימשיך עד שיסיים
         }
     });
     
@@ -915,7 +915,7 @@ function gameLoop() {
     // אנימציית כביש
     updateRoadAnimation(speed);
 
-    if (!isFrozen) playerY += speed;
+    if (!isFrozen && !playerTransitioning) playerY += speed;
     setCarY(playerCarEl, playerY);
 
     // התנגשויות
@@ -938,29 +938,26 @@ function gameLoop() {
     }
 
     // סיום קטע — עם black flash
-    if (playerY>=gameH) {
+    if (playerY>=gameH && !playerTransitioning) {
         if (currentSegment + 1 > TOTAL_SEGMENTS) {
-            // סיום מרוץ — בדוק אם AI כבר סיים
             stopGame();
-            if (mode === 'ai' && aiFinished) {
+            if ((mode === 'ai' && aiFinished) || (multiGameId && oppFinishedFlag)) {
                 showResult('😔', 'הפסדת', `${points} נקודות`);
             } else {
                 showResult('🏆', `🏁 ${myEmoji} ${displayName} 🏆`, `${points} נקודות`);
             }
             return;
         }
-        // מעבר קטע עם הבזק
-        gameRunning = false; // עצור זמנית
+        // מעבר קטע עם הבזק — AI ממשיך לנוע
+        playerTransitioning = true;
         flashSegmentTransition(() => {
             playerY = 0; currentSegment++;
             positionRaceLine();
             if (multiGameId) mpSpawnSegmentItems(); else spawnSegmentItems();
             setCarY(playerCarEl, 0);
             updateSegmentUI();
-            gameRunning = true;
-            gameLoop(); // המשך
+            playerTransitioning = false;
         });
-        return; // יצא מהלופ — ימשיך אחרי ה-flash
     }
     updateSegmentUI();
 
@@ -983,6 +980,7 @@ function gameLoop() {
                 const dx = aiCX - getLaneCenter(it.lane);
                 const dy = aiSY - (it.yPos + 13);
                 if (Math.sqrt(dx*dx + dy*dy) < HIT_RADIUS) {
+                    if (it.type === 'boost' && aiSpeed >= 4) continue; // מהירות מקסימלית — דלג
                     it.collected = true;
                     const fx = parseFloat(it.el.style.left) + 12;
                     const fy = it.yPos;
@@ -1172,6 +1170,20 @@ async function init() {
                 playerLane = multiAmFirst ? 3 : 1;
                 oppLane = multiAmFirst ? 1 : 3;
                 multiGameId = `${names[0]}_${names[1]}`;
+                
+                // נקה נתונים ישנים מ-Firebase (reconnect / משחק קודם)
+                if (multiAmFirst) {
+                    for (let s = 1; s <= TOTAL_SEGMENTS; s++) {
+                        remove(ref(db, `game/race/${multiGameId}/items_${s}`));
+                    }
+                    remove(ref(db, `game/race/${multiGameId}/status_${names[0]}`));
+                    remove(ref(db, `game/race/${multiGameId}/status_${names[1]}`));
+                    remove(ref(db, `game/race/${multiGameId}/ready_${names[0]}`));
+                    remove(ref(db, `game/race/${multiGameId}/ready_${names[1]}`));
+                    remove(ref(db, `game/race/${multiGameId}/pos_${names[0]}`));
+                    remove(ref(db, `game/race/${multiGameId}/pos_${names[1]}`));
+                }
+                
                 moveCarToLane(playerCarEl,playerLane,null);
                 
                 // יצור רכב יריב — עם הצבע של היריב
