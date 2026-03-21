@@ -758,8 +758,8 @@ function gameLoop() {
                 
                 if (bestLane !== aiLane) { aiLane = bestLane; moveCarToLane(aiCarEl, aiLane, null); moved = true; }
                 
-            } else if (Math.random() < 0.3) {
-                // אין מכשול — חפש ברק עד 2 נתיבים הצידה (30% סיכוי)
+            } else if (Math.random() < 0.2) {
+                // אין מכשול — חפש ברק בנתיב צמוד (20% סיכוי)
                 let bestBoostLane = -1;
                 let bestBoostDist = 999;
                 
