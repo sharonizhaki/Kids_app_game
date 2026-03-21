@@ -264,10 +264,10 @@ const SPEEDS = [1.2, 2.0, 3.0, 4.2, 5.5];
 const HIT_RADIUS = 28;
 const ITEMS_PER_SEGMENT = 18;
 const ITEM_TABLE = [
-    { type: 'diamond', emoji: '💎', weight: 20 },
+    { type: 'diamond', emoji: '💎', weight: 25 },
     { type: 'boost',   emoji: '⚡', weight: 25 },
     { type: 'bomb',    emoji: '💣', weight: 10 },
-    { type: 'rock',    emoji: '🪨', weight: 15 },
+    { type: 'rock',    emoji: '🪨', weight: 10 },
 ];
 const TOTAL_WEIGHT = ITEM_TABLE.reduce((s, i) => s + i.weight, 0);
 
@@ -800,8 +800,8 @@ function pickItemType() { let r=Math.random()*TOTAL_WEIGHT; for (const i of ITEM
 function generateItemsData() {
     let minY, maxY;
     if (currentSegment === 1) { minY = gameH * 0.05; maxY = gameH * 0.72; }
-    else if (currentSegment === TOTAL_SEGMENTS) { minY = gameH * 0.15; maxY = gameH * 0.88; }
-    else { minY = gameH * 0.15; maxY = gameH * 0.88; }
+    else if (currentSegment === TOTAL_SEGMENTS) { minY = gameH * 0.15; maxY = gameH * 0.80; }
+    else { minY = gameH * 0.15; maxY = gameH * 0.80; }
     
     const MIN_DIST = 50;
     const placed = [];
@@ -916,8 +916,8 @@ function gameLoop() {
             const fx=parseFloat(it.el.style.left)+12; const fy=it.yPos;
             if (it.type==='diamond') { points+=10; updatePoints(true); spawnFloatText(fx,fy,'+10 💎','#58D9F5'); }
             else if (it.type==='boost') { if (playerSpeed<4) { playerSpeed++; updateSpeed(true); } spawnFloatText(fx,fy,'⚡ מהירות!','#FFD700'); }
-            else if (it.type==='bomb') { lives--; updateLives(lives); if (playerSpeed>0){playerSpeed=0;updateSpeed(false);} playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450); freezePlayer(2); shakeScreen(); spawnFloatText(fx,fy,'💥 פצצה!','#FF4444'); if (lives<=0){stopGame();showResult('💥','התרסקת!',`${points} נקודות`);return;} }
-            else if (it.type==='rock') { if (playerSpeed>0){playerSpeed--;updateSpeed(false);} playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450); freezePlayer(1); shakeScreen(); spawnFloatText(fx,fy,'🪨 אבן!','#AAA'); }
+            else if (it.type==='bomb') { lives--; updateLives(lives); if (playerSpeed>0){playerSpeed=0;updateSpeed(false);} playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450); freezePlayer(1); shakeScreen(); spawnFloatText(fx,fy,'💥 פצצה!','#FF4444'); if (lives<=0){stopGame();showResult('💥','התרסקת!',`${points} נקודות`);return;} }
+            else if (it.type==='rock') { if (playerSpeed>0){playerSpeed--;updateSpeed(false);} playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450); freezePlayer(0.5); shakeScreen(); spawnFloatText(fx,fy,'🪨 אבן!','#AAA'); }
             it.el.classList.add('collected'); setTimeout(()=>it.el.remove(),300);
         }
     }
@@ -982,13 +982,13 @@ function gameLoop() {
                         aiSpeed = 0;
                         aiCarEl.classList.add('flash');
                         setTimeout(() => aiCarEl.classList.remove('flash'), 450);
-                        freezeAI(2);
+                        freezeAI(1);
                         spawnFloatText(fx, fy, '💥', '#FF4444');
                     } else if (it.type === 'rock') {
                         if (aiSpeed > 0) aiSpeed--;
                         aiCarEl.classList.add('flash');
                         setTimeout(() => aiCarEl.classList.remove('flash'), 450);
-                        freezeAI(1);
+                        freezeAI(0.5);
                         spawnFloatText(fx, fy, '🪨', '#AAA');
                     }
                     
