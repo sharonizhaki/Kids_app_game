@@ -134,9 +134,10 @@
             border-radius: 50% 50% 30% 30%;
             animation: flicker 0.08s infinite alternate;
         }
-        .exhaust.level-2 .exhaust-flame { height: 8px; width: 4px; }
-        .exhaust.level-3 .exhaust-flame { height: 13px; width: 5px; }
-        .exhaust.level-4 .exhaust-flame { height: 19px; width: 6px; }
+        .exhaust.level-1 .exhaust-flame { height: 5px; width: 3px; }
+        .exhaust.level-2 .exhaust-flame { height: 9px; width: 4px; }
+        .exhaust.level-3 .exhaust-flame { height: 14px; width: 5px; }
+        .exhaust.level-4 .exhaust-flame { height: 20px; width: 6px; }
         @keyframes flicker {
             0% { transform: scaleY(1) scaleX(1); opacity: 1; }
             100% { transform: scaleY(1.35) scaleX(0.75); opacity: 0.7; }
@@ -941,17 +942,9 @@ function createCar(userId, lane, id) {
 function updateExhaust(carEl, speed) {
     const exh = carEl.querySelector('.exhaust');
     if (!exh) return;
-    if (speed <= 1) {
-        exh.classList.remove('active','level-2','level-3','level-4');
-    } else if (speed === 2) {
-        exh.classList.add('active','level-2');
-        exh.classList.remove('level-3','level-4');
-    } else if (speed === 3) {
-        exh.classList.add('active','level-3');
-        exh.classList.remove('level-2','level-4');
-    } else {
-        exh.classList.add('active','level-4');
-        exh.classList.remove('level-2','level-3');
+    exh.classList.remove('active','level-1','level-2','level-3','level-4');
+    if (speed >= 1) {
+        exh.classList.add('active', `level-${Math.min(speed, 4)}`);
     }
 }
 let tiltActive = false;
