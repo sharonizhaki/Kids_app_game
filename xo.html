@@ -287,15 +287,13 @@ const displayName = params.get('player') || "משתמש";
 const userDataStr = sessionStorage.getItem('myUser');
 const userData = userDataStr ? JSON.parse(userDataStr) : null;
 
-// אם אין userData - יוצר userData זמני עם צבע אדום (משתמש רגיל, לא אורח)
-const finalUserData = userData || {
-    id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    name: displayName,
-    color: '#FF5C7A',  // אדום = משתמש רגיל (לא לבן שזה אורח!)
-    emoji: '👤'
-};
+// אם אין userData - חזור למסך הראשי
+if (!userData) {
+    window.location.href = 'index.html';
+    throw new Error('No user data');
+}
 
-const myName = finalUserData.id;
+const myName = userData.id;
 const isAIMode = params.get('ai') === 'true';  // בדוק אם זה משחק מול AI
 
 // הסתר את כפתור איפוס אם זה לא AI mode
@@ -321,8 +319,8 @@ if (isAIMode) {
 
 let mySymbol = null; 
 let currentGameState = null;
-let myColor = finalUserData.color;
-let myEmoji = finalUserData.emoji;
+let myColor = userData.color;
+let myEmoji = userData.emoji;
 let lastPlayerCount = 0;
 let playerColors = { X: '#FF5C7A', O: '#4DB8FF' };  // צבעי X ו-O
 let playerNames = { X: '', O: '', X_emoji: '', O_emoji: '' };  // שמות ואימוג'יים

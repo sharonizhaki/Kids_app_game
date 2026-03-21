@@ -216,10 +216,16 @@ const displayName = params.get('player') || 'משתמש';
 const mode = params.get('mode') || 'multiplayer';
 const userDataStr = sessionStorage.getItem('myUser');
 const userData = userDataStr ? JSON.parse(userDataStr) : null;
-const finalUserData = userData || { id: `user_${Date.now()}`, name: displayName, color: '#FF5C7A', emoji: '👤' };
-const myName = finalUserData.id;
-const myColor = finalUserData.color;
-const myEmoji = finalUserData.emoji;
+
+// אם אין userData - חזור למסך הראשי
+if (!userData) {
+    window.location.href = 'index.html';
+    throw new Error('No user data');
+}
+
+const myName = userData.id;
+const myColor = userData.color;
+const myEmoji = userData.emoji;
 
 // ========== קבועים ==========
 const TOTAL_SEGMENTS = 3;
