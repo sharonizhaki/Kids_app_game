@@ -30,6 +30,12 @@
         .speed-level.just-gained { animation: speedGain 0.5s ease; }
         @keyframes speedGain { 0% { transform: scale(1); } 50% { transform: scale(1.6); } 100% { transform: scale(1.15); } }
         .lives-display { display: flex; gap: 3px; font-size: 15px; justify-content: center; }
+        .wins-display { display: flex; gap: 2px; font-size: 13px; justify-content: center; }
+        .trophy { transition: all 0.4s; }
+        .trophy.dim { filter: grayscale(100%) brightness(0.4); opacity: 0.4; }
+        .trophy.won { filter: none; opacity: 1; transform: scale(1.1); }
+        .trophy.just-won { animation: trophyPop 0.6s ease; }
+        @keyframes trophyPop { 0% { transform: scale(1); } 40% { transform: scale(1.5) rotate(-10deg); } 70% { transform: scale(1.2) rotate(5deg); } 100% { transform: scale(1.1); } }
         .heart { transition: all 0.3s; }
         .heart.lost { opacity: 0.15; filter: grayscale(100%); transform: scale(0.8); }
         .heart.just-lost { animation: heartLost 0.7s ease; }
@@ -92,14 +98,20 @@
         .race-line-sq.w { background: white; }
         .race-line-sq.b { background: black; }
 
-        /* רכב — עם הטיה */
+        /* רכב — הטיה + קפיצה + שובל */
         .car {
             position: absolute; width: 38px; height: 58px; z-index: 30;
-            transition: left 0.18s ease, bottom 0.05s linear, transform 0.18s ease;
+            transition: left 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), bottom 0.05s linear, transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.2s ease;
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
         }
-        .car.tilt-left { transform: rotate(-8deg); }
-        .car.tilt-right { transform: rotate(8deg); }
+        .car.tilt-left { 
+            transform: rotate(-15deg) translateX(-3px) translateY(-5px); 
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)) drop-shadow(6px 0 8px rgba(255,255,255,0.15));
+        }
+        .car.tilt-right { 
+            transform: rotate(15deg) translateX(3px) translateY(-5px); 
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)) drop-shadow(-6px 0 8px rgba(255,255,255,0.15));
+        }
         .car.flash { animation: carFlash 0.15s ease 3; }
         .car.frozen { opacity: 0.5; filter: grayscale(50%) drop-shadow(0 0 10px rgba(100,150,255,0.8)); }
         @keyframes carFlash { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
@@ -145,6 +157,7 @@
         <div class="result-icon" id="resultIcon">🏆</div>
         <div class="result-title" id="resultTitle"></div>
         <div class="result-sub" id="resultSub"></div>
+        <div class="result-waiting" id="resultWaiting" style="display:none; font-size:0.85rem; opacity:0.6; margin-bottom:14px;"></div>
         <div class="result-buttons">
             <button class="result-btn primary" id="btnPlayAgain" onclick="playAgain()">🔄 שחק שוב</button>
             <button class="result-btn secondary" onclick="goHome()">🏠 בית</button>
@@ -163,6 +176,12 @@
             <div class="stat-item">
                 <div class="stat-label">💎 נקודות</div>
                 <div class="stat-value" id="points">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">🏆 נצחונות</div>
+                <div class="wins-display" id="winsDisplay">
+                    <span class="trophy dim">🏆</span><span class="trophy dim">🏆</span><span class="trophy dim">🏆</span><span class="trophy dim">🏆</span><span class="trophy dim">🏆</span>
+                </div>
             </div>
             <div class="stat-item">
                 <div class="stat-label">⚡ מהירות</div>
@@ -288,6 +307,8 @@ function handleOpponentLeft(n, e) {
     stopHeartbeat(); stopOpponentCheck(); stopGame(); stopPositionSync();
     if (roomListenerUnsubscribe) { roomListenerUnsubscribe(); roomListenerUnsubscribe = null; }
     if (itemsListenerUnsub) { itemsListenerUnsub(); itemsListenerUnsub = null; }
+    if (mpStatusUnsub) { mpStatusUnsub(); mpStatusUnsub = null; }
+    if (mpReadyUnsub) { mpReadyUnsub(); mpReadyUnsub = null; }
     remove(ref(db, `rooms_v3/race/${myName}`));
     showResult('😢', (n&&e) ? `${e} ${n} עזב/ה` : 'השחקן השני עזב/ה', 'המרוץ הסתיים', false);
 }
@@ -305,6 +326,8 @@ function startOpponentCheck() {
 window.goHome = async function() {
     stopHeartbeat(); stopOpponentCheck(); stopGame(); stopPositionSync();
     if (itemsListenerUnsub) { itemsListenerUnsub(); itemsListenerUnsub = null; }
+    if (mpStatusUnsub) { mpStatusUnsub(); mpStatusUnsub = null; }
+    if (mpReadyUnsub) { mpReadyUnsub(); mpReadyUnsub = null; }
     if (roomListenerUnsubscribe) { roomListenerUnsubscribe(); roomListenerUnsubscribe = null; }
     if (mode==='ai') await remove(ref(db,`rooms_v3/race_ai/${myName}`));
     else {
@@ -369,6 +392,19 @@ function resetGameState() {
 function updateLives(idx) { document.querySelectorAll('#livesDisplay .heart').forEach((h,i) => { if (i>=lives) { if (i===idx) { h.classList.add('just-lost'); setTimeout(()=>h.classList.remove('just-lost'),500); } h.classList.add('lost'); } else h.classList.remove('lost','just-lost'); }); }
 function updateSpeed(gained) { document.querySelectorAll('#speedInd .speed-level').forEach((l,i) => { const was=l.classList.contains('active'); l.classList.toggle('active',i<=playerSpeed); if (gained&&i===playerSpeed&&!was) { l.classList.add('just-gained'); setTimeout(()=>l.classList.remove('just-gained'),500); } }); }
 function updatePoints(added) { const el=document.getElementById('points'); el.textContent=points; if (added) { el.classList.remove('pop'); void el.offsetHeight; el.classList.add('pop'); } }
+function updateWins() {
+    document.querySelectorAll('#winsDisplay .trophy').forEach((t, i) => {
+        const wasWon = t.classList.contains('won');
+        if (i < myWins) {
+            t.classList.remove('dim');
+            t.classList.add('won');
+            if (!wasWon) { t.classList.add('just-won'); setTimeout(() => t.classList.remove('just-won'), 600); }
+        } else {
+            t.classList.remove('won', 'just-won');
+            t.classList.add('dim');
+        }
+    });
+}
 function updateSegmentUI() { segLabel.textContent = `קטע ${currentSegment} / ${TOTAL_SEGMENTS}`; segFill.style.width = `${Math.min((playerY/gameH)*100,100)}%`; }
 
 function showResult(icon, title, sub, canRetry=true) {
@@ -376,8 +412,156 @@ function showResult(icon, title, sub, canRetry=true) {
     document.getElementById('resultIcon').textContent = icon;
     document.getElementById('resultTitle').textContent = title;
     document.getElementById('resultSub').textContent = sub;
-    document.getElementById('btnPlayAgain').style.display = canRetry ? 'block' : 'none';
+    document.getElementById('resultWaiting').style.display = 'none';
+    document.getElementById('resultWaiting').textContent = '';
+    document.getElementById('btnPlayAgain').style.display = 'none';
+    document.getElementById('btnPlayAgain').textContent = '🔄 שחק שוב';
+    document.getElementById('btnPlayAgain').disabled = false;
+    
+    if (multiGameId) {
+        const iWon = (icon === '🏆' || icon === '😢' && title.includes('היריב'));
+        // 😢 + היריב הגיע = אני הפסדתי. 🏆 = אני ניצחתי. 💥 = התרסקתי
+        const myStatus = icon === '💥' ? 'crashed' : (icon === '🏆' ? 'finished' : 'lost');
+        mpSetStatus(myStatus);
+    } else {
+        document.getElementById('btnPlayAgain').style.display = canRetry ? 'block' : 'none';
+    }
+    
     document.getElementById('resultModal').classList.add('show');
+}
+
+// ========== Multiplayer status + wins ==========
+let mpStatusUnsub = null;
+let mpReadyUnsub = null;
+let oppName_display = '';
+let oppEmoji_display = '';
+let myWins = 0;
+let oppWins = 0;
+const WINS_TO_SERIES = 5;
+
+async function mpSetStatus(status) {
+    if (!multiGameId) return;
+    const oppId = Object.keys(window._ls || {}).find(n => n !== myName);
+    if (!oppId) return;
+    
+    // עדכן נצחונות אם סיימתי (לא התרסקתי)
+    if (status === 'finished') {
+        myWins++;
+        await set(ref(db, `game/race/${multiGameId}/wins_${myName}`), myWins);
+        updateWins();
+    }
+    
+    await set(ref(db, `game/race/${multiGameId}/status_${myName}`), status);
+    
+    const waitingEl = document.getElementById('resultWaiting');
+    waitingEl.style.display = 'block';
+    waitingEl.textContent = `⏳ ממתין ל-${oppEmoji_display} ${oppName_display} לסיום המרוץ...`;
+    
+    if (mpStatusUnsub) mpStatusUnsub();
+    mpStatusUnsub = onValue(ref(db, `game/race/${multiGameId}/status_${oppId}`), async snap => {
+        const oppStatus = snap.val();
+        if (!oppStatus || oppStatus === 'playing') return;
+        
+        // היריב סיים/התרסק — עדכן נצחונות יריב
+        if (oppStatus === 'finished') {
+            const winsSnap = await get(ref(db, `game/race/${multiGameId}/wins_${oppId}`));
+            oppWins = winsSnap.val() || 0;
+        }
+        
+        // בדוק אם מישהו הגיע ל-5 נצחונות
+        if (myWins >= WINS_TO_SERIES || oppWins >= WINS_TO_SERIES) {
+            // סדרה הסתיימה!
+            if (mpStatusUnsub) { mpStatusUnsub(); mpStatusUnsub = null; }
+            
+            const seriesWinner = myWins >= WINS_TO_SERIES;
+            const winnerName = seriesWinner ? displayName : oppName_display;
+            const winnerEmoji = seriesWinner ? myEmoji : oppEmoji_display;
+            
+            document.getElementById('resultIcon').textContent = seriesWinner ? '🏆' : '😔';
+            document.getElementById('resultTitle').textContent = seriesWinner ? '🎉 ניצחת במרוץ!' : `${winnerEmoji} ${winnerName} ניצח/ה במרוץ!`;
+            document.getElementById('resultSub').textContent = `${myWins} - ${oppWins}`;
+            waitingEl.style.display = 'none';
+            
+            // הצג כפתור "שחק שוב" — דורש הסכמה משני השחקנים
+            const btn = document.getElementById('btnPlayAgain');
+            btn.style.display = 'block';
+            btn.textContent = '🔄 התחל מרוץ חדש';
+            btn.onclick = () => mpRequestPlayAgain(oppId);
+            
+            // האזן אם היריב כבר לחץ
+            mpListenReady(oppId);
+        } else {
+            // סדרה ממשיכה — reset אוטומטי
+            waitingEl.textContent = `${oppEmoji_display} ${oppName_display} סיים! (${myWins}-${oppWins}) מתחילים מחדש...`;
+            
+            setTimeout(() => {
+                if (mpStatusUnsub) { mpStatusUnsub(); mpStatusUnsub = null; }
+                remove(ref(db, `game/race/${multiGameId}/status_${myName}`));
+                remove(ref(db, `game/race/${multiGameId}/status_${oppId}`));
+                
+                document.getElementById('resultModal').classList.remove('show');
+                resetGameState();
+                startCountdown(startGame);
+            }, 3000);
+        }
+    });
+}
+
+function mpRequestPlayAgain(oppId) {
+    set(ref(db, `game/race/${multiGameId}/ready_${myName}`), true);
+    const btn = document.getElementById('btnPlayAgain');
+    btn.textContent = '⏳ ממתין למשחק חדש...';
+    btn.disabled = true;
+    
+    const waitingEl = document.getElementById('resultWaiting');
+    waitingEl.style.display = 'block';
+    waitingEl.textContent = `⏳ ממתין ל-${oppEmoji_display} ${oppName_display}...`;
+    
+    mpListenReady(oppId);
+}
+
+function mpListenReady(oppId) {
+    if (mpReadyUnsub) mpReadyUnsub();
+    
+    // האזן ל-ready של היריב
+    mpReadyUnsub = onValue(ref(db, `game/race/${multiGameId}/ready_${oppId}`), snap => {
+        const oppReady = snap.val();
+        
+        if (oppReady) {
+            const waitingEl = document.getElementById('resultWaiting');
+            waitingEl.textContent = `${oppEmoji_display} ${oppName_display} מוכן!`;
+            
+            // בדוק אם גם אני מוכן
+            get(ref(db, `game/race/${multiGameId}/ready_${myName}`)).then(mySnap => {
+                if (mySnap.val()) {
+                    // שניהם מוכנים — התחל סדרה חדשה
+                    if (mpReadyUnsub) { mpReadyUnsub(); mpReadyUnsub = null; }
+                    if (mpStatusUnsub) { mpStatusUnsub(); mpStatusUnsub = null; }
+                    
+                    // נקה הכל
+                    remove(ref(db, `game/race/${multiGameId}/ready_${myName}`));
+                    remove(ref(db, `game/race/${multiGameId}/ready_${oppId}`));
+                    remove(ref(db, `game/race/${multiGameId}/status_${myName}`));
+                    remove(ref(db, `game/race/${multiGameId}/status_${oppId}`));
+                    remove(ref(db, `game/race/${multiGameId}/wins_${myName}`));
+                    remove(ref(db, `game/race/${multiGameId}/wins_${oppId}`));
+                    
+                    myWins = 0; oppWins = 0;
+                    updateWins();
+                    
+                    document.getElementById('resultModal').classList.remove('show');
+                    resetGameState();
+                    startCountdown(startGame);
+                }
+            });
+        } else {
+            // היריב עוד לא מוכן — אם אני כבר לחצתי, תעדכן
+            const waitingEl = document.getElementById('resultWaiting');
+            if (document.getElementById('btnPlayAgain').disabled) {
+                waitingEl.textContent = `⏳ ממתין ל-${oppEmoji_display} ${oppName_display}...`;
+            }
+        }
+    });
 }
 function spawnFloatText(x,y,text,color) { const el=document.createElement('div'); el.className='float-text'; el.textContent=text; el.style.left=`${x}px`; el.style.top=`${y}px`; el.style.color=color; gameArea.appendChild(el); setTimeout(()=>el.remove(),800); }
 
@@ -447,10 +631,11 @@ function startPositionSync() {
         targetOppLane = d.lane !== undefined ? d.lane : oppLane;
         oppSpeed = d.spd || 0;
         
-        // בדוק אם היריב סיים
-        if (oppSegment > TOTAL_SEGMENTS && !gameFinished) {
+        // בדוק אם היריב סיים — רק אם אני עדיין משחק
+        if (oppSegment > TOTAL_SEGMENTS && !gameFinished && gameRunning) {
+            // היריב הגיע ראשון, אני עדיין באמצע — סיים את המשחק שלי
             stopGame();
-            showResult('😢', 'היריב הגיע ראשון!', `${points} נקודות`, true);
+            showResult('😢', '😔 הפסדת', `${points} נקודות`, false);
         }
     });
     
@@ -652,7 +837,7 @@ function gameLoop() {
     // סיום קטע
     if (playerY>=gameH) {
         playerY=0; currentSegment++;
-        if (currentSegment>TOTAL_SEGMENTS) { stopGame(); showResult('🏆','🏁 סיימת!',`${points} נקודות`); return; }
+        if (currentSegment>TOTAL_SEGMENTS) { stopGame(); showResult('🏆', `🏁 ${myEmoji} ${displayName} 🏆`, `${points} נקודות`); return; }
         positionRaceLine();
         if (multiGameId) mpSpawnSegmentItems(); else spawnSegmentItems();
         setCarY(playerCarEl,0);
@@ -795,7 +980,7 @@ function gameLoop() {
             aiY = 0; aiSegment++;
             if (aiSegment > TOTAL_SEGMENTS && !gameFinished) {
                 stopGame();
-                showResult('🤖', 'המחשב הגיע ראשון!', `${points} נקודות`);
+                showResult('😔', 'הפסדת', `${points} נקודות`);
                 return;
             }
         }
@@ -822,7 +1007,7 @@ function startCountdown(cb) {
     },1000);
 }
 function startGame() {
-    gameRunning=true; positionRaceLine(); updateSegmentUI(); updateTrackDots();
+    gameRunning=true; positionRaceLine(); updateSegmentUI(); updateTrackDots(); updateWins();
     const hint=document.createElement('div'); hint.className='swipe-hint'; hint.innerHTML='👆 החליקו ימינה ושמאלה<br>כדי להזיז את הרכב';
     gameArea.appendChild(hint); setTimeout(()=>hint.remove(),1500);
     gameLoop();
@@ -872,6 +1057,9 @@ async function init() {
                 // יצור רכב יריב
                 const oppId = names.find(n=>n!==myName);
                 if (oppId && players[oppId]) {
+                    oppName_display = players[oppId].name || oppId;
+                    oppEmoji_display = players[oppId].emoji || '🏎️';
+                    
                     dotOpponent.style.display='block';
                     dotOpponent.style.background=players[oppId].color||'#4DB8FF';
                     dotOpponent.style.borderColor=players[oppId].color||'#4DB8FF';
