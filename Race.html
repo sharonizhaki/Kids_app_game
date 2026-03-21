@@ -463,6 +463,7 @@ function showResult(icon, title, sub, canRetry=true) {
 // ========== Multiplayer status + wins ==========
 let mpStatusUnsub = null;
 let mpReadyUnsub = null;
+let resetPending = false;
 let oppName_display = '';
 let oppEmoji_display = '';
 let myWins = 0;
@@ -521,7 +522,9 @@ async function mpSetStatus(status) {
             // האזן אם היריב כבר לחץ
             mpListenReady(oppId);
         } else {
-            // סדרה ממשיכה — reset אוטומטי
+            // סדרה ממשיכה — reset אוטומטי (עם guard נגד כפילות)
+            if (resetPending) return;
+            resetPending = true;
             waitingEl.textContent = `${oppEmoji_display} ${oppName_display} סיים! (${myWins}-${oppWins}) מתחילים מחדש...`;
             
             setTimeout(() => {
@@ -529,6 +532,7 @@ async function mpSetStatus(status) {
                 remove(ref(db, `game/race/${multiGameId}/status_${myName}`));
                 remove(ref(db, `game/race/${multiGameId}/status_${oppId}`));
                 
+                resetPending = false;
                 document.getElementById('resultModal').classList.remove('show');
                 resetGameState();
                 startCountdown(startGame);
@@ -563,7 +567,8 @@ function mpListenReady(oppId) {
             
             // בדוק אם גם אני מוכן
             get(ref(db, `game/race/${multiGameId}/ready_${myName}`)).then(mySnap => {
-                if (mySnap.val()) {
+                if (mySnap.val() && !resetPending) {
+                    resetPending = true;
                     // שניהם מוכנים — התחל סדרה חדשה
                     if (mpReadyUnsub) { mpReadyUnsub(); mpReadyUnsub = null; }
                     if (mpStatusUnsub) { mpStatusUnsub(); mpStatusUnsub = null; }
@@ -581,6 +586,7 @@ function mpListenReady(oppId) {
                     updateWins();
                     
                     document.getElementById('resultModal').classList.remove('show');
+                    resetPending = false;
                     resetGameState();
                     startCountdown(startGame);
                 }
@@ -722,7 +728,9 @@ function startPositionSync() {
     });
     
     // Smooth interpolation loop — עדכן רכב יריב בכל פריים
+    let interpRunning = true;
     function interpolateOpp() {
+        if (!interpRunning) return;
         if (!oppCarEl) { requestAnimationFrame(interpolateOpp); return; }
         
         // החלקת Y
@@ -742,11 +750,15 @@ function startPositionSync() {
         requestAnimationFrame(interpolateOpp);
     }
     requestAnimationFrame(interpolateOpp);
+    
+    // שמור reference לעצירת interpolation
+    window._stopInterp = () => { interpRunning = false; };
 }
 
 function stopPositionSync() {
     if (positionSyncInterval) { clearInterval(positionSyncInterval); positionSyncInterval = null; }
     if (oppPositionUnsub) { oppPositionUnsub(); oppPositionUnsub = null; }
+    if (window._stopInterp) { window._stopInterp(); window._stopInterp = null; }
 }
 
 // ========== קו מירוץ ==========
