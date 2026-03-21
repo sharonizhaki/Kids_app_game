@@ -143,6 +143,39 @@
             100% { transform: scaleY(1.35) scaleX(0.75); opacity: 0.7; }
         }
 
+        /* עשן סטארט */
+        .tire-smoke {
+            position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%);
+            width: 50px; height: 20px; pointer-events: none; z-index: -1;
+        }
+
+        /* אורות לטווח רחוק */
+        .headlight-beam {
+            position: absolute; top: -90px; left: 50%; transform: translateX(-50%);
+            width: 30px; height: 90px; pointer-events: none; z-index: -1;
+            opacity: 0; transition: opacity 0.4s;
+            background: radial-gradient(ellipse 50% 100% at 50% 100%,
+                rgba(255,255,200,0.12) 0%,
+                rgba(255,255,200,0.06) 40%,
+                transparent 100%);
+            clip-path: polygon(30% 100%, 70% 100%, 100% 0%, 0% 0%);
+        }
+        .headlight-beam.level-1 { opacity: 0.3; height: 50px; top: -50px; width: 26px; }
+        .headlight-beam.level-2 { opacity: 0.5; height: 70px; top: -70px; width: 30px; }
+        .headlight-beam.level-3 { opacity: 0.7; height: 95px; top: -95px; width: 36px; }
+        .headlight-beam.level-4 { opacity: 1; height: 120px; top: -120px; width: 42px; }
+        .smoke-puff {
+            position: absolute; bottom: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(200,200,200,0.6), rgba(150,150,150,0.2), transparent);
+            animation: smokePuff 0.8s ease-out forwards;
+        }
+        @keyframes smokePuff {
+            0% { opacity: 0.7; transform: scale(0.3) translateY(0); }
+            50% { opacity: 0.5; }
+            100% { opacity: 0; transform: scale(2.5) translateY(8px); }
+        }
+
         .item { position: absolute; font-size: 24px; z-index: 25; line-height: 1; text-align: center; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); pointer-events: none; }
         .item.diamond { animation: diamondFloat 1.5s ease-in-out infinite; }
         .item.heart-item { animation: heartPulse 1s ease-in-out infinite; }
@@ -410,7 +443,7 @@ function resetGameState() {
     setCarY(playerCarEl, 0);
     moveCarToLane(playerCarEl, playerLane, null);
     playerCarEl.classList.remove('frozen', 'flash', 'speed-3', 'speed-4', 'speed-5');
-    updateExhaust(playerCarEl, 0);
+    updateExhaust(playerCarEl, 0); updateHeadlights(playerCarEl, 0);
     playerCarEl.style.transform = '';
     tiltActive = false; wobbleFrame = 0;
     
@@ -419,6 +452,7 @@ function resetGameState() {
         moveCarToLane(aiCarEl, aiLane, null);
         aiCarEl.style.display = 'block';
         aiCarEl.classList.remove('frozen', 'flash', 'tilt-left', 'tilt-right');
+        updateExhaust(aiCarEl, 0); updateHeadlights(aiCarEl, 0);
     }
     if (oppCarEl) {
         setCarY(oppCarEl, 0);
@@ -634,7 +668,7 @@ function updateCarSpeedClass() {
     if (playerSpeed >= 4) playerCarEl.classList.add('speed-5');
     else if (playerSpeed >= 3) playerCarEl.classList.add('speed-4');
     else if (playerSpeed >= 2) playerCarEl.classList.add('speed-3');
-    updateExhaust(playerCarEl, playerSpeed);
+    updateExhaust(playerCarEl, playerSpeed); updateHeadlights(playerCarEl, playerSpeed);
 }
 
 let wobbleFrame = 0;
@@ -767,12 +801,19 @@ function startPositionSync() {
     
     // Interpolation — לחלוקה חלקה
     let targetOppY = 0, targetOppLane = oppLane;
+    let lastOppSegment = 1;
     
     oppPositionUnsub = onValue(oppPosRef, snap => {
         const d = snap.val();
         if (!d) return;
         
-        oppSegment = d.seg || 1;
+        const newSeg = d.seg || 1;
+        // אם הקטע השתנה — snap מיידי למיקום החדש (בלי interpolation)
+        if (newSeg !== lastOppSegment) {
+            lastOppSegment = newSeg;
+            oppY = d.y || 0;
+        }
+        oppSegment = newSeg;
         targetOppY = d.y || 0;
         targetOppLane = d.lane !== undefined ? d.lane : oppLane;
         oppSpeed = d.spd || 0;
@@ -932,6 +973,10 @@ function createCar(userId, lane, id) {
     exh.className = 'exhaust';
     exh.innerHTML = `<div class="exhaust-flame" style="background:linear-gradient(180deg,#FFD700,#FFA040,rgba(255,0,0,0.6));animation-delay:0s"></div><div class="exhaust-flame" style="background:linear-gradient(180deg,#FFA040,#FF4500,rgba(255,0,0,0.4));animation-delay:0.04s"></div><div class="exhaust-flame" style="background:linear-gradient(180deg,#FFD700,#FFA040,rgba(255,0,0,0.6));animation-delay:0.02s"></div>`;
     car.appendChild(exh);
+    // אורות לטווח רחוק
+    const beam = document.createElement('div');
+    beam.className = 'headlight-beam';
+    car.appendChild(beam);
     car.style.left = `${getLaneCenter(lane)-CAR_HALF_W}px`;
     // הרכב צמוד מתחת לקו הזינוק
     const startLineY = gameH * START_LINE_BOTTOM_PCT;
@@ -945,6 +990,15 @@ function updateExhaust(carEl, speed) {
     exh.classList.remove('active','level-1','level-2','level-3','level-4');
     if (speed >= 1) {
         exh.classList.add('active', `level-${Math.min(speed, 4)}`);
+    }
+}
+
+function updateHeadlights(carEl, speed) {
+    const beam = carEl.querySelector('.headlight-beam');
+    if (!beam) return;
+    beam.classList.remove('level-1','level-2','level-3','level-4');
+    if (speed >= 1) {
+        beam.classList.add(`level-${Math.min(speed, 4)}`);
     }
 }
 let tiltActive = false;
@@ -1123,8 +1177,8 @@ function gameLoop() {
             if (it.type==='diamond') { points+=10; updatePoints(true); spawnFloatText(fx,fy,'+10 💎','#58D9F5'); }
             else if (it.type==='boost') { if (playerSpeed<4) { playerSpeed++; updateSpeed(true); updateCarSpeedClass(); } spawnFloatText(fx,fy,'⚡ מהירות!','#FFD700'); }
             else if (it.type==='heart') { lives++; updateLives(-1); spawnFloatText(fx,fy,'+❤️','#FF4444'); }
-            else if (it.type==='bomb') { lives--; updateLives(lives); if (playerSpeed>0){playerSpeed=0;updateSpeed(false);updateCarSpeedClass();} playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450); freezePlayer(1); shakeScreen(); if(navigator.vibrate)navigator.vibrate(100); spawnFloatText(fx,fy,'💥 פצצה!','#FF4444'); if (lives<=0){stopGame();showResult('💥','התרסקת!',`${points} נקודות`);return;} }
-            else if (it.type==='rock') { if (playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();} playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450); freezePlayer(0.5); shakeScreen(); if(navigator.vibrate)navigator.vibrate(50); spawnFloatText(fx,fy,'🪨 אבן!','#AAA'); }
+            else if (it.type==='bomb') { lives--; updateLives(lives); if (playerSpeed>0){playerSpeed=0;updateSpeed(false);updateCarSpeedClass();} playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450); shakeScreen(); if(navigator.vibrate)navigator.vibrate(100); spawnFloatText(fx,fy,'💥 פצצה!','#FF4444'); if (lives<=0){stopGame();showResult('💥','התרסקת!',`${points} נקודות`);return;} }
+            else if (it.type==='rock') { if (playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();} playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450); shakeScreen(); if(navigator.vibrate)navigator.vibrate(50); spawnFloatText(fx,fy,'🪨 אבן!','#AAA'); }
             it.el.classList.add('collected'); setTimeout(()=>it.el.remove(),300);
         }
     }
@@ -1184,18 +1238,19 @@ function gameLoop() {
                     } else if (it.type === 'boost') {
                         if (aiSpeed < 4) aiSpeed++;
                         aiBoostCooldownUntil = Date.now() + 2000;
+                        updateExhaust(aiCarEl, aiSpeed); updateHeadlights(aiCarEl, aiSpeed);
                         spawnFloatText(fx, fy, '⚡', '#FFD700');
                     } else if (it.type === 'bomb') {
                         aiSpeed = 0;
+                        updateExhaust(aiCarEl, aiSpeed); updateHeadlights(aiCarEl, aiSpeed);
                         aiCarEl.classList.add('flash');
                         setTimeout(() => aiCarEl.classList.remove('flash'), 450);
-                        freezeAI(1);
                         spawnFloatText(fx, fy, '💥', '#FF4444');
                     } else if (it.type === 'rock') {
                         if (aiSpeed > 0) aiSpeed--;
+                        updateExhaust(aiCarEl, aiSpeed); updateHeadlights(aiCarEl, aiSpeed);
                         aiCarEl.classList.add('flash');
                         setTimeout(() => aiCarEl.classList.remove('flash'), 450);
-                        freezeAI(0.5);
                         spawnFloatText(fx, fy, '🪨', '#AAA');
                     }
                     
@@ -1320,9 +1375,33 @@ function startCountdown(cb) {
 }
 function startGame() {
     gameRunning=true; positionRaceLine(); updateSegmentUI(); updateTrackDots(); updateWins();
+    // עשן סטארט
+    spawnTireSmoke(playerCarEl);
+    if (aiCarEl) spawnTireSmoke(aiCarEl);
+    if (oppCarEl) spawnTireSmoke(oppCarEl);
     const hint=document.createElement('div'); hint.className='swipe-hint'; hint.innerHTML='👆 החליקו ימינה ושמאלה<br>כדי להזיז את הרכב';
     gameArea.appendChild(hint); setTimeout(()=>hint.remove(),1500);
     gameLoop();
+}
+
+function spawnTireSmoke(carEl) {
+    if (!carEl) return;
+    const smoke = document.createElement('div');
+    smoke.className = 'tire-smoke';
+    // יצירת 6 עיגולי עשן בפיזור
+    for (let i = 0; i < 6; i++) {
+        const puff = document.createElement('div');
+        puff.className = 'smoke-puff';
+        const size = 10 + Math.random() * 14;
+        puff.style.width = `${size}px`;
+        puff.style.height = `${size}px`;
+        puff.style.left = `${5 + Math.random() * 35}px`;
+        puff.style.animationDelay = `${i * 0.08}s`;
+        puff.style.animationDuration = `${0.6 + Math.random() * 0.4}s`;
+        smoke.appendChild(puff);
+    }
+    carEl.appendChild(smoke);
+    setTimeout(() => smoke.remove(), 1200);
 }
 
 // ========== Swipe ==========
