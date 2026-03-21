@@ -108,29 +108,35 @@
         .race-line-sq.w { background: white; }
         .race-line-sq.b { background: black; }
 
-        /* רכב — הטיה + קפיצה + שובל */
+        /* רכב — הטיה + קפיצה + שובל + נדנוד */
         .car {
             position: absolute; width: 38px; height: 58px; z-index: 30;
-            transition: left 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), bottom 0.05s linear, transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.2s ease;
+            transition: left 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), bottom 0.05s linear, filter 0.2s ease;
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
         }
-        .car.tilt-left { 
-            transform: rotate(-15deg) translateX(-3px) translateY(-5px); 
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)) drop-shadow(6px 0 8px rgba(255,255,255,0.15));
-        }
-        .car.tilt-right { 
-            transform: rotate(15deg) translateX(3px) translateY(-5px); 
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5)) drop-shadow(-6px 0 8px rgba(255,255,255,0.15));
-        }
+        /* להבות + צל דינמי במהירות גבוהה */
+        .car.speed-3 { filter: drop-shadow(0 6px 10px rgba(0,0,0,0.5)); }
+        .car.speed-4 { filter: drop-shadow(0 8px 14px rgba(0,0,0,0.4)) drop-shadow(0 8px 12px rgba(255,160,0,0.4)); }
+        .car.speed-5 { filter: drop-shadow(0 12px 20px rgba(0,0,0,0.3)) drop-shadow(0 10px 16px rgba(255,80,0,0.5)) drop-shadow(0 14px 20px rgba(255,0,0,0.3)); }
         .car.flash { animation: carFlash 0.15s ease 3; }
         .car.frozen { opacity: 0.5; filter: grayscale(50%) drop-shadow(0 0 10px rgba(100,150,255,0.8)); }
         @keyframes carFlash { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
 
         .item { position: absolute; font-size: 24px; z-index: 25; line-height: 1; text-align: center; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); pointer-events: none; }
         .item.diamond { animation: diamondFloat 1.5s ease-in-out infinite; }
+        .item.heart-item { animation: heartPulse 1s ease-in-out infinite; }
         @keyframes diamondFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes heartPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
         .item.collected { animation: collectPop 0.3s ease forwards; }
         @keyframes collectPop { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
+
+        /* קווי מהירות */
+        .speed-streak {
+            position: absolute; width: 2px; z-index: 3; pointer-events: none;
+            background: linear-gradient(180deg, rgba(255,255,255,0.6), transparent);
+            animation: streakMove 0.3s linear forwards;
+        }
+        @keyframes streakMove { 0% { opacity: 0.7; top: -20px; } 100% { opacity: 0; top: 100%; } }
 
         .segment-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.15); z-index: 45; }
         .segment-fill { height: 100%; background: linear-gradient(90deg, #4DB8FF, #F5C842); width: 0%; transition: width 0.3s; }
@@ -268,11 +274,14 @@ const ITEM_TABLE = [
     { type: 'boost',   emoji: '⚡', weight: 25 },
     { type: 'bomb',    emoji: '💣', weight: 10 },
     { type: 'rock',    emoji: '🪨', weight: 10 },
+    { type: 'heart',   emoji: '❤️‍🔥', weight: 4 },
 ];
 const TOTAL_WEIGHT = ITEM_TABLE.reduce((s, i) => s + i.weight, 0);
+const MAX_HEARTS_TOTAL = 2;
 
 // ========== מצב ==========
 let playerLane = 0, playerSpeed = 0, lives = 3, points = 0, pointsAtRoundStart = 0;
+let heartsSpawnedTotal = 0;
 let currentSegment = 1, gameRunning = false, gameFinished = false;
 let frozen = false, frozenUntil = 0;
 let playerTransitioning = false;
@@ -368,6 +377,7 @@ function resetGameState() {
     // אפס מצב — נקודות נשמרות בין סיבובים
     playerSpeed = 0; lives = 3; currentSegment = 1;
     pointsAtRoundStart = points;
+    heartsSpawnedTotal = 0;
     gameFinished = false; frozen = false; frozenUntil = 0; playerTransitioning = false;
     aiFrozen = false; aiFrozenUntil = 0; aiMoveCooldown = 0; aiBoostCooldownUntil = 0; aiFinished = false;
     playerY = 0; aiY = 0; aiSpeed = 0; aiSegment = 1;
@@ -385,7 +395,9 @@ function resetGameState() {
     
     setCarY(playerCarEl, 0);
     moveCarToLane(playerCarEl, playerLane, null);
-    playerCarEl.classList.remove('frozen', 'flash', 'tilt-left', 'tilt-right');
+    playerCarEl.classList.remove('frozen', 'flash', 'speed-3', 'speed-4', 'speed-5');
+    playerCarEl.style.transform = '';
+    tiltActive = false; wobbleFrame = 0; streakCounter = 0;
     
     if (aiCarEl) {
         setCarY(aiCarEl, 0);
@@ -602,6 +614,40 @@ function mpListenReady(oppId) {
 }
 function spawnFloatText(x,y,text,color) { const el=document.createElement('div'); el.className='float-text'; el.textContent=text; el.style.left=`${x}px`; el.style.top=`${y}px`; el.style.color=color; gameArea.appendChild(el); setTimeout(()=>el.remove(),800); }
 
+function updateCarSpeedClass() {
+    playerCarEl.classList.remove('speed-3','speed-4','speed-5');
+    if (playerSpeed >= 4) playerCarEl.classList.add('speed-5');
+    else if (playerSpeed >= 3) playerCarEl.classList.add('speed-4');
+    else if (playerSpeed >= 2) playerCarEl.classList.add('speed-3');
+}
+
+let wobbleFrame = 0;
+function applyWobble(carEl, speed) {
+    if (speed <= 0) { carEl.style.transform = ''; return; }
+    wobbleFrame++;
+    // נדנוד: ככל שמהר יותר → אמפליטודה + תדירות גבוהים יותר
+    const amplitude = 0.3 + speed * 0.2; // 0.5px - 1.3px
+    const frequency = 0.08 + speed * 0.02;
+    const offsetX = Math.sin(wobbleFrame * frequency) * amplitude;
+    const offsetR = Math.sin(wobbleFrame * frequency * 0.7) * (0.3 + speed * 0.15); // סיבוב קל
+    carEl.style.transform = `translateX(${offsetX}px) rotate(${offsetR}deg)`;
+}
+
+let streakCounter = 0;
+function spawnSpeedStreaks() {
+    streakCounter++;
+    if (streakCounter % 3 !== 0) return; // כל 3 פריימים
+    if (playerSpeed < 3) return; // רק מהירות 4+
+    
+    const streak = document.createElement('div');
+    streak.className = 'speed-streak';
+    const x = CURB_W + Math.random() * (gameW - CURB_W * 2);
+    streak.style.left = `${x}px`;
+    streak.style.height = `${20 + playerSpeed * 10}px`;
+    gameArea.appendChild(streak);
+    setTimeout(() => streak.remove(), 300);
+}
+
 // ========== אנימציות כביש ==========
 let roadOffset = 0;
 const curbLeft = document.querySelector('.curb-left');
@@ -803,13 +849,17 @@ function createCar(userId, lane, id) {
     car.style.bottom = `${startLineY - CAR_HEIGHT}px`;
     gameArea.appendChild(car); return car;
 }
+let tiltActive = false;
 function moveCarToLane(carEl, lane, dir) {
     carEl.style.left = `${getLaneCenter(lane)-19}px`;
-    if (dir) {
-        carEl.classList.remove('tilt-left','tilt-right');
-        carEl.classList.add(dir < 0 ? 'tilt-left' : 'tilt-right');
+    if (dir && carEl === playerCarEl) {
+        tiltActive = true;
+        const tiltDeg = dir < 0 ? -15 : 15;
+        const tiltX = dir * 3;
+        carEl.style.transform = `rotate(${tiltDeg}deg) translateX(${tiltX}px) translateY(-5px)`;
+        carEl.style.transition = 'left 0.2s cubic-bezier(0.25,0.46,0.45,0.94), bottom 0.05s linear, transform 0.2s ease, filter 0.2s ease';
         if (tiltTimeout) clearTimeout(tiltTimeout);
-        tiltTimeout = setTimeout(() => carEl.classList.remove('tilt-left','tilt-right'), 200);
+        tiltTimeout = setTimeout(() => { tiltActive = false; }, 200);
     }
 }
 function setCarY(carEl, y) {
@@ -834,7 +884,12 @@ function generateItemsData() {
     const data = [];
     
     for (let i = 0; i < ITEMS_PER_SEGMENT; i++) {
-        const def = pickItemType();
+        let def = pickItemType();
+        // הגבל לבבות ל-2 סה"כ למרוץ
+        if (def.type === 'heart' && heartsSpawnedTotal >= MAX_HEARTS_TOTAL) {
+            def = ITEM_TABLE[0]; // החלף ביהלום
+        }
+        if (def.type === 'heart') heartsSpawnedTotal++;
         let lane, yPos, attempts = 0;
         do {
             lane = Math.floor(Math.random() * LANE_COUNT);
@@ -854,7 +909,10 @@ function renderItems(data) {
     for (const d of data) {
         if (d.collected) continue;
         const el = document.createElement('div');
-        el.className = `item${d.type === 'diamond' ? ' diamond' : ''}`;
+        let cls = 'item';
+        if (d.type === 'diamond') cls += ' diamond';
+        else if (d.type === 'heart') cls += ' heart-item';
+        el.className = cls;
         el.textContent = d.emoji;
         el.style.left = `${getLaneCenter(d.lane) - 12}px`;
         el.style.top = `${d.yPos}px`;
@@ -924,11 +982,15 @@ function gameLoop() {
     const isFrozen = frozen && Date.now() < frozenUntil;
     const speed = isFrozen ? 0 : SPEEDS[playerSpeed];
 
-    // אנימציית כביש
+    // אנימציית כביש + קווי מהירות
     updateRoadAnimation(speed);
+    spawnSpeedStreaks();
 
     if (!isFrozen && !playerTransitioning) playerY += speed;
     setCarY(playerCarEl, playerY);
+    
+    // נדנוד רכב (רק אם לא בהטיה)
+    if (!tiltActive && !isFrozen) applyWobble(playerCarEl, speed);
 
     // התנגשויות
     const carCX = getLaneCenter(playerLane);
@@ -937,14 +999,16 @@ function gameLoop() {
         const it=items[i]; if (it.collected) continue;
         const dx=carCX-getLaneCenter(it.lane); const dy=carSY-(it.yPos+13);
         if (Math.sqrt(dx*dx+dy*dy)<HIT_RADIUS) {
-            if (it.type==='boost' && playerSpeed >= 4) continue; // מהירות מקסימלית — עובר מעל הברק
+            if (it.type==='boost' && playerSpeed >= 4) continue;
+            if (it.type==='heart' && lives >= 3) continue; // כבר מלא חיים
             it.collected=true;
             if (multiGameId) mpCollectItem(i);
             const fx=parseFloat(it.el.style.left)+12; const fy=it.yPos;
             if (it.type==='diamond') { points+=10; updatePoints(true); spawnFloatText(fx,fy,'+10 💎','#58D9F5'); }
-            else if (it.type==='boost') { if (playerSpeed<4) { playerSpeed++; updateSpeed(true); } spawnFloatText(fx,fy,'⚡ מהירות!','#FFD700'); }
-            else if (it.type==='bomb') { lives--; updateLives(lives); if (playerSpeed>0){playerSpeed=0;updateSpeed(false);} playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450); freezePlayer(1); shakeScreen(); spawnFloatText(fx,fy,'💥 פצצה!','#FF4444'); if (lives<=0){stopGame();showResult('💥','התרסקת!',`${points} נקודות`);return;} }
-            else if (it.type==='rock') { if (playerSpeed>0){playerSpeed--;updateSpeed(false);} playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450); freezePlayer(0.5); shakeScreen(); spawnFloatText(fx,fy,'🪨 אבן!','#AAA'); }
+            else if (it.type==='boost') { if (playerSpeed<4) { playerSpeed++; updateSpeed(true); updateCarSpeedClass(); } spawnFloatText(fx,fy,'⚡ מהירות!','#FFD700'); }
+            else if (it.type==='heart') { lives++; updateLives(-1); spawnFloatText(fx,fy,'+❤️','#FF4444'); }
+            else if (it.type==='bomb') { lives--; updateLives(lives); if (playerSpeed>0){playerSpeed=0;updateSpeed(false);updateCarSpeedClass();} playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450); freezePlayer(1); shakeScreen(); if(navigator.vibrate)navigator.vibrate(100); spawnFloatText(fx,fy,'💥 פצצה!','#FF4444'); if (lives<=0){stopGame();showResult('💥','התרסקת!',`${points} נקודות`);return;} }
+            else if (it.type==='rock') { if (playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();} playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450); freezePlayer(0.5); shakeScreen(); if(navigator.vibrate)navigator.vibrate(50); spawnFloatText(fx,fy,'🪨 אבן!','#AAA'); }
             it.el.classList.add('collected'); setTimeout(()=>it.el.remove(),300);
         }
     }
@@ -999,6 +1063,8 @@ function gameLoop() {
                     
                     if (it.type === 'diamond') {
                         // AI לא מקבל נקודות
+                    } else if (it.type === 'heart') {
+                        // AI אוסף לב — אין השפעה אבל נעלם
                     } else if (it.type === 'boost') {
                         if (aiSpeed < 4) aiSpeed++;
                         aiBoostCooldownUntil = Date.now() + 2000;
