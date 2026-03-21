@@ -323,16 +323,43 @@ window.playAgain = function() {
     startCountdown(startGame);
 };
 function resetGameState() {
-    items.forEach(it => it.el.remove()); items = [];
+    // נקה את כל האלמנטים מהמסך — items, float texts, hints
+    items.forEach(it => { if (it.el.parentNode) it.el.remove(); }); items = [];
+    gameArea.querySelectorAll('.item, .float-text, .swipe-hint, .collected').forEach(el => el.remove());
+    
+    // אפס מצב
     playerSpeed = 0; lives = 3; points = 0; currentSegment = 1;
     gameFinished = false; frozen = false; frozenUntil = 0;
     aiFrozen = false; aiFrozenUntil = 0; aiMoveCooldown = 0;
     playerY = 0; aiY = 0; aiSpeed = 0; aiSegment = 1;
     oppY = 0; oppSegment = 1; oppSpeed = 0;
+    
+    // אפס UI
     updateLives(-1); updateSpeed(false); updatePoints(false);
+    
+    // החזר רכבים למסלולים ההתחלתיים
+    if (mode === 'ai') {
+        playerLane = 3; aiLane = 1;
+    } else {
+        playerLane = multiAmFirst ? 3 : 1;
+    }
+    
     setCarY(playerCarEl, 0);
-    if (aiCarEl) { setCarY(aiCarEl, 0); aiCarEl.style.display = 'block'; }
-    if (oppCarEl) { setCarY(oppCarEl, 0); oppCarEl.style.display = 'block'; }
+    moveCarToLane(playerCarEl, playerLane, null);
+    playerCarEl.classList.remove('frozen', 'flash', 'tilt-left', 'tilt-right');
+    
+    if (aiCarEl) {
+        setCarY(aiCarEl, 0);
+        moveCarToLane(aiCarEl, aiLane, null);
+        aiCarEl.style.display = 'block';
+        aiCarEl.classList.remove('frozen', 'flash', 'tilt-left', 'tilt-right');
+    }
+    if (oppCarEl) {
+        setCarY(oppCarEl, 0);
+        oppCarEl.style.display = 'block';
+        oppCarEl.classList.remove('frozen', 'flash');
+    }
+    
     positionRaceLine();
     if (multiGameId) mpSpawnSegmentItems(); else spawnSegmentItems();
     updateTrackDots();
@@ -731,12 +758,12 @@ function gameLoop() {
                 
                 if (bestLane !== aiLane) { aiLane = bestLane; moveCarToLane(aiCarEl, aiLane, null); moved = true; }
                 
-            } else if (Math.random() < 0.5) {
-                // אין מכשול — חפש ברק עד 2 נתיבים הצידה (50% סיכוי)
+            } else if (Math.random() < 0.3) {
+                // אין מכשול — חפש ברק עד 2 נתיבים הצידה (30% סיכוי)
                 let bestBoostLane = -1;
                 let bestBoostDist = 999;
                 
-                for (let offset = -2; offset <= 2; offset++) {
+                for (let offset = -1; offset <= 1; offset++) {
                     if (offset === 0) continue;
                     const checkLane = aiLane + offset;
                     if (checkLane < 0 || checkLane >= LANE_COUNT) continue;
