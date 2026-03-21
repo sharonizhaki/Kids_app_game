@@ -755,7 +755,21 @@ function positionRaceLine() { const line=document.getElementById('raceLine'); li
 
 // ========== רכב ==========
 const CAR_COLORS = { emma:{main:'#FF6B85',dark:'#C2184C'}, rif:{main:'#5EC8FF',dark:'#1E5F9E'}, dad:{main:'#52D273',dark:'#0B8C2F'}, mom:{main:'#BA68C8',dark:'#4A148C'}, guest:{main:'#D0D0D0',dark:'#666666'}, ai:{main:'#FFA500',dark:'#FF8C00'} };
-function getCC(u) { if (u==='ai') return CAR_COLORS.ai; return CAR_COLORS[userData?.rawId||u]||CAR_COLORS.guest; }
+
+// מקבל userId או hexColor ומחזיר צבעי רכב
+function getCC(u) { 
+    if (u === 'ai') return CAR_COLORS.ai;
+    // בדוק אם זה hex color ישיר
+    if (u && u.startsWith('#')) {
+        // צור dark version
+        return { main: u, dark: u };
+    }
+    // בדוק לפי rawId של המשתמש הנוכחי
+    if (u === myName) return CAR_COLORS[userData?.rawId] || CAR_COLORS.guest;
+    // בדוק לפי שם ישיר
+    return CAR_COLORS[u] || CAR_COLORS.guest; 
+}
+
 function carSVG(u,uid) { const c=getCC(u); return `<svg viewBox="0 0 100 140"><defs><linearGradient id="cg-${uid}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:${c.main}"/><stop offset="100%" style="stop-color:${c.dark}"/></linearGradient><radialGradient id="hl-${uid}" cx="50%" cy="0%" r="40%"><stop offset="0%" style="stop-color:#FFFF00;stop-opacity:0.7"/><stop offset="100%" style="stop-color:#FFFF00;stop-opacity:0"/></radialGradient></defs><path d="M 30 25 L 70 25 L 75 50 L 75 100 Q 75 115 60 120 L 40 120 Q 25 115 25 100 L 25 50 Z" fill="url(#cg-${uid})" stroke="${c.dark}" stroke-width="1.5"/><ellipse cx="35" cy="22" rx="25" ry="25" fill="url(#hl-${uid})"/><ellipse cx="65" cy="22" rx="25" ry="25" fill="url(#hl-${uid})"/><circle cx="30" cy="50" r="11" fill="#111"/><circle cx="30" cy="50" r="7" fill="#222"/><circle cx="30" cy="50" r="4" fill="#444"/><circle cx="70" cy="50" r="11" fill="#111"/><circle cx="70" cy="50" r="7" fill="#222"/><circle cx="70" cy="50" r="4" fill="#444"/><circle cx="30" cy="95" r="11" fill="#111"/><circle cx="30" cy="95" r="7" fill="#222"/><circle cx="30" cy="95" r="4" fill="#444"/><circle cx="70" cy="95" r="11" fill="#111"/><circle cx="70" cy="95" r="7" fill="#222"/><circle cx="70" cy="95" r="4" fill="#444"/></svg>`; }
 
 const CAR_HEIGHT = 58;
@@ -1148,7 +1162,7 @@ async function init() {
     } else {
         playerLane=3; playerCarEl=createCar(myName,playerLane,'playerCar');
         window._ls={}; let lastCount=0;
-        roomListenerUnsubscribe=onValue(roomRef,snap=>{
+        roomListenerUnsubscribe=onValue(roomRef, async snap=>{
             const players=snap.val()||{}; const names=Object.keys(players).sort((a,b)=>(players[a].joinedAt||0)-(players[b].joinedAt||0));
             if (lastCount===2&&names.length<2){let n='',e='';for(const[id,p]of Object.entries(window._ls)){if(!players[id]){n=p.name||'';e=p.emoji||'';break;}}handleOpponentLeft(n,e);return;}
             window._ls=players; lastCount=names.length;
@@ -1159,27 +1173,30 @@ async function init() {
                 multiGameId = `${names[0]}_${names[1]}`;
                 moveCarToLane(playerCarEl,playerLane,null);
                 
-                // יצור רכב יריב
+                // יצור רכב יריב — עם הצבע של היריב
                 const oppId = names.find(n=>n!==myName);
                 if (oppId && players[oppId]) {
                     oppName_display = players[oppId].name || oppId;
                     oppEmoji_display = players[oppId].emoji || '🏎️';
+                    const oppColor = players[oppId].color || '#4DB8FF';
                     
                     dotOpponent.style.display='block';
-                    dotOpponent.style.background=players[oppId].color||'#4DB8FF';
-                    dotOpponent.style.borderColor=players[oppId].color||'#4DB8FF';
+                    dotOpponent.style.background = oppColor;
+                    dotOpponent.style.borderColor = oppColor;
                     
                     if (!oppCarEl) {
-                        oppCarEl = createCar(oppId, oppLane, 'oppCar');
+                        oppCarEl = createCar(oppColor, oppLane, 'oppCar');
                     } else {
                         moveCarToLane(oppCarEl, oppLane, null);
                     }
+                    setCarY(oppCarEl, 0); // מקם את רכב היריב בקו הזינוק
                 }
                 
                 startOpponentCheck();
                 
-                // אלמנטים — שחקן 1 יוצר, שחקן 2 ממתין ואז מרנדר
-                mpSpawnSegmentItems();
+                // הצג קו זינוק ואלמנטים לפני הספירה
+                positionRaceLine();
+                await mpSpawnSegmentItems();
                 
                 // התחל סנכרון מיקום
                 startPositionSync();
