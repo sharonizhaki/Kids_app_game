@@ -936,17 +936,23 @@ function startPositionSync() {
         
         const isVisible = (oppSegment === currentSegment);
         
-        // אם הרכב הופך לנראה עכשיו — snap מיידי + השהיה קצרה לפני הצגה
+        // אם הרכב הופך לנראה עכשיו — הצב בתחתית וחכה לנתוני Firebase אמיתיים
         if (isVisible && !oppWasVisible) {
-            oppY = targetOppY;
-            oppShowDelay = 3; // חכה 3 פריימים לפני הצגה
+            oppY = 0; // התחל מתחתית הקטע
+            targetOppY = 0;
+            oppShowDelay = 8; // חכה 8 פריימים (~130ms) לקבלת מיקום אמיתי
         }
         oppWasVisible = isVisible;
         
         if (oppShowDelay > 0) {
             oppShowDelay--;
-            oppY = targetOppY; // המשך snap בזמן ההשהיה
+            // בזמן ההשהיה — עדכן מיקום בשקט בלי להציג
+            oppY = targetOppY;
             setCarY(oppCarEl, oppY);
+            if (targetOppLane !== oppLane) {
+                oppLane = targetOppLane;
+                moveCarToLane(oppCarEl, oppLane, null);
+            }
             oppCarEl.style.display = 'none';
             requestAnimationFrame(interpolateOpp);
             return;
@@ -1266,8 +1272,8 @@ function initHeartSegments() {
 function generateItemsData() {
     let minY, maxY;
     if (currentSegment === 1) { minY = gameH * 0.05; maxY = gameH * 0.72; }
-    else if (currentSegment === TOTAL_SEGMENTS) { minY = gameH * 0.15; maxY = gameH * 0.80; }
-    else { minY = gameH * 0.15; maxY = gameH * 0.80; }
+    else if (currentSegment === TOTAL_SEGMENTS) { minY = gameH * 0.10; maxY = gameH * 0.65; }
+    else { minY = gameH * 0.05; maxY = gameH * 0.68; }
     
     // יצור רשימה קבועה מעורבבת
     let itemList = shuffle(SEGMENT_ITEMS);
@@ -1336,15 +1342,8 @@ function mpListenItems(segment) {
     itemsListenerUnsub = onValue(ref(db, `game/race/${multiGameId}/items_${segment}`), snap => {
         const data = snap.val();
         if (!data) return;
-        // עדכן אלמנטים שנאספו
-        for (let i = 0; i < items.length && i < data.length; i++) {
-            if (data[i].collected && !items[i].collected) {
-                items[i].collected = true;
-                items[i].el.classList.add('collected');
-                setTimeout(() => items[i].el.remove(), 300);
-            }
-        }
         // אם עדיין אין אלמנטים (טעינה ראשונית) — רנדר
+        // לא מסנכרנים collected — כל שחקן אוסף עצמאית
         if (items.length === 0 && data.length > 0) {
             renderItems(data);
         }
@@ -1352,8 +1351,8 @@ function mpListenItems(segment) {
 }
 
 async function mpCollectItem(index) {
-    const seg = currentSegment;
-    await set(ref(db, `game/race/${multiGameId}/items_${seg}/${index}/collected`), true);
+    // איסוף מקומי בלבד — לא מעדכן Firebase
+    // כל שחקן מתמודד עם האייטמים שלו עצמאית
 }
 
 async function mpSpawnSegmentItems() {
@@ -1391,9 +1390,9 @@ function gameLoop() {
     if (currentSegment === TOTAL_SEGMENTS) {
         const line = document.getElementById('raceLine');
         const progress = Math.min(playerY / gameH, 1);
-        // מתחיל מחוץ למסך למעלה, יורד עד למיקום הרכב (78% מלמעלה)
-        const carTopPos = gameH * (1 - START_LINE_BOTTOM_PCT) - CAR_HEIGHT;
-        const lineTop = -20 + progress * (carTopPos + 20);
+        // מתחיל מחוץ למסך למעלה, יורד עד 60% מלמעלה
+        const targetTop = gameH * 0.60;
+        const lineTop = -20 + progress * (targetTop + 20);
         line.style.top = `${lineTop}px`;
         line.style.bottom = 'auto';
     }
