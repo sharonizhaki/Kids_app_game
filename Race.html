@@ -928,21 +928,32 @@ function startPositionSync() {
     // Smooth interpolation loop — עדכן רכב יריב בכל פריים
     let interpRunning = true;
     let oppWasVisible = false;
+    let oppShowDelay = 0;
     function interpolateOpp() {
         if (!interpRunning) return;
         if (!oppCarEl) { requestAnimationFrame(interpolateOpp); return; }
         
         const isVisible = (oppSegment === currentSegment);
         
-        // אם הרכב הופך לנראה עכשיו — snap מיידי למיקום היריב
+        // אם הרכב הופך לנראה עכשיו — snap מיידי + השהיה קצרה לפני הצגה
         if (isVisible && !oppWasVisible) {
             oppY = targetOppY;
+            oppShowDelay = 3; // חכה 3 פריימים לפני הצגה
         }
         oppWasVisible = isVisible;
         
+        if (oppShowDelay > 0) {
+            oppShowDelay--;
+            oppY = targetOppY; // המשך snap בזמן ההשהיה
+            setCarY(oppCarEl, oppY);
+            oppCarEl.style.display = 'none';
+            requestAnimationFrame(interpolateOpp);
+            return;
+        }
+        
         // החלקת Y
         const diff = targetOppY - oppY;
-        oppY += diff * 0.15; // interpolation factor
+        oppY += diff * 0.15;
         
         // עדכן נתיב
         if (targetOppLane !== oppLane) {
@@ -970,7 +981,7 @@ function stopPositionSync() {
 
 // ========== קו מירוץ ==========
 function buildRaceLine() { const line=document.getElementById('raceLine'); line.innerHTML=''; for (let r=0;r<2;r++) { const row=document.createElement('div'); row.className='race-line-row'; const cnt=Math.ceil(gameW/12); for (let i=0;i<cnt;i++) { const sq=document.createElement('div'); sq.className=`race-line-sq ${(i+r)%2===0?'w':'b'}`; row.appendChild(sq); } line.appendChild(row); } }
-function positionRaceLine() { const line=document.getElementById('raceLine'); line.style.top='auto'; line.style.bottom='auto'; if (currentSegment===1) { line.classList.remove('hidden'); line.style.bottom='22%'; } else if (currentSegment===TOTAL_SEGMENTS) { line.classList.remove('hidden'); line.style.top='10%'; } else { line.classList.add('hidden'); } }
+function positionRaceLine() { const line=document.getElementById('raceLine'); line.style.top='auto'; line.style.bottom='auto'; line.style.display=''; if (currentSegment===1) { line.classList.remove('hidden'); line.style.bottom='22%'; } else if (currentSegment===TOTAL_SEGMENTS) { line.classList.remove('hidden'); line.style.top='-20px'; } else { line.classList.add('hidden'); } }
 
 // ========== רכב ==========
 const CAR_COLORS = { emma:{main:'#FF6B85',dark:'#C2184C',accent:'#FFB0C0'}, rif:{main:'#5EC8FF',dark:'#1E5F9E',accent:'#A0E0FF'}, dad:{main:'#52D273',dark:'#0B8C2F',accent:'#90EEA8'}, mom:{main:'#BA68C8',dark:'#4A148C',accent:'#D9A0E8'}, guest:{main:'#C0C0C0',dark:'#606060',accent:'#E0E0E0'}, ai:{main:'#FFA500',dark:'#B86E00',accent:'#FFD080'} };
@@ -1373,6 +1384,17 @@ function gameLoop() {
         const lineBottom = startBottom - (playerY / gameH) * startBottom * 2.5;
         line.style.bottom = `${lineBottom}px`;
         if (lineBottom < -20) line.classList.add('hidden');
+    }
+
+    // קו סיום — יורד מלמעלה לכיוון הרכב (רק בקטע אחרון)
+    if (currentSegment === TOTAL_SEGMENTS) {
+        const line = document.getElementById('raceLine');
+        const progress = Math.min(playerY / gameH, 1);
+        // מתחיל ב-top:-20px, יורד עד top:10% מגובה המסך
+        const targetTop = gameH * 0.10;
+        const lineTop = -20 + progress * (targetTop + 20);
+        line.style.top = `${lineTop}px`;
+        line.style.bottom = 'auto';
     }
 
     if (!isFrozen && !playerTransitioning) playerY += speed;
