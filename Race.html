@@ -341,8 +341,8 @@ const myEmoji = userData.emoji;
 
 // ========== קבועים ==========
 const LANE_COUNT = 5;
-// מהירויות: בסיס 2.4, עליה של 40% כל שלב
-const SPEEDS = [2.4, 3.4, 4.7, 6.6, 9.2];
+// מהירויות: בסיס 4.8, עליה של 40% כל שלב
+const SPEEDS = [4.8, 6.7, 9.4, 13.2, 18.4];
 const HIT_RADIUS = 28;
 const PLAYER_FIXED_BOTTOM_PCT = 0.18;
 
@@ -452,6 +452,8 @@ window.playAgain = function() {
     startCountdown(startGame);
 };
 function resetGameState() {
+    stopBgAnimation();
+    roadOffset = 0;
     items.forEach(it => { if (it.el && it.el.parentNode) it.el.remove(); }); items = [];
     gameArea.querySelectorAll('.item, .float-text, .swipe-hint, .collected, .skid-mark').forEach(el => el.remove());
     
@@ -478,7 +480,6 @@ function resetGameState() {
     if (oppCarEl) { oppCarEl.style.bottom = `${gameH * PLAYER_FIXED_BOTTOM_PCT - CAR_HEIGHT/2}px`; oppCarEl.style.display = 'block'; oppCarEl.classList.remove('frozen', 'flash'); }
     
     if (multiGameId) { set(ref(db, `game/race/${multiGameId}/pos_${myName}`), null); remove(ref(db, `game/race/${multiGameId}/items`)); }
-    roadOffset = 0;
     
     showStartLine();
     spawnAllItems();
