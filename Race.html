@@ -193,6 +193,38 @@
         .item.collected { animation: collectPop 0.3s ease forwards; }
         @keyframes collectPop { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
 
+        /* ========== אפקט האצה (ברק) ========== */
+        .car.boost-lunge {
+            animation: boostLunge 0.4s cubic-bezier(0.2, 0.8, 0.3, 1) !important;
+        }
+        @keyframes boostLunge {
+            0% { transform: translateY(0) scaleY(1) scaleX(1); }
+            25% { transform: translateY(-12px) scaleY(1.08) scaleX(0.94); }
+            50% { transform: translateY(-6px) scaleY(1.04) scaleX(0.97); }
+            100% { transform: translateY(0) scaleY(1) scaleX(1); }
+        }
+        .boost-glow {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 20px; height: 20px; border-radius: 50%;
+            pointer-events: none; z-index: 29;
+            animation: boostGlowPulse 0.5s ease-out forwards;
+        }
+        @keyframes boostGlowPulse {
+            0% { width: 20px; height: 20px; opacity: 0.9; box-shadow: 0 0 20px 8px rgba(255,215,0,0.8), 0 0 40px 16px rgba(255,160,0,0.4); }
+            50% { width: 80px; height: 80px; opacity: 0.5; box-shadow: 0 0 30px 12px rgba(255,215,0,0.5), 0 0 60px 24px rgba(255,160,0,0.2); }
+            100% { width: 120px; height: 120px; opacity: 0; box-shadow: 0 0 0 0 transparent; }
+        }
+        .speed-line {
+            position: absolute; pointer-events: none; z-index: 28;
+            width: 2px; border-radius: 1px;
+            background: linear-gradient(180deg, rgba(255,215,0,0.7), rgba(255,215,0,0));
+            animation: speedLineFall 0.4s ease-out forwards;
+        }
+        @keyframes speedLineFall {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(60px); }
+        }
+
         /* Parallax שכבות רקע */
         .parallax-bg-far { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: repeating-linear-gradient(180deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 2px, transparent 2px, transparent 60px); background-size: 100% 60px; }
         .parallax-bg-mid { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: repeating-linear-gradient(180deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 40px); background-size: 100% 40px; }
@@ -308,7 +340,8 @@ const myEmoji = userData.emoji;
 
 // ========== קבועים ==========
 const LANE_COUNT = 5;
-const SPEEDS = [1.2, 2.0, 3.0, 4.2, 5.5];
+// מהירויות: בסיס 2.4, עליה של 40% כל שלב
+const SPEEDS = [2.4, 3.4, 4.7, 6.6, 9.2];
 const HIT_RADIUS = 28;
 const PLAYER_FIXED_BOTTOM_PCT = 0.18;
 
@@ -555,6 +588,42 @@ function mpListenReady(oppId) {
 }
 
 function spawnFloatText(x,y,text,color) { const el=document.createElement('div'); el.className='float-text'; el.textContent=text; el.style.left=`${x}px`; el.style.top=`${y}px`; el.style.color=color; gameArea.appendChild(el); setTimeout(()=>el.remove(),800); }
+
+// אפקט האצה — קווי מהירות + זוהר + דחיפה קדימה
+function triggerBoostEffect(carEl) {
+    // 1. דחיפה קדימה (lunge)
+    carEl.classList.remove('boost-lunge');
+    void carEl.offsetHeight;
+    carEl.classList.add('boost-lunge');
+    setTimeout(() => carEl.classList.remove('boost-lunge'), 450);
+    
+    // 2. פולס זוהר סביב הרכב
+    const glow = document.createElement('div');
+    glow.className = 'boost-glow';
+    carEl.appendChild(glow);
+    setTimeout(() => glow.remove(), 550);
+    
+    // 3. קווי מהירות — נמשכים לאחור מצדי הרכב
+    const carLeft = parseFloat(carEl.style.left) || 0;
+    const carBottom = parseFloat(carEl.style.bottom) || 0;
+    for (let i = 0; i < 8; i++) {
+        const line = document.createElement('div');
+        line.className = 'speed-line';
+        const h = 20 + Math.random() * 30;
+        line.style.height = `${h}px`;
+        // פיזור אקראי סביב הרכב
+        const offsetX = -10 + Math.random() * (CAR_HALF_W * 2 + 20);
+        line.style.left = `${carLeft + offsetX}px`;
+        line.style.bottom = `${carBottom - 10 - Math.random() * 30}px`;
+        line.style.animationDuration = `${0.3 + Math.random() * 0.2}s`;
+        line.style.animationDelay = `${Math.random() * 0.1}s`;
+        gameArea.appendChild(line);
+        setTimeout(() => line.remove(), 600);
+    }
+    
+    // 4. ויברציה קלה
+    if (navigator.vibrate) navigator.vibrate(30);
+}
 
 function updateCarSpeedClass() {
     playerCarEl.classList.remove('speed-3','speed-4','speed-5');
@@ -830,18 +899,20 @@ function gameLoop() {
         if (lb < -20) startLine.classList.add('hidden');
     }
 
-    // קו סיום — נראה ב-90% אחרונים של המסלול ויורד לכיוון הרכב
+    // קו סיום — תמיד ממוקם לפי parallax, יורד מלמעלה בצורה טבעית
     let finishLineMet = false;
-    if (playerY >= RACE_LENGTH * 0.85) {
-        const finishLine = document.getElementById('raceLine');
+    const finishLine = document.getElementById('raceLine');
+    const finishWorldY = RACE_LENGTH;
+    const finishScreenY = getItemScreenY(finishWorldY);
+    
+    // אם קו הזינוק כבר נעלם — השתמש בקו לסיום
+    if (startLine.classList.contains('hidden')) {
         finishLine.classList.remove('hidden');
-        const finishWorldY = RACE_LENGTH;
-        const finishScreenY = getItemScreenY(finishWorldY);
         finishLine.style.top = `${finishScreenY}px`;
         finishLine.style.bottom = 'auto';
         
         const pTop = getPlayerScreenCenterY() - CAR_HEIGHT/2;
-        if (finishScreenY + 14 >= pTop && playerY > RACE_LENGTH * 0.9) finishLineMet = true;
+        if (finishScreenY + 14 >= pTop && playerY > RACE_LENGTH * 0.5) finishLineMet = true;
     }
 
     if (!tiltActive && !isFrozen) applyWobble(playerCarEl, speed);
@@ -860,10 +931,10 @@ function gameLoop() {
             it.collected=true;
             const fx=parseFloat(it.el.style.left)+12, fy=iSY;
             if (it.type==='diamond'){points+=10;updatePoints(true);spawnFloatText(fx,fy,'+10 💎','#58D9F5');}
-            else if(it.type==='boost'){if(playerSpeed<4){playerSpeed++;updateSpeed(true);updateCarSpeedClass();}spawnFloatText(fx,fy,'⚡ מהירות!','#FFD700');}
+            else if(it.type==='boost'){if(playerSpeed<4){playerSpeed++;updateSpeed(true);updateCarSpeedClass();}triggerBoostEffect(playerCarEl);spawnFloatText(fx,fy,'⚡ מהירות!','#FFD700');}
             else if(it.type==='heart'){lives++;updateLives(-1);spawnFloatText(fx,fy,'+❤️','#FF4444');}
-            else if(it.type==='bomb'){lives--;updateLives(lives);if(playerSpeed>0){playerSpeed=0;updateSpeed(false);updateCarSpeedClass();}else{freezePlayer(0.5);}playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450);shakeScreen();if(navigator.vibrate)navigator.vibrate(100);spawnFloatText(fx,fy,'💥 פצצה!','#FF4444');if(lives<=0){stopGame();showResult('💥','התרסקת!',`${points} נקודות`);return;}}
-            else if(it.type==='rock'){if(playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();}else{freezePlayer(0.5);}playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450);shakeScreen();if(navigator.vibrate)navigator.vibrate(50);spawnFloatText(fx,fy,'🪨 אבן!','#AAA');}
+            else if(it.type==='bomb'){lives--;updateLives(lives);if(playerSpeed>0){playerSpeed=0;updateSpeed(false);updateCarSpeedClass();}else{freezePlayer(0.25);}playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450);shakeScreen();if(navigator.vibrate)navigator.vibrate(100);spawnFloatText(fx,fy,'💥 פצצה!','#FF4444');if(lives<=0){stopGame();showResult('💥','התרסקת!',`${points} נקודות`);return;}}
+            else if(it.type==='rock'){if(playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();}else{freezePlayer(0.25);}playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450);shakeScreen();if(navigator.vibrate)navigator.vibrate(50);spawnFloatText(fx,fy,'🪨 אבן!','#AAA');}
             it.el.classList.add('collected');setTimeout(()=>it.el.remove(),300);
         }
     }
@@ -907,8 +978,8 @@ function gameLoop() {
                     if(it.type==='diamond'){}
                     else if(it.type==='heart'){}
                     else if(it.type==='boost'){if(aiSpeed<4)aiSpeed++;aiBoostCooldownUntil=Date.now()+2000;updateExhaust(aiCarEl,aiSpeed);spawnFloatText(fx,fy,'⚡','#FFD700');}
-                    else if(it.type==='bomb'){if(aiSpeed>0)aiSpeed=0;else freezeAI(0.5);updateExhaust(aiCarEl,aiSpeed);aiCarEl.classList.add('flash');setTimeout(()=>aiCarEl.classList.remove('flash'),450);spawnFloatText(fx,fy,'💥','#FF4444');}
-                    else if(it.type==='rock'){if(aiSpeed>0)aiSpeed--;else freezeAI(0.5);updateExhaust(aiCarEl,aiSpeed);aiCarEl.classList.add('flash');setTimeout(()=>aiCarEl.classList.remove('flash'),450);spawnFloatText(fx,fy,'🪨','#AAA');}
+                    else if(it.type==='bomb'){if(aiSpeed>0)aiSpeed=0;else freezeAI(0.25);updateExhaust(aiCarEl,aiSpeed);aiCarEl.classList.add('flash');setTimeout(()=>aiCarEl.classList.remove('flash'),450);spawnFloatText(fx,fy,'💥','#FF4444');}
+                    else if(it.type==='rock'){if(aiSpeed>0)aiSpeed--;else freezeAI(0.25);updateExhaust(aiCarEl,aiSpeed);aiCarEl.classList.add('flash');setTimeout(()=>aiCarEl.classList.remove('flash'),450);spawnFloatText(fx,fy,'🪨','#AAA');}
                     it.el.classList.add('collected');setTimeout(()=>it.el.remove(),300);
                 }
             }
@@ -950,18 +1021,35 @@ function gameLoop() {
 
 // ========== סיום: המכונית עפה למעלה ==========
 function finishFlyUp(isLoss) {
-    updateExhaust(playerCarEl,4); updateHeadlights(playerCarEl,4);
-    playerCarEl.classList.add('speed-5','finish-fly');
-    playerCarEl.style.bottom = `${gameH + 100}px`;
-    playerCarEl.style.transform = 'scale(0.7) rotate(-2deg)';
-    let flyId=null; const ms=SPEEDS[SPEEDS.length-1];
-    function flyLoop(){updateRoadAnimation(ms);flyId=requestAnimationFrame(flyLoop);}
-    flyId=requestAnimationFrame(flyLoop);
-    setTimeout(()=>{
-        if(flyId){cancelAnimationFrame(flyId);flyId=null;}
-        if(isLoss)showResult('😔','הפסדת',`${points} נקודות`);
-        else showResult('🏆',`🏁 ${myEmoji} ${displayName} 🏆`,`${points} נקודות`);
-    },1100);
+    // מהירות מקסימלית בסיום — המכונית ממשיכה לנסוע ונעלמת למעלה
+    playerSpeed = 4;
+    updateSpeed(true); updateCarSpeedClass();
+    updateExhaust(playerCarEl, 4); updateHeadlights(playerCarEl, 4);
+    playerCarEl.classList.add('speed-5');
+    
+    const ms = SPEEDS[SPEEDS.length - 1];
+    let finishAnimId = null;
+    let carBottom = parseFloat(playerCarEl.style.bottom) || 0;
+    
+    function finishLoop() {
+        updateRoadAnimation(ms);
+        // המכונית פשוט ממשיכה לנסוע קדימה במהירות מקסימלית
+        carBottom += ms * 1.2;
+        playerCarEl.style.bottom = `${carBottom}px`;
+        // נדנוד קל
+        const ox = Math.sin(Date.now() * 0.007) * 0.5;
+        const or = Math.sin(Date.now() * 0.005) * 0.4;
+        playerCarEl.style.transform = `translateX(${ox}px) rotate(${or}deg)`;
+        
+        if (carBottom < gameH + 150) {
+            finishAnimId = requestAnimationFrame(finishLoop);
+        } else {
+            // המכונית נעלמה מהמסך — הצג תוצאה
+            if (isLoss) showResult('😔', 'הפסדת', `${points} נקודות`);
+            else showResult('🏆', `🏁 ${myEmoji} ${displayName} 🏆`, `${points} נקודות`);
+        }
+    }
+    finishAnimId = requestAnimationFrame(finishLoop);
 }
 
 function stopGame() { gameRunning=false; if(animFrameId){cancelAnimationFrame(animFrameId);animFrameId=null;} startBgAnimation(); }
@@ -982,7 +1070,12 @@ function stopBgAnimation() { if(bgAnimId){cancelAnimationFrame(bgAnimId);bgAnimI
 function startCountdown(cb) {
     const modal=document.getElementById('countdownModal'),text=document.getElementById('countdownText');
     modal.classList.remove('hidden');text.textContent='🏎️ מוכנים?';text.className='countdown-text';let c=2;
-    const iv=setInterval(()=>{if(c>0){text.textContent=c;text.className='countdown-text';text.style.animation='none';text.offsetHeight;text.style.animation='';c--;}else if(c===0){text.textContent='🏁 סעו!';text.className='countdown-text go';c--;}else{clearInterval(iv);modal.classList.add('hidden');cb();}},1000);
+    // אנימציית כביש בזמן הספירה — במהירות ההתחלתית כדי שיהיה רצף חלק
+    let countdownRoadId = null;
+    const startSpeed = SPEEDS[0];
+    function countdownRoadLoop() { updateRoadAnimation(startSpeed); countdownRoadId = requestAnimationFrame(countdownRoadLoop); }
+    countdownRoadId = requestAnimationFrame(countdownRoadLoop);
+    const iv=setInterval(()=>{if(c>0){text.textContent=c;text.className='countdown-text';text.style.animation='none';text.offsetHeight;text.style.animation='';c--;}else if(c===0){text.textContent='🏁 סעו!';text.className='countdown-text go';c--;}else{clearInterval(iv);modal.classList.add('hidden');if(countdownRoadId){cancelAnimationFrame(countdownRoadId);countdownRoadId=null;}cb();}},1000);
 }
 
 function startGame() {
