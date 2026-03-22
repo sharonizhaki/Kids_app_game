@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🏁 מרוץ מכוניות</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Heebo:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Heebo', sans-serif; background: #0F1320; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; touch-action: none; user-select: none; -webkit-user-select: none; }
+
+        /* ========== בר עליון ========== */
+        .stats-bar {
+            background: linear-gradient(180deg, #0F1320 0%, rgba(15,19,32,0.95) 100%);
+            padding: 8px 10px 0; margin: 0 14px;
+            z-index: 100; position: relative; flex-shrink: 0;
+        }
+        .stats-top { display: flex; align-items: center; gap: 0; margin-bottom: 6px; }
+        .home-button { font-size: 20px; cursor: pointer; padding: 5px 9px; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,215,0,0.25); margin-left: 10px; flex-shrink: 0; }
+        .stats-row { display: flex; flex: 1; justify-content: space-around; align-items: center; }
+        .stat-item { text-align: center; }
+        .stat-label { font-size: 9px; color: #F5C842; letter-spacing: 0.5px; margin-bottom: 2px; font-weight: 700; opacity: 0.7; }
+        .stat-value { font-size: 20px; font-weight: bold; color: #4DB8FF; font-family: 'Fredoka One', cursive; transition: all 0.3s; min-width: 28px; }
+        .stat-value.pop { animation: statPop 0.4s ease; }
+        @keyframes statPop { 0% { transform: scale(1); } 40% { transform: scale(1.4); color: #F5C842; } 100% { transform: scale(1); } }
+        .speed-indicator { display: flex; gap: 3px; justify-content: center; }
+        .speed-level { font-size: 12px; filter: grayscale(100%) brightness(1.5); opacity: 0.35; transition: all 0.3s; }
+        .speed-level.active { filter: grayscale(0%); opacity: 1; transform: scale(1.15); }
+        .speed-level.just-gained { animation: speedGain 0.5s ease; }
+        @keyframes speedGain { 0% { transform: scale(1); } 50% { transform: scale(1.6); } 100% { transform: scale(1.15); } }
+        .lives-display { display: flex; gap: 3px; font-size: 15px; justify-content: center; }
+        .wins-display { display: flex; gap: 2px; font-size: 13px; justify-content: center; }
+        .trophy { transition: all 0.4s; }
+        .trophy.dim { filter: grayscale(100%) brightness(0.4); opacity: 0.4; }
+        .trophy.won { filter: none; opacity: 1; transform: scale(1.1); }
+        .trophy.just-won { animation: trophyPop 0.6s ease; }
+        @keyframes trophyPop { 0% { transform: scale(1); } 40% { transform: scale(1.5) rotate(-10deg); } 70% { transform: scale(1.2) rotate(5deg); } 100% { transform: scale(1.1); } }
+        .heart { transition: all 0.3s; }
+        .heart.lost { opacity: 0.15; filter: grayscale(100%); transform: scale(0.8); }
+        .heart.just-lost { animation: heartLost 0.7s ease; }
+        @keyframes heartLost {
+            0% { transform: scale(1); opacity: 1; }
+            15% { transform: scale(1.5) rotate(-10deg); filter: brightness(2); }
+            30% { transform: scale(1.4) rotate(10deg); }
+            50% { transform: scale(1.2) rotate(-5deg); filter: brightness(1.5); opacity: 0.7; }
+            100% { transform: scale(0.8); opacity: 0.15; filter: grayscale(100%); }
+        }
+
+        /* ========== מד מסלול ========== */
+        .track-progress {
+            position: relative; height: 14px; margin: 0 4px 6px;
+            background: rgba(255,255,255,0.08); border-radius: 7px; overflow: visible;
+        }
+        .track-progress-fill {
+            position: absolute; inset: 0; border-radius: 7px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+        }
+        .track-marker-start { position: absolute; left: -2px; top: 50%; transform: translateY(-50%); font-size: 8px; }
+        .track-marker-end { position: absolute; right: -2px; top: 50%; transform: translateY(-50%); font-size: 8px; }
+        .track-dot {
+            position: absolute; top: 50%; width: 10px; height: 10px;
+            border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.5);
+            transform: translate(-50%, -50%); transition: right 0.3s ease; z-index: 5;
+            box-shadow: 0 0 6px rgba(0,0,0,0.3);
+        }
+
+        /* ========== Countdown ========== */
+        .countdown-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(2px); }
+        .countdown-modal.hidden { display: none; }
+        .countdown-text { font-size: 70px; font-weight: bold; color: #FFD700; text-shadow: 0 0 40px rgba(255,215,0,0.9), 0 4px 20px rgba(0,0,0,0.5); animation: countPulse 0.8s ease; font-family: 'Fredoka One', cursive; }
+        .countdown-text.go { color: #4DB8FF; text-shadow: 0 0 40px rgba(77,184,255,0.9), 0 4px 20px rgba(0,0,0,0.5); }
+        @keyframes countPulse { 0% { transform: scale(0.3); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
+
+        /* ========== Result ========== */
+        .result-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: none; justify-content: center; align-items: center; z-index: 1001; padding: 20px; }
+        .result-modal.show { display: flex; }
+        .result-box { background: linear-gradient(135deg, rgba(15,19,32,0.85), rgba(15,19,32,0.9)); border: 3px solid #F5C842; border-radius: 25px; padding: 35px 25px; text-align: center; max-width: 320px; width: 100%; backdrop-filter: blur(8px); animation: countPulse 0.5s ease; }
+        .result-icon { font-size: 3.5rem; margin-bottom: 8px; }
+        .result-title { font-family: 'Fredoka One', cursive; font-size: 1.6rem; color: #F5C842; margin-bottom: 8px; }
+        .result-sub { font-size: 0.95rem; opacity: 0.8; margin-bottom: 18px; }
+        .result-buttons { display: flex; gap: 10px; }
+        .result-btn { flex: 1; padding: 12px 10px; border-radius: 15px; border: none; font-weight: 900; font-size: 0.9rem; cursor: pointer; }
+        .result-btn.primary { background: linear-gradient(135deg, #F5C842, #FFB347); color: #0F1320; }
+        .result-btn.secondary { background: rgba(255,255,255,0.1); color: white; border: 1.5px solid rgba(255,255,255,0.2); }
+
+        /* ========== אזור משחק ========== */
+        .game-area { flex: 1; position: relative; overflow: hidden; background: #4a5a7a; }
+        .game-area.shake { animation: screenShake 0.3s ease; }
+        @keyframes screenShake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+
+        /* אבני שפה */
+        .curb-left, .curb-right { position: fixed; top: 0; bottom: 0; width: 14px; z-index: 150; background-size: 14px 50px; }
+        .curb-left { left: 0; background: repeating-linear-gradient(180deg, #FF0000 0, #FF0000 25px, #FFFFFF 25px, #FFFFFF 50px); }
+        .curb-right { right: 0; background: repeating-linear-gradient(180deg, #FFFFFF 0, #FFFFFF 25px, #FF0000 25px, #FF0000 50px); }
+        
+        /* קווי הפרדה */
+        .lane-divider { position: absolute; top: 0; bottom: 0; width: 3px; z-index: 10; background: repeating-linear-gradient(180deg, rgba(255,255,255,0.8) 0px, rgba(255,255,255,0.8) 20px, transparent 20px, transparent 35px); background-size: 3px 35px; }
+
+        /* קו מירוץ */
+        .race-line { position: absolute; left: 0; right: 0; height: 14px; z-index: 40; display: flex; flex-direction: column; }
+        .race-line.hidden { display: none; }
+        .race-line-row { display: flex; flex: 1; }
+        .race-line-sq { flex: 1; max-width: 12px; }
+        .race-line-sq.w { background: white; }
+        .race-line-sq.b { background: black; }
+
+        /* ========== רכב ========== */
+        .car {
+            position: absolute; width: 42px; height: 65px; z-index: 30;
+            transition: left 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.2s ease;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+        }
+        .car.speed-3 { filter: drop-shadow(0 6px 10px rgba(0,0,0,0.5)); }
+        .car.speed-4 { filter: drop-shadow(0 8px 14px rgba(0,0,0,0.4)) drop-shadow(0 8px 12px rgba(255,160,0,0.4)); }
+        .car.speed-5 { filter: drop-shadow(0 12px 20px rgba(0,0,0,0.3)) drop-shadow(0 10px 16px rgba(255,80,0,0.5)) drop-shadow(0 14px 20px rgba(255,0,0,0.3)); }
+        .car.flash { animation: carFlash 0.15s ease 3; }
+        .car.frozen { opacity: 0.5; filter: grayscale(50%) drop-shadow(0 0 10px rgba(100,150,255,0.8)); }
+        .car.ice-skid {
+            animation: iceSkid 1s ease-in-out !important;
+        }
+        @keyframes iceSkid {
+            0% { transform: translateX(0) rotate(0deg); }
+            8% { transform: translateX(25px) rotate(14deg); }
+            20% { transform: translateX(-35px) rotate(-18deg); }
+            35% { transform: translateX(28px) rotate(15deg); }
+            50% { transform: translateX(-20px) rotate(-10deg); }
+            65% { transform: translateX(12px) rotate(7deg); }
+            80% { transform: translateX(-6px) rotate(-3deg); }
+            100% { transform: translateX(0) rotate(0deg); }
+        }
+        /* סימני צמיגים בהחלקה */
+        .skid-trail {
+            position: absolute; z-index: 8; pointer-events: none;
+        }
+        .skid-trail-line {
+            position: absolute; width: 3px; border-radius: 1.5px;
+            background: rgba(0,0,0,0.2);
+            animation: skidTrailFade 1.5s ease-out forwards;
+        }
+        @keyframes skidTrailFade {
+            0% { opacity: 0.7; }
+            60% { opacity: 0.4; }
+            100% { opacity: 0; }
+        }
+        .car.pit-bounce {
+            animation: pitBounce 1s ease-in-out !important;
+        }
+        @keyframes pitBounce {
+            0% { transform: translateY(0) rotate(0deg); }
+            10% { transform: translateY(12px) rotate(-4deg) scaleY(0.88); }
+            22% { transform: translateY(-16px) rotate(3deg) scaleY(1.1); }
+            36% { transform: translateY(8px) rotate(-2deg) scaleY(0.94); }
+            50% { transform: translateY(-10px) rotate(2deg) scaleY(1.05); }
+            65% { transform: translateY(4px) rotate(-1deg); }
+            80% { transform: translateY(-3px); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+        .car.finish-fly {
+            transition: bottom 1s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+            z-index: 300;
+        }
+        @keyframes carFlash { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+        .exhaust {
+            position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 1px; justify-content: center;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: -1;
+        }
+        .exhaust.active { opacity: 1; }
+        .exhaust-flame { width: 4px; height: 8px; border-radius: 50% 50% 30% 30%; animation: flicker 0.08s infinite alternate; }
+        .exhaust.level-1 .exhaust-flame { height: 5px; width: 3px; }
+        .exhaust.level-2 .exhaust-flame { height: 9px; width: 4px; }
+        .exhaust.level-3 .exhaust-flame { height: 14px; width: 5px; }
+        .exhaust.level-4 .exhaust-flame { height: 20px; width: 6px; }
+        @keyframes flicker { 0% { transform: scaleY(1) scaleX(1); opacity: 1; } 100% { transform: scaleY(1.35) scaleX(0.75); opacity: 0.7; } }
+
+        .tire-smoke { position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 50px; height: 20px; pointer-events: none; z-index: -1; }
+
+        .headlight-beam {
+            position: absolute; top: -90px; left: 50%; transform: translateX(-50%);
+            width: 30px; height: 90px; pointer-events: none; z-index: -1;
+            opacity: 0; transition: opacity 0.4s;
+            background: radial-gradient(ellipse 50% 100% at 50% 100%, rgba(255,255,200,0.12) 0%, rgba(255,255,200,0.06) 40%, transparent 100%);
+            clip-path: polygon(30% 100%, 70% 100%, 100% 0%, 0% 0%);
+        }
+        .headlight-beam.level-1 { opacity: 0.3; height: 50px; top: -50px; width: 26px; }
+        .headlight-beam.level-2 { opacity: 0.5; height: 70px; top: -70px; width: 30px; }
+        .headlight-beam.level-3 { opacity: 0.7; height: 95px; top: -95px; width: 36px; }
+        .headlight-beam.level-4 { opacity: 1; height: 120px; top: -120px; width: 42px; }
+        .smoke-puff {
+            position: absolute; bottom: 0; border-radius: 50%;
+            background: radial-gradient(circle, rgba(200,200,200,0.6), rgba(150,150,150,0.2), transparent);
+            animation: smokePuff 0.8s ease-out forwards;
+        }
+        @keyframes smokePuff { 0% { opacity: 0.7; transform: scale(0.3) translateY(0); } 50% { opacity: 0.5; } 100% { opacity: 0; transform: scale(2.5) translateY(8px); } }
+
+        /* ========== גשם ========== */
+        .game-area.rain-mode { background: #2e3a52; }
+        .game-area.rain-mode .lane-divider { background: repeating-linear-gradient(180deg, rgba(255,255,255,0.45) 0px, rgba(255,255,255,0.45) 20px, transparent 20px, transparent 35px); background-size: 3px 35px; }
+        .wet-overlay { display: none; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(40,60,100,0.08) 30%, rgba(60,80,120,0.12) 60%, rgba(0,0,0,0.2) 100%); }
+        .puddles { display: none; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(ellipse 80px 15px at 25% 40%, rgba(100,140,200,0.08) 0%, transparent 100%), radial-gradient(ellipse 60px 10px at 65% 65%, rgba(100,140,200,0.06) 0%, transparent 100%), radial-gradient(ellipse 90px 12px at 40% 80%, rgba(100,140,200,0.07) 0%, transparent 100%); animation: puddleShimmer 3s ease-in-out infinite alternate; }
+        @keyframes puddleShimmer { 0% { opacity: 0.6; } 100% { opacity: 1; } }
+        .rain-container { display: none; position: absolute; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
+        .raindrop { position: absolute; width: 1.5px; background: linear-gradient(180deg, transparent, rgba(170,200,255,0.5), rgba(170,200,255,0.15)); border-radius: 0 0 2px 2px; animation: rainFall linear infinite; }
+        @keyframes rainFall { 0% { transform: translateY(-100%) translateX(0); opacity: 1; } 85% { opacity: 0.6; } 100% { transform: translateY(calc(100vh + 20px)) translateX(-8px); opacity: 0; } }
+        .rain-splash { display: none; position: absolute; bottom: 0; left: 0; right: 0; height: 60px; z-index: 4; pointer-events: none; overflow: hidden; }
+        .splash-dot { position: absolute; width: 3px; height: 1.5px; background: rgba(150,180,220,0.4); border-radius: 50%; animation: splashPop 0.6s ease-out infinite; }
+        @keyframes splashPop { 0% { transform: scale(0); opacity: 0.8; } 50% { transform: scale(2.5); opacity: 0.4; } 100% { transform: scale(0); opacity: 0; } }
+        .road-mist { display: none; position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(0deg, rgba(100,120,160,0.15), transparent); z-index: 5; pointer-events: none; }
+        .lightning-flash { position: absolute; inset: 0; z-index: 200; background: rgba(200,210,255,0.15); pointer-events: none; opacity: 0; }
+        .lightning-flash.active { animation: lightningAnim 0.3s ease-out; }
+        @keyframes lightningAnim { 0% { opacity: 0.7; } 10% { opacity: 0; } 15% { opacity: 0.5; } 20% { opacity: 0; } 25% { opacity: 0.3; } 100% { opacity: 0; } }
+        .game-area.rain-mode .wet-overlay, .game-area.rain-mode .puddles, .game-area.rain-mode .rain-container, .game-area.rain-mode .rain-splash, .game-area.rain-mode .road-mist { display: block; }
+        .headlight-reflect { display: none; position: absolute; top: -55px; left: 50%; transform: translateX(-50%); width: 60px; height: 55px; pointer-events: none; z-index: -1; background: radial-gradient(ellipse at 50% 100%, rgba(255,255,200,0.08) 0%, rgba(255,255,200,0.03) 50%, transparent 100%); }
+        .wheel-spray { display: none; position: absolute; bottom: -6px; width: 18px; height: 14px; pointer-events: none; z-index: -1; overflow: hidden; }
+        .wheel-spray.left { left: -2px; }
+        .wheel-spray.right { right: -2px; }
+        .spray-particle { position: absolute; bottom: 0; width: 2px; height: 2px; background: rgba(170,200,240,0.4); border-radius: 50%; animation: sprayUp 0.35s ease-out infinite; }
+        @keyframes sprayUp { 0% { transform: translateY(0) scale(1); opacity: 0.7; } 100% { transform: translateY(-12px) translateX(var(--sx)) scale(0.3); opacity: 0; } }
+        .game-area.rain-mode .headlight-reflect, .game-area.rain-mode .wheel-spray { display: block; }
+
+        .skid-mark { position: absolute; z-index: 8; pointer-events: none; animation: skidFade 2.5s ease-out forwards; }
+        .skid-line { position: absolute; bottom: 0; width: 4px; border-radius: 2px; background: rgba(30,30,30,0.35); }
+        .skid-line.left { left: 2px; }
+        .skid-line.right { right: 2px; }
+        /* גשם: סימנים בהירים יותר (רטובים) */
+        .game-area.rain-mode .skid-line { background: rgba(20,20,40,0.25); box-shadow: 0 0 3px rgba(100,140,200,0.15); }
+        @keyframes skidFade { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 0; } }
+
+        /* פיצוץ אבן — שברים מתפזרים */
+        .rock-shard {
+            position: absolute; z-index: 55; pointer-events: none;
+            font-size: 12px; line-height: 1;
+            animation: rockShardFly 0.5s ease-out forwards;
+        }
+        @keyframes rockShardFly {
+            0% { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* בור — ענן אבק */
+        .dust-cloud {
+            position: absolute; z-index: 54; pointer-events: none;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(139,115,85,0.5), rgba(139,115,85,0.2), transparent);
+            animation: dustPuff 0.6s ease-out forwards;
+        }
+        @keyframes dustPuff {
+            0% { transform: scale(0.3); opacity: 0.8; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+        .dust-particle {
+            position: absolute; z-index: 53; pointer-events: none;
+            width: 3px; height: 3px; border-radius: 50%;
+            background: rgba(139,115,85,0.6);
+        }
+
+        /* קרח — שברי קרח + פלאש כחול */
+        .ice-crack {
+            position: absolute; z-index: 55; pointer-events: none;
+            font-size: 14px; line-height: 1;
+        }
+        .ice-flash {
+            position: absolute; z-index: 54; pointer-events: none;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(160,216,255,0.6), rgba(160,216,255,0.2), transparent);
+            animation: iceFlashPulse 0.4s ease-out forwards;
+        }
+        @keyframes iceFlashPulse {
+            0% { transform: scale(0.3); opacity: 1; }
+            50% { transform: scale(1.8); opacity: 0.5; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        .item { position: absolute; font-size: 24px; z-index: 25; line-height: 1; text-align: center; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); pointer-events: none; }
+        .item.diamond { animation: diamondFloat 1.5s ease-in-out infinite; }
+        .item.heart-item { animation: heartPulse 1s ease-in-out infinite; }
+        .item.puddle-item { filter: drop-shadow(0 2px 6px rgba(100,150,255,0.5)); }
+        .item.pit-item { filter: drop-shadow(0 3px 10px rgba(139,115,85,0.8)) drop-shadow(0 0 6px rgba(100,80,50,0.4)); }
+        .item.ice-item { filter: drop-shadow(0 2px 8px rgba(150,200,255,0.6)) drop-shadow(0 0 4px rgba(200,230,255,0.4)); }
+        @keyframes diamondFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes heartPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+        .item.collected { animation: collectPop 0.3s ease forwards; }
+        .item.bomb-explode { animation: none !important; }
+        @keyframes collectPop { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
+
+        /* פיצוץ פצצה */
+        .explosion {
+            position: absolute; z-index: 55; pointer-events: none;
+            font-size: 40px; line-height: 1; text-align: center;
+            animation: explosionAnim 0.5s ease-out forwards;
+        }
+        @keyframes explosionAnim {
+            0% { transform: scale(0.3) rotate(0deg); opacity: 1; }
+            30% { transform: scale(1.4) rotate(15deg); opacity: 1; }
+            60% { transform: scale(1.6) rotate(-10deg); opacity: 0.7; }
+            100% { transform: scale(2) rotate(5deg); opacity: 0; }
+        }
+        .explosion-ring {
+            position: absolute; z-index: 54; pointer-events: none;
+            border-radius: 50%; border: 3px solid rgba(255,100,0,0.8);
+            animation: explosionRing 0.5s ease-out forwards;
+        }
+        @keyframes explosionRing {
+            0% { width: 10px; height: 10px; opacity: 1; border-color: rgba(255,200,0,0.9); }
+            50% { width: 60px; height: 60px; opacity: 0.6; border-color: rgba(255,100,0,0.7); }
+            100% { width: 100px; height: 100px; opacity: 0; border-color: rgba(255,0,0,0); }
+        }
+        .explosion-particle {
+            position: absolute; z-index: 53; pointer-events: none;
+            width: 4px; height: 4px; border-radius: 50%;
+            animation: explosionParticle 0.4s ease-out forwards;
+        }
+        @keyframes explosionParticle {
+            0% { transform: translate(0,0) scale(1); opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* ========== אפקט האצה (ברק) ========== */
+        .car.boost-lunge {
+            animation: boostLunge 0.4s cubic-bezier(0.2, 0.8, 0.3, 1) !important;
+        }
+        @keyframes boostLunge {
+            0% { transform: translateY(0) scaleY(1) scaleX(1); }
+            25% { transform: translateY(-12px) scaleY(1.08) scaleX(0.94); }
+            50% { transform: translateY(-6px) scaleY(1.04) scaleX(0.97); }
+            100% { transform: translateY(0) scaleY(1) scaleX(1); }
+        }
+        .boost-glow {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 20px; height: 20px; border-radius: 50%;
+            pointer-events: none; z-index: 29;
+            animation: boostGlowPulse 0.5s ease-out forwards;
+        }
+        @keyframes boostGlowPulse {
+            0% { width: 20px; height: 20px; opacity: 0.9; box-shadow: 0 0 20px 8px rgba(255,215,0,0.8), 0 0 40px 16px rgba(255,160,0,0.4); }
+            50% { width: 80px; height: 80px; opacity: 0.5; box-shadow: 0 0 30px 12px rgba(255,215,0,0.5), 0 0 60px 24px rgba(255,160,0,0.2); }
+            100% { width: 120px; height: 120px; opacity: 0; box-shadow: 0 0 0 0 transparent; }
+        }
+        .speed-line {
+            position: absolute; pointer-events: none; z-index: 28;
+            width: 2px; border-radius: 1px;
+            background: linear-gradient(180deg, rgba(255,215,0,0.7), rgba(255,215,0,0));
+            animation: speedLineFall 0.4s ease-out forwards;
+        }
+        @keyframes speedLineFall {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(60px); }
+        }
+
+        /* Parallax שכבות רקע */
+        .parallax-bg-far { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: repeating-linear-gradient(180deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 2px, transparent 2px, transparent 60px); background-size: 100% 60px; }
+        .parallax-bg-mid { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: repeating-linear-gradient(180deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 40px); background-size: 100% 40px; }
+
+        /* מד התקדמות — תחתון */
+        .progress-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.15); z-index: 45; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #4DB8FF, #F5C842); width: 0%; transition: width 0.3s; }
+
+        .float-text { position: absolute; z-index: 60; font-weight: 900; font-size: 18px; pointer-events: none; animation: floatUp 0.8s ease forwards; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-50px) scale(1.3); } }
+        .swipe-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; font-weight: 900; color: white; background: rgba(0,0,0,0.6); padding: 16px 28px; border-radius: 20px; border: 2px solid rgba(245,200,66,0.4); z-index: 55; animation: hintFade 1.5s ease forwards; pointer-events: none; text-align: center; backdrop-filter: blur(4px); }
+        @keyframes hintFade { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.8); } 20% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 60% { opacity: 0.9; } 100% { opacity: 0; transform: translate(-50%,-50%) scale(0.95); } }
+    </style>
+</head>
+<body>
+
+<div class="countdown-modal" id="countdownModal">
+    <div id="countdownText" class="countdown-text">🏎️</div>
+</div>
+
+<div class="result-modal" id="resultModal">
+    <div class="result-box">
+        <div class="result-icon" id="resultIcon">🏆</div>
+        <div class="result-title" id="resultTitle"></div>
+        <div class="result-sub" id="resultSub"></div>
+        <div class="result-waiting" id="resultWaiting" style="display:none; font-size:0.85rem; opacity:0.6; margin-bottom:14px;"></div>
+        <div class="result-buttons">
+            <button class="result-btn primary" id="btnPlayAgain" onclick="playAgain()">🔄 שחק שוב</button>
+            <button class="result-btn secondary" onclick="goHome()">🏠 בית</button>
+        </div>
+    </div>
+</div>
+
+<div class="curb-left"></div>
+<div class="curb-right"></div>
+
+<div class="stats-bar">
+    <div class="stats-top">
+        <div class="home-button" id="homeBtn">🏠</div>
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-label">💎 נקודות</div>
+                <div class="stat-value" id="points">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">🏆 נצחונות</div>
+                <div class="wins-display" id="winsDisplay">
+                    <span class="trophy dim">🏆</span><span class="trophy dim">🏆</span><span class="trophy dim">🏆</span>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">⚡ מהירות</div>
+                <div class="speed-indicator" id="speedInd">
+                    <div class="speed-level active">🟢</div>
+                    <div class="speed-level">🟡</div>
+                    <div class="speed-level">🟠</div>
+                    <div class="speed-level">🔴</div>
+                    <div class="speed-level">🟣</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">❤️ חיים</div>
+                <div class="lives-display" id="livesDisplay">
+                    <span class="heart">❤️</span><span class="heart">❤️</span><span class="heart">❤️</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="track-progress" id="trackProgress">
+        <div class="track-progress-fill"></div>
+        <div class="track-marker-start">🏁</div>
+        <div class="track-marker-end">🚦</div>
+        <div class="track-dot" id="dotPlayer" style="right: 2%;"></div>
+        <div class="track-dot" id="dotOpponent" style="right: 2%; display: none;"></div>
+    </div>
+</div>
+
+<div class="game-area" id="gameArea">
+    <div class="parallax-bg-far" id="bgFar"></div>
+    <div class="parallax-bg-mid" id="bgMid"></div>
+    <div class="race-line hidden" id="startLine"></div>
+    <div class="race-line hidden" id="finishLine"></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="wet-overlay"></div>
+    <div class="puddles"></div>
+    <div class="rain-container" id="rainContainer"></div>
+    <div class="rain-splash" id="rainSplash"></div>
+    <div class="road-mist"></div>
+    <div class="lightning-flash" id="lightningFlash"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag", authDomain: "kidssapp-izhaki.firebaseapp.com",
+    databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "kidssapp-izhaki", storageBucket: "kidssapp-izhaki.firebasestorage.app",
+    messagingSenderId: "663906163746", appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const params = new URLSearchParams(location.search);
+const displayName = params.get('player') || 'משתמש';
+const mode = params.get('mode') || 'multiplayer';
+const userDataStr = sessionStorage.getItem('myUser');
+const userData = userDataStr ? JSON.parse(userDataStr) : null;
+if (!userData) { window.location.href = 'index.html'; throw new Error('No user data'); }
+const myName = userData.id;
+const myColor = userData.color;
+const myEmoji = userData.emoji;
+
+// ========== קבועים ==========
+const LANE_COUNT = 5;
+// מהירויות: בסיס 4.8, עליה של 40% כל שלב
+// מהירויות: בסיס 3.84, עליה של 40% כל שלב
+const SPEEDS = [3.5, 4.5, 6, 8, 11];
+const HIT_RADIUS = 28;
+const PLAYER_FIXED_BOTTOM_PCT = 0.18;
+
+// מסלול אחיד: אורך כולל = 4 × מסך (אותו אורך כמו 4 קטעים)
+let RACE_LENGTH = 0; // ייקבע אחרי calcDimensions
+
+// אייטמים: 4 גלים × 16 אייטמים = 64 + 2 לבבות
+const TOTAL_ITEMS_MULTIPLIER = 4;
+const HEARTS_COUNT = 2;
+
+function getWaveItems() {
+    if (isRainMode) {
+        return [
+            ...Array(5).fill({ type: 'diamond', emoji: '💎' }),
+            ...Array(3).fill({ type: 'boost', emoji: '⚡' }),
+            ...Array(2).fill({ type: 'bomb', emoji: '💣' }),
+            ...Array(3).fill({ type: 'puddle', emoji: '💦' }),
+            ...Array(3).fill({ type: 'ice', emoji: '❄️' }),
+        ];
+    }
+    return [
+        ...Array(5).fill({ type: 'diamond', emoji: '💎' }),
+        ...Array(3).fill({ type: 'boost', emoji: '⚡' }),
+        ...Array(2).fill({ type: 'bomb', emoji: '💣' }),
+        ...Array(3).fill({ type: 'rock', emoji: '🪨' }),
+        ...Array(3).fill({ type: 'pit', emoji: '🕳️' }),
+    ];
+}
+
+function getAllItemDefs() {
+    const base = getWaveItems();
+    let all = [];
+    for (let i = 0; i < TOTAL_ITEMS_MULTIPLIER; i++) {
+        all.push(...base);
+    }
+    for (let i = 0; i < HEARTS_COUNT; i++) {
+        all.push({ type: 'heart', emoji: '❤️‍🔥' });
+    }
+    return shuffle(all);
+}
+
+// ========== מצב ==========
+let playerLane = 0, playerSpeed = 0, lives = 3, points = 0, pointsAtRoundStart = 0;
+let gameRunning = false, gameFinished = false;
+let frozen = false, frozenUntil = 0;
+let iceSkidding = false;
+let items = [], playerCarEl = null, aiCarEl = null, animFrameId = null;
+let playerY = 0, aiY = 0, aiLane = 2, aiSpeed = 0;
+let aiFrozen = false, aiFrozenUntil = 0;
+let aiMoveCooldown = 0, aiBoostCooldownUntil = 0, aiFinished = false;
+let tiltTimeout = null, isRainMode = false, lightningTimeout = null;
+
+const gameArea = document.getElementById('gameArea');
+const progressFill = document.getElementById('progressFill');
+const dotPlayer = document.getElementById('dotPlayer');
+const dotOpponent = document.getElementById('dotOpponent');
+const bgFar = document.getElementById('bgFar');
+const bgMid = document.getElementById('bgMid');
+
+let gameW = 0, gameH = 0, laneW = 0;
+const CURB_W = 14;
+const CAR_HEIGHT = 65;
+const CAR_HALF_W = 21;
+
+function calcDimensions() {
+    gameW = gameArea.clientWidth;
+    gameH = gameArea.clientHeight;
+    laneW = (gameW - CURB_W * 2) / LANE_COUNT;
+    RACE_LENGTH = gameH * 8;
+}
+function getLaneCenter(i) { return CURB_W + i * laneW + laneW / 2; }
+
+function buildLaneDividers() {
+    laneDividers = [];
+    for (let i = 1; i < LANE_COUNT; i++) {
+        const d = document.createElement('div'); d.className = 'lane-divider';
+        d.style.left = `${CURB_W + i * laneW - 1.5}px`; gameArea.appendChild(d);
+        laneDividers.push(d);
+    }
+}
+
+// ========== Firebase ==========
+const roomPath = mode === 'ai' ? `rooms_v3/race_ai/${myName}` : `rooms_v3/race/${myName}`;
+const roomRef = ref(db, mode === 'ai' ? 'rooms_v3/race_ai' : 'rooms_v3/race');
+let heartbeatInterval = null, roomListenerUnsubscribe = null, opponentCheckInterval = null, myJoinedAt = Date.now();
+
+function startHeartbeat() { heartbeatInterval = setInterval(() => { set(ref(db, roomPath), { name: displayName, color: myColor, emoji: myEmoji, joinedAt: myJoinedAt, timestamp: Date.now(), active: true }); }, 1000); }
+function stopHeartbeat() { if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; } }
+function stopOpponentCheck() { if (opponentCheckInterval) { clearInterval(opponentCheckInterval); opponentCheckInterval = null; } }
+
+function handleOpponentLeft(n, e) {
+    stopHeartbeat(); stopOpponentCheck(); stopGame(); stopBgAnimation(); stopPositionSync();
+    if (roomListenerUnsubscribe) { roomListenerUnsubscribe(); roomListenerUnsubscribe = null; }
+    if (mpStatusUnsub) { mpStatusUnsub(); mpStatusUnsub = null; }
+    if (mpReadyUnsub) { mpReadyUnsub(); mpReadyUnsub = null; }
+    remove(ref(db, `rooms_v3/race/${myName}`));
+    showResult('😢', (n&&e) ? `${e} ${n} עזב/ה` : 'השחקן השני עזב/ה', 'המרוץ הסתיים', false);
+}
+function startOpponentCheck() {
+    if (mode === 'ai' || opponentCheckInterval) return;
+    opponentCheckInterval = setInterval(async () => {
+        try {
+            const snap = await get(roomRef); const players = snap.val() || {}; const names = Object.keys(players);
+            if (names.length === 1 && names[0] === myName) { let n='',e=''; if (window._ls) for (const [id,p] of Object.entries(window._ls)) { if (id!==myName) { n=p.name||''; e=p.emoji||''; break; } } handleOpponentLeft(n,e); return; }
+            if (names.length === 2) { const opp = names.find(x=>x!==myName); if (opp&&players[opp]&&Date.now()-(players[opp].timestamp||0)>5000) { await remove(ref(db,`rooms_v3/race/${opp}`)); handleOpponentLeft(players[opp].name||'',players[opp].emoji||''); } }
+        } catch(e) {}
+    }, 3000);
+}
+
+window.goHome = async function() {
+    stopHeartbeat(); stopOpponentCheck(); stopGame(); stopBgAnimation(); stopPositionSync();
+    if (mpStatusUnsub) { mpStatusUnsub(); mpStatusUnsub = null; }
+    if (mpReadyUnsub) { mpReadyUnsub(); mpReadyUnsub = null; }
+    if (roomListenerUnsubscribe) { roomListenerUnsubscribe(); roomListenerUnsubscribe = null; }
+    if (mode==='ai') await remove(ref(db,`rooms_v3/race_ai/${myName}`));
+    else {
+        await remove(ref(db,`rooms_v3/race/${myName}`));
+        if (multiGameId) {
+            await remove(ref(db,`game/race/${multiGameId}`));
+            const parts = multiGameId.split('_');
+            if (parts.length === 2) await remove(ref(db,`game/race/${parts[1]}_${parts[0]}`));
+        }
+    }
+    setTimeout(() => { window.location.href = 'index.html'; }, 200);
+};
+document.getElementById('homeBtn').addEventListener('click', () => goHome());
+window.addEventListener('beforeunload', () => { stopHeartbeat(); stopOpponentCheck(); if (mode==='ai') remove(ref(db,`rooms_v3/race_ai/${myName}`)); else remove(ref(db,`rooms_v3/race/${myName}`)); });
+
+// ========== Play Again ==========
+window.playAgain = function() {
+    document.getElementById('resultModal').classList.remove('show');
+    resetGameState();
+    startCountdown(startGame);
+};
+function resetGameState() {
+    stopBgAnimation();
+    roadOffset = 0;
+    items.forEach(it => { if (it.el && it.el.parentNode) it.el.remove(); }); items = [];
+    gameArea.querySelectorAll('.item, .float-text, .swipe-hint, .collected, .skid-mark').forEach(el => el.remove());
+    
+    playerSpeed = 0; lives = 3;
+    pointsAtRoundStart = points;
+    gameFinished = false; frozen = false; frozenUntil = 0; iceSkidding = false;
+    window._mpStarted = false;
+    aiFrozen = false; aiFrozenUntil = 0; aiMoveCooldown = 0; aiBoostCooldownUntil = 0; aiFinished = false;
+    playerY = 0; aiY = 0; aiSpeed = 0;
+    oppY = 0; oppSpeed = 0; oppFinishedFlag = false;
+    
+    updateLives(-1); updateSpeed(false); updatePoints(false);
+    
+    if (mode === 'ai') { playerLane = 3; aiLane = 1; }
+    else { playerLane = multiAmFirst ? 3 : 1; }
+    
+    placePlayerCar();
+    moveCarToLane(playerCarEl, playerLane, null);
+    playerCarEl.classList.remove('frozen', 'flash', 'speed-3', 'speed-4', 'speed-5', 'finish-fly');
+    updateExhaust(playerCarEl, 0); updateHeadlights(playerCarEl, 0);
+    playerCarEl.style.transform = ''; tiltActive = false; wobbleFrame = 0;
+    
+    if (aiCarEl) { placeAiCar(); moveCarToLane(aiCarEl, aiLane, null); aiCarEl.style.display = 'block'; aiCarEl.classList.remove('frozen', 'flash'); updateExhaust(aiCarEl, 0); updateHeadlights(aiCarEl, 0); }
+    if (oppCarEl) { oppCarEl.style.bottom = `${gameH * PLAYER_FIXED_BOTTOM_PCT - CAR_HEIGHT/2}px`; oppCarEl.style.display = 'block'; oppCarEl.classList.remove('frozen', 'flash'); }
+    
+    if (multiGameId) { set(ref(db, `game/race/${multiGameId}/pos_${myName}`), null); remove(ref(db, `game/race/${multiGameId}/items`)); }
+    
+    // אפס קווי זינוק/סיום
+    document.getElementById('finishLine').classList.add('hidden');
+    document.getElementById('finishLine').style.top = '';
+    document.getElementById('startLine').classList.add('hidden');
+    document.getElementById('startLine').style.top = '';
+    document.getElementById('startLine').style.bottom = '';
+    
+    // הגרלת מזג אוויר מחדש
+    setupWeather();
+    
+    showStartLine();
+    spawnAllItems();
+    if (multiGameId) mpSpawnItems();
+    updateTrackDots();
+}
+
+// ========== UI ==========
+function updateLives(idx) { document.querySelectorAll('#livesDisplay .heart').forEach((h,i) => { if (i>=lives) { if (i===idx) { h.classList.add('just-lost'); setTimeout(()=>h.classList.remove('just-lost'),500); } h.classList.add('lost'); } else h.classList.remove('lost','just-lost'); }); }
+function updateSpeed(gained) { document.querySelectorAll('#speedInd .speed-level').forEach((l,i) => { const was=l.classList.contains('active'); l.classList.toggle('active',i<=playerSpeed); if (gained&&i===playerSpeed&&!was) { l.classList.add('just-gained'); setTimeout(()=>l.classList.remove('just-gained'),500); } }); }
+function updatePoints(added) { const el=document.getElementById('points'); el.textContent=points; if (added) { el.classList.remove('pop'); void el.offsetHeight; el.classList.add('pop'); } }
+function updateWins() {
+    document.querySelectorAll('#winsDisplay .trophy').forEach((t, i) => {
+        const wasWon = t.classList.contains('won');
+        if (i < myWins) { t.classList.remove('dim'); t.classList.add('won'); if (!wasWon) { t.classList.add('just-won'); setTimeout(() => t.classList.remove('just-won'), 600); } }
+        else { t.classList.remove('won', 'just-won'); t.classList.add('dim'); }
+    });
+}
+function updateProgress() { progressFill.style.width = `${Math.min((playerY / RACE_LENGTH) * 100, 100)}%`; }
+
+function showResult(icon, title, sub, canRetry=true) {
+    gameFinished = true;
+    document.getElementById('resultIcon').textContent = icon;
+    document.getElementById('resultTitle').textContent = title;
+    document.getElementById('resultSub').textContent = sub;
+    document.getElementById('resultWaiting').style.display = 'none';
+    document.getElementById('resultWaiting').textContent = '';
+    document.getElementById('btnPlayAgain').style.display = 'none';
+    document.getElementById('btnPlayAgain').textContent = '🔄 שחק שוב';
+    document.getElementById('btnPlayAgain').disabled = false;
+    
+    if (multiGameId) {
+        mpSetStatus(icon === '💥' ? 'crashed' : (icon === '🏆' ? 'finished' : 'lost'));
+    } else {
+        // AI mode — ספירת נצחונות
+        if (icon === '🏆') {
+            myWins++;
+            updateWins(); // גביע מופיע עם אנימציה מיד!
+        }
+        
+        if (myWins >= WINS_TO_SERIES) {
+            document.getElementById('resultIcon').textContent = '🏆';
+            document.getElementById('resultTitle').textContent = '🎉 אלוף המרוץ!';
+            document.getElementById('resultSub').textContent = `${myWins} נצחונות | ${points} נקודות`;
+            document.getElementById('btnPlayAgain').style.display = canRetry ? 'block' : 'none';
+            document.getElementById('btnPlayAgain').textContent = '🔄 מרוץ חדש';
+            document.getElementById('btnPlayAgain').onclick = function() {
+                myWins = 0; points = 0; pointsAtRoundStart = 0;
+                updateWins();
+                document.getElementById('resultModal').classList.remove('show');
+                document.getElementById('btnPlayAgain').onclick = playAgain;
+                resetGameState();
+                startCountdown(startGame);
+            };
+        } else {
+            document.getElementById('btnPlayAgain').style.display = canRetry ? 'block' : 'none';
+        }
+    }
+    document.getElementById('resultModal').classList.add('show');
+    if (sub.includes('נקודות')) animateScoreCount(points);
+}
+
+// ========== Multiplayer status + wins ==========
+let mpStatusUnsub = null, mpReadyUnsub = null, resetPending = false;
+let oppName_display = '', oppEmoji_display = '';
+let myWins = 0, oppWins = 0;
+const WINS_TO_SERIES = 3;
+
+async function mpSetStatus(status) {
+    if (!multiGameId) return;
+    const oppId = Object.keys(window._ls || {}).find(n => n !== myName);
+    if (!oppId) return;
+    if (status === 'finished') { myWins++; await set(ref(db, `game/race/${multiGameId}/wins_${myName}`), myWins); updateWins(); }
+    await set(ref(db, `game/race/${multiGameId}/status_${myName}`), status);
+    const waitingEl = document.getElementById('resultWaiting');
+    waitingEl.style.display = 'block';
+    waitingEl.textContent = `⏳ ממתין ל-${oppEmoji_display} ${oppName_display} לסיום המרוץ...`;
+    if (mpStatusUnsub) mpStatusUnsub();
+    mpStatusUnsub = onValue(ref(db, `game/race/${multiGameId}/status_${oppId}`), async snap => {
+        const oppStatus = snap.val();
+        if (!oppStatus || oppStatus === 'playing') return;
+        if (oppStatus === 'finished') { const ws = await get(ref(db, `game/race/${multiGameId}/wins_${oppId}`)); oppWins = ws.val() || 0; }
+        if (myWins >= WINS_TO_SERIES || oppWins >= WINS_TO_SERIES) {
+            if (mpStatusUnsub) { mpStatusUnsub(); mpStatusUnsub = null; }
+            const sw = myWins >= WINS_TO_SERIES;
+            document.getElementById('resultIcon').textContent = sw ? '🏆' : '😔';
+            document.getElementById('resultTitle').textContent = sw ? '🎉 ניצחת במרוץ!' : `${oppEmoji_display} ${oppName_display} ניצח/ה במרוץ!`;
+            document.getElementById('resultSub').textContent = sw ? `${myWins} - ${oppWins} | ${points} נקודות` : `${myWins} - ${oppWins}`;
+            waitingEl.style.display = 'none';
+            const btn = document.getElementById('btnPlayAgain'); btn.style.display = 'block'; btn.textContent = '🔄 התחל מרוץ חדש'; btn.onclick = () => mpRequestPlayAgain(oppId);
+            mpListenReady(oppId);
+        } else {
+            if (resetPending) return; resetPending = true;
+            waitingEl.textContent = `${oppEmoji_display} ${oppName_display} סיים! (${myWins}-${oppWins}) מתחילים מחדש...`;
+            setTimeout(() => {
+                if (mpStatusUnsub) { mpStatusUnsub(); mpStatusUnsub = null; }
+                remove(ref(db, `game/race/${multiGameId}/status_${myName}`));
+                remove(ref(db, `game/race/${multiGameId}/status_${oppId}`));
+                resetPending = false;
+                document.getElementById('resultModal').classList.remove('show');
+                resetGameState(); startCountdown(startGame);
+            }, 3000);
+        }
+    });
+}
+
+function mpRequestPlayAgain(oppId) {
+    set(ref(db, `game/race/${multiGameId}/ready_${myName}`), true);
+    const btn = document.getElementById('btnPlayAgain'); btn.textContent = '⏳ ממתין למשחק חדש...'; btn.disabled = true;
+    const w = document.getElementById('resultWaiting'); w.style.display = 'block'; w.textContent = `⏳ ממתין ל-${oppEmoji_display} ${oppName_display}...`;
+    mpListenReady(oppId);
+}
+
+function mpListenReady(oppId) {
+    if (mpReadyUnsub) mpReadyUnsub();
+    mpReadyUnsub = onValue(ref(db, `game/race/${multiGameId}/ready_${oppId}`), snap => {
+        if (snap.val()) {
+            document.getElementById('resultWaiting').textContent = `${oppEmoji_display} ${oppName_display} מוכן!`;
+            get(ref(db, `game/race/${multiGameId}/ready_${myName}`)).then(ms => {
+                if (ms.val() && !resetPending) {
+                    resetPending = true;
+                    if (mpReadyUnsub) { mpReadyUnsub(); mpReadyUnsub = null; }
+                    if (mpStatusUnsub) { mpStatusUnsub(); mpStatusUnsub = null; }
+                    ['ready','status','wins'].forEach(k => { remove(ref(db,`game/race/${multiGameId}/${k}_${myName}`)); remove(ref(db,`game/race/${multiGameId}/${k}_${oppId}`)); });
+                    myWins = 0; oppWins = 0; points = 0; pointsAtRoundStart = 0; updateWins();
+                    document.getElementById('resultModal').classList.remove('show');
+                    resetPending = false; resetGameState(); startCountdown(startGame);
+                }
+            });
+        } else {
+            if (document.getElementById('btnPlayAgain').disabled) document.getElementById('resultWaiting').textContent = `⏳ ממתין ל-${oppEmoji_display} ${oppName_display}...`;
+        }
+    });
+}
+
+function spawnFloatText(x,y,text,color) { const el=document.createElement('div'); el.className='float-text'; el.textContent=text; el.style.left=`${x}px`; el.style.top=`${y}px`; el.style.color=color; gameArea.appendChild(el); setTimeout(()=>el.remove(),800); }
+
+// אפקט האצה — קווי מהירות + זוהר + דחיפה קדימה
+function triggerBoostEffect(carEl) {
+    // 1. דחיפה קדימה (lunge)
+    carEl.classList.remove('boost-lunge');
+    void carEl.offsetHeight;
+    carEl.classList.add('boost-lunge');
+    setTimeout(() => carEl.classList.remove('boost-lunge'), 450);
+    
+    // 2. פולס זוהר סביב הרכב
+    const glow = document.createElement('div');
+    glow.className = 'boost-glow';
+    carEl.appendChild(glow);
+    setTimeout(() => glow.remove(), 550);
+    
+    // 3. קווי מהירות — נמשכים לאחור מצדי הרכב
+    const carLeft = parseFloat(carEl.style.left) || 0;
+    const carBottom = parseFloat(carEl.style.bottom) || 0;
+    for (let i = 0; i < 8; i++) {
+        const line = document.createElement('div');
+        line.className = 'speed-line';
+        const h = 20 + Math.random() * 30;
+        line.style.height = `${h}px`;
+        // פיזור אקראי סביב הרכב
+        const offsetX = -10 + Math.random() * (CAR_HALF_W * 2 + 20);
+        line.style.left = `${carLeft + offsetX}px`;
+        line.style.bottom = `${carBottom - 10 - Math.random() * 30}px`;
+        line.style.animationDuration = `${0.3 + Math.random() * 0.2}s`;
+        line.style.animationDelay = `${Math.random() * 0.1}s`;
+        gameArea.appendChild(line);
+        setTimeout(() => line.remove(), 600);
+    }
+    
+    // 4. ויברציה קלה
+    if (navigator.vibrate) navigator.vibrate(30);
+}
+
+// אפקט פיצוץ פצצה
+function spawnExplosion(x, y) {
+    // 1. אימוג'י פיצוץ 💥 שמחליף את הפצצה
+    const boom = document.createElement('div');
+    boom.className = 'explosion';
+    boom.textContent = '💥';
+    boom.style.left = `${x - 20}px`;
+    boom.style.top = `${y - 20}px`;
+    gameArea.appendChild(boom);
+    setTimeout(() => boom.remove(), 550);
+    
+    // 2. טבעת גלי הדף
+    const ring = document.createElement('div');
+    ring.className = 'explosion-ring';
+    ring.style.left = `${x - 5}px`;
+    ring.style.top = `${y - 5}px`;
+    gameArea.appendChild(ring);
+    setTimeout(() => ring.remove(), 550);
+    
+    // 3. ניצוצות מתפזרים
+    const colors = ['#FF4400', '#FF8800', '#FFCC00', '#FF2200', '#FFA500'];
+    for (let i = 0; i < 10; i++) {
+        const p = document.createElement('div');
+        p.className = 'explosion-particle';
+        p.style.left = `${x}px`;
+        p.style.top = `${y}px`;
+        p.style.background = colors[Math.floor(Math.random() * colors.length)];
+        const angle = (Math.PI * 2 / 10) * i + Math.random() * 0.5;
+        const dist = 20 + Math.random() * 30;
+        const tx = Math.cos(angle) * dist;
+        const ty = Math.sin(angle) * dist;
+        p.style.animation = `explosionParticle 0.4s ease-out forwards`;
+        p.style.setProperty('--tx', `${tx}px`);
+        p.style.setProperty('--ty', `${ty}px`);
+        // Override animation with inline transform
+        p.animate([
+            { transform: 'translate(0,0) scale(1)', opacity: 1 },
+            { transform: `translate(${tx}px,${ty}px) scale(0.3)`, opacity: 0 }
+        ], { duration: 400, easing: 'ease-out', fill: 'forwards' });
+        gameArea.appendChild(p);
+        setTimeout(() => p.remove(), 450);
+    }
+}
+
+// אפקט אבן — שברים מתפזרים
+function spawnRockShatter(x, y) {
+    const flash = document.createElement('div');
+    flash.style.cssText = `position:absolute;z-index:54;pointer-events:none;left:${x-40}px;top:${y-40}px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(200,170,140,0.9),rgba(150,125,100,0.5),transparent);`;
+    flash.animate([
+        { transform: 'scale(0.3)', opacity: 1 },
+        { transform: 'scale(3.5)', opacity: 0 }
+    ], { duration: 500, easing: 'ease-out', fill: 'forwards' });
+    gameArea.appendChild(flash);
+    setTimeout(() => flash.remove(), 550);
+    
+    const shardChars = ['◆', '◇', '▪', '◾', '⬥', '▬', '▮', '■', '▰', '▲'];
+    const shardColors = ['#8B8B8B', '#6B6B6B', '#A0A0A0', '#7B6B5B', '#9B8B7B', '#5A5A5A', '#B0A090', '#C0B0A0'];
+    for (let i = 0; i < 20; i++) {
+        const s = document.createElement('div');
+        s.className = 'rock-shard';
+        s.textContent = shardChars[Math.floor(Math.random() * shardChars.length)];
+        s.style.left = `${x}px`;
+        s.style.top = `${y}px`;
+        s.style.color = shardColors[Math.floor(Math.random() * shardColors.length)];
+        s.style.fontSize = `${14 + Math.random() * 16}px`;
+        s.style.textShadow = '0 2px 4px rgba(0,0,0,0.6)';
+        const angle = (Math.PI * 2 / 20) * i + Math.random() * 0.25;
+        const dist = 30 + Math.random() * 55;
+        const tx = Math.cos(angle) * dist;
+        const ty = Math.sin(angle) * dist;
+        const rot = Math.random() * 900 - 450;
+        s.animate([
+            { transform: 'translate(0,0) rotate(0deg) scale(1.4)', opacity: 1 },
+            { transform: `translate(${tx}px,${ty}px) rotate(${rot}deg) scale(0.1)`, opacity: 0 }
+        ], { duration: 550 + Math.random() * 350, easing: 'ease-out', fill: 'forwards' });
+        gameArea.appendChild(s);
+        setTimeout(() => s.remove(), 950);
+    }
+}
+
+// אפקט בור — ענן אבק + חלקיקי עפר
+function spawnPitDust(x, y) {
+    const sizes = [
+        { w: 70, h: 70, dx: 0, dy: 0, delay: 0 },
+        { w: 50, h: 50, dx: -20, dy: -12, delay: 40 },
+        { w: 50, h: 50, dx: 20, dy: -8, delay: 60 },
+        { w: 40, h: 40, dx: -12, dy: 16, delay: 100 },
+        { w: 40, h: 40, dx: 14, dy: 14, delay: 80 },
+        { w: 30, h: 30, dx: -25, dy: 5, delay: 130 },
+        { w: 30, h: 30, dx: 25, dy: -15, delay: 110 },
+    ];
+    for (const s of sizes) {
+        const cloud = document.createElement('div');
+        cloud.className = 'dust-cloud';
+        cloud.style.left = `${x - s.w/2 + s.dx}px`;
+        cloud.style.top = `${y - s.h/2 + s.dy}px`;
+        cloud.style.width = `${s.w}px`;
+        cloud.style.height = `${s.h}px`;
+        cloud.style.animationDelay = `${s.delay}ms`;
+        gameArea.appendChild(cloud);
+        setTimeout(() => cloud.remove(), 800 + s.delay);
+    }
+}
+
+// אפקט קרח — שברי קרח + פלאש כחול קפוא
+function spawnIceCrack(x, y) {
+    // פלאש כחול גדול
+    const flash = document.createElement('div');
+    flash.className = 'ice-flash';
+    flash.style.left = `${x - 40}px`;
+    flash.style.top = `${y - 40}px`;
+    flash.style.width = '80px';
+    flash.style.height = '80px';
+    gameArea.appendChild(flash);
+    setTimeout(() => flash.remove(), 550);
+    
+    const iceChars = ['❄', '✦', '✧', '◇', '◆', '⬥', '✶', '✴'];
+    const iceColors = ['#A0D8FF', '#C0E8FF', '#80C8FF', '#FFFFFF', '#B0E0FF', '#D0F0FF', '#90D0FF'];
+    for (let i = 0; i < 20; i++) {
+        const s = document.createElement('div');
+        s.className = 'ice-crack';
+        s.textContent = iceChars[Math.floor(Math.random() * iceChars.length)];
+        s.style.left = `${x}px`;
+        s.style.top = `${y}px`;
+        s.style.color = iceColors[Math.floor(Math.random() * iceColors.length)];
+        s.style.fontSize = `${14 + Math.random() * 16}px`;
+        s.style.textShadow = '0 0 6px rgba(160,216,255,0.9), 0 0 12px rgba(100,180,255,0.4)';
+        const angle = (Math.PI * 2 / 20) * i + Math.random() * 0.25;
+        const dist = 30 + Math.random() * 55;
+        const tx = Math.cos(angle) * dist;
+        const ty = Math.sin(angle) * dist;
+        const rot = Math.random() * 900 - 450;
+        s.animate([
+            { transform: 'translate(0,0) rotate(0deg) scale(1.4)', opacity: 1 },
+            { transform: `translate(${tx}px,${ty}px) rotate(${rot}deg) scale(0.1)`, opacity: 0 }
+        ], { duration: 550 + Math.random() * 350, easing: 'ease-out', fill: 'forwards' });
+        gameArea.appendChild(s);
+        setTimeout(() => s.remove(), 950);
+    }
+}
+
+// אפקט החלקה על קרח — רכב מתנדנד ולא ניתן לשליטה
+function triggerIceSkid() {
+    iceSkidding = true;
+    playerCarEl.classList.remove('ice-skid');
+    void playerCarEl.offsetHeight;
+    playerCarEl.classList.add('ice-skid');
+    shakeScreen();
+    if (navigator.vibrate) navigator.vibrate([40, 30, 60, 30, 40, 30, 30]);
+    
+    // סימני צמיגים רציפים בזמן ההחלקה
+    const speed = SPEEDS[playerSpeed] || SPEEDS[0];
+    let trailCount = 0;
+    const trailInterval = setInterval(() => {
+        trailCount++;
+        if (trailCount > 12 || !iceSkidding) { clearInterval(trailInterval); return; }
+        
+        const carLeft = parseFloat(playerCarEl.style.left) || 0;
+        const carBottom = parseFloat(playerCarEl.style.bottom) || 0;
+        // קבל את ה-transform הנוכחי של הרכב כדי למקם סימנים נכון
+        const cs = getComputedStyle(playerCarEl);
+        const matrix = new DOMMatrix(cs.transform);
+        const offsetX = matrix.m41 || 0;
+        
+        const trail = document.createElement('div');
+        trail.className = 'skid-trail';
+        trail.style.left = `${carLeft + offsetX + 6}px`;
+        trail.style.bottom = `${carBottom - 4}px`;
+        trail.style.width = '30px';
+        trail.style.height = '35px';
+        
+        // שני פסים — גלגל שמאל וימין
+        const lineL = document.createElement('div');
+        lineL.className = 'skid-trail-line';
+        lineL.style.left = '0px';
+        lineL.style.height = '35px';
+        lineL.style.transform = `rotate(${(offsetX * 0.3).toFixed(1)}deg)`;
+        
+        const lineR = document.createElement('div');
+        lineR.className = 'skid-trail-line';
+        lineR.style.right = '0px';
+        lineR.style.height = '35px';
+        lineR.style.transform = `rotate(${(offsetX * 0.3).toFixed(1)}deg)`;
+        
+        trail.appendChild(lineL);
+        trail.appendChild(lineR);
+        gameArea.appendChild(trail);
+        
+        // סימנים זזים למטה עם ה-parallax
+        skidMarks.push(trail);
+        setTimeout(() => { trail.remove(); skidMarks = skidMarks.filter(m => m !== trail); }, 1600);
+    }, 75);
+    
+    setTimeout(() => {
+        iceSkidding = false;
+        playerCarEl.classList.remove('ice-skid');
+        playerCarEl.style.transform = '';
+    }, 1000);
+}
+
+// אפקט בור — רכב קופץ וחוזר, לא ניתן לשלוט
+function triggerPitBounce() {
+    iceSkidding = true;
+    playerCarEl.classList.remove('pit-bounce');
+    void playerCarEl.offsetHeight;
+    playerCarEl.classList.add('pit-bounce');
+    shakeScreen();
+    if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+    setTimeout(() => {
+        iceSkidding = false;
+        playerCarEl.classList.remove('pit-bounce');
+        playerCarEl.style.transform = '';
+    }, 1000);
+}
+
+function updateCarSpeedClass() {
+    playerCarEl.classList.remove('speed-3','speed-4','speed-5');
+    if (playerSpeed >= 4) playerCarEl.classList.add('speed-5');
+    else if (playerSpeed >= 3) playerCarEl.classList.add('speed-4');
+    else if (playerSpeed >= 2) playerCarEl.classList.add('speed-3');
+    updateExhaust(playerCarEl, playerSpeed); updateHeadlights(playerCarEl, playerSpeed);
+}
+
+let wobbleFrame = 0;
+function applyWobble(carEl, speed) {
+    if (speed <= 0) { carEl.style.transform = ''; return; }
+    wobbleFrame++;
+    const a = 0.3 + speed * 0.2, f = 0.08 + speed * 0.02;
+    carEl.style.transform = `translateX(${Math.sin(wobbleFrame*f)*a}px) rotate(${Math.sin(wobbleFrame*f*0.7)*(0.3+speed*0.15)}deg)`;
+}
+
+// ========== אנימציות כביש ==========
+let roadOffset = 0;
+const curbLeft = document.querySelector('.curb-left');
+const curbRight = document.querySelector('.curb-right');
+let laneDividers = [];
+
+function updateRoadAnimation(speed) {
+    roadOffset += speed * 1.5;
+    curbLeft.style.backgroundPositionY = `${roadOffset % 50}px`;
+    curbRight.style.backgroundPositionY = `${roadOffset % 50}px`;
+    laneDividers.forEach(d => { d.style.backgroundPositionY = `${roadOffset % 35}px`; });
+    bgFar.style.backgroundPositionY = `${(roadOffset * 0.3) % 60}px`;
+    bgMid.style.backgroundPositionY = `${(roadOffset * 0.6) % 40}px`;
+}
+
+function shakeScreen() { gameArea.classList.remove('shake'); void gameArea.offsetHeight; gameArea.classList.add('shake'); setTimeout(() => gameArea.classList.remove('shake'), 300); }
+
+function animateScoreCount(finalScore) {
+    const el = document.getElementById('resultSub'); const ft = el.textContent;
+    const pi = ft.indexOf('נקודות'); let prefix = '';
+    if (pi > 0) { const bp = ft.substring(0, pi).trim(); const ls = bp.lastIndexOf(' '); if (ls > 0) prefix = bp.substring(0, ls + 1); }
+    let cur = pointsAtRoundStart; const diff = finalScore - cur;
+    if (diff <= 0) { el.textContent = `${prefix}${finalScore} נקודות`; return; }
+    const step = Math.max(1, Math.ceil(diff / 30));
+    const iv = setInterval(() => { cur += step; if (cur >= finalScore) { cur = finalScore; clearInterval(iv); } el.textContent = `${prefix}${cur} נקודות`; }, 30);
+}
+
+// ========== מד מסלול ==========
+let oppY = 0, oppLane = 1, oppSpeed = 0, oppFinishedFlag = false;
+let oppCarEl = null, positionSyncInterval = null, oppPositionUnsub = null;
+
+function updateTrackDots() {
+    dotPlayer.style.right = `${2 + Math.min(playerY / RACE_LENGTH, 1) * 93}%`;
+    if (mode === 'ai' && aiCarEl) { dotOpponent.style.display = 'block'; dotOpponent.style.right = `${2 + Math.min(aiY / RACE_LENGTH, 1) * 93}%`; }
+    else if (multiGameId) { dotOpponent.style.display = 'block'; dotOpponent.style.right = `${2 + Math.min(oppY / RACE_LENGTH, 1) * 93}%`; }
+}
+
+function setupTrackDots() {
+    dotPlayer.style.background = myColor; dotPlayer.style.borderColor = myColor;
+    if (mode === 'ai') { dotOpponent.style.display = 'block'; dotOpponent.style.background = '#FFA500'; dotOpponent.style.borderColor = '#FFA500'; }
+}
+
+// ========== Multiplayer position sync ==========
+function startPositionSync() {
+    if (!multiGameId) return;
+    const myPosRef = ref(db, `game/race/${multiGameId}/pos_${myName}`);
+    positionSyncInterval = setInterval(() => {
+        if (!gameRunning) { if (gameFinished) { set(myPosRef, { y: Math.round(playerY), lane: playerLane, spd: playerSpeed, t: Date.now() }); clearInterval(positionSyncInterval); positionSyncInterval = null; } return; }
+        set(myPosRef, { y: Math.round(playerY), lane: playerLane, spd: playerSpeed, t: Date.now() });
+    }, 80);
+    const oppName = Object.keys(window._ls).find(n => n !== myName); if (!oppName) return;
+    let targetOppY = 0, targetOppLane = oppLane;
+    oppPositionUnsub = onValue(ref(db, `game/race/${multiGameId}/pos_${oppName}`), snap => {
+        const d = snap.val(); if (!d) return;
+        targetOppY = d.y || 0; targetOppLane = d.lane !== undefined ? d.lane : oppLane; oppSpeed = d.spd || 0;
+        if (targetOppY >= RACE_LENGTH && !oppFinishedFlag) oppFinishedFlag = true;
+    });
+    let interpRunning = true;
+    function interpolateOpp() {
+        if (!interpRunning || !oppCarEl) { if (interpRunning) requestAnimationFrame(interpolateOpp); return; }
+        oppY += (targetOppY - oppY) * 0.15;
+        if (targetOppLane !== oppLane) { oppLane = targetOppLane; moveCarToLane(oppCarEl, oppLane, null); }
+        const delta = oppY - playerY;
+        const pBottom = gameH * PLAYER_FIXED_BOTTOM_PCT - CAR_HEIGHT/2;
+        oppCarEl.style.bottom = `${pBottom + (delta / gameH) * gameH}px`;
+        // הצג אם בטווח מסך
+        const oppBottom = pBottom + (delta / gameH) * gameH;
+        oppCarEl.style.display = (oppBottom > -CAR_HEIGHT && oppBottom < gameH + CAR_HEIGHT) ? 'block' : 'none';
+        requestAnimationFrame(interpolateOpp);
+    }
+    requestAnimationFrame(interpolateOpp);
+    window._stopInterp = () => { interpRunning = false; };
+}
+function stopPositionSync() {
+    if (positionSyncInterval) { clearInterval(positionSyncInterval); positionSyncInterval = null; }
+    if (oppPositionUnsub) { oppPositionUnsub(); oppPositionUnsub = null; }
+    if (window._stopInterp) { window._stopInterp(); window._stopInterp = null; }
+}
+
+// ========== קו מירוץ ==========
+function buildRaceLine() {
+    ['startLine','finishLine'].forEach(id => {
+        const line = document.getElementById(id);
+        line.innerHTML = '';
+        for (let r = 0; r < 2; r++) {
+            const row = document.createElement('div'); row.className = 'race-line-row';
+            const cnt = Math.ceil(gameW / 12);
+            for (let i = 0; i < cnt; i++) { const sq = document.createElement('div'); sq.className = `race-line-sq ${(i+r)%2===0?'w':'b'}`; row.appendChild(sq); }
+            line.appendChild(row);
+        }
+    });
+}
+function showStartLine() {
+    const line = document.getElementById('startLine');
+    line.classList.remove('hidden');
+    line.style.top = 'auto'; line.style.bottom = 'auto';
+    // קו הזינוק — ממוקם לפי parallax ב-worldY = 0 (קצת מעל המכונית)
+    const screenY = getItemScreenY(0);
+    line.style.top = `${screenY - 20}px`;
+}
+
+// ========== רכב ==========
+const CAR_COLORS = { emma:{main:'#FF6B85',dark:'#C2184C',accent:'#FFB0C0'}, rif:{main:'#5EC8FF',dark:'#1E5F9E',accent:'#A0E0FF'}, dad:{main:'#52D273',dark:'#0B8C2F',accent:'#90EEA8'}, mom:{main:'#BA68C8',dark:'#4A148C',accent:'#D9A0E8'}, guest:{main:'#C0C0C0',dark:'#606060',accent:'#E0E0E0'}, ai:{main:'#FFA500',dark:'#B86E00',accent:'#FFD080'} };
+function darkenHex(hex, f=0.45) { const [r,g,b]=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)); return '#'+[r,g,b].map(c=>Math.round(c*f).toString(16).padStart(2,'0')).join(''); }
+function lightenHex(hex, f=0.4) { const [r,g,b]=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)); return '#'+[r,g,b].map(c=>Math.min(255,Math.round(c+(255-c)*f)).toString(16).padStart(2,'0')).join(''); }
+function getCC(u) { if (u==='ai') return CAR_COLORS.ai; if (u&&u.startsWith('#')) return {main:u,dark:darkenHex(u),accent:lightenHex(u)}; if (u===myName) return CAR_COLORS[userData?.rawId]||CAR_COLORS.guest; return CAR_COLORS[u]||CAR_COLORS.guest; }
+
+function carSVG(u, uid) {
+    const c=getCC(u); const M=c.main,D=c.dark,A=c.accent||lightenHex(M);
+    const W='#1A2840',WS='rgba(120,200,255,0.35)',CHR='#D8E8F0',YEL='#FFD700',RT='#FF3B4A',RG='#FF6070';
+    return `<svg viewBox="0 0 110 170" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="bd-${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${A}"/><stop offset="40%" stop-color="${M}"/><stop offset="100%" stop-color="${D}"/></linearGradient><radialGradient id="hl-${uid}" cx="0.35" cy="0.15" r="0.55"><stop offset="0%" stop-color="#fff" stop-opacity="0.35"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient><linearGradient id="wd-${uid}" x1="0.5" y1="0" x2="0.5" y2="1"><stop offset="0%" stop-color="#1E3450"/><stop offset="100%" stop-color="#0A1525"/></linearGradient><filter id="gl-${uid}" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.5"/><feComposite in="SourceGraphic"/></filter><linearGradient id="tr-${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a2a2a"/><stop offset="50%" stop-color="#1a1a1a"/><stop offset="100%" stop-color="#0d0d0d"/></linearGradient></defs><path d="M 30 18 Q 55 6 80 18 L 85 30 L 88 65 Q 90 72 90 80 L 90 130 Q 88 145 80 150 L 72 155 L 38 155 L 30 150 Q 22 145 20 130 L 20 80 Q 20 72 22 65 L 25 30 Z" fill="url(#bd-${uid})" stroke="${D}" stroke-width="1.8"/><path d="M 35 20 Q 55 10 75 20 L 78 30 L 80 55 Q 55 58 30 55 L 32 30 Z" fill="url(#hl-${uid})"/><line x1="55" y1="14" x2="55" y2="60" stroke="${D}" stroke-width="0.6" opacity="0.3"/><path d="M 45 35 L 65 35 L 63 45 L 47 45 Z" fill="${W}" stroke="${D}" stroke-width="0.6" opacity="0.7"/><line x1="50" y1="36" x2="49" y2="44" stroke="${D}" stroke-width="0.4" opacity="0.5"/><line x1="55" y1="36" x2="55" y2="44" stroke="${D}" stroke-width="0.4" opacity="0.5"/><line x1="60" y1="36" x2="61" y2="44" stroke="${D}" stroke-width="0.4" opacity="0.5"/><path d="M 24 22 L 38 18 L 36 26 L 22 28 Z" fill="#fff" opacity="0.95" filter="url(#gl-${uid})"/><path d="M 24 22 L 38 18 L 36 26 L 22 28 Z" fill="${YEL}" opacity="0.3"/><path d="M 86 22 L 72 18 L 74 26 L 88 28 Z" fill="#fff" opacity="0.95" filter="url(#gl-${uid})"/><path d="M 86 22 L 72 18 L 74 26 L 88 28 Z" fill="${YEL}" opacity="0.3"/><line x1="25" y1="27" x2="35" y2="24" stroke="${YEL}" stroke-width="1" opacity="0.7"/><line x1="85" y1="27" x2="75" y2="24" stroke="${YEL}" stroke-width="1" opacity="0.7"/><path d="M 30 62 Q 55 56 80 62 L 78 85 Q 55 88 32 85 Z" fill="url(#wd-${uid})" stroke="${D}" stroke-width="0.8"/><path d="M 34 64 Q 50 60 60 63 L 58 78 Q 45 80 35 78 Z" fill="${WS}" opacity="0.3"/><line x1="30" y1="62" x2="32" y2="85" stroke="${D}" stroke-width="1.5"/><line x1="80" y1="62" x2="78" y2="85" stroke="${D}" stroke-width="1.5"/><path d="M 32 85 Q 55 82 78 85 L 76 105 Q 55 108 34 105 Z" fill="${D}" stroke="${D}" stroke-width="0.6"/><rect x="48" y="84" width="14" height="5" rx="2" fill="${D}" stroke="#1a1a1a" stroke-width="0.5"/><path d="M 34 105 Q 55 108 76 105 L 74 118 Q 55 120 36 118 Z" fill="${W}" stroke="${D}" stroke-width="0.6"/><g opacity="0.6"><line x1="22" y1="95" x2="28" y2="93" stroke="${D}" stroke-width="0.6"/><line x1="22" y1="99" x2="28" y2="97" stroke="${D}" stroke-width="0.6"/><line x1="22" y1="103" x2="28" y2="101" stroke="${D}" stroke-width="0.6"/><line x1="88" y1="95" x2="82" y2="93" stroke="${D}" stroke-width="0.6"/><line x1="88" y1="99" x2="82" y2="97" stroke="${D}" stroke-width="0.6"/><line x1="88" y1="103" x2="82" y2="101" stroke="${D}" stroke-width="0.6"/></g><ellipse cx="18" cy="68" rx="4" ry="3" fill="${M}" stroke="${D}" stroke-width="0.6"/><ellipse cx="92" cy="68" rx="4" ry="3" fill="${M}" stroke="${D}" stroke-width="0.6"/><rect x="28" y="148" width="54" height="5" rx="1.5" fill="${D}" stroke="${D}" stroke-width="0.8"/><rect x="25" y="153" width="60" height="3" rx="1" fill="${D}"/><rect x="38" y="145" width="2.5" height="8" rx="0.5" fill="${D}"/><rect x="70" y="145" width="2.5" height="8" rx="0.5" fill="${D}"/><rect x="25" y="142" width="60" height="4" rx="2" fill="${RT}" opacity="0.9"/><rect x="25" y="142" width="60" height="4" rx="2" fill="${RG}" opacity="0.35" filter="url(#gl-${uid})"/><rect x="53" y="142" width="4" height="4" rx="1" fill="${D}" opacity="0.6"/><g><rect x="8" y="22" width="14" height="26" rx="4" fill="url(#tr-${uid})" stroke="#0a0a0a" stroke-width="1"/><circle cx="15" cy="35" r="3" fill="#2a2a2a" stroke="#444" stroke-width="0.5"/><circle cx="15" cy="35" r="1.2" fill="#888"/></g><g><rect x="88" y="22" width="14" height="26" rx="4" fill="url(#tr-${uid})" stroke="#0a0a0a" stroke-width="1"/><circle cx="95" cy="35" r="3" fill="#2a2a2a" stroke="#444" stroke-width="0.5"/><circle cx="95" cy="35" r="1.2" fill="#888"/></g><g><rect x="6" y="118" width="16" height="28" rx="5" fill="url(#tr-${uid})" stroke="#0a0a0a" stroke-width="1"/><circle cx="14" cy="132" r="3.5" fill="#2a2a2a" stroke="#444" stroke-width="0.5"/><circle cx="14" cy="132" r="1.5" fill="#888"/></g><g><rect x="88" y="118" width="16" height="28" rx="5" fill="url(#tr-${uid})" stroke="#0a0a0a" stroke-width="1"/><circle cx="96" cy="132" r="3.5" fill="#2a2a2a" stroke="#444" stroke-width="0.5"/><circle cx="96" cy="132" r="1.5" fill="#888"/></g><path d="M 28 16 Q 55 10 82 16" fill="none" stroke="${CHR}" stroke-width="1" opacity="0.5"/><rect x="52" y="14" width="6" height="140" rx="1" fill="#fff" opacity="0.08"/></svg>`;
+}
+
+function placePlayerCar() { if (playerCarEl) playerCarEl.style.bottom = `${gameH * PLAYER_FIXED_BOTTOM_PCT - CAR_HEIGHT/2}px`; }
+function placeAiCar() { if (aiCarEl) aiCarEl.style.bottom = `${gameH * PLAYER_FIXED_BOTTOM_PCT - CAR_HEIGHT/2}px`; }
+function getPlayerScreenCenterY() { return gameH - (gameH * PLAYER_FIXED_BOTTOM_PCT - CAR_HEIGHT/2) - CAR_HEIGHT / 2; }
+
+function createCar(userId, lane, id) {
+    const car = document.createElement('div'); car.className = 'car'; car.id = id;
+    car.innerHTML = carSVG(userId, id);
+    const exh = document.createElement('div'); exh.className = 'exhaust';
+    exh.innerHTML = `<div class="exhaust-flame" style="background:linear-gradient(180deg,#FFD700,#FFA040,rgba(255,0,0,0.6));animation-delay:0s"></div><div class="exhaust-flame" style="background:linear-gradient(180deg,#FFA040,#FF4500,rgba(255,0,0,0.4));animation-delay:0.04s"></div><div class="exhaust-flame" style="background:linear-gradient(180deg,#FFD700,#FFA040,rgba(255,0,0,0.6));animation-delay:0.02s"></div>`;
+    car.appendChild(exh);
+    const beam = document.createElement('div'); beam.className = 'headlight-beam'; car.appendChild(beam);
+    const reflect = document.createElement('div'); reflect.className = 'headlight-reflect'; car.appendChild(reflect);
+    function makeSpray(side) { const s=document.createElement('div'); s.className=`wheel-spray ${side}`; for(let i=0;i<5;i++){const p=document.createElement('div');p.className='spray-particle';p.style.left=`${2+Math.random()*12}px`;p.style.setProperty('--sx',`${(side==='left'?-1:1)*(3+Math.random()*6)}px`);p.style.animationDelay=`${i*0.07}s`;p.style.animationDuration=`${0.25+Math.random()*0.15}s`;s.appendChild(p);}return s; }
+    car.appendChild(makeSpray('left')); car.appendChild(makeSpray('right'));
+    car.style.left = `${getLaneCenter(lane)-CAR_HALF_W}px`;
+    car.style.bottom = `${gameH * PLAYER_FIXED_BOTTOM_PCT - CAR_HEIGHT/2}px`;
+    gameArea.appendChild(car); return car;
+}
+
+function updateExhaust(carEl, speed) { const e=carEl.querySelector('.exhaust'); if(!e)return; e.classList.remove('active','level-1','level-2','level-3','level-4'); if(speed>=1)e.classList.add('active',`level-${Math.min(speed,4)}`); }
+function updateHeadlights(carEl, speed) { const b=carEl.querySelector('.headlight-beam'); if(!b)return; b.classList.remove('level-1','level-2','level-3','level-4'); b.classList.add(isRainMode?'level-4':'level-2'); }
+
+// ========== מזג אוויר ==========
+function setupWeather() {
+    isRainMode = Math.random() < 0.5;
+    if (isRainMode) {
+        gameArea.classList.add('rain-mode');
+        const rc = document.getElementById('rainContainer'); rc.innerHTML = '';
+        for (let i=0;i<120;i++){const d=document.createElement('div');d.className='raindrop';d.style.left=`${Math.random()*100}%`;d.style.height=`${14+Math.random()*22}px`;d.style.animationDuration=`${0.3+Math.random()*0.35}s`;d.style.animationDelay=`${Math.random()}s`;d.style.opacity=0.3+Math.random()*0.4;rc.appendChild(d);}
+        const rs=document.getElementById('rainSplash');rs.innerHTML='';
+        for(let i=0;i<30;i++){const s=document.createElement('div');s.className='splash-dot';s.style.left=`${14+Math.random()*(gameW-28)}px`;s.style.bottom=`${Math.random()*50}px`;s.style.animationDelay=`${Math.random()*0.6}s`;s.style.animationDuration=`${0.4+Math.random()*0.3}s`;rs.appendChild(s);}
+        triggerLightning();
+    } else { gameArea.classList.remove('rain-mode'); if(lightningTimeout){clearTimeout(lightningTimeout);lightningTimeout=null;} }
+}
+function triggerLightning() { if(!isRainMode)return; const f=document.getElementById('lightningFlash');f.classList.remove('active');void f.offsetHeight;f.classList.add('active');setTimeout(()=>f.classList.remove('active'),400);lightningTimeout=setTimeout(triggerLightning,4000+Math.random()*8000); }
+
+let tiltActive = false;
+function moveCarToLane(carEl, lane, dir) {
+    if (dir && carEl === playerCarEl && gameRunning) spawnSkidMark(carEl, dir);
+    carEl.style.left = `${getLaneCenter(lane)-CAR_HALF_W}px`;
+    if (dir && carEl === playerCarEl) {
+        tiltActive = true;
+        carEl.style.transform = `rotate(${dir<0?-15:15}deg) translateX(${dir*3}px) translateY(-5px)`;
+        carEl.style.transition = 'left 0.2s cubic-bezier(0.25,0.46,0.45,0.94), transform 0.2s ease, filter 0.2s ease';
+        if (tiltTimeout) clearTimeout(tiltTimeout);
+        tiltTimeout = setTimeout(() => { tiltActive = false; }, 200);
+    }
+}
+function spawnSkidMark(carEl, dir) {
+    const carLeft = parseFloat(carEl.style.left) || 0;
+    const carBottom = parseFloat(carEl.style.bottom) || 0;
+    const markH = 40 + Math.random() * 15;
+    const curve = dir * (5 + Math.random() * 4);
+    
+    const m = document.createElement('div');
+    m.className = 'skid-mark';
+    m.style.left = `${carLeft + 6}px`;
+    m.style.bottom = `${carBottom - 4}px`;
+    m.style.width = '30px';
+    m.style.height = `${markH}px`;
+    m.style.transform = `rotate(${dir < 0 ? -6 : 6}deg) skewX(${curve}deg)`;
+    
+    const lineL = document.createElement('div');
+    lineL.className = 'skid-line left';
+    lineL.style.height = `${markH}px`;
+    
+    const lineR = document.createElement('div');
+    lineR.className = 'skid-line right';
+    lineR.style.height = `${markH - 4}px`;
+    
+    m.appendChild(lineL);
+    m.appendChild(lineR);
+    gameArea.appendChild(m);
+    skidMarks.push(m);
+    setTimeout(() => { m.remove(); skidMarks = skidMarks.filter(x => x !== m); }, 2600);
+}
+let skidMarks = [];
+
+// ========== אייטמים — מסלול אחיד ==========
+function shuffle(arr) { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function generateAllItems() {
+    const allItems = [];
+    const FIRST_ITEM_OFFSET = gameH * 1.2;
+    const LAST_ITEM_Y = RACE_LENGTH - gameH * 0.5;
+    const HALF_WAY = (FIRST_ITEM_OFFSET + LAST_ITEM_Y) / 2;
+    
+    // אייטמים רגילים (בלי לבבות)
+    const base = getWaveItems();
+    let regularItems = [];
+    for (let i = 0; i < TOTAL_ITEMS_MULTIPLIER; i++) regularItems.push(...base);
+    regularItems = shuffle(regularItems);
+    
+    // לבבות רק בחצי השני
+    const hearts = [];
+    for (let i = 0; i < HEARTS_COUNT; i++) hearts.push({ type: 'heart', emoji: '❤️‍🔥' });
+    
+    // פזר רגילים על כל המסלול
+    const totalRegular = regularItems.length;
+    const spacing = (LAST_ITEM_Y - FIRST_ITEM_OFFSET) / (totalRegular + HEARTS_COUNT);
+    
+    const placed = [];
+    let itemIndex = 0;
+    let heartIndex = 0;
+    // מיקומים ללבבות — בחצי השני, מפוזרים
+    const heartPositions = [];
+    for (let h = 0; h < HEARTS_COUNT; h++) {
+        heartPositions.push(Math.round(HALF_WAY + (h + 1) * (LAST_ITEM_Y - HALF_WAY) / (HEARTS_COUNT + 1)));
+    }
+    
+    for (let i = 0; i < totalRegular + HEARTS_COUNT; i++) {
+        const baseY = FIRST_ITEM_OFFSET + i * spacing;
+        let def;
+        // בדוק אם צריך להכניס לב כאן
+        if (heartIndex < HEARTS_COUNT && Math.abs(baseY - heartPositions[heartIndex]) < spacing) {
+            def = hearts[heartIndex];
+            heartIndex++;
+        } else if (itemIndex < totalRegular) {
+            def = regularItems[itemIndex];
+            itemIndex++;
+        } else continue;
+        
+        let lane, worldY, att = 0;
+        do {
+            lane = Math.floor(Math.random() * LANE_COUNT);
+            worldY = Math.round(baseY + (Math.random() - 0.5) * spacing * 0.5);
+            att++;
+        } while (att < 40 && placed.some(p => p.lane === lane && Math.abs(p.y - worldY) < spacing * 0.4));
+        placed.push({ lane, y: worldY });
+        allItems.push({ lane, type: def.type, emoji: def.emoji, worldY, collected: false });
+    }
+    return allItems;
+}
+
+function renderItems(data) {
+    items.forEach(it => { if(it.el) it.el.remove(); }); items = [];
+    for (const d of data) {
+        if (d.collected) continue;
+        const el = document.createElement('div');
+        let cls = 'item';
+        if (d.type === 'diamond') cls += ' diamond';
+        else if (d.type === 'heart') cls += ' heart-item';
+        else if (d.type === 'puddle') cls += ' puddle-item';
+        else if (d.type === 'pit') cls += ' pit-item';
+        else if (d.type === 'ice') cls += ' ice-item';
+        el.className = cls; el.textContent = d.emoji;
+        el.style.left = `${getLaneCenter(d.lane) - 12}px`;
+        el.style.top = '-30px';
+        gameArea.appendChild(el);
+        items.push({ el, lane: d.lane, type: d.type, worldY: d.worldY, collected: false });
+    }
+}
+
+function getItemScreenY(worldY) {
+    const pTop = getPlayerScreenCenterY() - CAR_HEIGHT/2;
+    return pTop - ((worldY - playerY) / gameH) * gameH;
+}
+
+function updateItemPositions() {
+    // אם קו הסיום על המסך — הסתר אייטמים מעליו
+    const finishSY = getItemScreenY(RACE_LENGTH);
+    const finishVisible = finishSY > -20;
+    
+    for (const it of items) {
+        if (it.collected) continue;
+        const sy = getItemScreenY(it.worldY);
+        // מחוץ למסך, או מעל קו הסיום כשהוא גלוי
+        if (sy < -40 || sy > gameH + 40 || (finishVisible && sy < finishSY)) {
+            it.el.style.display = 'none';
+        } else {
+            it.el.style.top = `${sy}px`;
+            it.el.style.display = '';
+        }
+    }
+}
+
+function spawnAllItems() { renderItems(generateAllItems()); }
+
+// Multiplayer items
+let multiGameId = null, multiAmFirst = false;
+
+async function mpSpawnItems() {
+    const snap = await get(ref(db, `game/race/${multiGameId}/items`));
+    if (!snap.val()) {
+        const data = generateAllItems();
+        await set(ref(db, `game/race/${multiGameId}/items`), data);
+        renderItems(data);
+    } else {
+        renderItems(snap.val());
+    }
+}
+
+function freezePlayer(sec) { frozen=true;frozenUntil=Date.now()+sec*1000;playerCarEl.classList.add('frozen');setTimeout(()=>{frozen=false;playerCarEl.classList.remove('frozen');},sec*1000); }
+function freezeAI(sec) { aiFrozen=true;aiFrozenUntil=Date.now()+sec*1000;aiCarEl.classList.add('frozen');setTimeout(()=>{aiFrozen=false;aiCarEl.classList.remove('frozen');},sec*1000); }
+
+// ========== Game loop — מסלול אחיד ==========
+function gameLoop() {
+    if (!gameRunning) return;
+    const isFrozen = frozen && Date.now() < frozenUntil;
+    const speed = isFrozen ? 0 : SPEEDS[playerSpeed];
+
+    updateRoadAnimation(speed);
+    if (!isFrozen) playerY += speed;
+    updateItemPositions();
+    
+    // סימני חריקה זזים
+    for (const m of skidMarks) { m.style.bottom = `${parseFloat(m.style.bottom) - speed * 1.5}px`; }
+
+    // קו זינוק — parallax ב-worldY=0, יורד למטה ונעלם
+    const startLine = document.getElementById('startLine');
+    if (!startLine.classList.contains('hidden')) {
+        const startScreenY = getItemScreenY(0);
+        startLine.style.top = `${startScreenY - 20}px`;
+        if (startScreenY > gameH + 30) startLine.classList.add('hidden');
+    }
+
+    // קו סיום — parallax ב-worldY=RACE_LENGTH, יורד מלמעלה
+    let finishLineMet = false;
+    const finishLine = document.getElementById('finishLine');
+    const finishScreenY = getItemScreenY(RACE_LENGTH);
+    
+    if (finishScreenY > -20) {
+        finishLine.classList.remove('hidden');
+        finishLine.style.top = `${finishScreenY}px`;
+    }
+    // קו הסיום עבר את המכונית = סיום המרוץ
+    const pTop = getPlayerScreenCenterY() - CAR_HEIGHT / 2;
+    if (finishScreenY > pTop + CAR_HEIGHT) finishLineMet = true;
+
+    if (!tiltActive && !isFrozen && !iceSkidding) applyWobble(playerCarEl, speed);
+
+    // התנגשויות
+    const carCX = getLaneCenter(playerLane);
+    const pSY = getPlayerScreenCenterY();
+    for (let i=0;i<items.length;i++) {
+        const it=items[i]; if (it.collected) continue;
+        const iSY = getItemScreenY(it.worldY);
+        if (iSY < -40 || iSY > gameH + 40) continue; // מחוץ למסך
+        const dx=carCX-getLaneCenter(it.lane), dy=pSY-(iSY+13);
+        if (Math.sqrt(dx*dx+dy*dy)<HIT_RADIUS) {
+            if (it.type==='boost'&&playerSpeed>=4) continue;
+            if (it.type==='heart'&&lives>=3) continue;
+            it.collected=true;
+            const fx=parseFloat(it.el.style.left)+12, fy=iSY;
+            if (it.type==='diamond'){points+=10;updatePoints(true);spawnFloatText(fx,fy,'+10 💎','#58D9F5');}
+            else if(it.type==='boost'){if(playerSpeed<4){playerSpeed++;updateSpeed(true);updateCarSpeedClass();}triggerBoostEffect(playerCarEl);spawnFloatText(fx,fy,'⚡','#FFD700');}
+            else if(it.type==='heart'){lives++;updateLives(-1);spawnFloatText(fx,fy,'+❤️','#FF4444');}
+            else if(it.type==='bomb'){lives--;updateLives(lives);if(playerSpeed>0){playerSpeed=0;updateSpeed(false);updateCarSpeedClass();}else{freezePlayer(0.25);}playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450);shakeScreen();if(navigator.vibrate)navigator.vibrate(100);spawnExplosion(fx,fy);if(lives<=0){stopGame();showResult('💥','התרסקת!',`${points} נקודות`);return;}}
+            else if(it.type==='rock'){if(playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();}else{freezePlayer(0.25);}playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450);shakeScreen();if(navigator.vibrate)navigator.vibrate(50);spawnRockShatter(fx,fy);}
+            else if(it.type==='pit'){if(playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();}triggerPitBounce();spawnPitDust(fx,fy);}
+            else if(it.type==='puddle'){if(playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();}triggerIceSkid();}
+            else if(it.type==='ice'){if(playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();}else{freezePlayer(0.25);}playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450);shakeScreen();if(navigator.vibrate)navigator.vibrate(50);spawnIceCrack(fx,fy);}
+            if(it.type==='bomb'){it.el.classList.add('bomb-explode');it.el.style.opacity='0';setTimeout(()=>it.el.remove(),100);}
+            else{it.el.classList.add('collected');setTimeout(()=>it.el.remove(),300);}
+        }
+    }
+
+    // סיום
+    if (finishLineMet || playerY >= RACE_LENGTH) {
+        stopGame();
+        const isLoss = (mode==='ai'&&aiFinished)||(multiGameId&&oppFinishedFlag);
+        finishFlyUp(isLoss);
+        return;
+    }
+
+    updateProgress();
+
+    // AI
+    if (mode==='ai'&&aiCarEl) {
+        const aiF = aiFrozen && Date.now() < aiFrozenUntil;
+        const aiSpd = aiF ? 0 : SPEEDS[aiSpeed];
+        if (!aiF) aiY += aiSpd;
+        
+        // מיקום AI יחסי לשחקן
+        const delta = aiY - playerY;
+        const pBot = gameH * PLAYER_FIXED_BOTTOM_PCT - CAR_HEIGHT/2;
+        const aiBot = pBot + (delta / gameH) * gameH;
+        aiCarEl.style.bottom = `${aiBot}px`;
+        aiCarEl.style.display = (aiBot > -CAR_HEIGHT && aiBot < gameH + CAR_HEIGHT) ? 'block' : 'none';
+        
+        // AI התנגשויות
+        if (!aiF) {
+            const aiCX = getLaneCenter(aiLane);
+            const aiSY = gameH - aiBot - CAR_HEIGHT/2;
+            for (let i=0;i<items.length;i++) {
+                const it=items[i]; if(it.collected)continue;
+                const iSY=getItemScreenY(it.worldY);
+                if(iSY<-40||iSY>gameH+40)continue;
+                const dx=aiCX-getLaneCenter(it.lane),dy=aiSY-(iSY+13);
+                if(Math.sqrt(dx*dx+dy*dy)<HIT_RADIUS){
+                    if(it.type==='boost'&&aiSpeed>=4)continue;
+                    it.collected=true;
+                    const fx=parseFloat(it.el.style.left)+12,fy=iSY;
+                    if(it.type==='diamond'){}
+                    else if(it.type==='heart'){}
+                    else if(it.type==='boost'){if(aiSpeed<4)aiSpeed++;aiBoostCooldownUntil=Date.now()+2000;updateExhaust(aiCarEl,aiSpeed);triggerBoostEffect(aiCarEl);spawnFloatText(fx,fy,'⚡','#FFD700');}
+                    else if(it.type==='bomb'){if(aiSpeed>0)aiSpeed=0;else freezeAI(0.25);updateExhaust(aiCarEl,aiSpeed);aiCarEl.classList.add('flash');setTimeout(()=>aiCarEl.classList.remove('flash'),450);spawnExplosion(fx,fy);}
+                    else if(it.type==='rock'){if(aiSpeed>0)aiSpeed--;else freezeAI(0.25);updateExhaust(aiCarEl,aiSpeed);aiCarEl.classList.add('flash');setTimeout(()=>aiCarEl.classList.remove('flash'),450);spawnRockShatter(fx,fy);}
+                    else if(it.type==='puddle'){if(aiSpeed>0)aiSpeed--;updateExhaust(aiCarEl,aiSpeed);}
+                    else if(it.type==='pit'){if(aiSpeed>0)aiSpeed--;updateExhaust(aiCarEl,aiSpeed);spawnPitDust(fx,fy);}
+                    else if(it.type==='ice'){if(aiSpeed>0)aiSpeed--;else freezeAI(0.25);updateExhaust(aiCarEl,aiSpeed);aiCarEl.classList.add('flash');setTimeout(()=>aiCarEl.classList.remove('flash'),450);spawnIceCrack(fx,fy);}
+                    it.el.classList.add('collected');setTimeout(()=>it.el.remove(),300);
+                }
+            }
+        }
+        
+        // AI חכם
+        if (!aiF && aiMoveCooldown <= 0) {
+            const aiSY2 = gameH - aiBot - CAR_HEIGHT/2;
+            const LA = 120 + aiSpeed * 20; // ראייה רחוקה יותר במהירות גבוהה
+            function scanLane(lane) {
+                let threat=null,hasBoost=false;
+                for(const it of items){if(it.collected||it.lane!==lane)continue;const iSY=getItemScreenY(it.worldY);const dy=aiSY2-(iSY+13);if(dy>0&&dy<LA){if(it.type==='bomb')threat='bomb';else if((it.type==='rock'||it.type==='ice'||it.type==='puddle'||it.type==='pit')&&threat!=='bomb')threat='rock';else if(it.type==='boost')hasBoost=true;}}
+                return{threat,hasBoost};
+            }
+            const cur=scanLane(aiLane);let moved=false;
+            if(cur.threat){
+                const lL=aiLane-1,rL=aiLane+1;
+                const left=lL>=0?scanLane(lL):{threat:'wall',hasBoost:false};
+                const right=rL<LANE_COUNT?scanLane(rL):{threat:'wall',hasBoost:false};
+                const ds=t=>!t?0:t==='rock'?1:t==='bomb'?2:3;
+                let bL=aiLane,bS=ds(cur.threat)*10;
+                if(lL>=0){let s=ds(left.threat)*10-(left.hasBoost?3:0);if(s<bS){bS=s;bL=lL;}}
+                if(rL<LANE_COUNT){let s=ds(right.threat)*10-(right.hasBoost?3:0);if(s<bS){bS=s;bL=rL;}}
+                if(bL!==aiLane){aiLane=bL;moveCarToLane(aiCarEl,aiLane,null);moved=true;}
+            } else if(Math.random()<0.2&&Date.now()>aiBoostCooldownUntil){
+                let bbL=-1,bbd=999;
+                for(let o=-2;o<=2;o++){if(!o)continue;const cl=aiLane+o;if(cl<0||cl>=LANE_COUNT)continue;const sc=scanLane(cl);if(sc.hasBoost&&!sc.threat&&Math.abs(o)<bbd){bbd=Math.abs(o);bbL=cl;}}
+                if(bbL>=0){const st=bbL>aiLane?1:-1;const nl=aiLane+st;if(nl>=0&&nl<LANE_COUNT&&!scanLane(nl).threat){aiLane=nl;moveCarToLane(aiCarEl,aiLane,null);moved=true;}}
+            }
+            if(moved)aiMoveCooldown=10;
+        }
+        if(aiMoveCooldown>0)aiMoveCooldown--;
+        if(aiY>=RACE_LENGTH&&!aiFinished){
+            aiFinished=true; aiSpeed=4; updateExhaust(aiCarEl,4); updateHeadlights(aiCarEl,4);
+            aiCarEl.classList.add('speed-5');
+        }
+        // AI שסיים — ממשיך לנסוע קדימה מהר עד שנעלם מהמסך
+        if(aiFinished){ aiY += SPEEDS[4] * 0.5; }
+    }
+
+    updateTrackDots();
+    animFrameId = requestAnimationFrame(gameLoop);
+}
+
+// ========== סיום: המכונית עפה למעלה ==========
+function finishFlyUp(isLoss) {
+    updateExhaust(playerCarEl, playerSpeed); updateHeadlights(playerCarEl, playerSpeed);
+    
+    const finishSpeed = SPEEDS[playerSpeed];
+    let finishAnimId = null;
+    let carBottom = parseFloat(playerCarEl.style.bottom) || 0;
+    const finishLineEl = document.getElementById('finishLine');
+    
+    function finishLoop() {
+        updateRoadAnimation(finishSpeed);
+        // המכונית עולה למעלה
+        carBottom += finishSpeed * 1.2;
+        playerCarEl.style.bottom = `${carBottom}px`;
+        const ox = Math.sin(Date.now() * 0.007) * 0.5;
+        const or = Math.sin(Date.now() * 0.005) * 0.4;
+        playerCarEl.style.transform = `translateX(${ox}px) rotate(${or}deg)`;
+        
+        // קו הסיום ממשיך לרדת
+        const curTop = parseFloat(finishLineEl.style.top) || 0;
+        finishLineEl.style.top = `${curTop + finishSpeed * 1.5}px`;
+        if (curTop > gameH + 20) finishLineEl.classList.add('hidden');
+        
+        // מכונית נעלמה + קו נעלם = הצג תוצאה
+        if (carBottom >= gameH + 150 && (curTop > gameH || finishLineEl.classList.contains('hidden'))) {
+            if (isLoss) showResult('😔', 'הפסדת', `${points} נקודות`);
+            else showResult('🏆', `🏁 ${myEmoji} ${displayName} 🏆`, `${points} נקודות`);
+        } else {
+            finishAnimId = requestAnimationFrame(finishLoop);
+        }
+    }
+    finishAnimId = requestAnimationFrame(finishLoop);
+}
+
+function stopGame() { gameRunning=false; if(animFrameId){cancelAnimationFrame(animFrameId);animFrameId=null;} startBgAnimation(); }
+
+let bgAnimId = null, bgWobble = 0;
+function startBgAnimation() {
+    if(bgAnimId)return; const ms=SPEEDS[SPEEDS.length-1];
+    if(playerCarEl){updateExhaust(playerCarEl,4);updateHeadlights(playerCarEl,4);}
+    function bgLoop(){bgWobble++;updateRoadAnimation(ms);
+        if(playerCarEl){playerCarEl.style.transform=`translateX(${Math.sin(bgWobble*0.07)*0.5}px) rotate(${Math.sin(bgWobble*0.05)*0.4}deg)`;}
+        for(const it of items){if(it.collected)continue;const c=parseFloat(it.el.style.top)||0;it.el.style.top=`${c+ms*1.2}px`;}
+        bgAnimId=requestAnimationFrame(bgLoop);}
+    bgLoop();
+}
+function stopBgAnimation() { if(bgAnimId){cancelAnimationFrame(bgAnimId);bgAnimId=null;} }
+
+// ========== Countdown ==========
+function startCountdown(cb) {
+    const modal=document.getElementById('countdownModal'),text=document.getElementById('countdownText');
+    modal.classList.remove('hidden');text.textContent='🏎️ מוכנים?';text.className='countdown-text';let c=2;
+    const iv=setInterval(()=>{if(c>0){text.textContent=c;text.className='countdown-text';text.style.animation='none';text.offsetHeight;text.style.animation='';c--;}else if(c===0){text.textContent='🏁 סעו!';text.className='countdown-text go';c--;}else{clearInterval(iv);modal.classList.add('hidden');cb();}},1000);
+}
+
+function startGame() {
+    stopBgAnimation();
+    gameRunning=true; updateProgress(); updateTrackDots(); updateWins();
+    updateHeadlights(playerCarEl,0);
+    if(aiCarEl)updateHeadlights(aiCarEl,0);
+    if(oppCarEl)updateHeadlights(oppCarEl,0);
+    spawnTireSmoke(playerCarEl); if(aiCarEl)spawnTireSmoke(aiCarEl); if(oppCarEl)spawnTireSmoke(oppCarEl);
+    const h=document.createElement('div');h.className='swipe-hint';h.innerHTML='👆 החליקו ימינה ושמאלה<br>כדי להזיז את הרכב';
+    gameArea.appendChild(h);setTimeout(()=>h.remove(),1500);
+    gameLoop();
+}
+
+function spawnTireSmoke(carEl) {
+    if(!carEl)return;const s=document.createElement('div');s.className='tire-smoke';
+    for(let i=0;i<6;i++){const p=document.createElement('div');p.className='smoke-puff';const sz=10+Math.random()*14;p.style.width=`${sz}px`;p.style.height=`${sz}px`;p.style.left=`${5+Math.random()*35}px`;p.style.animationDelay=`${i*0.08}s`;p.style.animationDuration=`${0.6+Math.random()*0.4}s`;s.appendChild(p);}
+    carEl.appendChild(s);setTimeout(()=>s.remove(),1200);
+}
+
+// ========== Swipe ==========
+let touchStartX=0,touchStartTime=0;
+gameArea.addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;touchStartTime=Date.now();},{passive:true});
+gameArea.addEventListener('touchend',e=>{
+    if(!gameRunning||frozen||iceSkidding)return;const diff=e.changedTouches[0].clientX-touchStartX;
+    if(Date.now()-touchStartTime<300&&Math.abs(diff)>25){const dir=diff<0?-1:1;if(dir<0&&playerLane>0){playerLane--;moveCarToLane(playerCarEl,playerLane,dir);}else if(dir>0&&playerLane<LANE_COUNT-1){playerLane++;moveCarToLane(playerCarEl,playerLane,dir);}}
+},{passive:true});
+
+// ========== Init ==========
+async function init() {
+    calcDimensions(); buildLaneDividers(); buildRaceLine(); setupTrackDots();
+    setupWeather();
+    const snap=await get(ref(db,roomPath)); myJoinedAt=snap?.val()?.joinedAt||Date.now();
+    await set(ref(db,roomPath),{name:displayName,color:myColor,emoji:myEmoji,joinedAt:myJoinedAt,timestamp:Date.now(),active:true});
+    startHeartbeat();
+
+    if (mode==='ai') {
+        playerLane=3;aiLane=1;
+        playerCarEl=createCar(myName,playerLane,'playerCar');
+        aiCarEl=createCar('ai',aiLane,'aiCar');
+        placePlayerCar();placeAiCar();
+        showStartLine(); spawnAllItems();
+        startCountdown(startGame);
+    } else {
+        playerLane=3;playerCarEl=createCar(myName,playerLane,'playerCar');placePlayerCar();
+        window._ls={};let lastCount=0;
+        roomListenerUnsubscribe=onValue(roomRef,async snap=>{
+            const players=snap.val()||{};const names=Object.keys(players).sort((a,b)=>(players[a].joinedAt||0)-(players[b].joinedAt||0));
+            if(lastCount===2&&names.length<2){let n='',e='';for(const[id,p]of Object.entries(window._ls)){if(!players[id]){n=p.name||'';e=p.emoji||'';break;}}handleOpponentLeft(n,e);return;}
+            window._ls=players;lastCount=names.length;
+            if(names.length===2&&!gameRunning&&!gameFinished){
+                if(window._mpStarted)return;window._mpStarted=true;
+                multiAmFirst=names[0]===myName;playerLane=multiAmFirst?3:1;oppLane=multiAmFirst?1:3;
+                multiGameId=`${names[0]}_${names[1]}`;
+                if(multiAmFirst){const cl=[];cl.push(remove(ref(db,`game/race/${multiGameId}/items`)));cl.push(remove(ref(db,`game/race/${multiGameId}/status_${names[0]}`)));cl.push(remove(ref(db,`game/race/${multiGameId}/status_${names[1]}`)));cl.push(remove(ref(db,`game/race/${multiGameId}/ready_${names[0]}`)));cl.push(remove(ref(db,`game/race/${multiGameId}/ready_${names[1]}`)));cl.push(remove(ref(db,`game/race/${multiGameId}/pos_${names[0]}`)));cl.push(remove(ref(db,`game/race/${multiGameId}/pos_${names[1]}`)));cl.push(remove(ref(db,`game/race/${names[1]}_${names[0]}`)));await Promise.all(cl);}
+                else{await new Promise(r=>setTimeout(r,300));}
+                moveCarToLane(playerCarEl,playerLane,null);placePlayerCar();
+                const oppId=names.find(n=>n!==myName);
+                if(oppId&&players[oppId]){
+                    oppName_display=players[oppId].name||oppId;oppEmoji_display=players[oppId].emoji||'🏎️';
+                    const oppColor=players[oppId].color||'#4DB8FF';
+                    dotOpponent.style.display='block';dotOpponent.style.background=oppColor;dotOpponent.style.borderColor=oppColor;
+                    if(!oppCarEl)oppCarEl=createCar(oppColor,oppLane,'oppCar');else moveCarToLane(oppCarEl,oppLane,null);
+                    oppCarEl.style.bottom=`${gameH*PLAYER_FIXED_BOTTOM_PCT-CAR_HEIGHT/2}px`;
+                }
+                startOpponentCheck(); showStartLine();
+                await mpSpawnItems(); startPositionSync();
+                startCountdown(startGame);
+            }
+        });
+    }
+}
+init();
+</script>
+</body>
+</html>
