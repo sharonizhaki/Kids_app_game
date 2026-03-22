@@ -929,7 +929,7 @@ const games = [
     { id: 'memory', name: 'משחק זיכרון', url: 'Memory.html', icon: '🧩' },
     { id: 'bingo', name: 'בינגו', url: 'Bingo.html', icon: '🔢' },
     { id: 'snakes', name: 'סולמות ונחשים', url: 'Snakes.html', icon: '🐍' },
-    { id: 'checkers', name: 'דמקה', url: 'Checkers.html', icon: '♟️' },
+    { id: 'breakout', name: 'שובר לבנים', url: 'Breakout.html', icon: '🧱' },
     { id: 'connect4', name: '4 בשורה', url: 'Connect4.html', icon: '🔴' }
 ];
 
@@ -1121,7 +1121,7 @@ function startWaiting(gameId) {
     const aiButton = document.getElementById('ai-play-btn');
     if (aiButton) {
         // משחקים שתומכים ב-AI
-        const aiGames = ['xo', 'race', 'bingo', 'draw', 'memory', 'snakes', 'checkers', 'connect4'];
+        const aiGames = ['xo', 'race', 'bingo', 'draw', 'memory', 'snakes', 'breakout', 'connect4'];
         
         if (aiGames.includes(currentGame.id)) {
             aiButton.style.display = 'block';
@@ -1144,8 +1144,8 @@ function startWaiting(gameId) {
                 case 'snakes':
                     aiButton.onclick = playWithAI_Snakes;
                     break;
-                case 'checkers':
-                    aiButton.onclick = playWithAI_Checkers;
+                case 'breakout':
+                    aiButton.onclick = playWithAI_Breakout;
                     break;
                 case 'connect4':
                     aiButton.onclick = playWithAI_Connect4;
@@ -1346,11 +1346,11 @@ window.playWithAI_Snakes = () => {
     window.location.href = `Snakes.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
 };
 
-// משחק דמקה עם AI
-window.playWithAI_Checkers = () => {
+// משחק שובר לבנים עם AI
+window.playWithAI_Breakout = () => {
     if (!myUser) return;
     cleanupBeforeAI();
-    window.location.href = `Checkers.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
+    window.location.href = `Breakout.html?player=${encodeURIComponent(myUser.name)}&mode=ai`;
 };
 
 // משחק 4 בשורה עם AI
@@ -1377,7 +1377,7 @@ window.logout = async () => {
                 await remove(ref(db, `rooms_v3/${gameType}/${guestId}`));
             }
             // מחק מ-rooms רגילים
-            const regularGames = ['xo', 'race', 'draw', 'memory', 'bingo', 'snakes', 'checkers', 'connect4'];
+            const regularGames = ['xo', 'race', 'draw', 'memory', 'bingo', 'snakes', 'breakout', 'connect4'];
             for (const gameType of regularGames) {
                 await remove(ref(db, `rooms_v3/${gameType}/${guestId}`));
             }
