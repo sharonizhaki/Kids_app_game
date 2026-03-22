@@ -1066,10 +1066,11 @@ function stopBgAnimation() { if(bgAnimId){cancelAnimationFrame(bgAnimId);bgAnimI
 function startCountdown(cb) {
     const modal=document.getElementById('countdownModal'),text=document.getElementById('countdownText');
     modal.classList.remove('hidden');text.textContent='🏎️ מוכנים?';text.className='countdown-text';let c=2;
-    // אנימציית כביש בזמן הספירה — במהירות ההתחלתית כדי שיהיה רצף חלק
+    // אנימציית כביש בספירה — מותאמת לתחושה הויזואלית של תחילת המשחק
+    // במשחק יש גם תנועת אייטמים, אז הכביש לבד צריך להיות איטי יותר
     let countdownRoadId = null;
-    const startSpeed = SPEEDS[0];
-    function countdownRoadLoop() { updateRoadAnimation(startSpeed); countdownRoadId = requestAnimationFrame(countdownRoadLoop); }
+    const countdownSpeed = SPEEDS[0] * 0.55;
+    function countdownRoadLoop() { updateRoadAnimation(countdownSpeed); countdownRoadId = requestAnimationFrame(countdownRoadLoop); }
     countdownRoadId = requestAnimationFrame(countdownRoadLoop);
     const iv=setInterval(()=>{if(c>0){text.textContent=c;text.className='countdown-text';text.style.animation='none';text.offsetHeight;text.style.animation='';c--;}else if(c===0){text.textContent='🏁 סעו!';text.className='countdown-text go';c--;}else{clearInterval(iv);modal.classList.add('hidden');if(countdownRoadId){cancelAnimationFrame(countdownRoadId);countdownRoadId=null;}cb();}},1000);
 }
