@@ -342,7 +342,8 @@ const myEmoji = userData.emoji;
 // ========== קבועים ==========
 const LANE_COUNT = 5;
 // מהירויות: בסיס 4.8, עליה של 40% כל שלב
-const SPEEDS = [4.8, 6.7, 9.4, 13.2, 18.4];
+// מהירויות: בסיס 3.84, עליה של 40% כל שלב
+const SPEEDS = [3.84, 5.4, 7.5, 10.5, 14.7];
 const HIT_RADIUS = 28;
 const PLAYER_FIXED_BOTTOM_PCT = 0.18;
 
@@ -385,7 +386,7 @@ function calcDimensions() {
     gameW = gameArea.clientWidth;
     gameH = gameArea.clientHeight;
     laneW = (gameW - CURB_W * 2) / LANE_COUNT;
-    RACE_LENGTH = gameH * 4;
+    RACE_LENGTH = gameH * 6; // מסלול ארוך יותר — יותר זמן נסיעה
 }
 function getLaneCenter(i) { return CURB_W + i * laneW + laneW / 2; }
 
@@ -480,6 +481,13 @@ function resetGameState() {
     if (oppCarEl) { oppCarEl.style.bottom = `${gameH * PLAYER_FIXED_BOTTOM_PCT - CAR_HEIGHT/2}px`; oppCarEl.style.display = 'block'; oppCarEl.classList.remove('frozen', 'flash'); }
     
     if (multiGameId) { set(ref(db, `game/race/${multiGameId}/pos_${myName}`), null); remove(ref(db, `game/race/${multiGameId}/items`)); }
+    
+    // אפס קווי זינוק/סיום
+    document.getElementById('finishLine').classList.add('hidden');
+    document.getElementById('finishLine').style.top = '';
+    document.getElementById('startLine').classList.add('hidden');
+    document.getElementById('startLine').style.top = '';
+    document.getElementById('startLine').style.bottom = '';
     
     showStartLine();
     spawnAllItems();
@@ -820,12 +828,14 @@ function shuffle(arr) { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=
 function generateAllItems() {
     const allItems = [];
     const waveLen = RACE_LENGTH / WAVE_COUNT;
-    // בחר 2 גלים ללבבות
     const heartWaves = shuffle([0,1,2,3]).slice(0, HEARTS_COUNT);
     
+    // 2 שניות ריקות בהתחלה — אייטמים מתחילים רחוק מעל
+    const FIRST_ITEM_OFFSET = gameH * 1.5;
+    
     for (let w = 0; w < WAVE_COUNT; w++) {
-        const waveStart = w * waveLen + waveLen * 0.08;
-        const waveEnd = (w + 1) * waveLen - waveLen * 0.08;
+        const waveStart = FIRST_ITEM_OFFSET + w * waveLen + waveLen * 0.08;
+        const waveEnd = FIRST_ITEM_OFFSET + (w + 1) * waveLen - waveLen * 0.08;
         let waveItems = shuffle([...ITEMS_PER_WAVE]);
         if (heartWaves.includes(w)) waveItems.push({ type: 'heart', emoji: '❤️‍🔥' });
         
@@ -922,10 +932,10 @@ function gameLoop() {
     if (finishScreenY > -20) {
         finishLine.classList.remove('hidden');
         finishLine.style.top = `${finishScreenY}px`;
-        
-        const pTop = getPlayerScreenCenterY() - CAR_HEIGHT / 2;
-        if (finishScreenY + 14 >= pTop) finishLineMet = true;
     }
+    // קו הסיום עבר את המכונית = סיום המרוץ
+    const pTop = getPlayerScreenCenterY() - CAR_HEIGHT / 2;
+    if (finishScreenY > pTop + CAR_HEIGHT) finishLineMet = true;
 
     if (!tiltActive && !isFrozen) applyWobble(playerCarEl, speed);
 
@@ -1033,26 +1043,33 @@ function gameLoop() {
 
 // ========== סיום: המכונית עפה למעלה ==========
 function finishFlyUp(isLoss) {
-    // המכונית ממשיכה במהירות הנוכחית שלה (המקסימלית שהשחקן השיג)
     updateExhaust(playerCarEl, playerSpeed); updateHeadlights(playerCarEl, playerSpeed);
     
     const finishSpeed = SPEEDS[playerSpeed];
     let finishAnimId = null;
     let carBottom = parseFloat(playerCarEl.style.bottom) || 0;
+    const finishLineEl = document.getElementById('finishLine');
     
     function finishLoop() {
         updateRoadAnimation(finishSpeed);
+        // המכונית עולה למעלה
         carBottom += finishSpeed * 1.2;
         playerCarEl.style.bottom = `${carBottom}px`;
         const ox = Math.sin(Date.now() * 0.007) * 0.5;
         const or = Math.sin(Date.now() * 0.005) * 0.4;
         playerCarEl.style.transform = `translateX(${ox}px) rotate(${or}deg)`;
         
-        if (carBottom < gameH + 150) {
-            finishAnimId = requestAnimationFrame(finishLoop);
-        } else {
+        // קו הסיום ממשיך לרדת
+        const curTop = parseFloat(finishLineEl.style.top) || 0;
+        finishLineEl.style.top = `${curTop + finishSpeed * 1.5}px`;
+        if (curTop > gameH + 20) finishLineEl.classList.add('hidden');
+        
+        // מכונית נעלמה + קו נעלם = הצג תוצאה
+        if (carBottom >= gameH + 150 && (curTop > gameH || finishLineEl.classList.contains('hidden'))) {
             if (isLoss) showResult('😔', 'הפסדת', `${points} נקודות`);
             else showResult('🏆', `🏁 ${myEmoji} ${displayName} 🏆`, `${points} נקודות`);
+        } else {
+            finishAnimId = requestAnimationFrame(finishLoop);
         }
     }
     finishAnimId = requestAnimationFrame(finishLoop);
