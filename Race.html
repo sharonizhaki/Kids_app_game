@@ -305,7 +305,8 @@
 <div class="game-area" id="gameArea">
     <div class="parallax-bg-far" id="bgFar"></div>
     <div class="parallax-bg-mid" id="bgMid"></div>
-    <div class="race-line hidden" id="raceLine"></div>
+    <div class="race-line hidden" id="startLine"></div>
+    <div class="race-line hidden" id="finishLine"></div>
     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
     <div class="wet-overlay"></div>
     <div class="puddles"></div>
@@ -721,12 +722,25 @@ function stopPositionSync() {
 }
 
 // ========== קו מירוץ ==========
-function buildRaceLine() { const line=document.getElementById('raceLine'); line.innerHTML=''; for (let r=0;r<2;r++) { const row=document.createElement('div'); row.className='race-line-row'; const cnt=Math.ceil(gameW/12); for (let i=0;i<cnt;i++) { const sq=document.createElement('div'); sq.className=`race-line-sq ${(i+r)%2===0?'w':'b'}`; row.appendChild(sq); } line.appendChild(row); } }
+function buildRaceLine() {
+    ['startLine','finishLine'].forEach(id => {
+        const line = document.getElementById(id);
+        line.innerHTML = '';
+        for (let r = 0; r < 2; r++) {
+            const row = document.createElement('div'); row.className = 'race-line-row';
+            const cnt = Math.ceil(gameW / 12);
+            for (let i = 0; i < cnt; i++) { const sq = document.createElement('div'); sq.className = `race-line-sq ${(i+r)%2===0?'w':'b'}`; row.appendChild(sq); }
+            line.appendChild(row);
+        }
+    });
+}
 function showStartLine() {
-    const line = document.getElementById('raceLine');
+    const line = document.getElementById('startLine');
     line.classList.remove('hidden');
-    line.style.top = 'auto';
-    line.style.bottom = `${gameH * PLAYER_FIXED_BOTTOM_PCT + CAR_HEIGHT + 10}px`;
+    line.style.top = 'auto'; line.style.bottom = 'auto';
+    // קו הזינוק — ממוקם לפי parallax ב-worldY = 0 (קצת מעל המכונית)
+    const screenY = getItemScreenY(0);
+    line.style.top = `${screenY - 20}px`;
 }
 
 // ========== רכב ==========
@@ -891,30 +905,25 @@ function gameLoop() {
     // סימני חריקה זזים
     for (const m of skidMarks) { m.style.bottom = `${parseFloat(m.style.bottom) - speed * 1.5}px`; }
 
-    // קו זינוק — יורד
-    const startLine = document.getElementById('raceLine');
+    // קו זינוק — parallax ב-worldY=0, יורד למטה ונעלם
+    const startLine = document.getElementById('startLine');
     if (!startLine.classList.contains('hidden')) {
-        const lb = parseFloat(startLine.style.bottom) - speed * 1.5;
-        startLine.style.bottom = `${lb}px`;
-        if (lb < -20) startLine.classList.add('hidden');
+        const startScreenY = getItemScreenY(0);
+        startLine.style.top = `${startScreenY - 20}px`;
+        if (startScreenY > gameH + 30) startLine.classList.add('hidden');
     }
 
-    // קו סיום — ממוקם לפי parallax, יורד חלק מלמעלה
+    // קו סיום — parallax ב-worldY=RACE_LENGTH, יורד מלמעלה
     let finishLineMet = false;
-    if (startLine.classList.contains('hidden')) {
-        const finishLine = document.getElementById('raceLine');
-        const finishWorldY = RACE_LENGTH;
-        const finishScreenY = getItemScreenY(finishWorldY);
+    const finishLine = document.getElementById('finishLine');
+    const finishScreenY = getItemScreenY(RACE_LENGTH);
+    
+    if (finishScreenY > -20) {
+        finishLine.classList.remove('hidden');
+        finishLine.style.top = `${finishScreenY}px`;
         
-        // הצג רק כשהקו נכנס לתוך המסך מלמעלה
-        if (finishScreenY > -20) {
-            finishLine.classList.remove('hidden');
-            finishLine.style.top = `${finishScreenY}px`;
-            finishLine.style.bottom = 'auto';
-            
-            const pTop = getPlayerScreenCenterY() - CAR_HEIGHT / 2;
-            if (finishScreenY + 14 >= pTop) finishLineMet = true;
-        }
+        const pTop = getPlayerScreenCenterY() - CAR_HEIGHT / 2;
+        if (finishScreenY + 14 >= pTop) finishLineMet = true;
     }
 
     if (!tiltActive && !isFrozen) applyWobble(playerCarEl, speed);
@@ -1066,13 +1075,7 @@ function stopBgAnimation() { if(bgAnimId){cancelAnimationFrame(bgAnimId);bgAnimI
 function startCountdown(cb) {
     const modal=document.getElementById('countdownModal'),text=document.getElementById('countdownText');
     modal.classList.remove('hidden');text.textContent='🏎️ מוכנים?';text.className='countdown-text';let c=2;
-    // אנימציית כביש בספירה — מותאמת לתחושה הויזואלית של תחילת המשחק
-    // במשחק יש גם תנועת אייטמים, אז הכביש לבד צריך להיות איטי יותר
-    let countdownRoadId = null;
-    const countdownSpeed = SPEEDS[0] * 0.55;
-    function countdownRoadLoop() { updateRoadAnimation(countdownSpeed); countdownRoadId = requestAnimationFrame(countdownRoadLoop); }
-    countdownRoadId = requestAnimationFrame(countdownRoadLoop);
-    const iv=setInterval(()=>{if(c>0){text.textContent=c;text.className='countdown-text';text.style.animation='none';text.offsetHeight;text.style.animation='';c--;}else if(c===0){text.textContent='🏁 סעו!';text.className='countdown-text go';c--;}else{clearInterval(iv);modal.classList.add('hidden');if(countdownRoadId){cancelAnimationFrame(countdownRoadId);countdownRoadId=null;}cb();}},1000);
+    const iv=setInterval(()=>{if(c>0){text.textContent=c;text.className='countdown-text';text.style.animation='none';text.offsetHeight;text.style.animation='';c--;}else if(c===0){text.textContent='🏁 סעו!';text.className='countdown-text go';c--;}else{clearInterval(iv);modal.classList.add('hidden');cb();}},1000);
 }
 
 function startGame() {
