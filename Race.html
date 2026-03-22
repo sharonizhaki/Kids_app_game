@@ -343,7 +343,7 @@ const myEmoji = userData.emoji;
 const LANE_COUNT = 5;
 // מהירויות: בסיס 4.8, עליה של 40% כל שלב
 // מהירויות: בסיס 3.84, עליה של 40% כל שלב
-const SPEEDS = [3.84, 5.4, 7.5, 10.5, 14.7];
+const SPEEDS = [3.5, 4.5, 6, 8, 11];
 const HIT_RADIUS = 28;
 const PLAYER_FIXED_BOTTOM_PCT = 0.18;
 
@@ -827,11 +827,15 @@ function shuffle(arr) { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=
 
 function generateAllItems() {
     const allItems = [];
-    const waveLen = RACE_LENGTH / WAVE_COUNT;
-    const heartWaves = shuffle([0,1,2,3]).slice(0, HEARTS_COUNT);
     
-    // 2 שניות ריקות בהתחלה — אייטמים מתחילים רחוק מעל
+    // 2 שניות ריקות בהתחלה
     const FIRST_ITEM_OFFSET = gameH * 1.5;
+    // אייטמים רק עד קו הסיום (עם מרווח קטן לפניו)
+    const LAST_ITEM_Y = RACE_LENGTH - gameH * 0.5;
+    const usableLength = LAST_ITEM_Y - FIRST_ITEM_OFFSET;
+    const waveLen = usableLength / WAVE_COUNT;
+    
+    const heartWaves = shuffle([0,1,2,3]).slice(0, HEARTS_COUNT);
     
     for (let w = 0; w < WAVE_COUNT; w++) {
         const waveStart = FIRST_ITEM_OFFSET + w * waveLen + waveLen * 0.08;

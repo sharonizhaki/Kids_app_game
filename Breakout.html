@@ -8,81 +8,169 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Heebo:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
   :root {
-    --emma: #FF5C7A;
-    --rif: #4DB8FF;
-    --gold: #F5C842;
-    --green: #3DD68C;
-    --bg: #0F1320;
-    --bg-mid: #1a2942;
+    --emma: #FF5C7A; --rif: #4DB8FF; --gold: #F5C842; --green: #3DD68C;
+    --bg: #0F1320; --bg-mid: #1a2942;
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; width: 100%; overflow: hidden; }
 
   body {
     background: linear-gradient(135deg, var(--bg) 0%, var(--bg-mid) 100%);
     font-family: 'Heebo', sans-serif;
-    touch-action: none;
-    height: 100dvh;
-    width: 100vw;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    color: white;
+    overflow: hidden; touch-action: none;
+    height: 100dvh; width: 100vw;
+    display: flex; flex-direction: column; align-items: center;
+    position: relative; color: white;
   }
 
   body::before {
-    content: '';
-    position: fixed; inset: 0; z-index: -2; pointer-events: none;
+    content: ''; position: fixed; inset: 0; z-index: -2; pointer-events: none;
     background:
-      radial-gradient(ellipse at 20% 30%, rgba(255, 92, 122, 0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 70%, rgba(77, 184, 255, 0.1) 0%, transparent 50%);
+      radial-gradient(ellipse at 20% 30%, rgba(255,92,122,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(77,184,255,0.1) 0%, transparent 50%);
   }
-
   .stars {
     position: fixed; inset: 0; z-index: -1;
     background-image: radial-gradient(white 1px, transparent 1px);
     background-size: 60px 60px; opacity: 0.08; pointer-events: none;
   }
 
+  /* ========== HEADER / SCORE BAR ========== */
+  .header {
+    display: flex; justify-content: space-around; align-items: stretch;
+    width: 100%; max-width: 400px; padding: 10px 12px 6px; gap: 8px;
+    flex-shrink: 0; z-index: 10;
+  }
+
+  .score-box {
+    flex: 1;
+    background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+    padding: 10px 8px 8px; border-radius: 18px; text-align: center;
+    border: 2px solid transparent; transition: all 0.3s ease;
+    backdrop-filter: blur(10px); position: relative; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+
+  .score-box::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .score-box .name {
+    font-weight: 900; font-size: 0.8rem; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; width: 100%;
+  }
+
+  .score-box .wins {
+    font-family: 'Fredoka One', cursive; font-size: 2rem; font-weight: 900; line-height: 1;
+  }
+
+  .score-box .wins-label {
+    font-size: 0.6rem; color: rgba(255,255,255,0.5); font-weight: 700;
+  }
+
+  .vs-box {
+    display: flex; align-items: center; justify-content: center;
+    min-width: 36px; font-family: 'Fredoka One', cursive;
+    font-size: 0.9rem; color: var(--gold); flex-shrink: 0;
+  }
+
+  /* ========== CANVAS ========== */
   #gameCanvas {
     display: block;
     background: rgba(15, 19, 32, 0.6);
-    border-radius: 12px;
-    box-shadow: 0 0 40px rgba(77, 184, 255, 0.15), 0 0 40px rgba(255, 92, 122, 0.15);
-    z-index: 1;
+    border-radius: 14px;
+    border: 1.5px solid rgba(255,255,255,0.08);
+    box-shadow: 0 0 30px rgba(77,184,255,0.1), 0 0 30px rgba(255,92,122,0.1);
+    flex-shrink: 1;
   }
 
-  #hud {
-    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
-    display: none; gap: 16px; z-index: 50;
-    font-weight: 700; font-size: 0.9em; pointer-events: none;
+  /* ========== ROUND BANNER ========== */
+  #round-banner {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    padding: 16px 28px; border-radius: 20px; font-weight: 900; font-size: 1.4rem;
+    z-index: 300; pointer-events: none; text-align: center;
+    border: 2.5px solid var(--gold);
+    background: linear-gradient(135deg, rgba(15,19,32,0.95) 0%, rgba(26,41,66,0.95) 100%);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 0 40px rgba(245,200,66,0.3);
+    animation: bannerIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: none;
   }
-  .hud-score { padding: 5px 14px; border-radius: 8px; background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); }
-
-  #gameOver {
-    position: absolute; inset: 0; display: none;
-    flex-direction: column; align-items: center; justify-content: center;
-    background: rgba(0,0,0,0.85); z-index: 200; gap: 16px; padding: 20px;
+  @keyframes bannerIn {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
   }
-  #gameOver h2 { font-size: 2.2em; font-weight: 900; font-family: 'Fredoka One', cursive; }
-  #gameOver .score-summary { color: #ccc; font-size: 1.05em; }
 
-  .go-buttons { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-  .go-btn {
-    padding: 12px 28px; border: none; border-radius: 12px;
-    font-family: 'Heebo', sans-serif; font-size: 1em; font-weight: 700;
-    cursor: pointer; transition: transform 0.2s;
+  /* ========== MATCH END MODAL ========== */
+  #match-modal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.88); z-index: 500;
+    align-items: center; justify-content: center; padding: 20px;
   }
-  .go-btn:active { transform: scale(0.95); }
-  #restartBtn { background: linear-gradient(135deg, var(--emma), var(--rif)); color: white; }
-  #homeBtn { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
 
+  .match-box {
+    background: linear-gradient(135deg, #1a2942 0%, #0F1320 100%);
+    color: white; padding: 32px 24px; border-radius: 28px; text-align: center;
+    width: 100%; max-width: 320px; border: 2px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+  }
+
+  .match-box .match-icon { font-size: 3.5rem; margin-bottom: 8px; }
+  .match-box .match-title { font-family: 'Fredoka One', cursive; font-size: 1.6rem; margin-bottom: 4px; }
+  .match-box .match-sub { font-size: 0.95rem; color: #aaa; margin-bottom: 18px; }
+
+  .match-btns { display: flex; flex-direction: column; gap: 10px; }
+
+  .mbtn {
+    padding: 14px 20px; border: none; border-radius: 16px;
+    font-family: 'Heebo', sans-serif; font-size: 1rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; user-select: none;
+  }
+  .mbtn:active { transform: scale(0.95); }
+
+  .mbtn-primary {
+    background: linear-gradient(135deg, var(--emma), var(--rif));
+    color: white; box-shadow: 0 4px 15px rgba(255,92,122,0.3);
+  }
+  .mbtn-secondary {
+    background: rgba(255,255,255,0.08); color: white;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .mbtn-waiting {
+    background: rgba(245,200,66,0.15); color: var(--gold);
+    border: 1.5px solid rgba(245,200,66,0.3);
+    animation: waitPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes waitPulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(245,200,66,0); }
+    50% { box-shadow: 0 0 20px rgba(245,200,66,0.3); }
+  }
+
+  /* ========== ALERT MODAL ========== */
+  #alert-modal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85); z-index: 1000;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .alert-box {
+    background: linear-gradient(135deg, #1a2942 0%, #0F1320 100%);
+    color: white; padding: 36px 28px; border-radius: 28px; text-align: center;
+    width: 100%; max-width: 320px; border: 2px solid rgba(255,255,255,0.1);
+  }
+  .alert-box .alert-icon { font-size: 3rem; margin-bottom: 10px; }
+  .alert-box .alert-msg { font-size: 1.05rem; font-weight: 600; line-height: 1.6; }
+  .alert-box .btn-reset {
+    margin-top: 18px; padding: 12px 24px; border-radius: 14px; border: none;
+    background: white; color: #0F1320; font-weight: 900; font-size: 0.95rem;
+    cursor: pointer; font-family: 'Heebo', sans-serif;
+  }
+  .alert-box .btn-reset:active { transform: scale(0.96); }
+
+  /* ========== POWER-UP TOAST ========== */
   .powerup-toast {
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 1.1em;
+    padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 1.05em;
     color: white; z-index: 150; pointer-events: none;
     animation: toastAnim 1.4s ease-out forwards;
   }
@@ -92,61 +180,66 @@
     100% { opacity: 0; transform: translate(-50%, -90%) scale(0.8); }
   }
 
-  #backBtn {
+  /* ========== HOME BUTTON ========== */
+  .btn-home {
     position: absolute; top: 10px; right: 10px; z-index: 60;
     background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15);
-    color: white; width: 36px; height: 36px; border-radius: 50%;
-    font-size: 1.2em; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(6px);
+    color: white; width: 38px; height: 38px; border-radius: 50%;
+    font-size: 1.1em; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(6px); user-select: none;
   }
-  #backBtn:active { transform: scale(0.9); }
+  .btn-home:active { transform: scale(0.9); }
 
-  #alert-modal {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.85); z-index: 1000;
-    align-items: center; justify-content: center; padding: 20px;
+  /* ========== CONFETTI ========== */
+  .confetti-container { position: fixed; inset: 0; pointer-events: none; z-index: 1002; overflow: hidden; }
+  .confetti-piece {
+    position: absolute; width: 10px; height: 10px; top: -10px; border-radius: 2px;
+    animation: confettiFall linear forwards;
   }
-  .alert-box {
-    background: linear-gradient(135deg, #1a2942 0%, #0F1320 100%);
-    color: white; padding: 40px 30px; border-radius: 30px;
-    text-align: center; width: 100%; max-width: 320px;
-    border: 2px solid rgba(255,255,255,0.1);
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
   }
-  .alert-box .alert-icon { font-size: 3rem; margin-bottom: 10px; }
-  .alert-box .alert-msg { font-size: 1.1rem; font-weight: 600; margin: 0; }
-  .alert-box .btn-reset {
-    margin-top: 20px;
-    background: linear-gradient(135deg, var(--emma), var(--rif));
-    color: white; padding: 11px 24px; border-radius: 12px; border: none;
-    font-weight: 900; cursor: pointer; width: 100%; font-size: 0.9rem;
-    font-family: 'Heebo', sans-serif;
-  }
-  .btn-reset:active { transform: scale(0.97); }
 </style>
 </head>
 <body>
 
 <div class="stars"></div>
+<button class="btn-home" onclick="goHome()">🏠</button>
 
-<div id="hud">
-  <div class="hud-score" id="hud-p1"><span id="p1Name">שחקן 1</span>: <span id="p1Score">0</span></div>
-  <div class="hud-score" id="hud-p2"><span id="p2Name">שחקן 2</span>: <span id="p2Score">0</span></div>
-</div>
-
-<button id="backBtn" onclick="goHome()">🏠</button>
-
-<canvas id="gameCanvas"></canvas>
-
-<div id="gameOver">
-  <h2 id="winnerText"></h2>
-  <p class="score-summary" id="scoreSummary"></p>
-  <div class="go-buttons">
-    <button class="go-btn" id="restartBtn">🔄 משחק חדש</button>
-    <button class="go-btn" id="homeBtn" onclick="goHome()">🏠 חזרה</button>
+<!-- HEADER SCORE BAR -->
+<div class="header">
+  <div class="score-box" id="card-p1">
+    <div class="name" id="name-p1">שחקן 1</div>
+    <div class="wins" id="wins-p1">0</div>
+    <div class="wins-label">ניצחונות</div>
+  </div>
+  <div class="vs-box">VS</div>
+  <div class="score-box" id="card-p2">
+    <div class="name" id="name-p2">שחקן 2</div>
+    <div class="wins" id="wins-p2">0</div>
+    <div class="wins-label">ניצחונות</div>
   </div>
 </div>
 
+<!-- CANVAS -->
+<canvas id="gameCanvas"></canvas>
+
+<!-- ROUND BANNER (win/loss per round) -->
+<div id="round-banner"></div>
+
+<!-- MATCH END MODAL -->
+<div id="match-modal">
+  <div class="match-box">
+    <div class="match-icon" id="mm-icon">🏆</div>
+    <div class="match-title" id="mm-title">ניצחון!</div>
+    <div class="match-sub" id="mm-sub">2-1</div>
+    <div class="match-btns" id="mm-btns"></div>
+  </div>
+</div>
+
+<!-- ALERT MODAL (opponent left / full) -->
 <div id="alert-modal">
   <div class="alert-box">
     <div class="alert-icon">⚠️</div>
@@ -173,74 +266,73 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// ─── Player Identity ───
-const params = new URLSearchParams(window.location.search);
-const isAIMode = params.get('mode') === 'ai';
-
-let userData = null;
-try { const saved = sessionStorage.getItem('myUser'); if (saved) userData = JSON.parse(saved); } catch (e) {}
-
+// ========== זיהוי שחקן ==========
+const params = new URLSearchParams(location.search);
+const displayName = params.get('player') || "משתמש";
+const userDataStr = sessionStorage.getItem('myUser');
+const userData = userDataStr ? JSON.parse(userDataStr) : null;
 if (!userData) { window.location.href = 'index.html'; throw new Error('No user data'); }
 
 const myName = userData.id;
-const displayName = userData.name;
 const myColor = userData.color;
 const myEmoji = userData.emoji;
+const isAIMode = params.get('mode') === 'ai';
 
-// ─── Room & Game refs ───
-const roomRef = ref(db, isAIMode ? 'rooms_v3/breakout_ai' : 'rooms_v3/breakout');
-let gameStateRef = isAIMode ? ref(db, `game/breakout_ai/${myName}`) : null;
+const GAME_ID = 'breakout';
+const roomRef = ref(db, isAIMode ? `rooms_v3/${GAME_ID}_ai` : `rooms_v3/${GAME_ID}`);
+let gameStateRef = isAIMode ? ref(db, `game/${GAME_ID}_ai/${myName}`) : null;
 let currentGameId = null;
 
-// ─── Game variables ───
+// ========== משתנים ==========
 let isP1 = false;
 let p1Color = '#FF5C7A', p2Color = '#4DB8FF';
 let p1DisplayName = '', p2DisplayName = '';
+let p1Emoji = '', p2Emoji = '';
 let lastPlayerCount = 0;
 
-// ─── Canvas ───
+// Match state (best of 3)
+let p1Wins = 0, p2Wins = 0, roundNum = 0;
+const WINS_NEEDED = 2;
+
+// ========== Canvas ==========
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 function resizeCanvas() {
+  const headerH = document.querySelector('.header').offsetHeight || 80;
+  const availH = window.innerHeight - headerH - 12;
   const maxW = Math.min(window.innerWidth - 12, 420);
-  const maxH = Math.min(window.innerHeight - 12, 720);
-  const ratio = Math.min(maxW / 420, maxH / 720);
+  const maxH = Math.min(availH, 700);
+  const ratio = Math.min(maxW / 420, maxH / 700);
   canvas.width = Math.floor(420 * ratio);
-  canvas.height = Math.floor(720 * ratio);
+  canvas.height = Math.floor(700 * ratio);
 }
-resizeCanvas();
+// Delay first resize to let header render
+setTimeout(resizeCanvas, 50);
 window.addEventListener('resize', resizeCanvas);
 
-function S(val) { return val * (canvas.width / 420); }
+function S(v) { return v * (canvas.width / 420); }
 
-// ─── Constants ───
+// ========== קבועים ==========
 const BRICK_ROWS = 1, BRICK_COLS = 7, BRICK_H = 18, BRICK_GAP = 4, BRICK_PAD_X = 20;
 const PAD_W = 80, PAD_H = 14, BALL_R = 7, BALL_SPEED = 4;
-const P1_PAD_Y = 720 - 30 - BRICK_ROWS * (BRICK_H + BRICK_GAP) - 20;
+const FIELD_H = 700;
+const P1_PAD_Y = FIELD_H - 30 - BRICK_ROWS * (BRICK_H + BRICK_GAP) - 20;
 const P2_PAD_Y = 30 + BRICK_ROWS * (BRICK_H + BRICK_GAP) + 6;
 
 let gameState = null, gameRunning = false, lastTime = 0;
 let myPadTarget = 210 - PAD_W / 2, powerupIdCounter = 0;
 
-// ═══════ Heartbeat & Opponent Check (כמו xo.html) ═══════
-
-let opponentCheckInterval = null;
-let roomListenerUnsubscribe = null;
-let gameStateUnsubscribe = null;
+// ========== Heartbeat ==========
+let heartbeatInterval = null, opponentCheckInterval = null;
+let roomListenerUnsubscribe = null, gameStateUnsubscribe = null;
 
 function startHeartbeat(roomPath, joinedAt) {
-  window.heartbeatInterval = setInterval(() => {
-    set(ref(db, roomPath), {
-      name: displayName, color: myColor, emoji: myEmoji,
-      joinedAt: joinedAt, timestamp: Date.now(), active: true
-    });
+  heartbeatInterval = setInterval(() => {
+    set(ref(db, roomPath), { name: displayName, color: myColor, emoji: myEmoji, joinedAt, timestamp: Date.now(), active: true });
   }, 1000);
 }
-
-function stopHeartbeat() {
-  if (window.heartbeatInterval) { clearInterval(window.heartbeatInterval); window.heartbeatInterval = null; }
-}
+function stopHeartbeat() { if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; } }
 
 function startOpponentCheck() {
   if (isAIMode || opponentCheckInterval) return;
@@ -249,78 +341,54 @@ function startOpponentCheck() {
       const snap = await get(roomRef);
       const players = snap.val() || {};
       const names = Object.keys(players);
-
       if (names.length === 1 && names[0] === myName && currentGameId) {
-        let leftName = '', leftEmoji = '';
-        if (window.lastPlayersSnapshot) {
-          for (const [id, player] of Object.entries(window.lastPlayersSnapshot)) {
-            if (id !== myName) { leftName = player.name; leftEmoji = player.emoji; break; }
-          }
-        }
-        handleOpponentLeft(leftName, leftEmoji);
-        return;
+        let ln = '', le = '';
+        if (window.lastPlayersSnapshot) { for (const [id, p] of Object.entries(window.lastPlayersSnapshot)) { if (id !== myName) { ln = p.name; le = p.emoji; break; } } }
+        handleOpponentLeft(ln, le); return;
       }
-
       if (names.length === 2 && currentGameId) {
-        const opponentId = names.find(n => n !== myName);
-        if (opponentId && players[opponentId]) {
-          const timeSinceLastBeat = Date.now() - (players[opponentId].timestamp || 0);
-          if (timeSinceLastBeat > 5000) {
-            await remove(ref(db, `rooms_v3/breakout/${opponentId}`));
-            handleOpponentLeft(players[opponentId].name || '', players[opponentId].emoji || '');
-          }
+        const oid = names.find(n => n !== myName);
+        if (oid && players[oid] && Date.now() - (players[oid].timestamp || 0) > 5000) {
+          await remove(ref(db, `rooms_v3/${GAME_ID}/${oid}`));
+          handleOpponentLeft(players[oid].name || '', players[oid].emoji || '');
         }
       }
-    } catch (error) { console.error('Error in opponent check:', error); }
+    } catch (e) { console.error('opponent check err:', e); }
   }, 3000);
 }
+function stopOpponentCheck() { if (opponentCheckInterval) { clearInterval(opponentCheckInterval); opponentCheckInterval = null; } }
 
-function stopOpponentCheck() {
-  if (opponentCheckInterval) { clearInterval(opponentCheckInterval); opponentCheckInterval = null; }
-}
-
-function handleOpponentLeft(leftPlayerName, leftPlayerEmoji) {
-  gameRunning = false;
-  stopHeartbeat();
-  stopOpponentCheck();
+function handleOpponentLeft(leftName, leftEmoji) {
+  gameRunning = false; stopHeartbeat(); stopOpponentCheck();
   if (roomListenerUnsubscribe) { roomListenerUnsubscribe(); roomListenerUnsubscribe = null; }
   if (gameStateUnsubscribe) { gameStateUnsubscribe(); gameStateUnsubscribe = null; }
-  remove(ref(db, `rooms_v3/breakout/${myName}`));
+  remove(ref(db, `rooms_v3/${GAME_ID}/${myName}`));
   if (gameStateRef && currentGameId) set(gameStateRef, null);
-
-  const msg = (leftPlayerName && leftPlayerEmoji)
-    ? `${leftPlayerEmoji} ${leftPlayerName} עזב/ה את המשחק`
-    : 'השחקן השני עזב/ה את המשחק';
+  const msg = (leftName && leftEmoji) ? `${leftEmoji} ${leftName} עזב/ה את המשחק` : 'השחקן השני עזב/ה את המשחק';
   document.getElementById('alert-modal').style.display = 'flex';
   document.getElementById('modal-msg').innerHTML = msg;
 }
 
-// ═══════ Navigation & Cleanup ═══════
-
+// ========== ניווט ==========
 window.goHome = async () => {
   try {
-    stopHeartbeat();
-    stopOpponentCheck();
-    gameRunning = false;
+    stopHeartbeat(); stopOpponentCheck(); gameRunning = false;
     if (!isAIMode) {
-      await remove(ref(db, `rooms_v3/breakout/${myName}`));
-      if (currentGameId) await remove(ref(db, `game/breakout/${currentGameId}`));
-    } else if (myName) {
-      await remove(ref(db, `rooms_v3/breakout_ai/${myName}`));
-    }
-  } catch (error) { console.error('Error in goHome:', error); }
+      await remove(ref(db, `rooms_v3/${GAME_ID}/${myName}`));
+      if (currentGameId) await remove(ref(db, `game/${GAME_ID}/${currentGameId}`));
+      remove(ref(db, `game/${GAME_ID}/pending`));
+    } else if (myName) { await remove(ref(db, `rooms_v3/${GAME_ID}_ai/${myName}`)); }
+  } catch (e) { console.error('goHome err:', e); }
   setTimeout(() => { window.location.href = 'index.html'; }, 200);
 };
 
 window.addEventListener('beforeunload', () => {
-  stopHeartbeat();
-  stopOpponentCheck();
-  if (!isAIMode) remove(ref(db, `rooms_v3/breakout/${myName}`));
-  else remove(ref(db, `rooms_v3/breakout_ai/${myName}`));
+  stopHeartbeat(); stopOpponentCheck();
+  if (!isAIMode) remove(ref(db, `rooms_v3/${GAME_ID}/${myName}`));
+  else remove(ref(db, `rooms_v3/${GAME_ID}_ai/${myName}`));
 });
 
-// ═══════ Game State ═══════
-
+// ========== יצירת מצב ==========
 function createInitialState() {
   const topBricks = [], bottomBricks = [];
   const brickW = (420 - 2 * BRICK_PAD_X - (BRICK_COLS - 1) * BRICK_GAP) / BRICK_COLS;
@@ -328,21 +396,24 @@ function createInitialState() {
     for (let c = 0; c < BRICK_COLS; c++) {
       const x = BRICK_PAD_X + c * (brickW + BRICK_GAP);
       topBricks.push({ x, y: 30 + r * (BRICK_H + BRICK_GAP), w: brickW, h: BRICK_H, alive: true, hp: 1 });
-      bottomBricks.push({ x, y: 720 - 30 - (BRICK_ROWS - r) * (BRICK_H + BRICK_GAP), w: brickW, h: BRICK_H, alive: true, hp: 1 });
+      bottomBricks.push({ x, y: FIELD_H - 30 - (BRICK_ROWS - r) * (BRICK_H + BRICK_GAP), w: brickW, h: BRICK_H, alive: true, hp: 1 });
     }
   }
   return {
-    ball: { x: 210, y: 360, dx: BALL_SPEED * 0.7, dy: -BALL_SPEED * 0.7 },
+    ball: { x: 210, y: FIELD_H / 2, dx: BALL_SPEED * 0.7, dy: -BALL_SPEED * 0.7 },
     p1PadX: 210 - PAD_W / 2, p2PadX: 210 - PAD_W / 2,
     topBricks, bottomBricks,
-    p1Score: 0, p2Score: 0, p1PadW: PAD_W, p2PadW: PAD_W,
+    p1Score: 0, p2Score: 0,
+    p1PadW: PAD_W, p2PadW: PAD_W,
     powerups: [], balls: [],
-    gameOver: false, winner: null, started: true, timestamp: Date.now()
+    gameOver: false, winner: null,
+    p1Wins: 0, p2Wins: 0, roundNum: 0,
+    rematchP1: false, rematchP2: false,
+    started: true, timestamp: Date.now()
   };
 }
 
-// ═══════ Power-ups ═══════
-
+// ========== פאוור-אפים ==========
 const POWERUP_TYPES = [
   { type: 'wider', label: '🔲 פד רחב', color: '#3DD68C' },
   { type: 'extra_ball', label: '⚾ כדור נוסף', color: '#F5C842' },
@@ -356,15 +427,14 @@ function maybeSpawnPowerup(x, y, goingUp) {
   }
 }
 
+function showToast(text, color) {
+  const t = document.createElement('div'); t.className = 'powerup-toast'; t.textContent = text; t.style.background = color || '#333';
+  document.body.appendChild(t); setTimeout(() => t.remove(), 1500);
+}
+
 function applyPowerup(type, catcher) {
   const info = POWERUP_TYPES.find(p => p.type === type);
-  const toast = document.createElement('div');
-  toast.className = 'powerup-toast';
-  toast.textContent = info ? info.label : type;
-  toast.style.background = info ? info.color : '#333';
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 1500);
-
+  showToast(info ? info.label : type, info ? info.color : '#333');
   if (type === 'wider') {
     if (catcher === 'p1') gameState.p1PadW = Math.min(PAD_W * 1.8, gameState.p1PadW + 25);
     else gameState.p2PadW = Math.min(PAD_W * 1.8, gameState.p2PadW + 25);
@@ -374,39 +444,38 @@ function applyPowerup(type, catcher) {
     gameState.ball.dx *= 0.65; gameState.ball.dy *= 0.65;
     setTimeout(() => {
       if (!gameState) return;
-      const speed = Math.sqrt(gameState.ball.dx ** 2 + gameState.ball.dy ** 2);
-      if (speed < BALL_SPEED * 0.8) { const f = (BALL_SPEED * 0.9) / speed; gameState.ball.dx *= f; gameState.ball.dy *= f; }
+      const spd = Math.sqrt(gameState.ball.dx ** 2 + gameState.ball.dy ** 2);
+      if (spd < BALL_SPEED * 0.8) { const f = (BALL_SPEED * 0.9) / spd; gameState.ball.dx *= f; gameState.ball.dy *= f; }
     }, 3000);
   }
 }
 
-// ═══════ Input ═══════
-
-canvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+// ========== קלט ==========
+let lastTouchX = null;
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); lastTouchX = e.touches[0].clientX; }, { passive: false });
 canvas.addEventListener('touchmove', (e) => {
-  e.preventDefault();
-  if (!gameState) return;
-  const rect = canvas.getBoundingClientRect();
-  const gameX = (e.touches[0].clientX - rect.left) / (canvas.width / 420);
+  e.preventDefault(); if (!gameState || lastTouchX === null) return;
+  const cur = e.touches[0].clientX;
+  const dx = (cur - lastTouchX) / (canvas.width / 420);
+  lastTouchX = cur;
   const padW = isP1 ? gameState.p1PadW : gameState.p2PadW;
-  myPadTarget = Math.max(0, Math.min(420 - padW, gameX - padW / 2));
+  myPadTarget = Math.max(0, Math.min(420 - padW, myPadTarget + dx));
 }, { passive: false });
-
+canvas.addEventListener('touchend', () => { lastTouchX = null; });
+canvas.addEventListener('touchcancel', () => { lastTouchX = null; });
 canvas.addEventListener('mousemove', (e) => {
   if (!gameState) return;
   const rect = canvas.getBoundingClientRect();
-  const gameX = (e.clientX - rect.left) / (canvas.width / 420);
+  const gx = (e.clientX - rect.left) / (canvas.width / 420);
   const padW = isP1 ? gameState.p1PadW : gameState.p2PadW;
-  myPadTarget = Math.max(0, Math.min(420 - padW, gameX - padW / 2));
+  myPadTarget = Math.max(0, Math.min(420 - padW, gx - padW / 2));
 });
 
-// ═══════ Firebase Sync ═══════
-
+// ========== Firebase ==========
 function syncFullState() {
   if (isAIMode || !isP1 || !gameState || !gameStateRef) return;
   set(gameStateRef, gameState);
 }
-
 function syncMyPad() {
   if (isAIMode || !gameStateRef) return;
   update(gameStateRef, { [isP1 ? 'p1PadX' : 'p2PadX']: myPadTarget }).catch(() => {});
@@ -424,27 +493,34 @@ function startGameStateListener() {
       gameState.p2PadX = myPad;
     } else {
       if (val.p2PadX !== undefined && gameState) gameState.p2PadX = val.p2PadX;
+      // Pick up rematch signals
+      if (val.rematchP2 !== undefined && gameState) gameState.rematchP2 = val.rematchP2;
     }
-    if (val.gameOver && !gameRunning) showGameOver(val.winner);
+    // Sync match wins
+    if (val.p1Wins !== undefined) { p1Wins = val.p1Wins; document.getElementById('wins-p1').textContent = p1Wins; }
+    if (val.p2Wins !== undefined) { p2Wins = val.p2Wins; document.getElementById('wins-p2').textContent = p2Wins; }
+    if (val.rematchP1 && val.rematchP2 && val.gameOver) {
+      // Both agreed to rematch
+      document.getElementById('match-modal').style.display = 'none';
+      if (isP1) startNewMatch();
+    }
+    if (val.gameOver && val.winner && !gameRunning) {
+      handleRoundEnd(val.winner, false);
+    }
   });
 }
 
-// ═══════ Physics ═══════
-
-function ballHitsBrick(ball, brick) {
-  return ball.x + BALL_R > brick.x && ball.x - BALL_R < brick.x + brick.w &&
-         ball.y + BALL_R > brick.y && ball.y - BALL_R < brick.y + brick.h;
+// ========== פיזיקה ==========
+function ballHitsBrick(b, brick) {
+  return b.x + BALL_R > brick.x && b.x - BALL_R < brick.x + brick.w && b.y + BALL_R > brick.y && b.y - BALL_R < brick.y + brick.h;
 }
-
 function padBounce(ball, padX, padW, goUp) {
-  const hitPos = (ball.x - padX) / padW;
-  const angle = (hitPos - 0.5) * Math.PI * 0.7;
-  const speed = Math.max(BALL_SPEED, Math.sqrt(ball.dx ** 2 + ball.dy ** 2));
-  ball.dx = speed * Math.sin(angle);
-  ball.dy = goUp ? -speed * Math.cos(angle) : speed * Math.cos(angle);
+  const angle = ((ball.x - padX) / padW - 0.5) * Math.PI * 0.7;
+  const spd = Math.max(BALL_SPEED, Math.sqrt(ball.dx ** 2 + ball.dy ** 2));
+  ball.dx = spd * Math.sin(angle);
+  ball.dy = goUp ? -spd * Math.cos(angle) : spd * Math.cos(angle);
   if (Math.abs(ball.dy) < 2) ball.dy = goUp ? -2 : 2;
 }
-
 function aiUpdate(dt) {
   if (!gameState) return;
   const targetX = gameState.ball.x - gameState.p2PadW / 2;
@@ -461,74 +537,63 @@ function updatePhysics(dt) {
   if (ball.x - BALL_R <= 0) { ball.x = BALL_R; ball.dx = Math.abs(ball.dx); }
   if (ball.x + BALL_R >= 420) { ball.x = 420 - BALL_R; ball.dx = -Math.abs(ball.dx); }
 
-  // P1 pad (bottom)
   if (ball.dy > 0 && ball.y + BALL_R >= P1_PAD_Y && ball.y + BALL_R <= P1_PAD_Y + PAD_H + 6) {
     if (ball.x >= gameState.p1PadX - 6 && ball.x <= gameState.p1PadX + gameState.p1PadW + 6) {
       ball.y = P1_PAD_Y - BALL_R; padBounce(ball, gameState.p1PadX, gameState.p1PadW, true);
     }
   }
-  // P2 pad (top)
   if (ball.dy < 0 && ball.y - BALL_R <= P2_PAD_Y + PAD_H && ball.y - BALL_R >= P2_PAD_Y - 6) {
     if (ball.x >= gameState.p2PadX - 6 && ball.x <= gameState.p2PadX + gameState.p2PadW + 6) {
       ball.y = P2_PAD_Y + PAD_H + BALL_R; padBounce(ball, gameState.p2PadX, gameState.p2PadW, false);
     }
   }
 
-  // Bricks
   for (const brick of gameState.topBricks) {
     if (!brick.alive) continue;
-    if (ballHitsBrick(ball, brick)) {
-      brick.hp--; if (brick.hp <= 0) { brick.alive = false; gameState.p1Score += 10; maybeSpawnPowerup(brick.x + brick.w / 2, brick.y + brick.h, false); }
-      ball.dy = Math.abs(ball.dy); break;
-    }
+    if (ballHitsBrick(ball, brick)) { brick.hp--; if (brick.hp <= 0) { brick.alive = false; gameState.p1Score += 10; maybeSpawnPowerup(brick.x + brick.w / 2, brick.y + brick.h, false); } ball.dy = Math.abs(ball.dy); break; }
   }
   for (const brick of gameState.bottomBricks) {
     if (!brick.alive) continue;
-    if (ballHitsBrick(ball, brick)) {
-      brick.hp--; if (brick.hp <= 0) { brick.alive = false; gameState.p2Score += 10; maybeSpawnPowerup(brick.x + brick.w / 2, brick.y - 10, true); }
-      ball.dy = -Math.abs(ball.dy); break;
-    }
+    if (ballHitsBrick(ball, brick)) { brick.hp--; if (brick.hp <= 0) { brick.alive = false; gameState.p2Score += 10; maybeSpawnPowerup(brick.x + brick.w / 2, brick.y - 10, true); } ball.dy = -Math.abs(ball.dy); break; }
   }
 
-  // Extra balls
   for (let i = gameState.balls.length - 1; i >= 0; i--) {
     const eb = gameState.balls[i];
     eb.x += eb.dx * dt; eb.y += eb.dy * dt;
     if (eb.x - BALL_R <= 0) { eb.x = BALL_R; eb.dx = Math.abs(eb.dx); }
     if (eb.x + BALL_R >= 420) { eb.x = 420 - BALL_R; eb.dx = -Math.abs(eb.dx); }
-    if (eb.y < -20 || eb.y > 740) { gameState.balls.splice(i, 1); continue; }
-    if (eb.dy > 0 && eb.y + BALL_R >= P1_PAD_Y && eb.y + BALL_R <= P1_PAD_Y + PAD_H + 4)
+    if (eb.y < -20 || eb.y > FIELD_H + 20) { gameState.balls.splice(i, 1); continue; }
+    if (eb.dy > 0 && eb.y + BALL_R >= P1_PAD_Y && eb.y + BALL_R <= P1_PAD_Y + PAD_H + 4) {
       if (eb.x >= gameState.p1PadX - 4 && eb.x <= gameState.p1PadX + gameState.p1PadW + 4) eb.dy = -Math.abs(eb.dy);
-    if (eb.dy < 0 && eb.y - BALL_R <= P2_PAD_Y + PAD_H && eb.y - BALL_R >= P2_PAD_Y - 4)
+    }
+    if (eb.dy < 0 && eb.y - BALL_R <= P2_PAD_Y + PAD_H && eb.y - BALL_R >= P2_PAD_Y - 4) {
       if (eb.x >= gameState.p2PadX - 4 && eb.x <= gameState.p2PadX + gameState.p2PadW + 4) eb.dy = Math.abs(eb.dy);
+    }
     for (const brick of gameState.topBricks) { if (!brick.alive) continue; if (ballHitsBrick(eb, brick)) { brick.hp--; if (brick.hp <= 0) { brick.alive = false; gameState.p1Score += 10; } eb.dy = Math.abs(eb.dy); break; } }
     for (const brick of gameState.bottomBricks) { if (!brick.alive) continue; if (ballHitsBrick(eb, brick)) { brick.hp--; if (brick.hp <= 0) { brick.alive = false; gameState.p2Score += 10; } eb.dy = -Math.abs(eb.dy); break; } }
   }
 
-  // Power-ups
   for (let i = gameState.powerups.length - 1; i >= 0; i--) {
-    const pu = gameState.powerups[i];
-    pu.y += pu.dy * dt;
-    if (pu.dy > 0 && pu.y >= P1_PAD_Y && pu.y <= P1_PAD_Y + PAD_H + 10)
+    const pu = gameState.powerups[i]; pu.y += pu.dy * dt;
+    if (pu.dy > 0 && pu.y >= P1_PAD_Y && pu.y <= P1_PAD_Y + PAD_H + 10) {
       if (pu.x >= gameState.p1PadX && pu.x <= gameState.p1PadX + gameState.p1PadW) { applyPowerup(pu.type, 'p1'); gameState.powerups.splice(i, 1); continue; }
-    if (pu.dy < 0 && pu.y <= P2_PAD_Y + PAD_H && pu.y >= P2_PAD_Y - 5)
+    }
+    if (pu.dy < 0 && pu.y <= P2_PAD_Y + PAD_H && pu.y >= P2_PAD_Y - 5) {
       if (pu.x >= gameState.p2PadX && pu.x <= gameState.p2PadX + gameState.p2PadW) { applyPowerup(pu.type, 'p2'); gameState.powerups.splice(i, 1); continue; }
-    if (pu.y > 740 || pu.y < -20) gameState.powerups.splice(i, 1);
+    }
+    if (pu.y > FIELD_H + 20 || pu.y < -20) gameState.powerups.splice(i, 1);
   }
 
-  // Game over
-  if (ball.y - BALL_R < -10) endGame('p1');
-  else if (ball.y + BALL_R > 730) endGame('p2');
-  if (gameState && !gameState.gameOver && gameState.topBricks.every(b => !b.alive)) endGame('p1');
-  if (gameState && !gameState.gameOver && gameState.bottomBricks.every(b => !b.alive)) endGame('p2');
+  if (ball.y - BALL_R < -10) endRound('p1');
+  else if (ball.y + BALL_R > FIELD_H + 10) endRound('p2');
+  if (gameState && !gameState.gameOver && gameState.topBricks.every(b => !b.alive)) endRound('p1');
+  if (gameState && !gameState.gameOver && gameState.bottomBricks.every(b => !b.alive)) endRound('p2');
 }
 
-// ═══════ Game Loop ═══════
-
+// ========== לולאה ==========
 function gameLoop(time) {
   if (!gameRunning) return;
-  const dt = Math.min((time - lastTime) / 16.67, 3);
-  lastTime = time;
+  const dt = Math.min((time - lastTime) / 16.67, 3); lastTime = time;
   if (!gameState || gameState.gameOver) { drawGame(); return; }
 
   if (isP1) gameState.p1PadX += (myPadTarget - gameState.p1PadX) * 0.3 * dt;
@@ -537,8 +602,8 @@ function gameLoop(time) {
   if (isP1 || isAIMode) {
     if (isAIMode) aiUpdate(dt);
     updatePhysics(dt);
-    document.getElementById('p1Score').textContent = gameState.p1Score;
-    document.getElementById('p2Score').textContent = gameState.p2Score;
+    document.getElementById('wins-p1').textContent = p1Wins;
+    document.getElementById('wins-p2').textContent = p2Wins;
     if (!isAIMode && Math.random() < 0.15) syncFullState();
   }
   syncMyPad();
@@ -546,219 +611,307 @@ function gameLoop(time) {
   requestAnimationFrame(gameLoop);
 }
 
-// ═══════ Drawing ═══════
-
+// ========== ציור ==========
 function drawGame() {
   if (!gameState) return;
-  const w = canvas.width, h = canvas.height;
-  ctx.clearRect(0, 0, w, h);
+  const w = canvas.width, h = canvas.height; ctx.clearRect(0, 0, w, h);
   const flip = !isP1 && !isAIMode;
   ctx.save();
   if (flip) { ctx.translate(w, h); ctx.rotate(Math.PI); }
 
   ctx.fillStyle = 'rgba(15, 19, 32, 0.6)'; ctx.fillRect(0, 0, w, h);
-
   ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = S(1);
-  ctx.setLineDash([S(8), S(8)]);
-  ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke();
-  ctx.setLineDash([]);
+  ctx.setLineDash([S(8), S(8)]); ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke(); ctx.setLineDash([]);
 
-  for (const b of gameState.topBricks) if (b.alive) drawBrick(b, p2Color);
-  for (const b of gameState.bottomBricks) if (b.alive) drawBrick(b, p1Color);
+  for (const b of gameState.topBricks) { if (b.alive) drawBrick(b, p2Color); }
+  for (const b of gameState.bottomBricks) { if (b.alive) drawBrick(b, p1Color); }
   drawPad(gameState.p2PadX, P2_PAD_Y, gameState.p2PadW, p2Color);
   drawPad(gameState.p1PadX, P1_PAD_Y, gameState.p1PadW, p1Color);
   drawBall(gameState.ball);
   for (const eb of gameState.balls) drawBall(eb);
-
   for (const pu of gameState.powerups) {
-    ctx.fillStyle = pu.color || '#F5C842';
-    ctx.shadowColor = pu.color || '#F5C842'; ctx.shadowBlur = S(8);
-    ctx.beginPath(); ctx.roundRect(S(pu.x - pu.w / 2), S(pu.y - pu.h / 2), S(pu.w), S(pu.h), S(4)); ctx.fill();
-    ctx.shadowBlur = 0;
+    ctx.fillStyle = pu.color || '#F5C842'; ctx.shadowColor = pu.color || '#F5C842'; ctx.shadowBlur = S(8);
+    ctx.beginPath(); ctx.roundRect(S(pu.x - pu.w / 2), S(pu.y - pu.h / 2), S(pu.w), S(pu.h), S(4)); ctx.fill(); ctx.shadowBlur = 0;
   }
   ctx.restore();
 }
-
 function drawBrick(brick, color) {
   const x = S(brick.x), y = S(brick.y), w = S(brick.w), h = S(brick.h);
   ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = S(6);
   ctx.beginPath(); ctx.roundRect(x, y, w, h, S(4)); ctx.fill(); ctx.shadowBlur = 0;
-  ctx.fillStyle = 'rgba(255,255,255,0.2)';
-  ctx.beginPath(); ctx.roundRect(x + S(2), y + S(1), w - S(4), h / 2 - S(1), S(2)); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.beginPath(); ctx.roundRect(x + S(2), y + S(1), w - S(4), h / 2 - S(1), S(2)); ctx.fill();
 }
-
 function drawPad(px, py, pw, color) {
   const x = S(px), y = S(py), w = S(pw), h = S(PAD_H);
   ctx.shadowColor = color; ctx.shadowBlur = S(12); ctx.fillStyle = color;
   ctx.beginPath(); ctx.roundRect(x, y, w, h, S(7)); ctx.fill(); ctx.shadowBlur = 0;
   const grad = ctx.createLinearGradient(x, y, x, y + h);
   grad.addColorStop(0, 'rgba(255,255,255,0.35)'); grad.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = grad;
-  ctx.beginPath(); ctx.roundRect(x + S(2), y + S(1), w - S(4), h / 2, S(5)); ctx.fill();
+  ctx.fillStyle = grad; ctx.beginPath(); ctx.roundRect(x + S(2), y + S(1), w - S(4), h / 2, S(5)); ctx.fill();
 }
-
 function drawBall(ball) {
   const x = S(ball.x), y = S(ball.y), r = S(BALL_R);
   ctx.shadowColor = '#fff'; ctx.shadowBlur = S(10); ctx.fillStyle = '#fff';
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
   const grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
   grad.addColorStop(0, 'rgba(255,255,255,0.9)'); grad.addColorStop(1, 'rgba(255,255,255,0.3)');
-  ctx.fillStyle = grad;
-  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
 }
 
-// ═══════ Game Over ═══════
+// ========== Confetti ==========
+function launchConfetti(color) {
+  const c = document.createElement('div'); c.className = 'confetti-container'; document.body.appendChild(c);
+  const colors = [color, '#F5C842', '#3DD68C', '#FF5C7A', '#4DB8FF', '#FFB347', '#E879F9'];
+  for (let i = 0; i < 50; i++) {
+    const p = document.createElement('div'); p.className = 'confetti-piece';
+    p.style.left = `${Math.random() * 100}%`;
+    p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    p.style.animationDuration = `${1.5 + Math.random() * 2}s`;
+    p.style.animationDelay = `${Math.random() * 0.5}s`;
+    p.style.width = `${6 + Math.random() * 8}px`; p.style.height = `${6 + Math.random() * 8}px`;
+    p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    c.appendChild(p);
+  }
+  setTimeout(() => c.remove(), 4000);
+}
 
-function endGame(winner) {
+// ========== סוף סיבוב ==========
+function endRound(winner) {
   if (!gameState || gameState.gameOver) return;
   gameState.gameOver = true; gameState.winner = winner;
   gameRunning = false;
+
+  if (winner === 'p1') p1Wins++; else p2Wins++;
+  roundNum++;
+  gameState.p1Wins = p1Wins; gameState.p2Wins = p2Wins; gameState.roundNum = roundNum;
+  gameState.rematchP1 = false; gameState.rematchP2 = false;
   syncFullState();
-  showGameOver(winner);
+  handleRoundEnd(winner, true);
 }
 
-function showGameOver(winner) {
-  const el = document.getElementById('winnerText');
-  const name = winner === 'p1' ? p1DisplayName : p2DisplayName;
-  const color = winner === 'p1' ? p1Color : p2Color;
-  el.textContent = `🎉 ${name} ניצח/ה!`;
-  el.style.color = color;
-  document.getElementById('scoreSummary').textContent =
-    `${p1DisplayName}: ${gameState?.p1Score || 0} | ${p2DisplayName}: ${gameState?.p2Score || 0}`;
-  document.getElementById('gameOver').style.display = 'flex';
+function handleRoundEnd(winner, isLocal) {
+  gameRunning = false;
+  document.getElementById('wins-p1').textContent = p1Wins;
+  document.getElementById('wins-p2').textContent = p2Wins;
+
+  const winnerName = winner === 'p1' ? p1DisplayName : p2DisplayName;
+  const winnerColor = winner === 'p1' ? p1Color : p2Color;
+  const winnerEmoji = winner === 'p1' ? p1Emoji : p2Emoji;
+
+  // Check if match is over (best of 3)
+  const matchOver = p1Wins >= WINS_NEEDED || p2Wins >= WINS_NEEDED;
+
+  if (matchOver) {
+    // Show match winner modal after a brief delay
+    if (isLocal || true) launchConfetti(winnerColor);
+    setTimeout(() => showMatchModal(winner), 800);
+  } else {
+    // Show round banner, then auto-start next round
+    showRoundBanner(winnerName, winnerEmoji, winnerColor);
+    if (isP1 || isAIMode) {
+      setTimeout(() => startNextRound(), 2500);
+    }
+  }
 }
 
-document.getElementById('restartBtn').addEventListener('click', () => {
-  gameState = createInitialState();
+function showRoundBanner(name, emoji, color) {
+  const banner = document.getElementById('round-banner');
+  banner.style.display = 'block';
+  banner.style.color = color;
+  banner.style.borderColor = color;
+  banner.style.boxShadow = `0 0 40px ${color}40`;
+  banner.innerHTML = `🏅 ${emoji} ${name} ניצח/ה סיבוב!`;
+  setTimeout(() => { banner.style.display = 'none'; }, 2200);
+}
+
+function startNextRound() {
+  if (!gameState) return;
+  const topBricks = [], bottomBricks = [];
+  const brickW = (420 - 2 * BRICK_PAD_X - (BRICK_COLS - 1) * BRICK_GAP) / BRICK_COLS;
+  for (let r = 0; r < BRICK_ROWS; r++) {
+    for (let c = 0; c < BRICK_COLS; c++) {
+      const x = BRICK_PAD_X + c * (brickW + BRICK_GAP);
+      topBricks.push({ x, y: 30 + r * (BRICK_H + BRICK_GAP), w: brickW, h: BRICK_H, alive: true, hp: 1 });
+      bottomBricks.push({ x, y: FIELD_H - 30 - (BRICK_ROWS - r) * (BRICK_H + BRICK_GAP), w: brickW, h: BRICK_H, alive: true, hp: 1 });
+    }
+  }
+  gameState.ball = { x: 210, y: FIELD_H / 2, dx: BALL_SPEED * 0.7, dy: (roundNum % 2 === 0 ? -1 : 1) * BALL_SPEED * 0.7 };
+  gameState.p1PadX = 210 - PAD_W / 2; gameState.p2PadX = 210 - PAD_W / 2;
+  gameState.p1PadW = PAD_W; gameState.p2PadW = PAD_W;
+  gameState.topBricks = topBricks; gameState.bottomBricks = bottomBricks;
+  gameState.powerups = []; gameState.balls = [];
+  gameState.p1Score = 0; gameState.p2Score = 0;
+  gameState.gameOver = false; gameState.winner = null;
+  gameState.p1Wins = p1Wins; gameState.p2Wins = p2Wins; gameState.roundNum = roundNum;
+  gameState.timestamp = Date.now();
   myPadTarget = 210 - PAD_W / 2;
   if (gameStateRef) set(gameStateRef, gameState);
-  document.getElementById('gameOver').style.display = 'none';
   gameRunning = true; lastTime = performance.now();
   requestAnimationFrame(gameLoop);
-});
-
-// ═══════ HUD setup ═══════
-
-function setupHUD() {
-  document.getElementById('p1Name').textContent = p1DisplayName;
-  document.getElementById('p2Name').textContent = p2DisplayName;
-  document.getElementById('hud-p1').style.color = p1Color;
-  document.getElementById('hud-p2').style.color = p2Color;
-  document.getElementById('hud').style.display = 'flex';
 }
 
-// ═══════ Start Game ═══════
+// ========== Match Modal ==========
+function showMatchModal(winner) {
+  const isWinner = (winner === 'p1' && isP1) || (winner === 'p2' && !isP1);
+  const winnerName = winner === 'p1' ? p1DisplayName : p2DisplayName;
+  const winnerColor = winner === 'p1' ? p1Color : p2Color;
+  const winnerEmoji = winner === 'p1' ? p1Emoji : p2Emoji;
+
+  document.getElementById('mm-icon').textContent = isWinner || isAIMode ? '🏆' : '😢';
+  const titleEl = document.getElementById('mm-title');
+  titleEl.textContent = `${winnerEmoji} ${winnerName} ניצח/ה!`;
+  titleEl.style.color = winnerColor;
+  document.getElementById('mm-sub').textContent = `${p1Wins} - ${p2Wins}`;
+
+  const btnsDiv = document.getElementById('mm-btns');
+  btnsDiv.innerHTML = '';
+
+  if (isAIMode) {
+    btnsDiv.innerHTML = `
+      <button class="mbtn mbtn-primary" id="btn-rematch-ai">🔄 שחק שוב</button>
+      <button class="mbtn mbtn-secondary" onclick="goHome()">🏠 חזרה לתפריט</button>
+    `;
+    document.getElementById('match-modal').style.display = 'flex';
+    document.getElementById('btn-rematch-ai').onclick = () => {
+      document.getElementById('match-modal').style.display = 'none';
+      startNewMatch();
+    };
+  } else {
+    // Multiplayer - need mutual consent
+    btnsDiv.innerHTML = `
+      <button class="mbtn mbtn-primary" id="btn-rematch">🔄 שחק שוב</button>
+      <button class="mbtn mbtn-secondary" onclick="goHome()">🏠 חזרה לתפריט</button>
+    `;
+    document.getElementById('match-modal').style.display = 'flex';
+
+    document.getElementById('btn-rematch').onclick = () => {
+      // Signal my rematch wish
+      const key = isP1 ? 'rematchP1' : 'rematchP2';
+      update(gameStateRef, { [key]: true });
+
+      // Check if opponent already agreed
+      const otherKey = isP1 ? 'rematchP2' : 'rematchP1';
+      if (gameState && gameState[otherKey]) {
+        // Both ready
+        document.getElementById('match-modal').style.display = 'none';
+        if (isP1) startNewMatch();
+      } else {
+        // Wait for opponent
+        const btn = document.getElementById('btn-rematch');
+        btn.className = 'mbtn mbtn-waiting';
+        btn.textContent = '⏳ ממתין להסכמה...';
+        btn.onclick = null;
+      }
+    };
+  }
+}
+
+function startNewMatch() {
+  p1Wins = 0; p2Wins = 0; roundNum = 0;
+  gameState = createInitialState();
+  if (gameStateRef) set(gameStateRef, gameState);
+  document.getElementById('match-modal').style.display = 'none';
+  document.getElementById('wins-p1').textContent = '0';
+  document.getElementById('wins-p2').textContent = '0';
+  myPadTarget = 210 - PAD_W / 2;
+  gameRunning = true; lastTime = performance.now();
+  requestAnimationFrame(gameLoop);
+}
+
+// ========== HUD ==========
+function updateHUD(p1Name, p1Col, p1Em, p2Name, p2Col, p2Em) {
+  p1DisplayName = p1Name; p2DisplayName = p2Name;
+  p1Color = p1Col; p2Color = p2Col;
+  p1Emoji = p1Em; p2Emoji = p2Em;
+  document.getElementById('name-p1').textContent = `${p1Em} ${p1Name}`;
+  document.getElementById('name-p2').textContent = `${p2Em} ${p2Name}`;
+  document.getElementById('card-p1').style.borderColor = p1Col;
+  document.getElementById('card-p2').style.borderColor = p2Col;
+  document.getElementById('wins-p1').style.color = p1Col;
+  document.getElementById('wins-p2').style.color = p2Col;
+}
 
 function startGamePlay() {
-  setupHUD();
-  document.getElementById('gameOver').style.display = 'none';
+  document.getElementById('match-modal').style.display = 'none';
   gameState = createInitialState();
   if (gameStateRef) set(gameStateRef, gameState);
   startGameStateListener();
   gameRunning = true; lastTime = performance.now();
+  resizeCanvas();
   requestAnimationFrame(gameLoop);
 }
 
-// ═══════ Init Session (same pattern as xo.html) ═══════
-
+// ========== initSession ==========
 async function initSession() {
   try {
-    console.log('🧱 initSession started, myName:', myName, 'AI Mode:', isAIMode);
-    const roomPath = isAIMode ? `rooms_v3/breakout_ai/${myName}` : `rooms_v3/breakout/${myName}`;
+    const roomPath = isAIMode ? `rooms_v3/${GAME_ID}_ai/${myName}` : `rooms_v3/${GAME_ID}/${myName}`;
     const myJoinedAt = Date.now();
 
     if (isAIMode) {
-      await set(ref(db, roomPath), {
-        name: displayName, color: myColor, emoji: myEmoji,
-        joinedAt: myJoinedAt, timestamp: myJoinedAt, active: true
-      });
+      await set(ref(db, roomPath), { name: displayName, color: myColor, emoji: myEmoji, joinedAt: myJoinedAt, timestamp: myJoinedAt, active: true });
       startHeartbeat(roomPath, myJoinedAt);
-
       isP1 = true;
-      p1Color = myColor; p2Color = '#FFB347';
-      p1DisplayName = displayName; p2DisplayName = '🤖 מחשב';
-
+      updateHUD(displayName, myColor, myEmoji, '🤖 מחשב', '#FFB347', '🤖');
       startGamePlay();
     } else {
-      // שחקן רגיל - בדוק אם כבר רשום ב-room (מגיע מ-index waiting)
       const existingSnap = await get(ref(db, roomPath));
       const existingData = existingSnap.val();
       const myJoinedAtFinal = existingData?.joinedAt || myJoinedAt;
 
-      await set(ref(db, roomPath), {
-        name: displayName, color: myColor, emoji: myEmoji,
-        joinedAt: myJoinedAtFinal, timestamp: Date.now(), active: true
-      });
+      await set(ref(db, roomPath), { name: displayName, color: myColor, emoji: myEmoji, joinedAt: myJoinedAtFinal, timestamp: Date.now(), active: true });
       startHeartbeat(roomPath, myJoinedAtFinal);
 
       const snapAfter = await get(roomRef);
       const playersAfter = snapAfter.val() || {};
-      const playerIds = Object.keys(playersAfter)
-        .sort((a, b) => (playersAfter[a].joinedAt || playersAfter[a].timestamp || 0) -
-                         (playersAfter[b].joinedAt || playersAfter[b].timestamp || 0));
+      const playerIds = Object.keys(playersAfter).sort((a, b) => (playersAfter[a].joinedAt || 0) - (playersAfter[b].joinedAt || 0));
 
       if (playerIds.length <= 2) {
-        if (playerIds.length === 2) {
+        if (playerIds.length === 1) {
+          isP1 = true; currentGameId = null;
+          gameStateRef = ref(db, `game/${GAME_ID}/pending`);
+        } else {
           const first = playerIds[0], second = playerIds[1];
-          currentGameId = `${first}_${second}`;
-          gameStateRef = ref(db, `game/breakout/${currentGameId}`);
           isP1 = myName === first;
-
-          p1Color = playersAfter[first].color; p2Color = playersAfter[second].color;
-          p1DisplayName = playersAfter[first].name; p2DisplayName = playersAfter[second].name;
-
-          const gameSnap = await get(gameStateRef);
-          if (!gameSnap.val()) startGamePlay();
-          else { gameState = gameSnap.val(); setupHUD(); startGameStateListener(); gameRunning = true; lastTime = performance.now(); requestAnimationFrame(gameLoop); }
-          startOpponentCheck();
+          currentGameId = `${first}_${second}`;
+          gameStateRef = ref(db, `game/${GAME_ID}/${currentGameId}`);
+          remove(ref(db, `game/${GAME_ID}/pending`));
+          const p1D = playersAfter[first], p2D = playersAfter[second];
+          updateHUD(p1D.name, p1D.color, p1D.emoji, p2D.name, p2D.color, p2D.emoji);
+          startGamePlay();
         }
-        // else: length 1 - ממתין לשחקן שני, room listener יטפל
       } else {
-        stopHeartbeat();
-        await remove(ref(db, roomPath));
+        stopHeartbeat(); await remove(ref(db, roomPath));
         document.getElementById('alert-modal').style.display = 'flex';
+        document.getElementById('alert-modal').querySelector('.alert-icon').textContent = '🚫';
         document.getElementById('modal-msg').textContent = 'המשחק מלא! כבר משחקים כאן שני שחקנים';
         return;
       }
 
-      // Room listener
       roomListenerUnsubscribe = onValue(roomRef, (snap) => {
         const players = snap.val() || {};
-        const names = Object.keys(players)
-          .sort((a, b) => (players[a].joinedAt || players[a].timestamp || 0) -
-                           (players[b].joinedAt || players[b].timestamp || 0));
-
-        if (!isAIMode && lastPlayerCount === 2 && names.length < 2 && currentGameId) {
-          let leftName = '', leftEmoji = '';
-          if (window.lastPlayersSnapshot) {
-            for (const [id, player] of Object.entries(window.lastPlayersSnapshot)) {
-              if (!players[id]) { leftName = player.name; leftEmoji = player.emoji; break; }
-            }
-          }
-          handleOpponentLeft(leftName, leftEmoji);
+        const names = Object.keys(players).sort((a, b) => (players[a].joinedAt || 0) - (players[b].joinedAt || 0));
+        if (names.length === 0 && gameStateRef && currentGameId) set(gameStateRef, null);
+        if (lastPlayerCount === 2 && names.length < 2) {
+          let ln = '', le = '';
+          if (window.lastPlayersSnapshot) { for (const [id, p] of Object.entries(window.lastPlayersSnapshot)) { if (!players[id]) { ln = p.name; le = p.emoji; break; } } }
+          handleOpponentLeft(ln, le);
         }
-
-        window.lastPlayersSnapshot = players;
-
-        if (names.length === 2 && !currentGameId) {
+        if (!currentGameId && names.length === 2) {
           const first = names[0], second = names[1];
-          currentGameId = `${first}_${second}`;
-          gameStateRef = ref(db, `game/breakout/${currentGameId}`);
           isP1 = myName === first;
-
-          p1Color = players[first].color; p2Color = players[second].color;
-          p1DisplayName = players[first].name; p2DisplayName = players[second].name;
-
-          startGamePlay();
+          currentGameId = `${first}_${second}`;
+          gameStateRef = ref(db, `game/${GAME_ID}/${currentGameId}`);
+          remove(ref(db, `game/${GAME_ID}/pending`));
+          updateHUD(players[first].name, players[first].color, players[first].emoji, players[second].name, players[second].color, players[second].emoji);
+          get(gameStateRef).then(snap => { if (!snap.val()) startGamePlay(); });
           startOpponentCheck();
         }
-
+        window.lastPlayersSnapshot = players;
         lastPlayerCount = names.length;
       });
+      startOpponentCheck();
     }
-  } catch (error) {
-    console.error('Error in initSession:', error);
-  }
+  } catch (e) { console.error('initSession err:', e); }
 }
 
 initSession();
