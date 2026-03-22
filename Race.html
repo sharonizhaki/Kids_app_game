@@ -24,7 +24,7 @@
         .stat-value.pop { animation: statPop 0.4s ease; }
         @keyframes statPop { 0% { transform: scale(1); } 40% { transform: scale(1.4); color: #F5C842; } 100% { transform: scale(1); } }
         .speed-indicator { display: flex; gap: 3px; justify-content: center; }
-        .speed-level { font-size: 12px; filter: grayscale(100%); opacity: 0.3; transition: all 0.3s; }
+        .speed-level { font-size: 12px; filter: grayscale(100%) brightness(1.5); opacity: 0.35; transition: all 0.3s; }
         .speed-level.active { filter: grayscale(0%); opacity: 1; transform: scale(1.15); }
         .speed-level.just-gained { animation: speedGain 0.5s ease; }
         @keyframes speedGain { 0% { transform: scale(1); } 50% { transform: scale(1.6); } 100% { transform: scale(1.15); } }
@@ -406,7 +406,7 @@
                     <div class="speed-level">🟡</div>
                     <div class="speed-level">🟠</div>
                     <div class="speed-level">🔴</div>
-                    <div class="speed-level">⚪</div>
+                    <div class="speed-level">🟣</div>
                 </div>
             </div>
             <div class="stat-item">
@@ -678,16 +678,15 @@ function showResult(icon, title, sub, canRetry=true) {
         // AI mode — ספירת נצחונות
         if (icon === '🏆') {
             myWins++;
-            updateWins();
+            updateWins(); // גביע מופיע עם אנימציה מיד!
         }
         
         if (myWins >= WINS_TO_SERIES) {
-            // ניצחת בסדרה!
             document.getElementById('resultIcon').textContent = '🏆';
             document.getElementById('resultTitle').textContent = '🎉 אלוף המרוץ!';
             document.getElementById('resultSub').textContent = `${myWins} נצחונות | ${points} נקודות`;
             document.getElementById('btnPlayAgain').style.display = canRetry ? 'block' : 'none';
-            document.getElementById('btnPlayAgain').textContent = '🔄 סדרה חדשה';
+            document.getElementById('btnPlayAgain').textContent = '🔄 מרוץ חדש';
             document.getElementById('btnPlayAgain').onclick = function() {
                 myWins = 0; points = 0; pointsAtRoundStart = 0;
                 updateWins();
@@ -861,39 +860,37 @@ function spawnExplosion(x, y) {
 
 // אפקט אבן — שברים מתפזרים
 function spawnRockShatter(x, y) {
-    // פלאש אפור-חום גדול
     const flash = document.createElement('div');
-    flash.style.cssText = `position:absolute;z-index:54;pointer-events:none;left:${x-30}px;top:${y-30}px;width:60px;height:60px;border-radius:50%;background:radial-gradient(circle,rgba(180,155,130,0.8),rgba(140,115,90,0.4),transparent);`;
+    flash.style.cssText = `position:absolute;z-index:54;pointer-events:none;left:${x-40}px;top:${y-40}px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(200,170,140,0.9),rgba(150,125,100,0.5),transparent);`;
     flash.animate([
         { transform: 'scale(0.3)', opacity: 1 },
-        { transform: 'scale(3)', opacity: 0 }
-    ], { duration: 450, easing: 'ease-out', fill: 'forwards' });
+        { transform: 'scale(3.5)', opacity: 0 }
+    ], { duration: 500, easing: 'ease-out', fill: 'forwards' });
     gameArea.appendChild(flash);
-    setTimeout(() => flash.remove(), 500);
+    setTimeout(() => flash.remove(), 550);
     
-    // שברי אבן גדולים ומגוונים
-    const shardChars = ['◆', '◇', '▪', '◾', '⬥', '▬', '▮', '■'];
-    const shardColors = ['#8B8B8B', '#6B6B6B', '#A0A0A0', '#7B6B5B', '#9B8B7B', '#5A5A5A', '#B0A090'];
-    for (let i = 0; i < 16; i++) {
+    const shardChars = ['◆', '◇', '▪', '◾', '⬥', '▬', '▮', '■', '▰', '▲'];
+    const shardColors = ['#8B8B8B', '#6B6B6B', '#A0A0A0', '#7B6B5B', '#9B8B7B', '#5A5A5A', '#B0A090', '#C0B0A0'];
+    for (let i = 0; i < 20; i++) {
         const s = document.createElement('div');
         s.className = 'rock-shard';
         s.textContent = shardChars[Math.floor(Math.random() * shardChars.length)];
         s.style.left = `${x}px`;
         s.style.top = `${y}px`;
         s.style.color = shardColors[Math.floor(Math.random() * shardColors.length)];
-        s.style.fontSize = `${12 + Math.random() * 14}px`;
-        s.style.textShadow = '0 1px 3px rgba(0,0,0,0.5)';
-        const angle = (Math.PI * 2 / 16) * i + Math.random() * 0.3;
-        const dist = 25 + Math.random() * 45;
+        s.style.fontSize = `${14 + Math.random() * 16}px`;
+        s.style.textShadow = '0 2px 4px rgba(0,0,0,0.6)';
+        const angle = (Math.PI * 2 / 20) * i + Math.random() * 0.25;
+        const dist = 30 + Math.random() * 55;
         const tx = Math.cos(angle) * dist;
         const ty = Math.sin(angle) * dist;
-        const rot = Math.random() * 720 - 360;
+        const rot = Math.random() * 900 - 450;
         s.animate([
-            { transform: 'translate(0,0) rotate(0deg) scale(1.2)', opacity: 1 },
-            { transform: `translate(${tx}px,${ty}px) rotate(${rot}deg) scale(0.15)`, opacity: 0 }
-        ], { duration: 500 + Math.random() * 300, easing: 'ease-out', fill: 'forwards' });
+            { transform: 'translate(0,0) rotate(0deg) scale(1.4)', opacity: 1 },
+            { transform: `translate(${tx}px,${ty}px) rotate(${rot}deg) scale(0.1)`, opacity: 0 }
+        ], { duration: 550 + Math.random() * 350, easing: 'ease-out', fill: 'forwards' });
         gameArea.appendChild(s);
-        setTimeout(() => s.remove(), 850);
+        setTimeout(() => s.remove(), 950);
     }
 }
 
@@ -926,36 +923,35 @@ function spawnIceCrack(x, y) {
     // פלאש כחול גדול
     const flash = document.createElement('div');
     flash.className = 'ice-flash';
-    flash.style.left = `${x - 30}px`;
-    flash.style.top = `${y - 30}px`;
-    flash.style.width = '60px';
-    flash.style.height = '60px';
+    flash.style.left = `${x - 40}px`;
+    flash.style.top = `${y - 40}px`;
+    flash.style.width = '80px';
+    flash.style.height = '80px';
     gameArea.appendChild(flash);
-    setTimeout(() => flash.remove(), 500);
+    setTimeout(() => flash.remove(), 550);
     
-    // שברי קרח — 16 כמו אבנים
-    const iceChars = ['❄', '✦', '✧', '◇', '◆', '⬥', '✶'];
-    const iceColors = ['#A0D8FF', '#C0E8FF', '#80C8FF', '#FFFFFF', '#B0E0FF', '#D0F0FF'];
-    for (let i = 0; i < 16; i++) {
+    const iceChars = ['❄', '✦', '✧', '◇', '◆', '⬥', '✶', '✴'];
+    const iceColors = ['#A0D8FF', '#C0E8FF', '#80C8FF', '#FFFFFF', '#B0E0FF', '#D0F0FF', '#90D0FF'];
+    for (let i = 0; i < 20; i++) {
         const s = document.createElement('div');
         s.className = 'ice-crack';
         s.textContent = iceChars[Math.floor(Math.random() * iceChars.length)];
         s.style.left = `${x}px`;
         s.style.top = `${y}px`;
         s.style.color = iceColors[Math.floor(Math.random() * iceColors.length)];
-        s.style.fontSize = `${12 + Math.random() * 14}px`;
-        s.style.textShadow = '0 0 4px rgba(160,216,255,0.8)';
-        const angle = (Math.PI * 2 / 16) * i + Math.random() * 0.3;
-        const dist = 25 + Math.random() * 45;
+        s.style.fontSize = `${14 + Math.random() * 16}px`;
+        s.style.textShadow = '0 0 6px rgba(160,216,255,0.9), 0 0 12px rgba(100,180,255,0.4)';
+        const angle = (Math.PI * 2 / 20) * i + Math.random() * 0.25;
+        const dist = 30 + Math.random() * 55;
         const tx = Math.cos(angle) * dist;
         const ty = Math.sin(angle) * dist;
-        const rot = Math.random() * 720 - 360;
+        const rot = Math.random() * 900 - 450;
         s.animate([
-            { transform: 'translate(0,0) rotate(0deg) scale(1.2)', opacity: 1 },
-            { transform: `translate(${tx}px,${ty}px) rotate(${rot}deg) scale(0.15)`, opacity: 0 }
-        ], { duration: 500 + Math.random() * 300, easing: 'ease-out', fill: 'forwards' });
+            { transform: 'translate(0,0) rotate(0deg) scale(1.4)', opacity: 1 },
+            { transform: `translate(${tx}px,${ty}px) rotate(${rot}deg) scale(0.1)`, opacity: 0 }
+        ], { duration: 550 + Math.random() * 350, easing: 'ease-out', fill: 'forwards' });
         gameArea.appendChild(s);
-        setTimeout(() => s.remove(), 850);
+        setTimeout(() => s.remove(), 950);
     }
 }
 
@@ -1457,12 +1453,12 @@ function gameLoop() {
                     const fx=parseFloat(it.el.style.left)+12,fy=iSY;
                     if(it.type==='diamond'){}
                     else if(it.type==='heart'){}
-                    else if(it.type==='boost'){if(aiSpeed<4)aiSpeed++;aiBoostCooldownUntil=Date.now()+2000;updateExhaust(aiCarEl,aiSpeed);spawnFloatText(fx,fy,'⚡','#FFD700');}
-                    else if(it.type==='bomb'){if(aiSpeed>0)aiSpeed=0;else freezeAI(0.25);updateExhaust(aiCarEl,aiSpeed);aiCarEl.classList.add('flash');setTimeout(()=>aiCarEl.classList.remove('flash'),450);spawnFloatText(fx,fy,'💥','#FF4444');}
-                    else if(it.type==='rock'){if(aiSpeed>0)aiSpeed--;else freezeAI(0.25);updateExhaust(aiCarEl,aiSpeed);aiCarEl.classList.add('flash');setTimeout(()=>aiCarEl.classList.remove('flash'),450);spawnFloatText(fx,fy,'🪨','#AAA');}
-                    else if(it.type==='puddle'){if(aiSpeed>0)aiSpeed--;updateExhaust(aiCarEl,aiSpeed);spawnFloatText(fx,fy,'💦','#6CB4EE');}
-                    else if(it.type==='pit'){if(aiSpeed>0)aiSpeed--;updateExhaust(aiCarEl,aiSpeed);spawnFloatText(fx,fy,'🕳️','#8B7355');}
-                    else if(it.type==='ice'){if(aiSpeed>0)aiSpeed--;else freezeAI(0.25);updateExhaust(aiCarEl,aiSpeed);aiCarEl.classList.add('flash');setTimeout(()=>aiCarEl.classList.remove('flash'),450);spawnFloatText(fx,fy,'❄️','#A0D8FF');}
+                    else if(it.type==='boost'){if(aiSpeed<4)aiSpeed++;aiBoostCooldownUntil=Date.now()+2000;updateExhaust(aiCarEl,aiSpeed);triggerBoostEffect(aiCarEl);spawnFloatText(fx,fy,'⚡','#FFD700');}
+                    else if(it.type==='bomb'){if(aiSpeed>0)aiSpeed=0;else freezeAI(0.25);updateExhaust(aiCarEl,aiSpeed);aiCarEl.classList.add('flash');setTimeout(()=>aiCarEl.classList.remove('flash'),450);spawnExplosion(fx,fy);}
+                    else if(it.type==='rock'){if(aiSpeed>0)aiSpeed--;else freezeAI(0.25);updateExhaust(aiCarEl,aiSpeed);aiCarEl.classList.add('flash');setTimeout(()=>aiCarEl.classList.remove('flash'),450);spawnRockShatter(fx,fy);}
+                    else if(it.type==='puddle'){if(aiSpeed>0)aiSpeed--;updateExhaust(aiCarEl,aiSpeed);}
+                    else if(it.type==='pit'){if(aiSpeed>0)aiSpeed--;updateExhaust(aiCarEl,aiSpeed);spawnPitDust(fx,fy);}
+                    else if(it.type==='ice'){if(aiSpeed>0)aiSpeed--;else freezeAI(0.25);updateExhaust(aiCarEl,aiSpeed);aiCarEl.classList.add('flash');setTimeout(()=>aiCarEl.classList.remove('flash'),450);spawnIceCrack(fx,fy);}
                     it.el.classList.add('collected');setTimeout(()=>it.el.remove(),300);
                 }
             }
@@ -1495,7 +1491,12 @@ function gameLoop() {
             if(moved)aiMoveCooldown=10;
         }
         if(aiMoveCooldown>0)aiMoveCooldown--;
-        if(aiY>=RACE_LENGTH&&!aiFinished){aiFinished=true;aiSpeed=4;updateExhaust(aiCarEl,4);}
+        if(aiY>=RACE_LENGTH&&!aiFinished){
+            aiFinished=true; aiSpeed=4; updateExhaust(aiCarEl,4); updateHeadlights(aiCarEl,4);
+            aiCarEl.classList.add('speed-5');
+        }
+        // AI שסיים — ממשיך לנסוע קדימה מהר עד שנעלם מהמסך
+        if(aiFinished){ aiY += SPEEDS[4] * 0.5; }
     }
 
     updateTrackDots();
