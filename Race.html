@@ -899,20 +899,22 @@ function gameLoop() {
         if (lb < -20) startLine.classList.add('hidden');
     }
 
-    // קו סיום — תמיד ממוקם לפי parallax, יורד מלמעלה בצורה טבעית
+    // קו סיום — ממוקם לפי parallax, יורד חלק מלמעלה
     let finishLineMet = false;
-    const finishLine = document.getElementById('raceLine');
-    const finishWorldY = RACE_LENGTH;
-    const finishScreenY = getItemScreenY(finishWorldY);
-    
-    // אם קו הזינוק כבר נעלם — השתמש בקו לסיום
     if (startLine.classList.contains('hidden')) {
-        finishLine.classList.remove('hidden');
-        finishLine.style.top = `${finishScreenY}px`;
-        finishLine.style.bottom = 'auto';
+        const finishLine = document.getElementById('raceLine');
+        const finishWorldY = RACE_LENGTH;
+        const finishScreenY = getItemScreenY(finishWorldY);
         
-        const pTop = getPlayerScreenCenterY() - CAR_HEIGHT/2;
-        if (finishScreenY + 14 >= pTop && playerY > RACE_LENGTH * 0.5) finishLineMet = true;
+        // הצג רק כשהקו נכנס לתוך המסך מלמעלה
+        if (finishScreenY > -20) {
+            finishLine.classList.remove('hidden');
+            finishLine.style.top = `${finishScreenY}px`;
+            finishLine.style.bottom = 'auto';
+            
+            const pTop = getPlayerScreenCenterY() - CAR_HEIGHT / 2;
+            if (finishScreenY + 14 >= pTop) finishLineMet = true;
+        }
     }
 
     if (!tiltActive && !isFrozen) applyWobble(playerCarEl, speed);
@@ -1021,22 +1023,17 @@ function gameLoop() {
 
 // ========== סיום: המכונית עפה למעלה ==========
 function finishFlyUp(isLoss) {
-    // מהירות מקסימלית בסיום — המכונית ממשיכה לנסוע ונעלמת למעלה
-    playerSpeed = 4;
-    updateSpeed(true); updateCarSpeedClass();
-    updateExhaust(playerCarEl, 4); updateHeadlights(playerCarEl, 4);
-    playerCarEl.classList.add('speed-5');
+    // המכונית ממשיכה במהירות הנוכחית שלה (המקסימלית שהשחקן השיג)
+    updateExhaust(playerCarEl, playerSpeed); updateHeadlights(playerCarEl, playerSpeed);
     
-    const ms = SPEEDS[SPEEDS.length - 1];
+    const finishSpeed = SPEEDS[playerSpeed];
     let finishAnimId = null;
     let carBottom = parseFloat(playerCarEl.style.bottom) || 0;
     
     function finishLoop() {
-        updateRoadAnimation(ms);
-        // המכונית פשוט ממשיכה לנסוע קדימה במהירות מקסימלית
-        carBottom += ms * 1.2;
+        updateRoadAnimation(finishSpeed);
+        carBottom += finishSpeed * 1.2;
         playerCarEl.style.bottom = `${carBottom}px`;
-        // נדנוד קל
         const ox = Math.sin(Date.now() * 0.007) * 0.5;
         const or = Math.sin(Date.now() * 0.005) * 0.4;
         playerCarEl.style.transform = `translateX(${ox}px) rotate(${or}deg)`;
@@ -1044,7 +1041,6 @@ function finishFlyUp(isLoss) {
         if (carBottom < gameH + 150) {
             finishAnimId = requestAnimationFrame(finishLoop);
         } else {
-            // המכונית נעלמה מהמסך — הצג תוצאה
             if (isLoss) showResult('😔', 'הפסדת', `${points} נקודות`);
             else showResult('🏆', `🏁 ${myEmoji} ${displayName} 🏆`, `${points} נקודות`);
         }
