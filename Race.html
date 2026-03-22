@@ -1696,15 +1696,20 @@ async function init() {
                 
                 // נקה נתונים ישנים מ-Firebase (reconnect / משחק קודם)
                 if (multiAmFirst) {
+                    const cleanups = [];
                     for (let s = 1; s <= TOTAL_SEGMENTS; s++) {
-                        remove(ref(db, `game/race/${multiGameId}/items_${s}`));
+                        cleanups.push(remove(ref(db, `game/race/${multiGameId}/items_${s}`)));
                     }
-                    remove(ref(db, `game/race/${multiGameId}/status_${names[0]}`));
-                    remove(ref(db, `game/race/${multiGameId}/status_${names[1]}`));
-                    remove(ref(db, `game/race/${multiGameId}/ready_${names[0]}`));
-                    remove(ref(db, `game/race/${multiGameId}/ready_${names[1]}`));
-                    remove(ref(db, `game/race/${multiGameId}/pos_${names[0]}`));
-                    remove(ref(db, `game/race/${multiGameId}/pos_${names[1]}`));
+                    cleanups.push(remove(ref(db, `game/race/${multiGameId}/status_${names[0]}`)));
+                    cleanups.push(remove(ref(db, `game/race/${multiGameId}/status_${names[1]}`)));
+                    cleanups.push(remove(ref(db, `game/race/${multiGameId}/ready_${names[0]}`)));
+                    cleanups.push(remove(ref(db, `game/race/${multiGameId}/ready_${names[1]}`)));
+                    cleanups.push(remove(ref(db, `game/race/${multiGameId}/pos_${names[0]}`)));
+                    cleanups.push(remove(ref(db, `game/race/${multiGameId}/pos_${names[1]}`)));
+                    await Promise.all(cleanups);
+                } else {
+                    // שחקן 2 — חכה שהמחיקה תסתיים (נותן לשחקן 1 רגע)
+                    await new Promise(r => setTimeout(r, 300));
                 }
                 
                 moveCarToLane(playerCarEl,playerLane,null);
