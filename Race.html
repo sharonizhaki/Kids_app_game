@@ -1621,7 +1621,7 @@ function gameLoop() {
 function stopGame() { 
     gameRunning=false; 
     if (animFrameId){cancelAnimationFrame(animFrameId);animFrameId=null;} 
-    // המשך אנימציית רקע — כביש וניענוע רכב
+    // המשך אנימציית רקע — כביש וניענוע רכב במהירות מקסימלית
     startBgAnimation();
 }
 
@@ -1629,14 +1629,19 @@ let bgAnimId = null;
 let bgWobble = 0;
 function startBgAnimation() {
     if (bgAnimId) return;
-    const lastSpeed = SPEEDS[playerSpeed] || SPEEDS[0];
+    const maxSpeed = SPEEDS[SPEEDS.length - 1]; // מהירות מקסימלית תמיד
+    // הפעל להבות מקסימליות
+    if (playerCarEl) {
+        updateExhaust(playerCarEl, 4);
+        updateHeadlights(playerCarEl, 4);
+    }
     function bgLoop() {
         bgWobble++;
-        updateRoadAnimation(lastSpeed);
-        // ניענוע רכב קל
+        updateRoadAnimation(maxSpeed);
+        // ניענוע רכב
         if (playerCarEl) {
-            const ox = Math.sin(bgWobble * 0.065) * 0.3;
-            const or = Math.sin(bgWobble * 0.045) * 0.25;
+            const ox = Math.sin(bgWobble * 0.07) * 0.5;
+            const or = Math.sin(bgWobble * 0.05) * 0.4;
             playerCarEl.style.transform = `translateX(${ox}px) rotate(${or}deg)`;
         }
         bgAnimId = requestAnimationFrame(bgLoop);
