@@ -406,7 +406,7 @@
                     <div class="speed-level">🟡</div>
                     <div class="speed-level">🟠</div>
                     <div class="speed-level">🔴</div>
-                    <div class="speed-level">🟣</div>
+                    <div class="speed-level">⚪</div>
                 </div>
             </div>
             <div class="stat-item">
@@ -671,8 +671,35 @@ function showResult(icon, title, sub, canRetry=true) {
     document.getElementById('btnPlayAgain').style.display = 'none';
     document.getElementById('btnPlayAgain').textContent = '🔄 שחק שוב';
     document.getElementById('btnPlayAgain').disabled = false;
-    if (multiGameId) { mpSetStatus(icon === '💥' ? 'crashed' : (icon === '🏆' ? 'finished' : 'lost')); }
-    else { document.getElementById('btnPlayAgain').style.display = canRetry ? 'block' : 'none'; }
+    
+    if (multiGameId) {
+        mpSetStatus(icon === '💥' ? 'crashed' : (icon === '🏆' ? 'finished' : 'lost'));
+    } else {
+        // AI mode — ספירת נצחונות
+        if (icon === '🏆') {
+            myWins++;
+            updateWins();
+        }
+        
+        if (myWins >= WINS_TO_SERIES) {
+            // ניצחת בסדרה!
+            document.getElementById('resultIcon').textContent = '🏆';
+            document.getElementById('resultTitle').textContent = '🎉 אלוף המרוץ!';
+            document.getElementById('resultSub').textContent = `${myWins} נצחונות | ${points} נקודות`;
+            document.getElementById('btnPlayAgain').style.display = canRetry ? 'block' : 'none';
+            document.getElementById('btnPlayAgain').textContent = '🔄 סדרה חדשה';
+            document.getElementById('btnPlayAgain').onclick = function() {
+                myWins = 0; points = 0; pointsAtRoundStart = 0;
+                updateWins();
+                document.getElementById('resultModal').classList.remove('show');
+                document.getElementById('btnPlayAgain').onclick = playAgain;
+                resetGameState();
+                startCountdown(startGame);
+            };
+        } else {
+            document.getElementById('btnPlayAgain').style.display = canRetry ? 'block' : 'none';
+        }
+    }
     document.getElementById('resultModal').classList.add('show');
     if (sub.includes('נקודות')) animateScoreCount(points);
 }
@@ -1220,22 +1247,49 @@ function generateAllItems() {
     const allItems = [];
     const FIRST_ITEM_OFFSET = gameH * 1.2;
     const LAST_ITEM_Y = RACE_LENGTH - gameH * 0.5;
+    const HALF_WAY = (FIRST_ITEM_OFFSET + LAST_ITEM_Y) / 2;
     
-    const itemDefs = getAllItemDefs();
-    const totalItems = itemDefs.length;
-    const spacing = (LAST_ITEM_Y - FIRST_ITEM_OFFSET) / totalItems;
+    // אייטמים רגילים (בלי לבבות)
+    const base = getWaveItems();
+    let regularItems = [];
+    for (let i = 0; i < TOTAL_ITEMS_MULTIPLIER; i++) regularItems.push(...base);
+    regularItems = shuffle(regularItems);
+    
+    // לבבות רק בחצי השני
+    const hearts = [];
+    for (let i = 0; i < HEARTS_COUNT; i++) hearts.push({ type: 'heart', emoji: '❤️‍🔥' });
+    
+    // פזר רגילים על כל המסלול
+    const totalRegular = regularItems.length;
+    const spacing = (LAST_ITEM_Y - FIRST_ITEM_OFFSET) / (totalRegular + HEARTS_COUNT);
     
     const placed = [];
-    for (let i = 0; i < totalItems; i++) {
-        const def = itemDefs[i];
-        // פיזור אחיד עם קצת אקראיות
+    let itemIndex = 0;
+    let heartIndex = 0;
+    // מיקומים ללבבות — בחצי השני, מפוזרים
+    const heartPositions = [];
+    for (let h = 0; h < HEARTS_COUNT; h++) {
+        heartPositions.push(Math.round(HALF_WAY + (h + 1) * (LAST_ITEM_Y - HALF_WAY) / (HEARTS_COUNT + 1)));
+    }
+    
+    for (let i = 0; i < totalRegular + HEARTS_COUNT; i++) {
         const baseY = FIRST_ITEM_OFFSET + i * spacing;
+        let def;
+        // בדוק אם צריך להכניס לב כאן
+        if (heartIndex < HEARTS_COUNT && Math.abs(baseY - heartPositions[heartIndex]) < spacing) {
+            def = hearts[heartIndex];
+            heartIndex++;
+        } else if (itemIndex < totalRegular) {
+            def = regularItems[itemIndex];
+            itemIndex++;
+        } else continue;
+        
         let lane, worldY, att = 0;
         do {
             lane = Math.floor(Math.random() * LANE_COUNT);
-            worldY = Math.round(baseY + (Math.random() - 0.5) * spacing * 0.6);
+            worldY = Math.round(baseY + (Math.random() - 0.5) * spacing * 0.5);
             att++;
-        } while (att < 40 && placed.some(p => p.lane === lane && Math.abs(p.y - worldY) < 40));
+        } while (att < 40 && placed.some(p => p.lane === lane && Math.abs(p.y - worldY) < spacing * 0.4));
         placed.push({ lane, y: worldY });
         allItems.push({ lane, type: def.type, emoji: def.emoji, worldY, collected: false });
     }
@@ -1417,7 +1471,7 @@ function gameLoop() {
         // AI חכם
         if (!aiF && aiMoveCooldown <= 0) {
             const aiSY2 = gameH - aiBot - CAR_HEIGHT/2;
-            const LA = 150;
+            const LA = 120 + aiSpeed * 20; // ראייה רחוקה יותר במהירות גבוהה
             function scanLane(lane) {
                 let threat=null,hasBoost=false;
                 for(const it of items){if(it.collected||it.lane!==lane)continue;const iSY=getItemScreenY(it.worldY);const dy=aiSY2-(iSY+13);if(dy>0&&dy<LA){if(it.type==='bomb')threat='bomb';else if((it.type==='rock'||it.type==='ice'||it.type==='puddle'||it.type==='pit')&&threat!=='bomb')threat='rock';else if(it.type==='boost')hasBoost=true;}}
