@@ -503,7 +503,14 @@ window.goHome = async function() {
     if (mode==='ai') await remove(ref(db,`rooms_v3/race_ai/${myName}`));
     else {
         await remove(ref(db,`rooms_v3/race/${myName}`));
-        if (multiGameId) await remove(ref(db,`game/race/${multiGameId}`));
+        if (multiGameId) {
+            await remove(ref(db,`game/race/${multiGameId}`));
+            // נקה גם path הפוך ממשחקים קודמים
+            const parts = multiGameId.split('_');
+            if (parts.length === 2) {
+                await remove(ref(db,`game/race/${parts[1]}_${parts[0]}`));
+            }
+        }
     }
     setTimeout(() => { window.location.href = 'index.html'; }, 200);
 };
@@ -1629,17 +1636,20 @@ let bgAnimId = null;
 let bgWobble = 0;
 function startBgAnimation() {
     if (bgAnimId) return;
-    const maxSpeed = SPEEDS[SPEEDS.length - 1]; // מהירות מקסימלית תמיד
+    const maxSpeed = SPEEDS[SPEEDS.length - 1];
     // הפעל להבות מקסימליות
     if (playerCarEl) {
         updateExhaust(playerCarEl, 4);
         updateHeadlights(playerCarEl, 4);
     }
+    let carBottom = parseFloat(playerCarEl?.style.bottom || 0);
     function bgLoop() {
         bgWobble++;
         updateRoadAnimation(maxSpeed);
-        // ניענוע רכב
+        // הרכב נוסע למעלה ונעלם מהמסך
         if (playerCarEl) {
+            carBottom += maxSpeed * 0.8;
+            playerCarEl.style.bottom = `${carBottom}px`;
             const ox = Math.sin(bgWobble * 0.07) * 0.5;
             const or = Math.sin(bgWobble * 0.05) * 0.4;
             playerCarEl.style.transform = `translateX(${ox}px) rotate(${or}deg)`;
@@ -1748,6 +1758,7 @@ async function init() {
                 // נקה נתונים ישנים מ-Firebase (reconnect / משחק קודם)
                 if (multiAmFirst) {
                     const cleanups = [];
+                    // נקה את ה-path הנוכחי
                     for (let s = 1; s <= TOTAL_SEGMENTS; s++) {
                         cleanups.push(remove(ref(db, `game/race/${multiGameId}/items_${s}`)));
                     }
@@ -1757,6 +1768,9 @@ async function init() {
                     cleanups.push(remove(ref(db, `game/race/${multiGameId}/ready_${names[1]}`)));
                     cleanups.push(remove(ref(db, `game/race/${multiGameId}/pos_${names[0]}`)));
                     cleanups.push(remove(ref(db, `game/race/${multiGameId}/pos_${names[1]}`)));
+                    // נקה גם את ה-path ההפוך (סדר כניסה שונה ממשחקים קודמים)
+                    const reverseId = `${names[1]}_${names[0]}`;
+                    cleanups.push(remove(ref(db, `game/race/${reverseId}`)));
                     await Promise.all(cleanups);
                 } else {
                     // שחקן 2 — חכה שהמחיקה תסתיים (נותן לשחקן 1 רגע)
