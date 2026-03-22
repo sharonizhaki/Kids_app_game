@@ -527,6 +527,7 @@ function resetGameState() {
     heartsSpawnedTotal = 0;
     initHeartSegments();
     gameFinished = false; frozen = false; frozenUntil = 0; playerTransitioning = false;
+    window._mpStarted = false;
     aiFrozen = false; aiFrozenUntil = 0; aiMoveCooldown = 0; aiBoostCooldownUntil = 0; aiFinished = false;
     playerY = 0; aiY = 0; aiSpeed = 0; aiSegment = 1;
     oppY = 0; oppSegment = 1; oppSpeed = 0; oppFinishedFlag = false;
@@ -1390,9 +1391,9 @@ function gameLoop() {
     if (currentSegment === TOTAL_SEGMENTS) {
         const line = document.getElementById('raceLine');
         const progress = Math.min(playerY / gameH, 1);
-        // מתחיל ב-top:-20px, יורד עד top:10% מגובה המסך
-        const targetTop = gameH * 0.10;
-        const lineTop = -20 + progress * (targetTop + 20);
+        // מתחיל מחוץ למסך למעלה, יורד עד למיקום הרכב (78% מלמעלה)
+        const carTopPos = gameH * (1 - START_LINE_BOTTOM_PCT) - CAR_HEIGHT;
+        const lineTop = -20 + progress * (carTopPos + 20);
         line.style.top = `${lineTop}px`;
         line.style.bottom = 'auto';
     }
@@ -1685,6 +1686,10 @@ async function init() {
             if (lastCount===2&&names.length<2){let n='',e='';for(const[id,p]of Object.entries(window._ls)){if(!players[id]){n=p.name||'';e=p.emoji||'';break;}}handleOpponentLeft(n,e);return;}
             window._ls=players; lastCount=names.length;
             if (names.length===2&&!gameRunning&&!gameFinished) {
+                // מנע הפעלה כפולה — countdown כבר רץ
+                if (window._mpStarted) return;
+                window._mpStarted = true;
+                
                 multiAmFirst = names[0]===myName;
                 playerLane = multiAmFirst ? 3 : 1;
                 oppLane = multiAmFirst ? 1 : 3;
