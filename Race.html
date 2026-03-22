@@ -834,50 +834,52 @@ function spawnExplosion(x, y) {
 
 // אפקט אבן — שברים מתפזרים
 function spawnRockShatter(x, y) {
-    // פלאש אפור-חום
+    // פלאש אפור-חום גדול
     const flash = document.createElement('div');
-    flash.style.cssText = `position:absolute;z-index:54;pointer-events:none;left:${x-20}px;top:${y-20}px;width:40px;height:40px;border-radius:50%;background:radial-gradient(circle,rgba(160,140,120,0.7),rgba(120,100,80,0.3),transparent);`;
+    flash.style.cssText = `position:absolute;z-index:54;pointer-events:none;left:${x-30}px;top:${y-30}px;width:60px;height:60px;border-radius:50%;background:radial-gradient(circle,rgba(180,155,130,0.8),rgba(140,115,90,0.4),transparent);`;
     flash.animate([
         { transform: 'scale(0.3)', opacity: 1 },
-        { transform: 'scale(2.5)', opacity: 0 }
-    ], { duration: 400, easing: 'ease-out', fill: 'forwards' });
+        { transform: 'scale(3)', opacity: 0 }
+    ], { duration: 450, easing: 'ease-out', fill: 'forwards' });
     gameArea.appendChild(flash);
-    setTimeout(() => flash.remove(), 450);
+    setTimeout(() => flash.remove(), 500);
     
     // שברי אבן גדולים ומגוונים
-    const shardChars = ['◆', '◇', '▪', '◾', '⬥', '▬', '▮'];
-    const shardColors = ['#8B8B8B', '#6B6B6B', '#A0A0A0', '#7B6B5B', '#9B8B7B', '#5A5A5A'];
-    for (let i = 0; i < 12; i++) {
+    const shardChars = ['◆', '◇', '▪', '◾', '⬥', '▬', '▮', '■'];
+    const shardColors = ['#8B8B8B', '#6B6B6B', '#A0A0A0', '#7B6B5B', '#9B8B7B', '#5A5A5A', '#B0A090'];
+    for (let i = 0; i < 16; i++) {
         const s = document.createElement('div');
         s.className = 'rock-shard';
         s.textContent = shardChars[Math.floor(Math.random() * shardChars.length)];
         s.style.left = `${x}px`;
         s.style.top = `${y}px`;
         s.style.color = shardColors[Math.floor(Math.random() * shardColors.length)];
-        s.style.fontSize = `${10 + Math.random() * 10}px`;
-        const angle = (Math.PI * 2 / 12) * i + Math.random() * 0.4;
-        const dist = 20 + Math.random() * 35;
+        s.style.fontSize = `${12 + Math.random() * 14}px`;
+        s.style.textShadow = '0 1px 3px rgba(0,0,0,0.5)';
+        const angle = (Math.PI * 2 / 16) * i + Math.random() * 0.3;
+        const dist = 25 + Math.random() * 45;
         const tx = Math.cos(angle) * dist;
         const ty = Math.sin(angle) * dist;
-        const rot = Math.random() * 540 - 270;
+        const rot = Math.random() * 720 - 360;
         s.animate([
-            { transform: 'translate(0,0) rotate(0deg) scale(1)', opacity: 1 },
-            { transform: `translate(${tx}px,${ty}px) rotate(${rot}deg) scale(0.2)`, opacity: 0 }
-        ], { duration: 450 + Math.random() * 250, easing: 'ease-out', fill: 'forwards' });
+            { transform: 'translate(0,0) rotate(0deg) scale(1.2)', opacity: 1 },
+            { transform: `translate(${tx}px,${ty}px) rotate(${rot}deg) scale(0.15)`, opacity: 0 }
+        ], { duration: 500 + Math.random() * 300, easing: 'ease-out', fill: 'forwards' });
         gameArea.appendChild(s);
-        setTimeout(() => s.remove(), 750);
+        setTimeout(() => s.remove(), 850);
     }
 }
 
 // אפקט בור — ענן אבק + חלקיקי עפר
 function spawnPitDust(x, y) {
-    // ענן אבק גדול ובולט
     const sizes = [
-        { w: 50, h: 50, dx: 0, dy: 0, delay: 0 },
-        { w: 35, h: 35, dx: -15, dy: -8, delay: 50 },
-        { w: 35, h: 35, dx: 15, dy: -5, delay: 80 },
-        { w: 25, h: 25, dx: -8, dy: 12, delay: 120 },
-        { w: 25, h: 25, dx: 10, dy: 10, delay: 100 },
+        { w: 70, h: 70, dx: 0, dy: 0, delay: 0 },
+        { w: 50, h: 50, dx: -20, dy: -12, delay: 40 },
+        { w: 50, h: 50, dx: 20, dy: -8, delay: 60 },
+        { w: 40, h: 40, dx: -12, dy: 16, delay: 100 },
+        { w: 40, h: 40, dx: 14, dy: 14, delay: 80 },
+        { w: 30, h: 30, dx: -25, dy: 5, delay: 130 },
+        { w: 30, h: 30, dx: 25, dy: -15, delay: 110 },
     ];
     for (const s of sizes) {
         const cloud = document.createElement('div');
@@ -888,42 +890,45 @@ function spawnPitDust(x, y) {
         cloud.style.height = `${s.h}px`;
         cloud.style.animationDelay = `${s.delay}ms`;
         gameArea.appendChild(cloud);
-        setTimeout(() => cloud.remove(), 700 + s.delay);
+        setTimeout(() => cloud.remove(), 800 + s.delay);
     }
 }
 
 // אפקט קרח — שברי קרח + פלאש כחול קפוא
 function spawnIceCrack(x, y) {
-    // פלאש כחול
+    // פלאש כחול גדול
     const flash = document.createElement('div');
     flash.className = 'ice-flash';
-    flash.style.left = `${x - 15}px`;
-    flash.style.top = `${y - 15}px`;
-    flash.style.width = '30px';
-    flash.style.height = '30px';
+    flash.style.left = `${x - 30}px`;
+    flash.style.top = `${y - 30}px`;
+    flash.style.width = '60px';
+    flash.style.height = '60px';
     gameArea.appendChild(flash);
-    setTimeout(() => flash.remove(), 450);
+    setTimeout(() => flash.remove(), 500);
     
-    // שברי קרח
-    const iceChars = ['❄', '✦', '✧', '◇', '◆'];
-    for (let i = 0; i < 8; i++) {
+    // שברי קרח — 16 כמו אבנים
+    const iceChars = ['❄', '✦', '✧', '◇', '◆', '⬥', '✶'];
+    const iceColors = ['#A0D8FF', '#C0E8FF', '#80C8FF', '#FFFFFF', '#B0E0FF', '#D0F0FF'];
+    for (let i = 0; i < 16; i++) {
         const s = document.createElement('div');
         s.className = 'ice-crack';
         s.textContent = iceChars[Math.floor(Math.random() * iceChars.length)];
         s.style.left = `${x}px`;
         s.style.top = `${y}px`;
-        s.style.color = ['#A0D8FF', '#C0E8FF', '#80C8FF', '#FFFFFF'][Math.floor(Math.random() * 4)];
-        const angle = (Math.PI * 2 / 8) * i + Math.random() * 0.4;
-        const dist = 12 + Math.random() * 22;
+        s.style.color = iceColors[Math.floor(Math.random() * iceColors.length)];
+        s.style.fontSize = `${12 + Math.random() * 14}px`;
+        s.style.textShadow = '0 0 4px rgba(160,216,255,0.8)';
+        const angle = (Math.PI * 2 / 16) * i + Math.random() * 0.3;
+        const dist = 25 + Math.random() * 45;
         const tx = Math.cos(angle) * dist;
         const ty = Math.sin(angle) * dist;
-        const rot = Math.random() * 180;
+        const rot = Math.random() * 720 - 360;
         s.animate([
-            { transform: 'translate(0,0) rotate(0deg) scale(1)', opacity: 1 },
-            { transform: `translate(${tx}px,${ty}px) rotate(${rot}deg) scale(0.2)`, opacity: 0 }
-        ], { duration: 400 + Math.random() * 150, easing: 'ease-out', fill: 'forwards' });
+            { transform: 'translate(0,0) rotate(0deg) scale(1.2)', opacity: 1 },
+            { transform: `translate(${tx}px,${ty}px) rotate(${rot}deg) scale(0.15)`, opacity: 0 }
+        ], { duration: 500 + Math.random() * 300, easing: 'ease-out', fill: 'forwards' });
         gameArea.appendChild(s);
-        setTimeout(() => s.remove(), 600);
+        setTimeout(() => s.remove(), 850);
     }
 }
 
@@ -1348,12 +1353,12 @@ function gameLoop() {
             it.collected=true;
             const fx=parseFloat(it.el.style.left)+12, fy=iSY;
             if (it.type==='diamond'){points+=10;updatePoints(true);spawnFloatText(fx,fy,'+10 💎','#58D9F5');}
-            else if(it.type==='boost'){if(playerSpeed<4){playerSpeed++;updateSpeed(true);updateCarSpeedClass();}triggerBoostEffect(playerCarEl);spawnFloatText(fx,fy,'⚡ מהירות!','#FFD700');}
+            else if(it.type==='boost'){if(playerSpeed<4){playerSpeed++;updateSpeed(true);updateCarSpeedClass();}triggerBoostEffect(playerCarEl);spawnFloatText(fx,fy,'⚡','#FFD700');}
             else if(it.type==='heart'){lives++;updateLives(-1);spawnFloatText(fx,fy,'+❤️','#FF4444');}
             else if(it.type==='bomb'){lives--;updateLives(lives);if(playerSpeed>0){playerSpeed=0;updateSpeed(false);updateCarSpeedClass();}else{freezePlayer(0.25);}playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450);shakeScreen();if(navigator.vibrate)navigator.vibrate(100);spawnExplosion(fx,fy);if(lives<=0){stopGame();showResult('💥','התרסקת!',`${points} נקודות`);return;}}
             else if(it.type==='rock'){if(playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();}else{freezePlayer(0.25);}playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450);shakeScreen();if(navigator.vibrate)navigator.vibrate(50);spawnRockShatter(fx,fy);}
             else if(it.type==='pit'){if(playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();}triggerPitBounce();spawnPitDust(fx,fy);}
-            else if(it.type==='puddle'){if(playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();}triggerIceSkid();spawnFloatText(fx,fy,'💦 שלולית!','#6CB4EE');}
+            else if(it.type==='puddle'){if(playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();}triggerIceSkid();}
             else if(it.type==='ice'){if(playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();}else{freezePlayer(0.25);}playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450);shakeScreen();if(navigator.vibrate)navigator.vibrate(50);spawnIceCrack(fx,fy);}
             if(it.type==='bomb'){it.el.classList.add('bomb-explode');it.el.style.opacity='0';setTimeout(()=>it.el.remove(),100);}
             else{it.el.classList.add('collected');setTimeout(()=>it.el.remove(),300);}
