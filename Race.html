@@ -115,6 +115,46 @@
         .car.speed-5 { filter: drop-shadow(0 12px 20px rgba(0,0,0,0.3)) drop-shadow(0 10px 16px rgba(255,80,0,0.5)) drop-shadow(0 14px 20px rgba(255,0,0,0.3)); }
         .car.flash { animation: carFlash 0.15s ease 3; }
         .car.frozen { opacity: 0.5; filter: grayscale(50%) drop-shadow(0 0 10px rgba(100,150,255,0.8)); }
+        .car.ice-skid {
+            animation: iceSkid 1s ease-in-out !important;
+        }
+        @keyframes iceSkid {
+            0% { transform: translateX(0) rotate(0deg); }
+            8% { transform: translateX(25px) rotate(14deg); }
+            20% { transform: translateX(-35px) rotate(-18deg); }
+            35% { transform: translateX(28px) rotate(15deg); }
+            50% { transform: translateX(-20px) rotate(-10deg); }
+            65% { transform: translateX(12px) rotate(7deg); }
+            80% { transform: translateX(-6px) rotate(-3deg); }
+            100% { transform: translateX(0) rotate(0deg); }
+        }
+        /* סימני צמיגים בהחלקה */
+        .skid-trail {
+            position: absolute; z-index: 8; pointer-events: none;
+        }
+        .skid-trail-line {
+            position: absolute; width: 3px; border-radius: 1.5px;
+            background: rgba(0,0,0,0.2);
+            animation: skidTrailFade 1.5s ease-out forwards;
+        }
+        @keyframes skidTrailFade {
+            0% { opacity: 0.7; }
+            60% { opacity: 0.4; }
+            100% { opacity: 0; }
+        }
+        .car.pit-bounce {
+            animation: pitBounce 0.7s ease-in-out !important;
+        }
+        @keyframes pitBounce {
+            0% { transform: translateY(0) rotate(0deg); }
+            12% { transform: translateY(10px) rotate(-3deg) scaleY(0.9); }
+            25% { transform: translateY(-14px) rotate(2deg) scaleY(1.08); }
+            40% { transform: translateY(6px) rotate(-2deg) scaleY(0.95); }
+            55% { transform: translateY(-8px) rotate(1deg) scaleY(1.04); }
+            70% { transform: translateY(3px) rotate(-1deg); }
+            85% { transform: translateY(-2px); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
         .car.finish-fly {
             transition: bottom 1s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
             z-index: 300;
@@ -179,19 +219,106 @@
         @keyframes sprayUp { 0% { transform: translateY(0) scale(1); opacity: 0.7; } 100% { transform: translateY(-12px) translateX(var(--sx)) scale(0.3); opacity: 0; } }
         .game-area.rain-mode .headlight-reflect, .game-area.rain-mode .wheel-spray { display: block; }
 
-        .skid-mark { position: absolute; z-index: 8; pointer-events: none; animation: skidFade 2s ease-out forwards; }
-        .skid-line { position: absolute; bottom: 0; width: 3px; height: 28px; background: rgba(0,0,0,0.18); border-radius: 1px; }
-        .skid-line.left { left: 0; }
-        .skid-line.right { right: 0; }
-        @keyframes skidFade { 0% { opacity: 1; } 60% { opacity: 0.7; } 100% { opacity: 0; } }
+        .skid-mark { position: absolute; z-index: 8; pointer-events: none; animation: skidFade 2.5s ease-out forwards; }
+        .skid-line { position: absolute; bottom: 0; width: 4px; border-radius: 2px; background: rgba(30,30,30,0.35); }
+        .skid-line.left { left: 2px; }
+        .skid-line.right { right: 2px; }
+        /* גשם: סימנים בהירים יותר (רטובים) */
+        .game-area.rain-mode .skid-line { background: rgba(20,20,40,0.25); box-shadow: 0 0 3px rgba(100,140,200,0.15); }
+        @keyframes skidFade { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 0; } }
+
+        /* פיצוץ אבן — שברים מתפזרים */
+        .rock-shard {
+            position: absolute; z-index: 55; pointer-events: none;
+            font-size: 12px; line-height: 1;
+            animation: rockShardFly 0.5s ease-out forwards;
+        }
+        @keyframes rockShardFly {
+            0% { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* בור — ענן אבק */
+        .dust-cloud {
+            position: absolute; z-index: 54; pointer-events: none;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(139,115,85,0.5), rgba(139,115,85,0.2), transparent);
+            animation: dustPuff 0.6s ease-out forwards;
+        }
+        @keyframes dustPuff {
+            0% { transform: scale(0.3); opacity: 0.8; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+        .dust-particle {
+            position: absolute; z-index: 53; pointer-events: none;
+            width: 3px; height: 3px; border-radius: 50%;
+            background: rgba(139,115,85,0.6);
+        }
+
+        /* קרח — שברי קרח + פלאש כחול */
+        .ice-crack {
+            position: absolute; z-index: 55; pointer-events: none;
+            font-size: 14px; line-height: 1;
+        }
+        .ice-flash {
+            position: absolute; z-index: 54; pointer-events: none;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(160,216,255,0.6), rgba(160,216,255,0.2), transparent);
+            animation: iceFlashPulse 0.4s ease-out forwards;
+        }
+        @keyframes iceFlashPulse {
+            0% { transform: scale(0.3); opacity: 1; }
+            50% { transform: scale(1.8); opacity: 0.5; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
 
         .item { position: absolute; font-size: 24px; z-index: 25; line-height: 1; text-align: center; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); pointer-events: none; }
         .item.diamond { animation: diamondFloat 1.5s ease-in-out infinite; }
         .item.heart-item { animation: heartPulse 1s ease-in-out infinite; }
+        .item.puddle-item { animation: puddleWobble 1.2s ease-in-out infinite; filter: drop-shadow(0 2px 6px rgba(100,150,255,0.5)); }
+        @keyframes puddleWobble { 0%,100% { transform: scaleX(1) scaleY(1); } 50% { transform: scaleX(1.15) scaleY(0.9); } }
+        .item.pit-item { animation: pitPulse 1.5s ease-in-out infinite; filter: drop-shadow(0 3px 8px rgba(0,0,0,0.7)); }
+        @keyframes pitPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .item.ice-item { animation: iceSpin 2s linear infinite; filter: drop-shadow(0 2px 8px rgba(150,200,255,0.6)) drop-shadow(0 0 4px rgba(200,230,255,0.4)); }
+        @keyframes iceSpin { 0% { transform: rotate(0deg) scale(1); } 25% { transform: rotate(90deg) scale(1.05); } 50% { transform: rotate(180deg) scale(1); } 75% { transform: rotate(270deg) scale(0.95); } 100% { transform: rotate(360deg) scale(1); } }
         @keyframes diamondFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
         @keyframes heartPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
         .item.collected { animation: collectPop 0.3s ease forwards; }
+        .item.bomb-explode { animation: none !important; }
         @keyframes collectPop { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
+
+        /* פיצוץ פצצה */
+        .explosion {
+            position: absolute; z-index: 55; pointer-events: none;
+            font-size: 40px; line-height: 1; text-align: center;
+            animation: explosionAnim 0.5s ease-out forwards;
+        }
+        @keyframes explosionAnim {
+            0% { transform: scale(0.3) rotate(0deg); opacity: 1; }
+            30% { transform: scale(1.4) rotate(15deg); opacity: 1; }
+            60% { transform: scale(1.6) rotate(-10deg); opacity: 0.7; }
+            100% { transform: scale(2) rotate(5deg); opacity: 0; }
+        }
+        .explosion-ring {
+            position: absolute; z-index: 54; pointer-events: none;
+            border-radius: 50%; border: 3px solid rgba(255,100,0,0.8);
+            animation: explosionRing 0.5s ease-out forwards;
+        }
+        @keyframes explosionRing {
+            0% { width: 10px; height: 10px; opacity: 1; border-color: rgba(255,200,0,0.9); }
+            50% { width: 60px; height: 60px; opacity: 0.6; border-color: rgba(255,100,0,0.7); }
+            100% { width: 100px; height: 100px; opacity: 0; border-color: rgba(255,0,0,0); }
+        }
+        .explosion-particle {
+            position: absolute; z-index: 53; pointer-events: none;
+            width: 4px; height: 4px; border-radius: 50%;
+            animation: explosionParticle 0.4s ease-out forwards;
+        }
+        @keyframes explosionParticle {
+            0% { transform: translate(0,0) scale(1); opacity: 1; }
+            100% { opacity: 0; }
+        }
 
         /* ========== אפקט האצה (ברק) ========== */
         .car.boost-lunge {
@@ -351,19 +478,45 @@ const PLAYER_FIXED_BOTTOM_PCT = 0.18;
 let RACE_LENGTH = 0; // ייקבע אחרי calcDimensions
 
 // אייטמים: 4 גלים × 16 אייטמים = 64 + 2 לבבות
-const WAVE_COUNT = 4;
-const ITEMS_PER_WAVE = [
-    ...Array(6).fill({ type: 'diamond', emoji: '💎' }),
-    ...Array(4).fill({ type: 'boost', emoji: '⚡' }),
-    ...Array(3).fill({ type: 'bomb', emoji: '💣' }),
-    ...Array(3).fill({ type: 'rock', emoji: '🪨' }),
-];
+const TOTAL_ITEMS_MULTIPLIER = 4;
 const HEARTS_COUNT = 2;
+
+function getWaveItems() {
+    if (isRainMode) {
+        return [
+            ...Array(5).fill({ type: 'diamond', emoji: '💎' }),
+            ...Array(3).fill({ type: 'boost', emoji: '⚡' }),
+            ...Array(2).fill({ type: 'bomb', emoji: '💣' }),
+            ...Array(3).fill({ type: 'puddle', emoji: '💦' }),
+            ...Array(3).fill({ type: 'ice', emoji: '❄️' }),
+        ];
+    }
+    return [
+        ...Array(5).fill({ type: 'diamond', emoji: '💎' }),
+        ...Array(3).fill({ type: 'boost', emoji: '⚡' }),
+        ...Array(2).fill({ type: 'bomb', emoji: '💣' }),
+        ...Array(3).fill({ type: 'rock', emoji: '🪨' }),
+        ...Array(3).fill({ type: 'pit', emoji: '🕳️' }),
+    ];
+}
+
+function getAllItemDefs() {
+    const base = getWaveItems();
+    let all = [];
+    for (let i = 0; i < TOTAL_ITEMS_MULTIPLIER; i++) {
+        all.push(...base);
+    }
+    for (let i = 0; i < HEARTS_COUNT; i++) {
+        all.push({ type: 'heart', emoji: '❤️‍🔥' });
+    }
+    return shuffle(all);
+}
 
 // ========== מצב ==========
 let playerLane = 0, playerSpeed = 0, lives = 3, points = 0, pointsAtRoundStart = 0;
 let gameRunning = false, gameFinished = false;
 let frozen = false, frozenUntil = 0;
+let iceSkidding = false;
 let items = [], playerCarEl = null, aiCarEl = null, animFrameId = null;
 let playerY = 0, aiY = 0, aiLane = 2, aiSpeed = 0;
 let aiFrozen = false, aiFrozenUntil = 0;
@@ -386,7 +539,7 @@ function calcDimensions() {
     gameW = gameArea.clientWidth;
     gameH = gameArea.clientHeight;
     laneW = (gameW - CURB_W * 2) / LANE_COUNT;
-    RACE_LENGTH = gameH * 6; // מסלול ארוך יותר — יותר זמן נסיעה
+    RACE_LENGTH = gameH * 6.6;
 }
 function getLaneCenter(i) { return CURB_W + i * laneW + laneW / 2; }
 
@@ -460,7 +613,7 @@ function resetGameState() {
     
     playerSpeed = 0; lives = 3;
     pointsAtRoundStart = points;
-    gameFinished = false; frozen = false; frozenUntil = 0;
+    gameFinished = false; frozen = false; frozenUntil = 0; iceSkidding = false;
     window._mpStarted = false;
     aiFrozen = false; aiFrozenUntil = 0; aiMoveCooldown = 0; aiBoostCooldownUntil = 0; aiFinished = false;
     playerY = 0; aiY = 0; aiSpeed = 0;
@@ -633,6 +786,233 @@ function triggerBoostEffect(carEl) {
     
     // 4. ויברציה קלה
     if (navigator.vibrate) navigator.vibrate(30);
+}
+
+// אפקט פיצוץ פצצה
+function spawnExplosion(x, y) {
+    // 1. אימוג'י פיצוץ 💥 שמחליף את הפצצה
+    const boom = document.createElement('div');
+    boom.className = 'explosion';
+    boom.textContent = '💥';
+    boom.style.left = `${x - 20}px`;
+    boom.style.top = `${y - 20}px`;
+    gameArea.appendChild(boom);
+    setTimeout(() => boom.remove(), 550);
+    
+    // 2. טבעת גלי הדף
+    const ring = document.createElement('div');
+    ring.className = 'explosion-ring';
+    ring.style.left = `${x - 5}px`;
+    ring.style.top = `${y - 5}px`;
+    gameArea.appendChild(ring);
+    setTimeout(() => ring.remove(), 550);
+    
+    // 3. ניצוצות מתפזרים
+    const colors = ['#FF4400', '#FF8800', '#FFCC00', '#FF2200', '#FFA500'];
+    for (let i = 0; i < 10; i++) {
+        const p = document.createElement('div');
+        p.className = 'explosion-particle';
+        p.style.left = `${x}px`;
+        p.style.top = `${y}px`;
+        p.style.background = colors[Math.floor(Math.random() * colors.length)];
+        const angle = (Math.PI * 2 / 10) * i + Math.random() * 0.5;
+        const dist = 20 + Math.random() * 30;
+        const tx = Math.cos(angle) * dist;
+        const ty = Math.sin(angle) * dist;
+        p.style.animation = `explosionParticle 0.4s ease-out forwards`;
+        p.style.setProperty('--tx', `${tx}px`);
+        p.style.setProperty('--ty', `${ty}px`);
+        // Override animation with inline transform
+        p.animate([
+            { transform: 'translate(0,0) scale(1)', opacity: 1 },
+            { transform: `translate(${tx}px,${ty}px) scale(0.3)`, opacity: 0 }
+        ], { duration: 400, easing: 'ease-out', fill: 'forwards' });
+        gameArea.appendChild(p);
+        setTimeout(() => p.remove(), 450);
+    }
+}
+
+// אפקט אבן — שברים מתפזרים
+function spawnRockShatter(x, y) {
+    const shards = ['🪨', '💥', '⚡'];
+    const pieces = ['▪', '▫', '◾', '◽'];
+    // שברי אבן קטנים
+    for (let i = 0; i < 8; i++) {
+        const s = document.createElement('div');
+        s.className = 'rock-shard';
+        s.textContent = pieces[Math.floor(Math.random() * pieces.length)];
+        s.style.left = `${x}px`;
+        s.style.top = `${y}px`;
+        s.style.color = ['#8B8B8B', '#6B6B6B', '#AAA', '#7B6B5B'][Math.floor(Math.random() * 4)];
+        const angle = (Math.PI * 2 / 8) * i + Math.random() * 0.5;
+        const dist = 15 + Math.random() * 25;
+        const tx = Math.cos(angle) * dist;
+        const ty = Math.sin(angle) * dist;
+        const rot = Math.random() * 360;
+        s.animate([
+            { transform: 'translate(0,0) rotate(0deg) scale(1)', opacity: 1 },
+            { transform: `translate(${tx}px,${ty}px) rotate(${rot}deg) scale(0.3)`, opacity: 0 }
+        ], { duration: 400 + Math.random() * 200, easing: 'ease-out', fill: 'forwards' });
+        gameArea.appendChild(s);
+        setTimeout(() => s.remove(), 650);
+    }
+    // אימוג'י אבן שנשברת
+    const mainRock = document.createElement('div');
+    mainRock.className = 'rock-shard';
+    mainRock.textContent = '💥';
+    mainRock.style.left = `${x - 8}px`;
+    mainRock.style.top = `${y - 8}px`;
+    mainRock.style.fontSize = '28px';
+    mainRock.animate([
+        { transform: 'scale(0.5)', opacity: 1 },
+        { transform: 'scale(1.5)', opacity: 0 }
+    ], { duration: 350, easing: 'ease-out', fill: 'forwards' });
+    gameArea.appendChild(mainRock);
+    setTimeout(() => mainRock.remove(), 400);
+}
+
+// אפקט בור — ענן אבק + חלקיקי עפר
+function spawnPitDust(x, y) {
+    // ענן אבק מרכזי
+    const cloud = document.createElement('div');
+    cloud.className = 'dust-cloud';
+    cloud.style.left = `${x - 20}px`;
+    cloud.style.top = `${y - 20}px`;
+    cloud.style.width = '40px';
+    cloud.style.height = '40px';
+    gameArea.appendChild(cloud);
+    setTimeout(() => cloud.remove(), 650);
+    
+    // חלקיקי עפר מתפזרים
+    for (let i = 0; i < 10; i++) {
+        const p = document.createElement('div');
+        p.className = 'dust-particle';
+        p.style.left = `${x}px`;
+        p.style.top = `${y}px`;
+        const size = 2 + Math.random() * 4;
+        p.style.width = `${size}px`;
+        p.style.height = `${size}px`;
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 10 + Math.random() * 30;
+        const tx = Math.cos(angle) * dist;
+        const ty = Math.sin(angle) * dist - 10; // קצת למעלה
+        p.style.background = ['rgba(139,115,85,0.7)', 'rgba(160,130,90,0.6)', 'rgba(110,90,65,0.5)'][Math.floor(Math.random() * 3)];
+        p.animate([
+            { transform: 'translate(0,0) scale(1)', opacity: 0.8 },
+            { transform: `translate(${tx}px,${ty}px) scale(0.2)`, opacity: 0 }
+        ], { duration: 350 + Math.random() * 250, easing: 'ease-out', fill: 'forwards' });
+        gameArea.appendChild(p);
+        setTimeout(() => p.remove(), 650);
+    }
+}
+
+// אפקט קרח — שברי קרח + פלאש כחול קפוא
+function spawnIceCrack(x, y) {
+    // פלאש כחול
+    const flash = document.createElement('div');
+    flash.className = 'ice-flash';
+    flash.style.left = `${x - 15}px`;
+    flash.style.top = `${y - 15}px`;
+    flash.style.width = '30px';
+    flash.style.height = '30px';
+    gameArea.appendChild(flash);
+    setTimeout(() => flash.remove(), 450);
+    
+    // שברי קרח
+    const iceChars = ['❄', '✦', '✧', '◇', '◆'];
+    for (let i = 0; i < 8; i++) {
+        const s = document.createElement('div');
+        s.className = 'ice-crack';
+        s.textContent = iceChars[Math.floor(Math.random() * iceChars.length)];
+        s.style.left = `${x}px`;
+        s.style.top = `${y}px`;
+        s.style.color = ['#A0D8FF', '#C0E8FF', '#80C8FF', '#FFFFFF'][Math.floor(Math.random() * 4)];
+        const angle = (Math.PI * 2 / 8) * i + Math.random() * 0.4;
+        const dist = 12 + Math.random() * 22;
+        const tx = Math.cos(angle) * dist;
+        const ty = Math.sin(angle) * dist;
+        const rot = Math.random() * 180;
+        s.animate([
+            { transform: 'translate(0,0) rotate(0deg) scale(1)', opacity: 1 },
+            { transform: `translate(${tx}px,${ty}px) rotate(${rot}deg) scale(0.2)`, opacity: 0 }
+        ], { duration: 400 + Math.random() * 150, easing: 'ease-out', fill: 'forwards' });
+        gameArea.appendChild(s);
+        setTimeout(() => s.remove(), 600);
+    }
+}
+
+// אפקט החלקה על קרח — רכב מתנדנד ולא ניתן לשליטה
+function triggerIceSkid() {
+    iceSkidding = true;
+    playerCarEl.classList.remove('ice-skid');
+    void playerCarEl.offsetHeight;
+    playerCarEl.classList.add('ice-skid');
+    shakeScreen();
+    if (navigator.vibrate) navigator.vibrate([40, 30, 60, 30, 40, 30, 30]);
+    
+    // סימני צמיגים רציפים בזמן ההחלקה
+    const speed = SPEEDS[playerSpeed] || SPEEDS[0];
+    let trailCount = 0;
+    const trailInterval = setInterval(() => {
+        trailCount++;
+        if (trailCount > 12 || !iceSkidding) { clearInterval(trailInterval); return; }
+        
+        const carLeft = parseFloat(playerCarEl.style.left) || 0;
+        const carBottom = parseFloat(playerCarEl.style.bottom) || 0;
+        // קבל את ה-transform הנוכחי של הרכב כדי למקם סימנים נכון
+        const cs = getComputedStyle(playerCarEl);
+        const matrix = new DOMMatrix(cs.transform);
+        const offsetX = matrix.m41 || 0;
+        
+        const trail = document.createElement('div');
+        trail.className = 'skid-trail';
+        trail.style.left = `${carLeft + offsetX + 6}px`;
+        trail.style.bottom = `${carBottom - 4}px`;
+        trail.style.width = '30px';
+        trail.style.height = '35px';
+        
+        // שני פסים — גלגל שמאל וימין
+        const lineL = document.createElement('div');
+        lineL.className = 'skid-trail-line';
+        lineL.style.left = '0px';
+        lineL.style.height = '35px';
+        lineL.style.transform = `rotate(${(offsetX * 0.3).toFixed(1)}deg)`;
+        
+        const lineR = document.createElement('div');
+        lineR.className = 'skid-trail-line';
+        lineR.style.right = '0px';
+        lineR.style.height = '35px';
+        lineR.style.transform = `rotate(${(offsetX * 0.3).toFixed(1)}deg)`;
+        
+        trail.appendChild(lineL);
+        trail.appendChild(lineR);
+        gameArea.appendChild(trail);
+        
+        // סימנים זזים למטה עם ה-parallax
+        skidMarks.push(trail);
+        setTimeout(() => { trail.remove(); skidMarks = skidMarks.filter(m => m !== trail); }, 1600);
+    }, 75);
+    
+    setTimeout(() => {
+        iceSkidding = false;
+        playerCarEl.classList.remove('ice-skid');
+        playerCarEl.style.transform = '';
+    }, 1000);
+}
+
+// אפקט בור — רכב קופץ וחוזר, לא ניתן לשלוט
+function triggerPitBounce() {
+    iceSkidding = true;
+    playerCarEl.classList.remove('pit-bounce');
+    void playerCarEl.offsetHeight;
+    playerCarEl.classList.add('pit-bounce');
+    shakeScreen();
+    if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+    setTimeout(() => {
+        iceSkidding = false;
+        playerCarEl.classList.remove('pit-bounce');
+        playerCarEl.style.transform = '';
+    }, 700);
 }
 
 function updateCarSpeedClass() {
@@ -813,12 +1193,32 @@ function moveCarToLane(carEl, lane, dir) {
     }
 }
 function spawnSkidMark(carEl, dir) {
-    const m=document.createElement('div');m.className='skid-mark';
-    m.style.left=`${parseFloat(carEl.style.left)+8}px`;m.style.bottom=`${parseFloat(carEl.style.bottom)-2}px`;
-    m.style.width='26px';m.style.height='28px';m.style.transform=`rotate(${dir<0?-8:8}deg)`;
-    m.innerHTML='<div class="skid-line left"></div><div class="skid-line right"></div>';
-    gameArea.appendChild(m); skidMarks.push(m);
-    setTimeout(()=>{m.remove();skidMarks=skidMarks.filter(x=>x!==m);},2100);
+    const carLeft = parseFloat(carEl.style.left) || 0;
+    const carBottom = parseFloat(carEl.style.bottom) || 0;
+    const markH = 40 + Math.random() * 15;
+    const curve = dir * (5 + Math.random() * 4);
+    
+    const m = document.createElement('div');
+    m.className = 'skid-mark';
+    m.style.left = `${carLeft + 6}px`;
+    m.style.bottom = `${carBottom - 4}px`;
+    m.style.width = '30px';
+    m.style.height = `${markH}px`;
+    m.style.transform = `rotate(${dir < 0 ? -6 : 6}deg) skewX(${curve}deg)`;
+    
+    const lineL = document.createElement('div');
+    lineL.className = 'skid-line left';
+    lineL.style.height = `${markH}px`;
+    
+    const lineR = document.createElement('div');
+    lineR.className = 'skid-line right';
+    lineR.style.height = `${markH - 4}px`;
+    
+    m.appendChild(lineL);
+    m.appendChild(lineR);
+    gameArea.appendChild(m);
+    skidMarks.push(m);
+    setTimeout(() => { m.remove(); skidMarks = skidMarks.filter(x => x !== m); }, 2600);
 }
 let skidMarks = [];
 
@@ -827,33 +1227,26 @@ function shuffle(arr) { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=
 
 function generateAllItems() {
     const allItems = [];
-    
-    // 2 שניות ריקות בהתחלה
-    const FIRST_ITEM_OFFSET = gameH * 1.5;
-    // אייטמים רק עד קו הסיום (עם מרווח קטן לפניו)
+    const FIRST_ITEM_OFFSET = gameH * 1.2;
     const LAST_ITEM_Y = RACE_LENGTH - gameH * 0.5;
-    const usableLength = LAST_ITEM_Y - FIRST_ITEM_OFFSET;
-    const waveLen = usableLength / WAVE_COUNT;
     
-    const heartWaves = shuffle([0,1,2,3]).slice(0, HEARTS_COUNT);
+    const itemDefs = getAllItemDefs();
+    const totalItems = itemDefs.length;
+    const spacing = (LAST_ITEM_Y - FIRST_ITEM_OFFSET) / totalItems;
     
-    for (let w = 0; w < WAVE_COUNT; w++) {
-        const waveStart = FIRST_ITEM_OFFSET + w * waveLen + waveLen * 0.08;
-        const waveEnd = FIRST_ITEM_OFFSET + (w + 1) * waveLen - waveLen * 0.08;
-        let waveItems = shuffle([...ITEMS_PER_WAVE]);
-        if (heartWaves.includes(w)) waveItems.push({ type: 'heart', emoji: '❤️‍🔥' });
-        
-        const placed = [];
-        for (const def of waveItems) {
-            let lane, worldY, att = 0;
-            do {
-                lane = Math.floor(Math.random() * LANE_COUNT);
-                worldY = Math.round(waveStart + Math.random() * (waveEnd - waveStart));
-                att++;
-            } while (att < 40 && placed.some(p => p.lane === lane && Math.abs(p.y - worldY) < 50));
-            placed.push({ lane, y: worldY });
-            allItems.push({ lane, type: def.type, emoji: def.emoji, worldY, collected: false });
-        }
+    const placed = [];
+    for (let i = 0; i < totalItems; i++) {
+        const def = itemDefs[i];
+        // פיזור אחיד עם קצת אקראיות
+        const baseY = FIRST_ITEM_OFFSET + i * spacing;
+        let lane, worldY, att = 0;
+        do {
+            lane = Math.floor(Math.random() * LANE_COUNT);
+            worldY = Math.round(baseY + (Math.random() - 0.5) * spacing * 0.6);
+            att++;
+        } while (att < 40 && placed.some(p => p.lane === lane && Math.abs(p.y - worldY) < 40));
+        placed.push({ lane, y: worldY });
+        allItems.push({ lane, type: def.type, emoji: def.emoji, worldY, collected: false });
     }
     return allItems;
 }
@@ -866,6 +1259,9 @@ function renderItems(data) {
         let cls = 'item';
         if (d.type === 'diamond') cls += ' diamond';
         else if (d.type === 'heart') cls += ' heart-item';
+        else if (d.type === 'puddle') cls += ' puddle-item';
+        else if (d.type === 'pit') cls += ' pit-item';
+        else if (d.type === 'ice') cls += ' ice-item';
         el.className = cls; el.textContent = d.emoji;
         el.style.left = `${getLaneCenter(d.lane) - 12}px`;
         el.style.top = '-30px';
@@ -880,11 +1276,20 @@ function getItemScreenY(worldY) {
 }
 
 function updateItemPositions() {
+    // אם קו הסיום על המסך — הסתר אייטמים מעליו
+    const finishSY = getItemScreenY(RACE_LENGTH);
+    const finishVisible = finishSY > -20;
+    
     for (const it of items) {
         if (it.collected) continue;
         const sy = getItemScreenY(it.worldY);
-        it.el.style.top = `${sy}px`;
-        it.el.style.display = (sy < -40 || sy > gameH + 40) ? 'none' : '';
+        // מחוץ למסך, או מעל קו הסיום כשהוא גלוי
+        if (sy < -40 || sy > gameH + 40 || (finishVisible && sy < finishSY)) {
+            it.el.style.display = 'none';
+        } else {
+            it.el.style.top = `${sy}px`;
+            it.el.style.display = '';
+        }
     }
 }
 
@@ -941,7 +1346,7 @@ function gameLoop() {
     const pTop = getPlayerScreenCenterY() - CAR_HEIGHT / 2;
     if (finishScreenY > pTop + CAR_HEIGHT) finishLineMet = true;
 
-    if (!tiltActive && !isFrozen) applyWobble(playerCarEl, speed);
+    if (!tiltActive && !isFrozen && !iceSkidding) applyWobble(playerCarEl, speed);
 
     // התנגשויות
     const carCX = getLaneCenter(playerLane);
@@ -959,9 +1364,13 @@ function gameLoop() {
             if (it.type==='diamond'){points+=10;updatePoints(true);spawnFloatText(fx,fy,'+10 💎','#58D9F5');}
             else if(it.type==='boost'){if(playerSpeed<4){playerSpeed++;updateSpeed(true);updateCarSpeedClass();}triggerBoostEffect(playerCarEl);spawnFloatText(fx,fy,'⚡ מהירות!','#FFD700');}
             else if(it.type==='heart'){lives++;updateLives(-1);spawnFloatText(fx,fy,'+❤️','#FF4444');}
-            else if(it.type==='bomb'){lives--;updateLives(lives);if(playerSpeed>0){playerSpeed=0;updateSpeed(false);updateCarSpeedClass();}else{freezePlayer(0.25);}playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450);shakeScreen();if(navigator.vibrate)navigator.vibrate(100);spawnFloatText(fx,fy,'💥 פצצה!','#FF4444');if(lives<=0){stopGame();showResult('💥','התרסקת!',`${points} נקודות`);return;}}
-            else if(it.type==='rock'){if(playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();}else{freezePlayer(0.25);}playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450);shakeScreen();if(navigator.vibrate)navigator.vibrate(50);spawnFloatText(fx,fy,'🪨 אבן!','#AAA');}
-            it.el.classList.add('collected');setTimeout(()=>it.el.remove(),300);
+            else if(it.type==='bomb'){lives--;updateLives(lives);if(playerSpeed>0){playerSpeed=0;updateSpeed(false);updateCarSpeedClass();}else{freezePlayer(0.25);}playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450);shakeScreen();if(navigator.vibrate)navigator.vibrate(100);spawnExplosion(fx,fy);if(lives<=0){stopGame();showResult('💥','התרסקת!',`${points} נקודות`);return;}}
+            else if(it.type==='rock'){if(playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();}else{freezePlayer(0.25);}playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450);shakeScreen();if(navigator.vibrate)navigator.vibrate(50);spawnRockShatter(fx,fy);}
+            else if(it.type==='pit'){if(playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();}triggerPitBounce();spawnPitDust(fx,fy);}
+            else if(it.type==='puddle'){if(playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();}triggerIceSkid();spawnFloatText(fx,fy,'💦 שלולית!','#6CB4EE');}
+            else if(it.type==='ice'){if(playerSpeed>0){playerSpeed--;updateSpeed(false);updateCarSpeedClass();}else{freezePlayer(0.25);}playerCarEl.classList.add('flash');setTimeout(()=>playerCarEl.classList.remove('flash'),450);shakeScreen();if(navigator.vibrate)navigator.vibrate(50);spawnIceCrack(fx,fy);}
+            if(it.type==='bomb'){it.el.classList.add('bomb-explode');it.el.style.opacity='0';setTimeout(()=>it.el.remove(),100);}
+            else{it.el.classList.add('collected');setTimeout(()=>it.el.remove(),300);}
         }
     }
 
@@ -1006,6 +1415,9 @@ function gameLoop() {
                     else if(it.type==='boost'){if(aiSpeed<4)aiSpeed++;aiBoostCooldownUntil=Date.now()+2000;updateExhaust(aiCarEl,aiSpeed);spawnFloatText(fx,fy,'⚡','#FFD700');}
                     else if(it.type==='bomb'){if(aiSpeed>0)aiSpeed=0;else freezeAI(0.25);updateExhaust(aiCarEl,aiSpeed);aiCarEl.classList.add('flash');setTimeout(()=>aiCarEl.classList.remove('flash'),450);spawnFloatText(fx,fy,'💥','#FF4444');}
                     else if(it.type==='rock'){if(aiSpeed>0)aiSpeed--;else freezeAI(0.25);updateExhaust(aiCarEl,aiSpeed);aiCarEl.classList.add('flash');setTimeout(()=>aiCarEl.classList.remove('flash'),450);spawnFloatText(fx,fy,'🪨','#AAA');}
+                    else if(it.type==='puddle'){if(aiSpeed>0)aiSpeed--;updateExhaust(aiCarEl,aiSpeed);spawnFloatText(fx,fy,'💦','#6CB4EE');}
+                    else if(it.type==='pit'){if(aiSpeed>0)aiSpeed--;updateExhaust(aiCarEl,aiSpeed);spawnFloatText(fx,fy,'🕳️','#8B7355');}
+                    else if(it.type==='ice'){if(aiSpeed>0)aiSpeed--;else freezeAI(0.25);updateExhaust(aiCarEl,aiSpeed);aiCarEl.classList.add('flash');setTimeout(()=>aiCarEl.classList.remove('flash'),450);spawnFloatText(fx,fy,'❄️','#A0D8FF');}
                     it.el.classList.add('collected');setTimeout(()=>it.el.remove(),300);
                 }
             }
@@ -1017,7 +1429,7 @@ function gameLoop() {
             const LA = 150;
             function scanLane(lane) {
                 let threat=null,hasBoost=false;
-                for(const it of items){if(it.collected||it.lane!==lane)continue;const iSY=getItemScreenY(it.worldY);const dy=aiSY2-(iSY+13);if(dy>0&&dy<LA){if(it.type==='bomb')threat='bomb';else if(it.type==='rock'&&threat!=='bomb')threat='rock';else if(it.type==='boost')hasBoost=true;}}
+                for(const it of items){if(it.collected||it.lane!==lane)continue;const iSY=getItemScreenY(it.worldY);const dy=aiSY2-(iSY+13);if(dy>0&&dy<LA){if(it.type==='bomb')threat='bomb';else if((it.type==='rock'||it.type==='ice'||it.type==='puddle'||it.type==='pit')&&threat!=='bomb')threat='rock';else if(it.type==='boost')hasBoost=true;}}
                 return{threat,hasBoost};
             }
             const cur=scanLane(aiLane);let moved=false;
@@ -1122,7 +1534,7 @@ function spawnTireSmoke(carEl) {
 let touchStartX=0,touchStartTime=0;
 gameArea.addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;touchStartTime=Date.now();},{passive:true});
 gameArea.addEventListener('touchend',e=>{
-    if(!gameRunning||frozen)return;const diff=e.changedTouches[0].clientX-touchStartX;
+    if(!gameRunning||frozen||iceSkidding)return;const diff=e.changedTouches[0].clientX-touchStartX;
     if(Date.now()-touchStartTime<300&&Math.abs(diff)>25){const dir=diff<0?-1:1;if(dir<0&&playerLane>0){playerLane--;moveCarToLane(playerCarEl,playerLane,dir);}else if(dir>0&&playerLane<LANE_COUNT-1){playerLane++;moveCarToLane(playerCarEl,playerLane,dir);}}
 },{passive:true});
 
