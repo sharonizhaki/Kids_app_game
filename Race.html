@@ -143,16 +143,16 @@
             100% { opacity: 0; }
         }
         .car.pit-bounce {
-            animation: pitBounce 0.7s ease-in-out !important;
+            animation: pitBounce 1s ease-in-out !important;
         }
         @keyframes pitBounce {
             0% { transform: translateY(0) rotate(0deg); }
-            12% { transform: translateY(10px) rotate(-3deg) scaleY(0.9); }
-            25% { transform: translateY(-14px) rotate(2deg) scaleY(1.08); }
-            40% { transform: translateY(6px) rotate(-2deg) scaleY(0.95); }
-            55% { transform: translateY(-8px) rotate(1deg) scaleY(1.04); }
-            70% { transform: translateY(3px) rotate(-1deg); }
-            85% { transform: translateY(-2px); }
+            10% { transform: translateY(12px) rotate(-4deg) scaleY(0.88); }
+            22% { transform: translateY(-16px) rotate(3deg) scaleY(1.1); }
+            36% { transform: translateY(8px) rotate(-2deg) scaleY(0.94); }
+            50% { transform: translateY(-10px) rotate(2deg) scaleY(1.05); }
+            65% { transform: translateY(4px) rotate(-1deg); }
+            80% { transform: translateY(-3px); }
             100% { transform: translateY(0) rotate(0deg); }
         }
         .car.finish-fly {
@@ -276,12 +276,9 @@
         .item { position: absolute; font-size: 24px; z-index: 25; line-height: 1; text-align: center; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); pointer-events: none; }
         .item.diamond { animation: diamondFloat 1.5s ease-in-out infinite; }
         .item.heart-item { animation: heartPulse 1s ease-in-out infinite; }
-        .item.puddle-item { animation: puddleWobble 1.2s ease-in-out infinite; filter: drop-shadow(0 2px 6px rgba(100,150,255,0.5)); }
-        @keyframes puddleWobble { 0%,100% { transform: scaleX(1) scaleY(1); } 50% { transform: scaleX(1.15) scaleY(0.9); } }
-        .item.pit-item { animation: pitPulse 1.5s ease-in-out infinite; filter: drop-shadow(0 3px 8px rgba(0,0,0,0.7)); }
-        @keyframes pitPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-        .item.ice-item { animation: iceSpin 2s linear infinite; filter: drop-shadow(0 2px 8px rgba(150,200,255,0.6)) drop-shadow(0 0 4px rgba(200,230,255,0.4)); }
-        @keyframes iceSpin { 0% { transform: rotate(0deg) scale(1); } 25% { transform: rotate(90deg) scale(1.05); } 50% { transform: rotate(180deg) scale(1); } 75% { transform: rotate(270deg) scale(0.95); } 100% { transform: rotate(360deg) scale(1); } }
+        .item.puddle-item { filter: drop-shadow(0 2px 6px rgba(100,150,255,0.5)); }
+        .item.pit-item { filter: drop-shadow(0 3px 10px rgba(139,115,85,0.8)) drop-shadow(0 0 6px rgba(100,80,50,0.4)); }
+        .item.ice-item { filter: drop-shadow(0 2px 8px rgba(150,200,255,0.6)) drop-shadow(0 0 4px rgba(200,230,255,0.4)); }
         @keyframes diamondFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
         @keyframes heartPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
         .item.collected { animation: collectPop 0.3s ease forwards; }
@@ -539,7 +536,7 @@ function calcDimensions() {
     gameW = gameArea.clientWidth;
     gameH = gameArea.clientHeight;
     laneW = (gameW - CURB_W * 2) / LANE_COUNT;
-    RACE_LENGTH = gameH * 6.6;
+    RACE_LENGTH = gameH * 8;
 }
 function getLaneCenter(i) { return CURB_W + i * laneW + laneW / 2; }
 
@@ -641,6 +638,9 @@ function resetGameState() {
     document.getElementById('startLine').classList.add('hidden');
     document.getElementById('startLine').style.top = '';
     document.getElementById('startLine').style.bottom = '';
+    
+    // הגרלת מזג אוויר מחדש
+    setupWeather();
     
     showStartLine();
     spawnAllItems();
@@ -834,75 +834,61 @@ function spawnExplosion(x, y) {
 
 // אפקט אבן — שברים מתפזרים
 function spawnRockShatter(x, y) {
-    const shards = ['🪨', '💥', '⚡'];
-    const pieces = ['▪', '▫', '◾', '◽'];
-    // שברי אבן קטנים
-    for (let i = 0; i < 8; i++) {
+    // פלאש אפור-חום
+    const flash = document.createElement('div');
+    flash.style.cssText = `position:absolute;z-index:54;pointer-events:none;left:${x-20}px;top:${y-20}px;width:40px;height:40px;border-radius:50%;background:radial-gradient(circle,rgba(160,140,120,0.7),rgba(120,100,80,0.3),transparent);`;
+    flash.animate([
+        { transform: 'scale(0.3)', opacity: 1 },
+        { transform: 'scale(2.5)', opacity: 0 }
+    ], { duration: 400, easing: 'ease-out', fill: 'forwards' });
+    gameArea.appendChild(flash);
+    setTimeout(() => flash.remove(), 450);
+    
+    // שברי אבן גדולים ומגוונים
+    const shardChars = ['◆', '◇', '▪', '◾', '⬥', '▬', '▮'];
+    const shardColors = ['#8B8B8B', '#6B6B6B', '#A0A0A0', '#7B6B5B', '#9B8B7B', '#5A5A5A'];
+    for (let i = 0; i < 12; i++) {
         const s = document.createElement('div');
         s.className = 'rock-shard';
-        s.textContent = pieces[Math.floor(Math.random() * pieces.length)];
+        s.textContent = shardChars[Math.floor(Math.random() * shardChars.length)];
         s.style.left = `${x}px`;
         s.style.top = `${y}px`;
-        s.style.color = ['#8B8B8B', '#6B6B6B', '#AAA', '#7B6B5B'][Math.floor(Math.random() * 4)];
-        const angle = (Math.PI * 2 / 8) * i + Math.random() * 0.5;
-        const dist = 15 + Math.random() * 25;
+        s.style.color = shardColors[Math.floor(Math.random() * shardColors.length)];
+        s.style.fontSize = `${10 + Math.random() * 10}px`;
+        const angle = (Math.PI * 2 / 12) * i + Math.random() * 0.4;
+        const dist = 20 + Math.random() * 35;
         const tx = Math.cos(angle) * dist;
         const ty = Math.sin(angle) * dist;
-        const rot = Math.random() * 360;
+        const rot = Math.random() * 540 - 270;
         s.animate([
             { transform: 'translate(0,0) rotate(0deg) scale(1)', opacity: 1 },
-            { transform: `translate(${tx}px,${ty}px) rotate(${rot}deg) scale(0.3)`, opacity: 0 }
-        ], { duration: 400 + Math.random() * 200, easing: 'ease-out', fill: 'forwards' });
+            { transform: `translate(${tx}px,${ty}px) rotate(${rot}deg) scale(0.2)`, opacity: 0 }
+        ], { duration: 450 + Math.random() * 250, easing: 'ease-out', fill: 'forwards' });
         gameArea.appendChild(s);
-        setTimeout(() => s.remove(), 650);
+        setTimeout(() => s.remove(), 750);
     }
-    // אימוג'י אבן שנשברת
-    const mainRock = document.createElement('div');
-    mainRock.className = 'rock-shard';
-    mainRock.textContent = '💥';
-    mainRock.style.left = `${x - 8}px`;
-    mainRock.style.top = `${y - 8}px`;
-    mainRock.style.fontSize = '28px';
-    mainRock.animate([
-        { transform: 'scale(0.5)', opacity: 1 },
-        { transform: 'scale(1.5)', opacity: 0 }
-    ], { duration: 350, easing: 'ease-out', fill: 'forwards' });
-    gameArea.appendChild(mainRock);
-    setTimeout(() => mainRock.remove(), 400);
 }
 
 // אפקט בור — ענן אבק + חלקיקי עפר
 function spawnPitDust(x, y) {
-    // ענן אבק מרכזי
-    const cloud = document.createElement('div');
-    cloud.className = 'dust-cloud';
-    cloud.style.left = `${x - 20}px`;
-    cloud.style.top = `${y - 20}px`;
-    cloud.style.width = '40px';
-    cloud.style.height = '40px';
-    gameArea.appendChild(cloud);
-    setTimeout(() => cloud.remove(), 650);
-    
-    // חלקיקי עפר מתפזרים
-    for (let i = 0; i < 10; i++) {
-        const p = document.createElement('div');
-        p.className = 'dust-particle';
-        p.style.left = `${x}px`;
-        p.style.top = `${y}px`;
-        const size = 2 + Math.random() * 4;
-        p.style.width = `${size}px`;
-        p.style.height = `${size}px`;
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 10 + Math.random() * 30;
-        const tx = Math.cos(angle) * dist;
-        const ty = Math.sin(angle) * dist - 10; // קצת למעלה
-        p.style.background = ['rgba(139,115,85,0.7)', 'rgba(160,130,90,0.6)', 'rgba(110,90,65,0.5)'][Math.floor(Math.random() * 3)];
-        p.animate([
-            { transform: 'translate(0,0) scale(1)', opacity: 0.8 },
-            { transform: `translate(${tx}px,${ty}px) scale(0.2)`, opacity: 0 }
-        ], { duration: 350 + Math.random() * 250, easing: 'ease-out', fill: 'forwards' });
-        gameArea.appendChild(p);
-        setTimeout(() => p.remove(), 650);
+    // ענן אבק גדול ובולט
+    const sizes = [
+        { w: 50, h: 50, dx: 0, dy: 0, delay: 0 },
+        { w: 35, h: 35, dx: -15, dy: -8, delay: 50 },
+        { w: 35, h: 35, dx: 15, dy: -5, delay: 80 },
+        { w: 25, h: 25, dx: -8, dy: 12, delay: 120 },
+        { w: 25, h: 25, dx: 10, dy: 10, delay: 100 },
+    ];
+    for (const s of sizes) {
+        const cloud = document.createElement('div');
+        cloud.className = 'dust-cloud';
+        cloud.style.left = `${x - s.w/2 + s.dx}px`;
+        cloud.style.top = `${y - s.h/2 + s.dy}px`;
+        cloud.style.width = `${s.w}px`;
+        cloud.style.height = `${s.h}px`;
+        cloud.style.animationDelay = `${s.delay}ms`;
+        gameArea.appendChild(cloud);
+        setTimeout(() => cloud.remove(), 700 + s.delay);
     }
 }
 
@@ -1012,7 +998,7 @@ function triggerPitBounce() {
         iceSkidding = false;
         playerCarEl.classList.remove('pit-bounce');
         playerCarEl.style.transform = '';
-    }, 700);
+    }, 1000);
 }
 
 function updateCarSpeedClass() {
@@ -1450,7 +1436,7 @@ function gameLoop() {
             if(moved)aiMoveCooldown=10;
         }
         if(aiMoveCooldown>0)aiMoveCooldown--;
-        if(aiY>=RACE_LENGTH&&!aiFinished)aiFinished=true;
+        if(aiY>=RACE_LENGTH&&!aiFinished){aiFinished=true;aiSpeed=4;updateExhaust(aiCarEl,4);}
     }
 
     updateTrackDots();
