@@ -901,10 +901,10 @@ function drawGame() {
 
   // פאוור-אפים
   for (const pu of gameState.powerups) {
-    // רקע בהיר לנראות
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    // רקע בהיר לנראות - עיגול לבן חצי-שקוף
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
     ctx.beginPath();
-    ctx.arc(S(pu.x), S(pu.y), S(14), 0, Math.PI * 2);
+    ctx.arc(S(pu.x), S(pu.y), S(15), 0, Math.PI * 2);
     ctx.fill();
 
     if (pu.category === 'personal') {
@@ -933,52 +933,47 @@ function drawGame() {
 
   const nowDraw = Date.now();
 
-  // ערפל משותף - מסתיר את אזור הפד בשני הצדדים
+  // ערפל משותף - מסתיר רק את הפדים
   if (effects.shared.fog > nowDraw) {
     const fogAge = nowDraw - effects.animStart.fog;
-    const fadeIn = Math.min(fogAge / 400, 1);
+    const fadeIn = Math.min(fogAge / 300, 1);
     const remaining = effects.shared.fog - nowDraw;
-    const fadeOut = remaining < 400 ? remaining / 400 : 1;
+    const fadeOut = remaining < 300 ? remaining / 300 : 1;
     const fogStr = fadeIn * fadeOut;
-    const t = nowDraw / 1200;
+    const t = nowDraw / 1500;
+    const fogH = S(PAD_H + 30); // גובה הערפל סביב הפד
 
     ctx.save();
 
-    // P1 pad area (bottom ~25%)
-    const p1Top = canvas.height * 0.68;
-    const grad1 = ctx.createLinearGradient(0, p1Top - canvas.height * 0.06, 0, canvas.height);
-    grad1.addColorStop(0, 'rgba(20, 25, 45, 0)');
-    grad1.addColorStop(0.15, `rgba(20, 25, 45, ${0.92 * fogStr})`);
-    grad1.addColorStop(1, `rgba(20, 25, 45, ${0.96 * fogStr})`);
-    ctx.fillStyle = grad1;
-    ctx.fillRect(0, p1Top - canvas.height * 0.06, canvas.width, canvas.height * 0.38);
+    // ערפל על פד P1 (למטה)
+    const p1cy = S(P1_PAD_Y + PAD_H / 2);
+    const fogGrad1 = ctx.createRadialGradient(canvas.width / 2, p1cy, S(20), canvas.width / 2, p1cy, canvas.width * 0.6);
+    fogGrad1.addColorStop(0, `rgba(20, 25, 45, ${0.94 * fogStr})`);
+    fogGrad1.addColorStop(0.6, `rgba(20, 25, 45, ${0.88 * fogStr})`);
+    fogGrad1.addColorStop(1, 'rgba(20, 25, 45, 0)');
+    ctx.fillStyle = fogGrad1;
+    ctx.fillRect(0, p1cy - fogH / 2, canvas.width, fogH);
 
-    // P2 pad area (top ~25%)
-    const p2Bottom = canvas.height * 0.32;
-    const grad2 = ctx.createLinearGradient(0, 0, 0, p2Bottom + canvas.height * 0.06);
-    grad2.addColorStop(0, `rgba(20, 25, 45, ${0.96 * fogStr})`);
-    grad2.addColorStop(0.85, `rgba(20, 25, 45, ${0.92 * fogStr})`);
-    grad2.addColorStop(1, 'rgba(20, 25, 45, 0)');
-    ctx.fillStyle = grad2;
-    ctx.fillRect(0, 0, canvas.width, p2Bottom + canvas.height * 0.06);
+    // ערפל על פד P2 (למעלה)
+    const p2cy = S(P2_PAD_Y + PAD_H / 2);
+    const fogGrad2 = ctx.createRadialGradient(canvas.width / 2, p2cy, S(20), canvas.width / 2, p2cy, canvas.width * 0.6);
+    fogGrad2.addColorStop(0, `rgba(20, 25, 45, ${0.94 * fogStr})`);
+    fogGrad2.addColorStop(0.6, `rgba(20, 25, 45, ${0.88 * fogStr})`);
+    fogGrad2.addColorStop(1, 'rgba(20, 25, 45, 0)');
+    ctx.fillStyle = fogGrad2;
+    ctx.fillRect(0, p2cy - fogH / 2, canvas.width, fogH);
 
-    // עננים זזים לאפקט עדין
-    ctx.globalAlpha = fogStr * 0.3;
-    for (let i = 0; i < 6; i++) {
-      const cx = (Math.sin(t * 0.2 + i * 1.4) * 0.35 + 0.5) * canvas.width;
-      const cy1 = canvas.height * (0.78 + Math.sin(t * 0.15 + i * 2.1) * 0.06);
-      const cy2 = canvas.height * (0.22 + Math.sin(t * 0.18 + i * 1.7) * 0.06);
-      const cr = S(25 + i * 7);
-      const cgrad1 = ctx.createRadialGradient(cx, cy1, 0, cx, cy1, cr);
-      cgrad1.addColorStop(0, 'rgba(80, 100, 140, 0.4)');
-      cgrad1.addColorStop(1, 'rgba(80, 100, 140, 0)');
-      ctx.fillStyle = cgrad1;
-      ctx.beginPath(); ctx.arc(cx, cy1, cr, 0, Math.PI * 2); ctx.fill();
-      const cgrad2 = ctx.createRadialGradient(cx, cy2, 0, cx, cy2, cr);
-      cgrad2.addColorStop(0, 'rgba(80, 100, 140, 0.4)');
-      cgrad2.addColorStop(1, 'rgba(80, 100, 140, 0)');
-      ctx.fillStyle = cgrad2;
-      ctx.beginPath(); ctx.arc(cx, cy2, cr, 0, Math.PI * 2); ctx.fill();
+    // עננים זזים קטנים על הפדים
+    ctx.globalAlpha = fogStr * 0.35;
+    for (let i = 0; i < 4; i++) {
+      const cx = (Math.sin(t * 0.25 + i * 1.8) * 0.4 + 0.5) * canvas.width;
+      const cr = S(18 + i * 5);
+      const cg1 = ctx.createRadialGradient(cx, p1cy, 0, cx, p1cy, cr);
+      cg1.addColorStop(0, 'rgba(70, 90, 130, 0.5)'); cg1.addColorStop(1, 'rgba(70, 90, 130, 0)');
+      ctx.fillStyle = cg1; ctx.beginPath(); ctx.arc(cx, p1cy, cr, 0, Math.PI * 2); ctx.fill();
+      const cg2 = ctx.createRadialGradient(cx, p2cy, 0, cx, p2cy, cr);
+      cg2.addColorStop(0, 'rgba(70, 90, 130, 0.5)'); cg2.addColorStop(1, 'rgba(70, 90, 130, 0)');
+      ctx.fillStyle = cg2; ctx.beginPath(); ctx.arc(cx, p2cy, cr, 0, Math.PI * 2); ctx.fill();
     }
     ctx.globalAlpha = 1;
     ctx.restore();
@@ -1192,13 +1187,14 @@ function drawBall(ball) {
 
   ctx.save();
 
-  // רפאים - fade in/out
+  // רפאים - כמעט נעלם לגמרי
   if (isGhost) {
     const ghostAge = now - effects.animStart.ghost;
     const remaining = effects.shared.ghost - now;
     const fadeIn = Math.min(ghostAge / 300, 1);
     const fadeOut = remaining < 300 ? remaining / 300 : 1;
-    ctx.globalAlpha = 0.08 + (1 - fadeIn * fadeOut) * 0.05;
+    const vanish = fadeIn * fadeOut;
+    ctx.globalAlpha = 0.03 + (1 - vanish) * 0.97; // 3% opacity at peak
   }
 
   // קרניים מפוזרות
