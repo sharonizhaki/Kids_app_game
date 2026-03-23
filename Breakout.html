@@ -597,7 +597,6 @@ canvas.addEventListener('mousemove', (e) => {
   if (effects[myKey].frozen > Date.now()) return;
   const rect = canvas.getBoundingClientRect();
   let gx = (e.clientX - rect.left) / (canvas.width / 420);
-  const myKey = isP1 ? 'p1' : 'p2';
   if (effects[myKey].reversed > Date.now()) gx = 420 - gx;
   const padW = isP1 ? gameState.p1PadW : gameState.p2PadW;
   myPadTarget = Math.max(0, Math.min(420 - padW, gx - padW / 2));
@@ -699,10 +698,6 @@ function updatePhysics(dt) {
       ball.y = shieldY + BALL_R;
       ball.dy = Math.abs(ball.dy);
       effects.shieldHitAnim.p2 = Date.now();
-    }
-  }
-      ball.y = shieldY + BALL_R;
-      ball.dy = Math.abs(ball.dy);
     }
   }
 
