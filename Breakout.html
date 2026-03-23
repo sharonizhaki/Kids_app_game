@@ -213,13 +213,13 @@
   <div class="score-box" id="card-p1">
     <div class="name" id="name-p1">שחקן 1</div>
     <div class="wins" id="wins-p1">0</div>
-    <div class="wins-label">ניצחונות</div>
+    <div class="wins-label">⭐</div>
   </div>
   <div class="vs-box">VS</div>
   <div class="score-box" id="card-p2">
     <div class="name" id="name-p2">שחקן 2</div>
     <div class="wins" id="wins-p2">0</div>
-    <div class="wins-label">ניצחונות</div>
+    <div class="wins-label">⭐</div>
   </div>
 </div>
 
@@ -233,7 +233,7 @@
 <div id="match-modal">
   <div class="match-box">
     <div class="match-icon" id="mm-icon">🏆</div>
-    <div class="match-title" id="mm-title">ניצחון!</div>
+    <div class="match-title" id="mm-title">🏆</div>
     <div class="match-sub" id="mm-sub">2-1</div>
     <div class="match-btns" id="mm-btns"></div>
   </div>
@@ -654,14 +654,50 @@ function padBounce(ball, padX, padW, goUp) {
 }
 function aiUpdate(dt) {
   if (!gameState) return;
-  const targetX = gameState.ball.x - gameState.p2PadW / 2;
-  const ease = gameState.ball.dy < 0 ? 0.08 : 0.03;
-  gameState.p2PadX += (targetX - gameState.p2PadX) * ease * dt;
-  gameState.p2PadX = Math.max(0, Math.min(420 - gameState.p2PadW, gameState.p2PadX));
+  const ball = gameState.ball;
+  const padW = gameState.p2PadW;
+  const padX = gameState.p2PadX;
+  const padCenter = padX + padW / 2;
+
+  // בדוק אם יש פאוור-אפ שעולה לכיווני ואפשר לתפוס בבטחה
+  let targetX = ball.x; // ברירת מחדל - עקוב אחרי הכדור
+  let chasingPowerup = false;
+
+  if (gameState.powerups.length > 0 && ball.dy > 0) {
+    // הכדור הולך למטה (רחוק ממני) - יש זמן לתפוס פאוור-אפ
+    let bestPU = null;
+    let bestDist = Infinity;
+    for (const pu of gameState.powerups) {
+      if (pu.dy >= 0) continue; // רק אלה שעולים לכיווני
+      if (pu.y > P2_PAD_Y + PAD_H + 50) continue; // רחוק מדי
+      const dist = Math.abs(pu.x - padCenter);
+      if (dist < bestDist) { bestDist = dist; bestPU = pu; }
+    }
+    // תפוס רק אם הפאוור-אפ קרוב מספיק ויש זמן
+    if (bestPU && bestDist < 120) {
+      targetX = bestPU.x;
+      chasingPowerup = true;
+    }
+  }
+
+  // מהירות מעקב - יותר אגרסיבי כשכדור בא, רגוע כשהולך
+  let ease;
+  if (chasingPowerup) {
+    ease = 0.1;
+  } else if (ball.dy < 0) {
+    ease = 0.08; // כדור בא אלי
+  } else {
+    ease = 0.03; // כדור הולך, חזור לאמצע
+    targetX = ball.x * 0.6 + 210 * 0.4; // מעקב חלקי + חזרה למרכז
+  }
+
+  const target = targetX - padW / 2;
+  gameState.p2PadX += (target - gameState.p2PadX) * ease * dt;
+  gameState.p2PadX = Math.max(0, Math.min(420 - padW, gameState.p2PadX));
 }
 
 function updatePhysics(dt) {
-  if (!gameState || gameState.gameOver) return;
+  if (!gameState || gameState.gameOver || gameState.paused) return;
   const ball = gameState.ball;
   ball.x += ball.dx * dt; ball.y += ball.dy * dt;
 
@@ -1226,7 +1262,12 @@ function startNextRound() {
   lastSpeedUpTime = Date.now();
   if (gameStateRef) set(gameStateRef, gameState);
   gameRunning = true; lastTime = performance.now();
+  gameState.paused = true;
   requestAnimationFrame(gameLoop);
+  showCountdown(() => {
+    if (gameState) gameState.paused = false;
+    lastSpeedUpTime = Date.now();
+  });
 }
 
 // ========== Match Modal ==========
@@ -1238,7 +1279,7 @@ function showMatchModal(winner) {
 
   document.getElementById('mm-icon').textContent = isWinner || isAIMode ? '🏆' : '😢';
   const titleEl = document.getElementById('mm-title');
-  titleEl.textContent = `${winnerEmoji} ${winnerName} ניצח!`;
+  titleEl.textContent = `${winnerEmoji} ${winnerName} 🏆`;
   titleEl.style.color = winnerColor;
   document.getElementById('mm-sub').textContent = `${p1Wins} - ${p2Wins}`;
 
@@ -1300,7 +1341,12 @@ function startNewMatch() {
   myPadTarget = 210 - PAD_W / 2;
   lastSpeedUpTime = Date.now();
   gameRunning = true; lastTime = performance.now();
+  gameState.paused = true;
   requestAnimationFrame(gameLoop);
+  showCountdown(() => {
+    if (gameState) gameState.paused = false;
+    lastSpeedUpTime = Date.now();
+  });
 }
 
 // ========== HUD ==========
@@ -1319,12 +1365,52 @@ function updateHUD(p1Name, p1Col, p1Em, p2Name, p2Col, p2Em) {
 function startGamePlay() {
   document.getElementById('match-modal').style.display = 'none';
   gameState = createInitialState();
+  gameState.paused = true; // כדור לא זז עד שהספירה נגמרת
   if (gameStateRef) set(gameStateRef, gameState);
   startGameStateListener();
   lastSpeedUpTime = Date.now();
   gameRunning = true; lastTime = performance.now();
   resizeCanvas();
   requestAnimationFrame(gameLoop);
+  showCountdown(() => {
+    if (gameState) gameState.paused = false;
+    lastSpeedUpTime = Date.now();
+  });
+}
+
+function showCountdown(onDone) {
+  const banner = document.getElementById('round-banner');
+  let count = 3;
+  banner.style.display = 'block';
+  banner.style.color = 'var(--gold)';
+  banner.style.borderColor = 'var(--gold)';
+  banner.style.boxShadow = '0 0 40px rgba(245,200,66,0.3)';
+  banner.style.fontSize = '2.5rem';
+  banner.textContent = count;
+
+  const interval = setInterval(() => {
+    count--;
+    if (count > 0) {
+      banner.textContent = count;
+      banner.style.animation = 'none';
+      banner.offsetHeight; // reflow
+      banner.style.animation = 'bannerIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    } else {
+      banner.textContent = '!';
+      banner.style.color = 'var(--green)';
+      banner.style.borderColor = 'var(--green)';
+      banner.style.boxShadow = '0 0 40px rgba(61,214,140,0.3)';
+      banner.style.animation = 'none';
+      banner.offsetHeight;
+      banner.style.animation = 'bannerIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      setTimeout(() => {
+        banner.style.display = 'none';
+        banner.style.fontSize = '';
+        if (onDone) onDone();
+      }, 500);
+      clearInterval(interval);
+    }
+  }, 800);
 }
 
 // ========== initSession ==========
