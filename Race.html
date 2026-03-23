@@ -120,12 +120,12 @@
         }
         @keyframes iceSkid {
             0% { transform: translateX(0) rotate(0deg); }
-            8% { transform: translateX(25px) rotate(14deg); }
-            20% { transform: translateX(-35px) rotate(-18deg); }
-            35% { transform: translateX(28px) rotate(15deg); }
-            50% { transform: translateX(-20px) rotate(-10deg); }
-            65% { transform: translateX(12px) rotate(7deg); }
-            80% { transform: translateX(-6px) rotate(-3deg); }
+            10% { transform: translateX(16px) rotate(8deg); }
+            25% { transform: translateX(-22px) rotate(-11deg); }
+            40% { transform: translateX(14px) rotate(7deg); }
+            55% { transform: translateX(-10px) rotate(-5deg); }
+            70% { transform: translateX(5px) rotate(3deg); }
+            85% { transform: translateX(-2px) rotate(-1deg); }
             100% { transform: translateX(0) rotate(0deg); }
         }
         /* סימני צמיגים בהחלקה */
@@ -207,9 +207,18 @@
         .splash-dot { position: absolute; width: 3px; height: 1.5px; background: rgba(150,180,220,0.4); border-radius: 50%; animation: splashPop 0.6s ease-out infinite; }
         @keyframes splashPop { 0% { transform: scale(0); opacity: 0.8; } 50% { transform: scale(2.5); opacity: 0.4; } 100% { transform: scale(0); opacity: 0; } }
         .road-mist { display: none; position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(0deg, rgba(100,120,160,0.15), transparent); z-index: 5; pointer-events: none; }
-        .lightning-flash { position: absolute; inset: 0; z-index: 200; background: rgba(200,210,255,0.15); pointer-events: none; opacity: 0; }
-        .lightning-flash.active { animation: lightningAnim 0.3s ease-out; }
-        @keyframes lightningAnim { 0% { opacity: 0.7; } 10% { opacity: 0; } 15% { opacity: 0.5; } 20% { opacity: 0; } 25% { opacity: 0.3; } 100% { opacity: 0; } }
+        .lightning-flash { position: absolute; inset: 0; z-index: 200; pointer-events: none; opacity: 0; }
+        .lightning-flash.active { animation: lightningAnim 0.5s ease-out; }
+        @keyframes lightningAnim { 
+            0% { opacity: 0; background: rgba(220,230,255,0.4); } 
+            5% { opacity: 1; background: rgba(255,255,255,0.6); } 
+            8% { opacity: 0.1; background: rgba(200,210,255,0.2); } 
+            12% { opacity: 0.8; background: rgba(240,245,255,0.5); } 
+            16% { opacity: 0; } 
+            20% { opacity: 0.4; background: rgba(200,210,255,0.3); } 
+            30% { opacity: 0; } 
+            100% { opacity: 0; } 
+        }
         .game-area.rain-mode .wet-overlay, .game-area.rain-mode .puddles, .game-area.rain-mode .rain-container, .game-area.rain-mode .rain-splash, .game-area.rain-mode .road-mist { display: block; }
         .headlight-reflect { display: none; position: absolute; top: -55px; left: 50%; transform: translateX(-50%); width: 60px; height: 55px; pointer-events: none; z-index: -1; background: radial-gradient(ellipse at 50% 100%, rgba(255,255,200,0.08) 0%, rgba(255,255,200,0.03) 50%, transparent 100%); }
         .wheel-spray { display: none; position: absolute; bottom: -6px; width: 18px; height: 14px; pointer-events: none; z-index: -1; overflow: hidden; }
@@ -608,7 +617,8 @@ function resetGameState() {
     items.forEach(it => { if (it.el && it.el.parentNode) it.el.remove(); }); items = [];
     gameArea.querySelectorAll('.item, .float-text, .swipe-hint, .collected, .skid-mark').forEach(el => el.remove());
     
-    playerSpeed = 0; lives = 3;
+    playerSpeed = 0;
+    // חיים לא מתאפסים בין סיבובים! רק במרוץ חדש
     pointsAtRoundStart = points;
     gameFinished = false; frozen = false; frozenUntil = 0; iceSkidding = false;
     window._mpStarted = false;
@@ -674,11 +684,17 @@ function showResult(icon, title, sub, canRetry=true) {
     
     if (multiGameId) {
         mpSetStatus(icon === '💥' ? 'crashed' : (icon === '🏆' ? 'finished' : 'lost'));
+        // הפסד — החזר נקודות למצב תחילת הסיבוב
+        if (icon !== '🏆') { points = pointsAtRoundStart; updatePoints(false); }
     } else {
-        // AI mode — ספירת נצחונות
+        // AI mode
         if (icon === '🏆') {
             myWins++;
-            updateWins(); // גביע מופיע עם אנימציה מיד!
+            updateWins();
+        } else {
+            // הפסד — החזר נקודות למצב תחילת הסיבוב
+            points = pointsAtRoundStart;
+            updatePoints(false);
         }
         
         if (myWins >= WINS_TO_SERIES) {
@@ -688,7 +704,7 @@ function showResult(icon, title, sub, canRetry=true) {
             document.getElementById('btnPlayAgain').style.display = canRetry ? 'block' : 'none';
             document.getElementById('btnPlayAgain').textContent = '🔄 מרוץ חדש';
             document.getElementById('btnPlayAgain').onclick = function() {
-                myWins = 0; points = 0; pointsAtRoundStart = 0;
+                myWins = 0; points = 0; pointsAtRoundStart = 0; lives = 3;
                 updateWins();
                 document.getElementById('resultModal').classList.remove('show');
                 document.getElementById('btnPlayAgain').onclick = playAgain;
@@ -765,7 +781,7 @@ function mpListenReady(oppId) {
                     if (mpReadyUnsub) { mpReadyUnsub(); mpReadyUnsub = null; }
                     if (mpStatusUnsub) { mpStatusUnsub(); mpStatusUnsub = null; }
                     ['ready','status','wins'].forEach(k => { remove(ref(db,`game/race/${multiGameId}/${k}_${myName}`)); remove(ref(db,`game/race/${multiGameId}/${k}_${oppId}`)); });
-                    myWins = 0; oppWins = 0; points = 0; pointsAtRoundStart = 0; updateWins();
+                    myWins = 0; oppWins = 0; points = 0; pointsAtRoundStart = 0; lives = 3; updateWins();
                     document.getElementById('resultModal').classList.remove('show');
                     resetPending = false; resetGameState(); startCountdown(startGame);
                 }
@@ -1183,16 +1199,34 @@ function updateHeadlights(carEl, speed) { const b=carEl.querySelector('.headligh
 // ========== מזג אוויר ==========
 function setupWeather() {
     isRainMode = Math.random() < 0.5;
+    lightningCount = 0;
+    if(lightningTimeout){clearTimeout(lightningTimeout);lightningTimeout=null;}
     if (isRainMode) {
         gameArea.classList.add('rain-mode');
         const rc = document.getElementById('rainContainer'); rc.innerHTML = '';
         for (let i=0;i<120;i++){const d=document.createElement('div');d.className='raindrop';d.style.left=`${Math.random()*100}%`;d.style.height=`${14+Math.random()*22}px`;d.style.animationDuration=`${0.3+Math.random()*0.35}s`;d.style.animationDelay=`${Math.random()}s`;d.style.opacity=0.3+Math.random()*0.4;rc.appendChild(d);}
         const rs=document.getElementById('rainSplash');rs.innerHTML='';
         for(let i=0;i<30;i++){const s=document.createElement('div');s.className='splash-dot';s.style.left=`${14+Math.random()*(gameW-28)}px`;s.style.bottom=`${Math.random()*50}px`;s.style.animationDelay=`${Math.random()*0.6}s`;s.style.animationDuration=`${0.4+Math.random()*0.3}s`;rs.appendChild(s);}
-        triggerLightning();
-    } else { gameArea.classList.remove('rain-mode'); if(lightningTimeout){clearTimeout(lightningTimeout);lightningTimeout=null;} }
+        lightningTimeout = setTimeout(triggerLightning, 6000 + Math.random() * 10000);
+    } else { gameArea.classList.remove('rain-mode'); }
 }
-function triggerLightning() { if(!isRainMode)return; const f=document.getElementById('lightningFlash');f.classList.remove('active');void f.offsetHeight;f.classList.add('active');setTimeout(()=>f.classList.remove('active'),400);lightningTimeout=setTimeout(triggerLightning,4000+Math.random()*8000); }
+let lightningCount = 0;
+const MAX_LIGHTNING = 2;
+
+function triggerLightning() { 
+    if(!isRainMode || lightningCount >= MAX_LIGHTNING) return; 
+    lightningCount++;
+    const f=document.getElementById('lightningFlash');
+    f.classList.remove('active');
+    void f.offsetHeight;
+    f.classList.add('active');
+    setTimeout(()=>f.classList.remove('active'),500);
+    if(navigator.vibrate) navigator.vibrate([20, 100, 40]);
+    // ברק שני — רק אם עוד לא הגענו למקסימום
+    if(lightningCount < MAX_LIGHTNING) {
+        lightningTimeout=setTimeout(triggerLightning, 8000+Math.random()*15000);
+    }
+}
 
 let tiltActive = false;
 function moveCarToLane(carEl, lane, dir) {
