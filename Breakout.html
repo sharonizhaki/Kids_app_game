@@ -440,32 +440,40 @@ function createInitialState() {
 
 // ========== פאוור-אפים ==========
 const POWERUP_TYPES = [
-  // 🎯 טוב לי (הילה בצבע שחקן)
-  { type: 'wider',     emoji: '↔️', label: '↔️ פד רחב',      category: 'personal' },
-  { type: 'shield',    emoji: '🛡️', label: '🛡️ מגן',         category: 'personal' },
-  { type: 'magnet',    emoji: '🧲', label: '🧲 מגנט',        category: 'personal' },
-  { type: 'shrink',    emoji: '🤏', label: '🤏 פד קטן',      category: 'personal' },
-  { type: 'reverse',   emoji: '🔄', label: '🔄 היפוך',       category: 'personal' },
-  { type: 'bomb',      emoji: '💣', label: '💣 פיצוץ',       category: 'personal' },
-  { type: 'freeze',    emoji: '❄️', label: '❄️ הקפאה',       category: 'personal' },
+  // 🎯 אישי (הילה בצבע שחקן)
+  { type: 'wider',      emoji: '↔️', label: '↔️ פד רחב',     category: 'personal', weight: 15 },
+  { type: 'shield',     emoji: '🛡️', label: '🛡️ מגן',        category: 'personal', weight: 4 },
+  { type: 'magnet',     emoji: '🧲', label: '🧲 מגנט',       category: 'personal', weight: 10 },
+  { type: 'shrink',     emoji: '🤏', label: '🤏 פד קטן',     category: 'personal', weight: 12 },
+  { type: 'reverse',    emoji: '🔄', label: '🔄 היפוך',      category: 'personal', weight: 6 },
+  { type: 'bomb',       emoji: '💣', label: '💣 פיצוץ',      category: 'personal', weight: 4 },
+  { type: 'freeze',     emoji: '❄️', label: '❄️ הקפאה',      category: 'personal', weight: 8 },
   // 🌐 משותף (בלי הילה)
-  { type: 'extra_ball', emoji: '⚾', label: '⚾ כדור נוסף',   category: 'shared' },
-  { type: 'meteor',    emoji: '☄️', label: '☄️ כדור חזק',    category: 'shared' },
-  { type: 'fog',       emoji: '🌫️', label: '🌫️ ערפל',        category: 'shared' },
-  { type: 'ghost',     emoji: '👻', label: '👻 רפאים',       category: 'shared' },
+  { type: 'extra_ball', emoji: '⚾', label: '⚾ כדור נוסף',  category: 'shared',   weight: 12 },
+  { type: 'meteor',     emoji: '☄️', label: '☄️ כדור חזק',   category: 'shared',   weight: 3 },
+  { type: 'fog',        emoji: '🌫️', label: '🌫️ ערפל',       category: 'shared',   weight: 5 },
+  { type: 'ghost',      emoji: '👻', label: '👻 רפאים',      category: 'shared',   weight: 5 },
 ];
+
+function weightedRandom(items) {
+  const total = items.reduce((s, i) => s + i.weight, 0);
+  let r = Math.random() * total;
+  for (const item of items) {
+    r -= item.weight;
+    if (r <= 0) return item;
+  }
+  return items[items.length - 1];
+}
 
 function maybeSpawnPowerup(x, y, goingUp) {
   if (Math.random() < 0.35) {
-    // מי צפוי לתפוס: goingUp=true → נופל למעלה → p2, goingUp=false → נופל למטה → p1
     const catcher = goingUp ? 'p2' : 'p1';
-    let available = POWERUP_TYPES;
-    // אם השחקן כבר השתמש ב-2 מגנים - לא להציע מגן
+    let available = POWERUP_TYPES.slice();
     if (gameState[catcher + 'ShieldUsed'] >= 2) {
       available = available.filter(p => p.type !== 'shield');
     }
     if (available.length === 0) return;
-    const pt = available[Math.floor(Math.random() * available.length)];
+    const pt = weightedRandom(available);
     gameState.powerups.push({
       x, y, dy: goingUp ? -2 : 2,
       type: pt.type, id: ++powerupIdCounter,
@@ -864,6 +872,34 @@ function drawGame() {
   if (flip) { ctx.translate(w, h); ctx.rotate(Math.PI); }
 
   ctx.fillStyle = 'rgba(15, 19, 32, 0.6)'; ctx.fillRect(0, 0, w, h);
+
+  // מסגרת מגרש זוהרת
+  const brd = S(2);
+  const cornerR = S(10);
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = brd;
+  ctx.shadowColor = 'rgba(255,255,255,0.06)';
+  ctx.shadowBlur = S(8);
+  ctx.beginPath();
+  ctx.roundRect(brd / 2, brd / 2, w - brd, h - brd, cornerR);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // פינות מודגשות
+  const cLen = S(18);
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = S(2.5);
+  ctx.lineCap = 'round';
+  // top-left
+  ctx.beginPath(); ctx.moveTo(S(4), S(4) + cLen); ctx.lineTo(S(4), S(4)); ctx.lineTo(S(4) + cLen, S(4)); ctx.stroke();
+  // top-right
+  ctx.beginPath(); ctx.moveTo(w - S(4) - cLen, S(4)); ctx.lineTo(w - S(4), S(4)); ctx.lineTo(w - S(4), S(4) + cLen); ctx.stroke();
+  // bottom-left
+  ctx.beginPath(); ctx.moveTo(S(4), h - S(4) - cLen); ctx.lineTo(S(4), h - S(4)); ctx.lineTo(S(4) + cLen, h - S(4)); ctx.stroke();
+  // bottom-right
+  ctx.beginPath(); ctx.moveTo(w - S(4) - cLen, h - S(4)); ctx.lineTo(w - S(4), h - S(4)); ctx.lineTo(w - S(4), h - S(4) - cLen); ctx.stroke();
+
+  // קו מרכזי
   ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = S(1);
   ctx.setLineDash([S(8), S(8)]); ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke(); ctx.setLineDash([]);
 
