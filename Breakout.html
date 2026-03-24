@@ -318,6 +318,7 @@ let currentGameId = null;
 
 // מסך בחירת מצב
 window.chooseMode = (mode) => {
+  console.log('chooseMode called:', mode);
   document.getElementById('mode-select').style.display = 'none';
   document.querySelector('.header').style.display = 'flex';
   document.getElementById('gameCanvas').style.display = 'block';
@@ -328,7 +329,8 @@ window.chooseMode = (mode) => {
   }
   roomRef = ref(db, `rooms_v3/${GAME_ID}_ai`);
   gameStateRef = ref(db, `game/${GAME_ID}_ai/${myName}`);
-  initSession();
+  // עיכוב קצר כדי שהדפדפן ירנדר את ה-header וה-canvas לפני חישוב גדלים
+  setTimeout(() => { resizeCanvas(); initSession(); }, 100);
 };
 
 // ========== משתנים ==========
@@ -356,8 +358,8 @@ function resizeCanvas() {
   canvas.width = Math.floor(420 * ratio);
   canvas.height = Math.floor(700 * ratio);
 }
-// Delay first resize to let header render
-setTimeout(resizeCanvas, 50);
+// Delay first resize to let header render (only if visible)
+setTimeout(() => { if (canvas.style.display !== 'none') resizeCanvas(); }, 50);
 window.addEventListener('resize', resizeCanvas);
 
 function S(v) { return v * (canvas.width / 420); }
@@ -1693,11 +1695,14 @@ function showCountdown(onDone) {
 // ========== initSession ==========
 async function initSession() {
   try {
+    console.log('initSession start - isAIMode:', isAIMode, 'isSoloMode:', isSoloMode, 'isMultiplayer:', isMultiplayer);
     const roomPath = (isAIMode || isSoloMode) ? `rooms_v3/${GAME_ID}_ai/${myName}` : `rooms_v3/${GAME_ID}/${myName}`;
     const myJoinedAt = Date.now();
 
     if (isAIMode || isSoloMode) {
+      console.log('Setting room:', roomPath);
       await set(ref(db, roomPath), { name: displayName, color: myColor, emoji: myEmoji, joinedAt: myJoinedAt, timestamp: myJoinedAt, active: true });
+      console.log('Room set OK, starting heartbeat');
       startHeartbeat(roomPath, myJoinedAt);
       isP1 = true;
       if (isSoloMode) {
