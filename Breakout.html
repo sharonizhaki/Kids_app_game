@@ -405,7 +405,7 @@ function handleOpponentLeft(leftName, leftEmoji) {
 window.goHome = async () => {
   try {
     stopHeartbeat(); stopOpponentCheck(); gameRunning = false;
-    if (!isAIMode) {
+    if (!isAIMode && !isSoloMode) {
       await remove(ref(db, `rooms_v3/${GAME_ID}/${myName}`));
       if (currentGameId) await remove(ref(db, `game/${GAME_ID}/${currentGameId}`));
       remove(ref(db, `game/${GAME_ID}/pending`));
@@ -416,7 +416,7 @@ window.goHome = async () => {
 
 window.addEventListener('beforeunload', () => {
   stopHeartbeat(); stopOpponentCheck();
-  if (!isAIMode) remove(ref(db, `rooms_v3/${GAME_ID}/${myName}`));
+  if (!isAIMode && !isSoloMode) remove(ref(db, `rooms_v3/${GAME_ID}/${myName}`));
   else remove(ref(db, `rooms_v3/${GAME_ID}_ai/${myName}`));
 });
 
@@ -667,11 +667,11 @@ canvas.addEventListener('mousemove', (e) => {
 
 // ========== Firebase ==========
 function syncFullState() {
-  if (isAIMode || !isP1 || !gameState || !gameStateRef) return;
+  if (isAIMode || isSoloMode || !isP1 || !gameState || !gameStateRef) return;
   set(gameStateRef, gameState);
 }
 function syncMyPad() {
-  if (isAIMode || !gameStateRef) return;
+  if (isAIMode || isSoloMode || !gameStateRef) return;
   update(gameStateRef, { [isP1 ? 'p1PadX' : 'p2PadX']: myPadTarget }).catch(() => {});
 }
 
@@ -934,12 +934,14 @@ function gameLoop(time) {
     gameState.p2PadX = Math.max(0, Math.min(420 - gameState.p2PadW, gameState.p2PadX));
   }
 
-  if (isP1 || isAIMode) {
-    if (isAIMode) aiUpdate(dt);
+  if (isP1 || isAIMode || isSoloMode) {
+    if (isAIMode && !isSoloMode) aiUpdate(dt);
     updatePhysics(dt);
-    document.getElementById('wins-p1').textContent = p1Wins;
-    document.getElementById('wins-p2').textContent = p2Wins;
-    if (!isAIMode && Math.random() < 0.15) syncFullState();
+    if (!isSoloMode) {
+      document.getElementById('wins-p1').textContent = p1Wins;
+      document.getElementById('wins-p2').textContent = p2Wins;
+    }
+    if (!isAIMode && !isSoloMode && Math.random() < 0.15) syncFullState();
   }
   syncMyPad();
   drawGame();
@@ -950,7 +952,7 @@ function gameLoop(time) {
 function drawGame() {
   if (!gameState) return;
   const w = canvas.width, h = canvas.height; ctx.clearRect(0, 0, w, h);
-  const flip = !isP1 && !isAIMode;
+  const flip = !isP1 && !isAIMode && !isSoloMode;
   ctx.save();
   if (flip) { ctx.translate(w, h); ctx.rotate(Math.PI); }
 
@@ -987,7 +989,7 @@ function drawGame() {
   ctx.setLineDash([S(8), S(8)]); ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke(); ctx.setLineDash([]);
 
   for (const b of gameState.topBricks) { if (b.alive) drawBrick(b, p2Color); }
-  for (const b of gameState.bottomBricks) { if (b.alive) drawBrick(b, p1Color); }
+  if (!isSoloMode) { for (const b of gameState.bottomBricks) { if (b.alive) drawBrick(b, p1Color); } }
 
   // לבנים מתות - אנימציית צבע + היעלמות
   const now = Date.now();
@@ -1036,7 +1038,7 @@ function drawGame() {
   }
   ctx.globalAlpha = 1;
 
-  drawPadWithEffects(gameState.p2PadX, P2_PAD_Y, gameState.p2PadW, p2Color, 'p2');
+  if (!isSoloMode) drawPadWithEffects(gameState.p2PadX, P2_PAD_Y, gameState.p2PadW, p2Color, 'p2');
   drawPadWithEffects(gameState.p1PadX, P1_PAD_Y, gameState.p1PadW, p1Color, 'p1');
   drawBall(gameState.ball);
   for (const eb of gameState.balls) drawBall(eb);
