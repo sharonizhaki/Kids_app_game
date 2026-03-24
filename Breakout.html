@@ -190,6 +190,18 @@
   }
   .btn-home:active { transform: scale(0.9); }
 
+  /* Mode select */
+  .mode-btn {
+    width: 100%; max-width: 280px;
+    padding: 18px 16px; border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 20px; background: rgba(255,255,255,0.04);
+    color: white; cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; gap: 4px; transition: all 0.2s;
+    font-family: 'Heebo', sans-serif; backdrop-filter: blur(8px);
+  }
+  .mode-btn:active { transform: scale(0.96); }
+  .mode-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(245,200,66,0.4); box-shadow: 0 4px 20px rgba(245,200,66,0.15); }
+
   /* ========== CONFETTI ========== */
   .confetti-container { position: fixed; inset: 0; pointer-events: none; z-index: 1002; overflow: hidden; }
   .confetti-piece {
@@ -239,6 +251,24 @@
   </div>
 </div>
 
+<!-- MODE SELECT (shown when mode=ai from index) -->
+<div id="mode-select" style="display:none; position:fixed; inset:0; z-index:600; background:var(--bg); align-items:center; justify-content:center; flex-direction:column; gap:20px; padding:20px;">
+  <div style="font-size:3rem; margin-bottom:4px;">🧱</div>
+  <div style="font-family:'Fredoka One',cursive; font-size:1.6rem; background:linear-gradient(135deg,var(--emma),var(--rif)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">שובר לבנים</div>
+  <div style="color:#aaa; font-size:0.9rem; margin-bottom:10px;" id="mode-greeting"></div>
+  <button class="mode-btn" id="btn-vs-ai" onclick="chooseMode('ai')">
+    <span style="font-size:1.8rem;">🤖</span>
+    <span style="font-weight:900; font-size:1rem;">מול מחשב</span>
+    <span style="font-size:0.75rem; color:#aaa;">הטוב מ-3 סיבובים</span>
+  </button>
+  <button class="mode-btn" id="btn-solo" onclick="chooseMode('solo')">
+    <span style="font-size:1.8rem;">🎮</span>
+    <span style="font-weight:900; font-size:1rem;">משחק לבד</span>
+    <span style="font-size:0.75rem; color:#aaa;">שבור את כל הלבנים • 3 חיים</span>
+  </button>
+  <button style="background:none; border:none; color:#888; font-size:0.85rem; cursor:pointer; margin-top:8px; text-decoration:underline; font-family:Heebo,sans-serif;" onclick="goHome()">🏠 חזרה</button>
+</div>
+
 <!-- ALERT MODAL (opponent left / full) -->
 <div id="alert-modal">
   <div class="alert-box">
@@ -276,13 +306,30 @@ if (!userData) { window.location.href = 'index.html'; throw new Error('No user d
 const myName = userData.id;
 const myColor = userData.color;
 const myEmoji = userData.emoji;
-const isAIMode = params.get('mode') === 'ai';
-const isSoloMode = params.get('mode') === 'solo';
+const modeFromURL = params.get('mode'); // 'ai' from index means "show choice screen"
+let isAIMode = false;
+let isSoloMode = false;
+let isMultiplayer = !modeFromURL; // no mode = multiplayer from waiting room
 
 const GAME_ID = 'breakout';
-const roomRef = ref(db, (isAIMode || isSoloMode) ? `rooms_v3/${GAME_ID}_ai` : `rooms_v3/${GAME_ID}`);
-let gameStateRef = (isAIMode || isSoloMode) ? ref(db, `game/${GAME_ID}_ai/${myName}`) : null;
+let roomRef = isMultiplayer ? ref(db, `rooms_v3/${GAME_ID}`) : ref(db, `rooms_v3/${GAME_ID}_ai`);
+let gameStateRef = isMultiplayer ? null : ref(db, `game/${GAME_ID}_ai/${myName}`);
 let currentGameId = null;
+
+// מסך בחירת מצב
+window.chooseMode = (mode) => {
+  document.getElementById('mode-select').style.display = 'none';
+  document.querySelector('.header').style.display = 'flex';
+  document.getElementById('gameCanvas').style.display = 'block';
+  if (mode === 'ai') {
+    isAIMode = true; isSoloMode = false;
+  } else {
+    isAIMode = false; isSoloMode = true;
+  }
+  roomRef = ref(db, `rooms_v3/${GAME_ID}_ai`);
+  gameStateRef = ref(db, `game/${GAME_ID}_ai/${myName}`);
+  initSession();
+};
 
 // ========== משתנים ==========
 let isP1 = false;
@@ -1727,7 +1774,17 @@ async function initSession() {
   } catch (e) { console.error('initSession err:', e); }
 }
 
-initSession();
+if (modeFromURL === 'ai') {
+  // הגיע מכפתור "שחק לבד" באינדקס - הצג בחירה בין מול מחשב למשחק לבד
+  const modeEl = document.getElementById('mode-select');
+  modeEl.style.display = 'flex';
+  document.getElementById('mode-greeting').textContent = `${myEmoji} ${displayName}`;
+  document.querySelector('.header').style.display = 'none';
+  document.getElementById('gameCanvas').style.display = 'none';
+} else {
+  // מולטיפלייר - מגיע מחדר המתנה
+  initSession();
+}
 </script>
 </body>
 </html>
