@@ -277,10 +277,11 @@ const myName = userData.id;
 const myColor = userData.color;
 const myEmoji = userData.emoji;
 const isAIMode = params.get('mode') === 'ai';
+const isSoloMode = params.get('mode') === 'solo';
 
 const GAME_ID = 'breakout';
-const roomRef = ref(db, isAIMode ? `rooms_v3/${GAME_ID}_ai` : `rooms_v3/${GAME_ID}`);
-let gameStateRef = isAIMode ? ref(db, `game/${GAME_ID}_ai/${myName}`) : null;
+const roomRef = ref(db, (isAIMode || isSoloMode) ? `rooms_v3/${GAME_ID}_ai` : `rooms_v3/${GAME_ID}`);
+let gameStateRef = (isAIMode || isSoloMode) ? ref(db, `game/${GAME_ID}_ai/${myName}`) : null;
 let currentGameId = null;
 
 // ========== משתנים ==========
@@ -293,6 +294,7 @@ let lastPlayerCount = 0;
 // Match state (best of 3)
 let p1Wins = 0, p2Wins = 0, roundNum = 0;
 const WINS_NEEDED = 2;
+let soloLives = 3;
 
 // ========== Canvas ==========
 const canvas = document.getElementById('gameCanvas');
@@ -314,7 +316,7 @@ window.addEventListener('resize', resizeCanvas);
 function S(v) { return v * (canvas.width / 420); }
 
 // ========== קבועים ==========
-const BRICK_ROWS = 3, BRICK_COLS = 7, BRICK_H = 16, BRICK_GAP = 3, BRICK_PAD_X = 20;
+const BRICK_ROWS = 5, BRICK_COLS = 7, BRICK_H = 13, BRICK_GAP = 2, BRICK_PAD_X = 20;
 const PAD_W = 80, PAD_H = 14, BALL_R = 7, BALL_SPEED = 4;
 const FIELD_H = 700;
 const P1_PAD_Y = FIELD_H - 30 - BRICK_ROWS * (BRICK_H + BRICK_GAP) - 20;
@@ -327,13 +329,19 @@ const SPEED_UP_INTERVAL = 3000;
 const SPEED_UP_FACTOR = 1.08;
 
 // אנימציית לבנים מתות
-let dyingBricks = [];
+let dyingBricks = []; particles = [];
+
+// חלקיקים
+let particles = []; // { x, y, dx, dy, color, life, maxLife, size }
+
+// אנימציית פגיעת כדור בפד
+let padHits = { p1: 0, p2: 0 }; // timestamp of last hit
 
 // אפקטים זמניים
 let effects = {
-  p1: { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0 },
-  p2: { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0 },
-  shared: { fog: 0, ghost: 0 },
+  p1: { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0, fog: 0 },
+  p2: { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0, fog: 0 },
+  shared: { ghost: 0 },
   shieldHitAnim: { p1: 0, p2: 0 },
   // animation start timestamps
   animStart: {
@@ -343,7 +351,7 @@ let effects = {
     p1Shrunk: 0, p2Shrunk: 0,
     p1Reversed: 0, p2Reversed: 0,
     p1Frozen: 0, p2Frozen: 0,
-    ghost: 0, meteor: 0, fog: 0,
+    ghost: 0, meteor: 0, p1Fog: 0, p2Fog: 0,
   }
 };
 
@@ -438,6 +446,31 @@ function createInitialState() {
   };
 }
 
+function createSoloState() {
+  const topBricks = [];
+  const brickW = (420 - 2 * BRICK_PAD_X - (BRICK_COLS - 1) * BRICK_GAP) / BRICK_COLS;
+  for (let r = 0; r < BRICK_ROWS; r++) {
+    for (let c = 0; c < BRICK_COLS; c++) {
+      const x = BRICK_PAD_X + c * (brickW + BRICK_GAP);
+      topBricks.push({ x, y: 30 + r * (BRICK_H + BRICK_GAP), w: brickW, h: BRICK_H, alive: true, hp: 1, row: r });
+    }
+  }
+  return {
+    ball: { x: 210, y: FIELD_H * 0.6, dx: BALL_SPEED * 0.9, dy: -BALL_SPEED * 0.9 },
+    p1PadX: 210 - PAD_W / 2, p2PadX: 0,
+    topBricks, bottomBricks: [],
+    p1Score: 0, p2Score: 0,
+    p1PadW: PAD_W, p2PadW: 0,
+    powerups: [], balls: [],
+    gameOver: false, winner: null,
+    p1Wins: 0, p2Wins: 0, roundNum: 0,
+    rematchP1: false, rematchP2: false,
+    p1ShieldUsed: 0, p2ShieldUsed: 0,
+    soloLives: 3,
+    started: true, timestamp: Date.now()
+  };
+}
+
 // ========== פאוור-אפים ==========
 const POWERUP_TYPES = [
   // 🎯 אישי (הילה בצבע שחקן)
@@ -488,6 +521,22 @@ function showToast(text, color) {
   document.body.appendChild(t); setTimeout(() => t.remove(), 1500);
 }
 
+function spawnParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1 + Math.random() * 3;
+    particles.push({
+      x, y,
+      dx: Math.cos(angle) * speed,
+      dy: Math.sin(angle) * speed,
+      color,
+      life: 0,
+      maxLife: 300 + Math.random() * 300,
+      size: 1.5 + Math.random() * 2.5,
+    });
+  }
+}
+
 // פיצוץ סביב לבנה - שובר שכנות
 function splashBreak(brick, bricksArray, scorerKey, colorForDying) {
   const cx = brick.x + brick.w / 2;
@@ -502,6 +551,7 @@ function splashBreak(brick, bricksArray, scorerKey, colorForDying) {
         nb.alive = false;
         if (scorerKey === 'p1') gameState.p1Score += 10; else gameState.p2Score += 10;
         dyingBricks.push({ x: nb.x, y: nb.y, w: nb.w, h: nb.h, color: colorForDying, startTime: Date.now(), duration: 400 });
+        spawnParticles(nb.x + nb.w / 2, nb.y + nb.h / 2, colorForDying, 6);
       }
     }
   }
@@ -554,6 +604,7 @@ function applyPowerup(type, catcher) {
         pick.alive = false; pick.hp = 0;
         if (catcher === 'p1') gameState.p1Score += 10; else gameState.p2Score += 10;
         dyingBricks.push({ x: pick.x, y: pick.y, w: pick.w, h: pick.h, color: enemyColor, startTime: Date.now(), duration: 400 });
+        spawnParticles(pick.x + pick.w / 2, pick.y + pick.h / 2, enemyColor, 10);
       }
       break;
     }
@@ -574,8 +625,8 @@ function applyPowerup(type, catcher) {
       break;
 
     case 'fog':
-      effects.shared.fog = now + 3000;
-      effects.animStart.fog = now;
+      effects[opponent].fog = now + 3000;
+      effects.animStart[opponent + 'Fog'] = now;
       break;
 
     case 'ghost':
@@ -666,6 +717,7 @@ function padBounce(ball, padX, padW, goUp) {
 }
 function aiUpdate(dt) {
   if (!gameState) return;
+  if (effects.p2.frozen > Date.now()) return; // הקפאה - AI לא זז
   const ball = gameState.ball;
   const padW = gameState.p2PadW;
   const padX = gameState.p2PadX;
@@ -695,9 +747,9 @@ function aiUpdate(dt) {
   // מהירות מעקב - יותר אגרסיבי כשכדור בא, רגוע כשהולך
   let ease;
   if (chasingPowerup) {
-    ease = 0.1;
+    ease = 0.07;
   } else if (ball.dy < 0) {
-    ease = 0.08; // כדור בא אלי
+    ease = 0.055; // כדור בא אלי
   } else {
     ease = 0.03; // כדור הולך, חזור לאמצע
     targetX = ball.x * 0.6 + 210 * 0.4; // מעקב חלקי + חזרה למרכז
@@ -719,11 +771,13 @@ function updatePhysics(dt) {
   if (ball.dy > 0 && ball.y + BALL_R >= P1_PAD_Y && ball.y + BALL_R <= P1_PAD_Y + PAD_H + 6) {
     if (ball.x >= gameState.p1PadX - 6 && ball.x <= gameState.p1PadX + gameState.p1PadW + 6) {
       ball.y = P1_PAD_Y - BALL_R; padBounce(ball, gameState.p1PadX, gameState.p1PadW, true);
+      padHits.p1 = Date.now();
     }
   }
-  if (ball.dy < 0 && ball.y - BALL_R <= P2_PAD_Y + PAD_H && ball.y - BALL_R >= P2_PAD_Y - 6) {
+  if (!isSoloMode && ball.dy < 0 && ball.y - BALL_R <= P2_PAD_Y + PAD_H && ball.y - BALL_R >= P2_PAD_Y - 6) {
     if (ball.x >= gameState.p2PadX - 6 && ball.x <= gameState.p2PadX + gameState.p2PadW + 6) {
       ball.y = P2_PAD_Y + PAD_H + BALL_R; padBounce(ball, gameState.p2PadX, gameState.p2PadW, false);
+      padHits.p2 = Date.now();
     }
   }
 
@@ -762,6 +816,7 @@ function updatePhysics(dt) {
         brick.alive = false;
         gameState.p1Score += 10;
         dyingBricks.push({ x: brick.x, y: brick.y, w: brick.w, h: brick.h, color: p1Color, startTime: Date.now(), duration: 350 });
+        spawnParticles(brick.x + brick.w / 2, brick.y + brick.h / 2, p1Color, 8);
         maybeSpawnPowerup(brick.x + brick.w / 2, brick.y + brick.h, false);
         if (meteorActive) splashBreak(brick, gameState.topBricks, 'p1', p1Color);
       }
@@ -777,6 +832,7 @@ function updatePhysics(dt) {
         brick.alive = false;
         gameState.p2Score += 10;
         dyingBricks.push({ x: brick.x, y: brick.y, w: brick.w, h: brick.h, color: p2Color, startTime: Date.now(), duration: 350 });
+        spawnParticles(brick.x + brick.w / 2, brick.y + brick.h / 2, p2Color, 8);
         maybeSpawnPowerup(brick.x + brick.w / 2, brick.y - 10, true);
         if (meteorActive) splashBreak(brick, gameState.bottomBricks, 'p2', p2Color);
       }
@@ -815,25 +871,52 @@ function updatePhysics(dt) {
   const now = Date.now();
   if (now - lastSpeedUpTime >= SPEED_UP_INTERVAL) {
     lastSpeedUpTime = now;
-    gameState.ball.dx *= SPEED_UP_FACTOR;
-    gameState.ball.dy *= SPEED_UP_FACTOR;
-    for (const eb of gameState.balls) {
-      eb.dx *= SPEED_UP_FACTOR;
-      eb.dy *= SPEED_UP_FACTOR;
+    const curSpd = Math.sqrt(gameState.ball.dx ** 2 + gameState.ball.dy ** 2);
+    const MAX_SPEED = 7;
+    if (curSpd < MAX_SPEED) {
+      const factor = Math.min(SPEED_UP_FACTOR, MAX_SPEED / curSpd);
+      gameState.ball.dx *= factor;
+      gameState.ball.dy *= factor;
+      for (const eb of gameState.balls) {
+        eb.dx *= factor;
+        eb.dy *= factor;
+      }
     }
   }
 
-  if (ball.y - BALL_R < -10) endRound('p1');
-  else if (ball.y + BALL_R > FIELD_H + 10) endRound('p2');
-  if (gameState && !gameState.gameOver && gameState.topBricks.every(b => !b.alive)) endRound('p1');
-  if (gameState && !gameState.gameOver && gameState.bottomBricks.every(b => !b.alive)) endRound('p2');
+  if (isSoloMode) {
+    // סולו: כדור חוזר מלמעלה, נופל למטה = חיים
+    if (ball.y - BALL_R < 0) { ball.y = BALL_R; ball.dy = Math.abs(ball.dy); }
+    if (ball.y + BALL_R > FIELD_H + 10) {
+      gameState.soloLives = (gameState.soloLives || 3) - 1;
+      soloLives = gameState.soloLives;
+      document.getElementById('wins-p2').textContent = '❤️'.repeat(Math.max(0, soloLives));
+      if (soloLives <= 0) {
+        endRound('p2'); // הפסד
+      } else {
+        // אתחול כדור מחדש
+        ball.x = 210; ball.y = FIELD_H * 0.6;
+        ball.dx = BALL_SPEED * 0.9 * (Math.random() > 0.5 ? 1 : -1);
+        ball.dy = -BALL_SPEED * 0.9;
+        gameState.balls = [];
+        gameState.paused = true;
+        showCountdown(() => { if (gameState) gameState.paused = false; lastSpeedUpTime = Date.now(); });
+      }
+    }
+    if (gameState && !gameState.gameOver && gameState.topBricks.every(b => !b.alive)) endRound('p1'); // ניצחון
+  } else {
+    if (ball.y - BALL_R < -10) endRound('p1');
+    else if (ball.y + BALL_R > FIELD_H + 10) endRound('p2');
+    if (gameState && !gameState.gameOver && gameState.topBricks.every(b => !b.alive)) endRound('p1');
+    if (gameState && !gameState.gameOver && gameState.bottomBricks.every(b => !b.alive)) endRound('p2');
+  }
 }
 
 // ========== לולאה ==========
 function gameLoop(time) {
   if (!gameRunning) return;
   const dt = Math.min((time - lastTime) / 16.67, 3); lastTime = time;
-  if (!gameState || gameState.gameOver) { drawGame(); return; }
+  if (!gameState || gameState.gameOver) { drawGame(); requestAnimationFrame(gameLoop); return; }
 
   if (isP1) gameState.p1PadX += (myPadTarget - gameState.p1PadX) * 0.3 * dt;
   else gameState.p2PadX += (myPadTarget - gameState.p2PadX) * 0.3 * dt;
@@ -930,6 +1013,29 @@ function drawGame() {
     ctx.restore();
   }
 
+  // חלקיקים
+  const pNow = Date.now();
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.life += 16; // ~60fps
+    if (p.life >= p.maxLife) { particles.splice(i, 1); continue; }
+    p.x += p.dx; p.y += p.dy;
+    p.dy += 0.05; // gravity
+    p.dx *= 0.98; // friction
+    const progress = p.life / p.maxLife;
+    const alpha = 1 - progress;
+    const size = S(p.size * (1 - progress * 0.5));
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = S(3);
+    ctx.beginPath();
+    ctx.arc(S(p.x), S(p.y), size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+  ctx.globalAlpha = 1;
+
   drawPadWithEffects(gameState.p2PadX, P2_PAD_Y, gameState.p2PadW, p2Color, 'p2');
   drawPadWithEffects(gameState.p1PadX, P1_PAD_Y, gameState.p1PadW, p1Color, 'p1');
   drawBall(gameState.ball);
@@ -958,7 +1064,10 @@ function drawGame() {
     ctx.font = `${S(24)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(255,255,255,0.8)';
+    ctx.shadowBlur = S(6);
     ctx.fillText(pu.emoji || '⭐', S(pu.x), S(pu.y));
+    ctx.shadowBlur = 0;
     // +1 ליד כדור נוסף
     if (pu.type === 'extra_ball') {
       ctx.font = `bold ${S(12)}px Heebo, sans-serif`;
@@ -969,47 +1078,36 @@ function drawGame() {
 
   const nowDraw = Date.now();
 
-  // ערפל משותף - מסתיר רק את הפדים
-  if (effects.shared.fog > nowDraw) {
-    const fogAge = nowDraw - effects.animStart.fog;
+  // ערפל - מסתיר את הפד של מי שחטף (אישי)
+  const myFogKey = isP1 ? 'p1' : 'p2';
+  if (effects[myFogKey].fog > nowDraw) {
+    const fogAnimKey = myFogKey + 'Fog';
+    const fogAge = nowDraw - (effects.animStart[fogAnimKey] || 0);
     const fadeIn = Math.min(fogAge / 300, 1);
-    const remaining = effects.shared.fog - nowDraw;
+    const remaining = effects[myFogKey].fog - nowDraw;
     const fadeOut = remaining < 300 ? remaining / 300 : 1;
     const fogStr = fadeIn * fadeOut;
     const t = nowDraw / 1500;
-    const fogH = S(PAD_H + 30); // גובה הערפל סביב הפד
+    const fogH = S(PAD_H + 35);
 
     ctx.save();
+    // הפד שלי (למטה אחרי flip) - מסתיר אותו
+    const myCy = S(P1_PAD_Y + PAD_H / 2); // תמיד למטה כי flip כבר קרה
+    const fogGrad = ctx.createRadialGradient(canvas.width / 2, myCy, S(15), canvas.width / 2, myCy, canvas.width * 0.6);
+    fogGrad.addColorStop(0, `rgba(20, 25, 45, ${0.95 * fogStr})`);
+    fogGrad.addColorStop(0.5, `rgba(20, 25, 45, ${0.9 * fogStr})`);
+    fogGrad.addColorStop(1, 'rgba(20, 25, 45, 0)');
+    ctx.fillStyle = fogGrad;
+    ctx.fillRect(0, myCy - fogH / 2, canvas.width, fogH);
 
-    // ערפל על פד P1 (למטה)
-    const p1cy = S(P1_PAD_Y + PAD_H / 2);
-    const fogGrad1 = ctx.createRadialGradient(canvas.width / 2, p1cy, S(20), canvas.width / 2, p1cy, canvas.width * 0.6);
-    fogGrad1.addColorStop(0, `rgba(20, 25, 45, ${0.94 * fogStr})`);
-    fogGrad1.addColorStop(0.6, `rgba(20, 25, 45, ${0.88 * fogStr})`);
-    fogGrad1.addColorStop(1, 'rgba(20, 25, 45, 0)');
-    ctx.fillStyle = fogGrad1;
-    ctx.fillRect(0, p1cy - fogH / 2, canvas.width, fogH);
-
-    // ערפל על פד P2 (למעלה)
-    const p2cy = S(P2_PAD_Y + PAD_H / 2);
-    const fogGrad2 = ctx.createRadialGradient(canvas.width / 2, p2cy, S(20), canvas.width / 2, p2cy, canvas.width * 0.6);
-    fogGrad2.addColorStop(0, `rgba(20, 25, 45, ${0.94 * fogStr})`);
-    fogGrad2.addColorStop(0.6, `rgba(20, 25, 45, ${0.88 * fogStr})`);
-    fogGrad2.addColorStop(1, 'rgba(20, 25, 45, 0)');
-    ctx.fillStyle = fogGrad2;
-    ctx.fillRect(0, p2cy - fogH / 2, canvas.width, fogH);
-
-    // עננים זזים קטנים על הפדים
+    // עננים זזים
     ctx.globalAlpha = fogStr * 0.35;
     for (let i = 0; i < 4; i++) {
       const cx = (Math.sin(t * 0.25 + i * 1.8) * 0.4 + 0.5) * canvas.width;
       const cr = S(18 + i * 5);
-      const cg1 = ctx.createRadialGradient(cx, p1cy, 0, cx, p1cy, cr);
-      cg1.addColorStop(0, 'rgba(70, 90, 130, 0.5)'); cg1.addColorStop(1, 'rgba(70, 90, 130, 0)');
-      ctx.fillStyle = cg1; ctx.beginPath(); ctx.arc(cx, p1cy, cr, 0, Math.PI * 2); ctx.fill();
-      const cg2 = ctx.createRadialGradient(cx, p2cy, 0, cx, p2cy, cr);
-      cg2.addColorStop(0, 'rgba(70, 90, 130, 0.5)'); cg2.addColorStop(1, 'rgba(70, 90, 130, 0)');
-      ctx.fillStyle = cg2; ctx.beginPath(); ctx.arc(cx, p2cy, cr, 0, Math.PI * 2); ctx.fill();
+      const cg = ctx.createRadialGradient(cx, myCy, 0, cx, myCy, cr);
+      cg.addColorStop(0, 'rgba(70, 90, 130, 0.5)'); cg.addColorStop(1, 'rgba(70, 90, 130, 0)');
+      ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx, myCy, cr, 0, Math.PI * 2); ctx.fill();
     }
     ctx.globalAlpha = 1;
     ctx.restore();
@@ -1213,6 +1311,32 @@ function drawPadWithEffects(px, py, pw, color, playerKey) {
     ctx.globalAlpha = 1;
   }
 
+  // אנימציית פגיעת כדור - גל אור מתפשט
+  const hitAge = now - (padHits[playerKey] || 0);
+  if (hitAge < 350) {
+    const hitProgress = hitAge / 350;
+    const waveR = S(10 + hitProgress * 40);
+    const waveAlpha = (1 - hitProgress) * 0.5;
+    ctx.globalAlpha = waveAlpha;
+    ctx.strokeStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = S(8);
+    ctx.lineWidth = S(2 * (1 - hitProgress));
+    ctx.beginPath();
+    ctx.arc(drawX + drawW / 2, y + h / 2, waveR, 0, Math.PI * 2);
+    ctx.stroke();
+    // גל שני קטן יותר
+    if (hitProgress > 0.1) {
+      const wave2R = S(5 + (hitProgress - 0.1) * 30);
+      ctx.globalAlpha = waveAlpha * 0.5;
+      ctx.beginPath();
+      ctx.arc(drawX + drawW / 2, y + h / 2, wave2R, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+  }
+
   ctx.restore();
 }
 
@@ -1337,10 +1461,10 @@ function showRoundBanner(name, emoji, color) {
 
 function startNextRound() {
   if (!gameState) return;
-  dyingBricks = [];
-  effects.p1 = { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0 };
-  effects.p2 = { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0 };
-  effects.shared = { fog: 0, ghost: 0 };
+  dyingBricks = []; particles = [];
+  effects.p1 = { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0, fog: 0 };
+  effects.p2 = { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0, fog: 0 };
+  effects.shared = { ghost: 0 };
   effects.shieldHitAnim = { p1: 0, p2: 0 };
   const topBricks = [], bottomBricks = [];
   const brickW = (420 - 2 * BRICK_PAD_X - (BRICK_COLS - 1) * BRICK_GAP) / BRICK_COLS;
@@ -1430,10 +1554,10 @@ function showMatchModal(winner) {
 
 function startNewMatch() {
   p1Wins = 0; p2Wins = 0; roundNum = 0;
-  dyingBricks = [];
-  effects.p1 = { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0 };
-  effects.p2 = { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0 };
-  effects.shared = { fog: 0, ghost: 0 };
+  dyingBricks = []; particles = [];
+  effects.p1 = { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0, fog: 0 };
+  effects.p2 = { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0, fog: 0 };
+  effects.shared = { ghost: 0 };
   effects.shieldHitAnim = { p1: 0, p2: 0 };
   gameState = createInitialState();
   if (gameStateRef) set(gameStateRef, gameState);
@@ -1466,9 +1590,11 @@ function updateHUD(p1Name, p1Col, p1Em, p2Name, p2Col, p2Em) {
 
 function startGamePlay() {
   document.getElementById('match-modal').style.display = 'none';
-  gameState = createInitialState();
-  gameState.paused = true; // כדור לא זז עד שהספירה נגמרת
-  if (gameStateRef) set(gameStateRef, gameState);
+  gameState = isSoloMode ? createSoloState() : createInitialState();
+  gameState.paused = true;
+  if (isP1 || isAIMode || isSoloMode) {
+    if (gameStateRef) set(gameStateRef, gameState);
+  }
   startGameStateListener();
   lastSpeedUpTime = Date.now();
   gameRunning = true; lastTime = performance.now();
@@ -1518,14 +1644,25 @@ function showCountdown(onDone) {
 // ========== initSession ==========
 async function initSession() {
   try {
-    const roomPath = isAIMode ? `rooms_v3/${GAME_ID}_ai/${myName}` : `rooms_v3/${GAME_ID}/${myName}`;
+    const roomPath = (isAIMode || isSoloMode) ? `rooms_v3/${GAME_ID}_ai/${myName}` : `rooms_v3/${GAME_ID}/${myName}`;
     const myJoinedAt = Date.now();
 
-    if (isAIMode) {
+    if (isAIMode || isSoloMode) {
       await set(ref(db, roomPath), { name: displayName, color: myColor, emoji: myEmoji, joinedAt: myJoinedAt, timestamp: myJoinedAt, active: true });
       startHeartbeat(roomPath, myJoinedAt);
       isP1 = true;
-      updateHUD(displayName, myColor, myEmoji, 'מחשב', '#FFB347', '🤖');
+      if (isSoloMode) {
+        document.querySelector('.vs-box').style.display = 'none';
+        updateHUD(displayName, myColor, myEmoji, '', '#EF4444', '');
+        document.getElementById('name-p2').textContent = '❤️ חיים';
+        document.getElementById('wins-p2').textContent = '❤️❤️❤️';
+        document.getElementById('wins-p2').style.color = '#EF4444';
+        document.getElementById('card-p2').style.borderColor = '#EF4444';
+        document.querySelector('#card-p1 .wins-label').textContent = '🧱';
+        document.querySelector('#card-p2 .wins-label').textContent = '';
+      } else {
+        updateHUD(displayName, myColor, myEmoji, 'מחשב', '#FFB347', '🤖');
+      }
       startGamePlay();
     } else {
       const existingSnap = await get(ref(db, roomPath));
