@@ -318,7 +318,7 @@ let currentGameId = null;
 
 // מסך בחירת מצב
 window.chooseMode = (mode) => {
-  console.log('chooseMode called:', mode);
+  document.title = 'בחירה: ' + mode;
   document.getElementById('mode-select').style.display = 'none';
   document.querySelector('.header').style.display = 'flex';
   document.getElementById('gameCanvas').style.display = 'block';
@@ -329,8 +329,12 @@ window.chooseMode = (mode) => {
   }
   roomRef = ref(db, `rooms_v3/${GAME_ID}_ai`);
   gameStateRef = ref(db, `game/${GAME_ID}_ai/${myName}`);
-  // עיכוב קצר כדי שהדפדפן ירנדר את ה-header וה-canvas לפני חישוב גדלים
-  setTimeout(() => { resizeCanvas(); initSession(); }, 100);
+  setTimeout(() => {
+    document.title = 'resize...';
+    resizeCanvas();
+    document.title = 'init...';
+    initSession();
+  }, 100);
 };
 
 // ========== משתנים ==========
@@ -1695,14 +1699,14 @@ function showCountdown(onDone) {
 // ========== initSession ==========
 async function initSession() {
   try {
-    console.log('initSession start - isAIMode:', isAIMode, 'isSoloMode:', isSoloMode, 'isMultiplayer:', isMultiplayer);
+    document.title = `init: AI=${isAIMode} Solo=${isSoloMode}`;
     const roomPath = (isAIMode || isSoloMode) ? `rooms_v3/${GAME_ID}_ai/${myName}` : `rooms_v3/${GAME_ID}/${myName}`;
     const myJoinedAt = Date.now();
 
     if (isAIMode || isSoloMode) {
-      console.log('Setting room:', roomPath);
+      document.title = 'firebase set...';
       await set(ref(db, roomPath), { name: displayName, color: myColor, emoji: myEmoji, joinedAt: myJoinedAt, timestamp: myJoinedAt, active: true });
-      console.log('Room set OK, starting heartbeat');
+      document.title = 'heartbeat...';
       startHeartbeat(roomPath, myJoinedAt);
       isP1 = true;
       if (isSoloMode) {
@@ -1717,7 +1721,9 @@ async function initSession() {
       } else {
         updateHUD(displayName, myColor, myEmoji, 'מחשב', '#FFB347', '🤖');
       }
+      document.title = 'startGamePlay...';
       startGamePlay();
+      document.title = 'RUNNING!';
     } else {
       const existingSnap = await get(ref(db, roomPath));
       const existingData = existingSnap.val();
@@ -1776,7 +1782,7 @@ async function initSession() {
       });
       startOpponentCheck();
     }
-  } catch (e) { console.error('initSession err:', e); }
+  } catch (e) { document.title = 'ERROR: ' + e.message; }
 }
 
 if (modeFromURL === 'ai') {
