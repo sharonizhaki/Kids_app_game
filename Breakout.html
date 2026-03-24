@@ -2,18 +2,1816 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>בדיקה</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0F1320">
+<title>שובר לבנים - משחקי אמה וריף</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Heebo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --emma: #FF5C7A; --rif: #4DB8FF; --gold: #F5C842; --green: #3DD68C;
+    --bg: #0F1320; --bg-mid: #1a2942;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: linear-gradient(135deg, var(--bg) 0%, var(--bg-mid) 100%);
+    font-family: 'Heebo', sans-serif;
+    overflow: hidden; touch-action: none;
+    height: 100dvh; width: 100vw;
+    display: flex; flex-direction: column; align-items: center;
+    position: relative; color: white;
+  }
+
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: -2; pointer-events: none;
+    background:
+      radial-gradient(ellipse at 20% 30%, rgba(255,92,122,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(77,184,255,0.1) 0%, transparent 50%);
+  }
+  .stars {
+    position: fixed; inset: 0; z-index: -1;
+    background-image: radial-gradient(white 1px, transparent 1px);
+    background-size: 60px 60px; opacity: 0.08; pointer-events: none;
+  }
+
+  /* ========== HEADER / SCORE BAR ========== */
+  .header {
+    display: flex; justify-content: space-around; align-items: stretch;
+    width: 100%; max-width: 400px; padding: 10px 12px 6px; gap: 8px;
+    flex-shrink: 0; z-index: 10;
+  }
+
+  .score-box {
+    flex: 1;
+    background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+    padding: 10px 8px 8px; border-radius: 18px; text-align: center;
+    border: 2px solid transparent; transition: all 0.3s ease;
+    backdrop-filter: blur(10px); position: relative; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+
+  .score-box::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .score-box .name {
+    font-weight: 900; font-size: 0.8rem; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; width: 100%;
+  }
+
+  .score-box .wins {
+    font-family: 'Fredoka One', cursive; font-size: 2rem; font-weight: 900; line-height: 1;
+  }
+
+  .score-box .wins-label {
+    font-size: 0.6rem; color: rgba(255,255,255,0.5); font-weight: 700;
+  }
+
+  .vs-box {
+    display: flex; align-items: center; justify-content: center;
+    min-width: 36px; font-family: 'Fredoka One', cursive;
+    font-size: 0.9rem; color: var(--gold); flex-shrink: 0;
+  }
+
+  /* ========== CANVAS ========== */
+  #gameCanvas {
+    display: block;
+    background: rgba(15, 19, 32, 0.6);
+    border-radius: 14px;
+    border: 1.5px solid rgba(255,255,255,0.08);
+    box-shadow: 0 0 30px rgba(77,184,255,0.1), 0 0 30px rgba(255,92,122,0.1);
+    flex-shrink: 1;
+  }
+
+  /* ========== ROUND BANNER ========== */
+  #round-banner {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    padding: 16px 28px; border-radius: 20px; font-weight: 900; font-size: 1.4rem;
+    z-index: 300; pointer-events: none; text-align: center;
+    border: 2.5px solid var(--gold);
+    background: linear-gradient(135deg, rgba(15,19,32,0.95) 0%, rgba(26,41,66,0.95) 100%);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 0 40px rgba(245,200,66,0.3);
+    animation: bannerIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: none;
+  }
+  @keyframes bannerIn {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  }
+
+  /* ========== MATCH END MODAL ========== */
+  #match-modal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.88); z-index: 500;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+
+  .match-box {
+    background: linear-gradient(135deg, #1a2942 0%, #0F1320 100%);
+    color: white; padding: 32px 24px; border-radius: 28px; text-align: center;
+    width: 100%; max-width: 320px; border: 2px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+  }
+
+  .match-box .match-icon { font-size: 3.5rem; margin-bottom: 8px; }
+  .match-box .match-title { font-family: 'Fredoka One', cursive; font-size: 1.6rem; margin-bottom: 4px; }
+  .match-box .match-sub { font-size: 0.95rem; color: #aaa; margin-bottom: 18px; }
+
+  .match-btns { display: flex; flex-direction: column; gap: 10px; }
+
+  .mbtn {
+    padding: 14px 20px; border: none; border-radius: 16px;
+    font-family: 'Heebo', sans-serif; font-size: 1rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; user-select: none;
+  }
+  .mbtn:active { transform: scale(0.95); }
+
+  .mbtn-primary {
+    background: linear-gradient(135deg, var(--emma), var(--rif));
+    color: white; box-shadow: 0 4px 15px rgba(255,92,122,0.3);
+  }
+  .mbtn-secondary {
+    background: rgba(255,255,255,0.08); color: white;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .mbtn-waiting {
+    background: rgba(245,200,66,0.15); color: var(--gold);
+    border: 1.5px solid rgba(245,200,66,0.3);
+    animation: waitPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes waitPulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(245,200,66,0); }
+    50% { box-shadow: 0 0 20px rgba(245,200,66,0.3); }
+  }
+
+  /* ========== ALERT MODAL ========== */
+  #alert-modal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85); z-index: 1000;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .alert-box {
+    background: linear-gradient(135deg, #1a2942 0%, #0F1320 100%);
+    color: white; padding: 36px 28px; border-radius: 28px; text-align: center;
+    width: 100%; max-width: 320px; border: 2px solid rgba(255,255,255,0.1);
+  }
+  .alert-box .alert-icon { font-size: 3rem; margin-bottom: 10px; }
+  .alert-box .alert-msg { font-size: 1.05rem; font-weight: 600; line-height: 1.6; }
+  .alert-box .btn-reset {
+    margin-top: 18px; padding: 12px 24px; border-radius: 14px; border: none;
+    background: white; color: #0F1320; font-weight: 900; font-size: 0.95rem;
+    cursor: pointer; font-family: 'Heebo', sans-serif;
+  }
+  .alert-box .btn-reset:active { transform: scale(0.96); }
+
+  /* ========== POWER-UP TOAST ========== */
+  .powerup-toast {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 1.05em;
+    color: white; z-index: 150; pointer-events: none;
+    animation: toastAnim 1.4s ease-out forwards;
+  }
+  @keyframes toastAnim {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    70% { opacity: 1; transform: translate(-50%, -70%) scale(1.1); }
+    100% { opacity: 0; transform: translate(-50%, -90%) scale(0.8); }
+  }
+
+  /* ========== HOME BUTTON ========== */
+  .btn-home {
+    position: absolute; top: 10px; right: 10px; z-index: 60;
+    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15);
+    color: white; width: 38px; height: 38px; border-radius: 50%;
+    font-size: 1.1em; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(6px); user-select: none;
+  }
+  .btn-home:active { transform: scale(0.9); }
+
+  /* Mode select */
+  .mode-btn {
+    width: 100%; max-width: 280px;
+    padding: 18px 16px; border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 20px; background: rgba(255,255,255,0.04);
+    color: white; cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; gap: 4px; transition: all 0.2s;
+    font-family: 'Heebo', sans-serif; backdrop-filter: blur(8px);
+  }
+  .mode-btn:active { transform: scale(0.96); }
+  .mode-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(245,200,66,0.4); box-shadow: 0 4px 20px rgba(245,200,66,0.15); }
+
+  /* ========== CONFETTI ========== */
+  .confetti-container { position: fixed; inset: 0; pointer-events: none; z-index: 1002; overflow: hidden; }
+  .confetti-piece {
+    position: absolute; width: 10px; height: 10px; top: -10px; border-radius: 2px;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+</style>
 </head>
-<body style="background:#111;color:white;font-family:sans-serif;padding:40px;text-align:center;">
-<h1 id="msg">טוען...</h1>
+<body>
+
+<div class="stars"></div>
+<button class="btn-home" onclick="goHome()">🏠</button>
+
+<!-- HEADER SCORE BAR -->
+<div class="header">
+  <div class="score-box" id="card-p1">
+    <div class="name" id="name-p1">שחקן 1</div>
+    <div class="wins" id="wins-p1">0</div>
+    <div class="wins-label">⭐</div>
+  </div>
+  <div class="vs-box">VS</div>
+  <div class="score-box" id="card-p2">
+    <div class="name" id="name-p2">שחקן 2</div>
+    <div class="wins" id="wins-p2">0</div>
+    <div class="wins-label">⭐</div>
+  </div>
+</div>
+
+<!-- CANVAS -->
+<canvas id="gameCanvas"></canvas>
+
+<!-- ROUND BANNER (win/loss per round) -->
+<div id="round-banner"></div>
+
+<!-- MATCH END MODAL -->
+<div id="match-modal">
+  <div class="match-box">
+    <div class="match-icon" id="mm-icon">🏆</div>
+    <div class="match-title" id="mm-title">🏆</div>
+    <div class="match-sub" id="mm-sub">2-1</div>
+    <div class="match-btns" id="mm-btns"></div>
+  </div>
+</div>
+
+<!-- MODE SELECT (shown when mode=ai from index) -->
+<div id="mode-select" style="display:none; position:fixed; inset:0; z-index:600; background:var(--bg); align-items:center; justify-content:center; flex-direction:column; gap:20px; padding:20px;">
+  <div style="font-size:3rem; margin-bottom:4px;">🧱</div>
+  <div style="font-family:'Fredoka One',cursive; font-size:1.6rem; background:linear-gradient(135deg,var(--emma),var(--rif)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">שובר לבנים</div>
+  <div style="color:#aaa; font-size:0.9rem; margin-bottom:10px;" id="mode-greeting"></div>
+  <button class="mode-btn" id="btn-vs-ai" onclick="chooseMode('ai')">
+    <span style="font-size:1.8rem;">🤖</span>
+    <span style="font-weight:900; font-size:1rem;">מול מחשב</span>
+    <span style="font-size:0.75rem; color:#aaa;">הטוב מ-3 סיבובים</span>
+  </button>
+  <button class="mode-btn" id="btn-solo" onclick="chooseMode('solo')">
+    <span style="font-size:1.8rem;">🎮</span>
+    <span style="font-weight:900; font-size:1rem;">משחק לבד</span>
+    <span style="font-size:0.75rem; color:#aaa;">שבור את כל הלבנים • 3 חיים</span>
+  </button>
+  <button style="background:none; border:none; color:#888; font-size:0.85rem; cursor:pointer; margin-top:8px; text-decoration:underline; font-family:Heebo,sans-serif;" onclick="goHome()">🏠 חזרה</button>
+</div>
+
+<!-- ALERT MODAL (opponent left / full) -->
+<div id="alert-modal">
+  <div class="alert-box">
+    <div class="alert-icon">⚠️</div>
+    <p class="alert-msg" id="modal-msg">השחקן השני עזב/ה את המשחק</p>
+    <button class="btn-reset" onclick="goHome()">חזרה לתפריט</button>
+  </div>
+</div>
+
 <script>
-var p = new URLSearchParams(location.search);
-var user = sessionStorage.getItem('myUser');
-document.getElementById('msg').textContent = 
-  'mode=' + p.get('mode') + 
-  ' | player=' + p.get('player') + 
-  ' | session=' + (user ? 'YES' : 'NO');
+// דיבוג - ירוץ תמיד גם אם ה-module נכשל
+document.title = 'SCRIPT OK - URL: ' + location.search;
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, update, remove, get }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
+  authDomain: "kidssapp-izhaki.firebaseapp.com",
+  databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kidssapp-izhaki",
+  storageBucket: "kidssapp-izhaki.firebasestorage.app",
+  messagingSenderId: "663906163746",
+  appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ========== זיהוי שחקן ==========
+const params = new URLSearchParams(location.search);
+const displayName = params.get('player') || "משתמש";
+const userDataStr = sessionStorage.getItem('myUser');
+const userData = userDataStr ? JSON.parse(userDataStr) : null;
+if (!userData) { window.location.href = 'index.html'; throw new Error('No user data'); }
+
+const myName = userData.id;
+const myColor = userData.color;
+const myEmoji = userData.emoji;
+const modeFromURL = params.get('mode'); // 'ai' from index means "show choice screen"
+let isAIMode = false;
+let isSoloMode = false;
+let isMultiplayer = !modeFromURL; // no mode = multiplayer from waiting room
+
+// דיבוג ויזואלי - יוסר אחרי תיקון
+document.title = `mode=${modeFromURL} user=${myName}`;
+
+const GAME_ID = 'breakout';
+let roomRef = isMultiplayer ? ref(db, `rooms_v3/${GAME_ID}`) : ref(db, `rooms_v3/${GAME_ID}_ai`);
+let gameStateRef = isMultiplayer ? null : ref(db, `game/${GAME_ID}_ai/${myName}`);
+let currentGameId = null;
+
+// מסך בחירת מצב
+window.chooseMode = (mode) => {
+  document.title = 'בחירה: ' + mode;
+  document.getElementById('mode-select').style.display = 'none';
+  document.querySelector('.header').style.display = 'flex';
+  document.getElementById('gameCanvas').style.display = 'block';
+  if (mode === 'ai') {
+    isAIMode = true; isSoloMode = false;
+  } else {
+    isAIMode = false; isSoloMode = true;
+  }
+  roomRef = ref(db, `rooms_v3/${GAME_ID}_ai`);
+  gameStateRef = ref(db, `game/${GAME_ID}_ai/${myName}`);
+  setTimeout(() => {
+    document.title = 'resize...';
+    resizeCanvas();
+    document.title = 'init...';
+    initSession();
+  }, 100);
+};
+
+// ========== משתנים ==========
+let isP1 = false;
+let p1Color = '#FF5C7A', p2Color = '#4DB8FF';
+let p1DisplayName = '', p2DisplayName = '';
+let p1Emoji = '', p2Emoji = '';
+let lastPlayerCount = 0;
+
+// Match state (best of 3)
+let p1Wins = 0, p2Wins = 0, roundNum = 0;
+const WINS_NEEDED = 2;
+let soloLives = 3;
+
+// ========== Canvas ==========
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const headerH = document.querySelector('.header').offsetHeight || 80;
+  const availH = window.innerHeight - headerH - 12;
+  const maxW = Math.min(window.innerWidth - 12, 420);
+  const maxH = Math.min(availH, 700);
+  const ratio = Math.min(maxW / 420, maxH / 700);
+  canvas.width = Math.floor(420 * ratio);
+  canvas.height = Math.floor(700 * ratio);
+}
+// Delay first resize to let header render (only if visible)
+setTimeout(() => { if (canvas.style.display !== 'none') resizeCanvas(); }, 50);
+window.addEventListener('resize', resizeCanvas);
+
+function S(v) { return v * (canvas.width / 420); }
+
+// ========== קבועים ==========
+const BRICK_ROWS = 5, BRICK_COLS = 7, BRICK_H = 13, BRICK_GAP = 2, BRICK_PAD_X = 20;
+const PAD_W = 80, PAD_H = 14, BALL_R = 7, BALL_SPEED = 4;
+const FIELD_H = 700;
+const P1_PAD_Y = FIELD_H - 30 - BRICK_ROWS * (BRICK_H + BRICK_GAP) - 20;
+const P2_PAD_Y = 30 + BRICK_ROWS * (BRICK_H + BRICK_GAP) + 6;
+
+let gameState = null, gameRunning = false, lastTime = 0;
+let myPadTarget = 210 - PAD_W / 2, powerupIdCounter = 0;
+let lastSpeedUpTime = 0;
+const SPEED_UP_INTERVAL = 3000;
+const SPEED_UP_FACTOR = 1.08;
+
+// אנימציית לבנים מתות
+let dyingBricks = []; particles = [];
+
+// חלקיקים
+let particles = []; // { x, y, dx, dy, color, life, maxLife, size }
+
+// אנימציית פגיעת כדור בפד
+let padHits = { p1: 0, p2: 0 }; // timestamp of last hit
+
+// אפקטים זמניים
+let effects = {
+  p1: { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0, fog: 0 },
+  p2: { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0, fog: 0 },
+  shared: { ghost: 0 },
+  shieldHitAnim: { p1: 0, p2: 0 },
+  // animation start timestamps
+  animStart: {
+    p1Wider: 0, p2Wider: 0,
+    p1Magnet: 0, p2Magnet: 0,
+    p1Shield: 0, p2Shield: 0,
+    p1Shrunk: 0, p2Shrunk: 0,
+    p1Reversed: 0, p2Reversed: 0,
+    p1Frozen: 0, p2Frozen: 0,
+    ghost: 0, meteor: 0, p1Fog: 0, p2Fog: 0,
+  }
+};
+
+// ========== Heartbeat ==========
+let heartbeatInterval = null, opponentCheckInterval = null;
+let roomListenerUnsubscribe = null, gameStateUnsubscribe = null;
+
+function startHeartbeat(roomPath, joinedAt) {
+  heartbeatInterval = setInterval(() => {
+    set(ref(db, roomPath), { name: displayName, color: myColor, emoji: myEmoji, joinedAt, timestamp: Date.now(), active: true });
+  }, 1000);
+}
+function stopHeartbeat() { if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; } }
+
+function startOpponentCheck() {
+  if (isAIMode || opponentCheckInterval) return;
+  opponentCheckInterval = setInterval(async () => {
+    try {
+      const snap = await get(roomRef);
+      const players = snap.val() || {};
+      const names = Object.keys(players);
+      if (names.length === 1 && names[0] === myName && currentGameId) {
+        let ln = '', le = '';
+        if (window.lastPlayersSnapshot) { for (const [id, p] of Object.entries(window.lastPlayersSnapshot)) { if (id !== myName) { ln = p.name; le = p.emoji; break; } } }
+        handleOpponentLeft(ln, le); return;
+      }
+      if (names.length === 2 && currentGameId) {
+        const oid = names.find(n => n !== myName);
+        if (oid && players[oid] && Date.now() - (players[oid].timestamp || 0) > 5000) {
+          await remove(ref(db, `rooms_v3/${GAME_ID}/${oid}`));
+          handleOpponentLeft(players[oid].name || '', players[oid].emoji || '');
+        }
+      }
+    } catch (e) { console.error('opponent check err:', e); }
+  }, 3000);
+}
+function stopOpponentCheck() { if (opponentCheckInterval) { clearInterval(opponentCheckInterval); opponentCheckInterval = null; } }
+
+function handleOpponentLeft(leftName, leftEmoji) {
+  gameRunning = false; stopHeartbeat(); stopOpponentCheck();
+  if (roomListenerUnsubscribe) { roomListenerUnsubscribe(); roomListenerUnsubscribe = null; }
+  if (gameStateUnsubscribe) { gameStateUnsubscribe(); gameStateUnsubscribe = null; }
+  remove(ref(db, `rooms_v3/${GAME_ID}/${myName}`));
+  if (gameStateRef && currentGameId) set(gameStateRef, null);
+  const msg = (leftName && leftEmoji) ? `${leftEmoji} ${leftName} עזב/ה את המשחק` : 'השחקן השני עזב/ה את המשחק';
+  document.getElementById('alert-modal').style.display = 'flex';
+  document.getElementById('modal-msg').innerHTML = msg;
+}
+
+// ========== ניווט ==========
+window.goHome = async () => {
+  try {
+    stopHeartbeat(); stopOpponentCheck(); gameRunning = false;
+    if (!isAIMode && !isSoloMode) {
+      await remove(ref(db, `rooms_v3/${GAME_ID}/${myName}`));
+      if (currentGameId) await remove(ref(db, `game/${GAME_ID}/${currentGameId}`));
+      remove(ref(db, `game/${GAME_ID}/pending`));
+    } else if (myName) { await remove(ref(db, `rooms_v3/${GAME_ID}_ai/${myName}`)); }
+  } catch (e) { console.error('goHome err:', e); }
+  setTimeout(() => { window.location.href = 'index.html'; }, 200);
+};
+
+window.addEventListener('beforeunload', () => {
+  stopHeartbeat(); stopOpponentCheck();
+  if (!isAIMode && !isSoloMode) remove(ref(db, `rooms_v3/${GAME_ID}/${myName}`));
+  else remove(ref(db, `rooms_v3/${GAME_ID}_ai/${myName}`));
+});
+
+// ========== יצירת מצב ==========
+function createInitialState() {
+  const topBricks = [], bottomBricks = [];
+  const brickW = (420 - 2 * BRICK_PAD_X - (BRICK_COLS - 1) * BRICK_GAP) / BRICK_COLS;
+  for (let r = 0; r < BRICK_ROWS; r++) {
+    for (let c = 0; c < BRICK_COLS; c++) {
+      const x = BRICK_PAD_X + c * (brickW + BRICK_GAP);
+      topBricks.push({ x, y: 30 + r * (BRICK_H + BRICK_GAP), w: brickW, h: BRICK_H, alive: true, hp: 1, row: r });
+      bottomBricks.push({ x, y: FIELD_H - 30 - (BRICK_ROWS - r) * (BRICK_H + BRICK_GAP), w: brickW, h: BRICK_H, alive: true, hp: 1, row: r });
+    }
+  }
+  return {
+    ball: { x: 210, y: FIELD_H / 2, dx: BALL_SPEED * 1.05, dy: -BALL_SPEED * 1.05 },
+    p1PadX: 210 - PAD_W / 2, p2PadX: 210 - PAD_W / 2,
+    topBricks, bottomBricks,
+    p1Score: 0, p2Score: 0,
+    p1PadW: PAD_W, p2PadW: PAD_W,
+    powerups: [], balls: [],
+    gameOver: false, winner: null,
+    p1Wins: 0, p2Wins: 0, roundNum: 0,
+    rematchP1: false, rematchP2: false,
+    p1ShieldUsed: 0, p2ShieldUsed: 0,
+    started: true, timestamp: Date.now()
+  };
+}
+
+function createSoloState() {
+  const topBricks = [];
+  const brickW = (420 - 2 * BRICK_PAD_X - (BRICK_COLS - 1) * BRICK_GAP) / BRICK_COLS;
+  for (let r = 0; r < BRICK_ROWS; r++) {
+    for (let c = 0; c < BRICK_COLS; c++) {
+      const x = BRICK_PAD_X + c * (brickW + BRICK_GAP);
+      topBricks.push({ x, y: 30 + r * (BRICK_H + BRICK_GAP), w: brickW, h: BRICK_H, alive: true, hp: 1, row: r });
+    }
+  }
+  return {
+    ball: { x: 210, y: FIELD_H * 0.6, dx: BALL_SPEED * 0.9, dy: -BALL_SPEED * 0.9 },
+    p1PadX: 210 - PAD_W / 2, p2PadX: 0,
+    topBricks, bottomBricks: [],
+    p1Score: 0, p2Score: 0,
+    p1PadW: PAD_W, p2PadW: 0,
+    powerups: [], balls: [],
+    gameOver: false, winner: null,
+    p1Wins: 0, p2Wins: 0, roundNum: 0,
+    rematchP1: false, rematchP2: false,
+    p1ShieldUsed: 0, p2ShieldUsed: 0,
+    soloLives: 3,
+    started: true, timestamp: Date.now()
+  };
+}
+
+// ========== פאוור-אפים ==========
+const POWERUP_TYPES = [
+  // 🎯 אישי (הילה בצבע שחקן)
+  { type: 'wider',      emoji: '↔️', label: '↔️ פד רחב',     category: 'personal', weight: 15 },
+  { type: 'shield',     emoji: '🛡️', label: '🛡️ מגן',        category: 'personal', weight: 4 },
+  { type: 'magnet',     emoji: '🧲', label: '🧲 מגנט',       category: 'personal', weight: 10 },
+  { type: 'shrink',     emoji: '🤏', label: '🤏 פד קטן',     category: 'personal', weight: 12 },
+  { type: 'reverse',    emoji: '🔄', label: '🔄 היפוך',      category: 'personal', weight: 6 },
+  { type: 'bomb',       emoji: '💣', label: '💣 פיצוץ',      category: 'personal', weight: 4 },
+  { type: 'freeze',     emoji: '❄️', label: '❄️ הקפאה',      category: 'personal', weight: 8 },
+  // 🌐 משותף (בלי הילה)
+  { type: 'extra_ball', emoji: '⚾', label: '⚾ כדור נוסף',  category: 'shared',   weight: 12 },
+  { type: 'meteor',     emoji: '☄️', label: '☄️ כדור חזק',   category: 'shared',   weight: 3 },
+  { type: 'fog',        emoji: '🌫️', label: '🌫️ ערפל',       category: 'shared',   weight: 5 },
+  { type: 'ghost',      emoji: '👻', label: '👻 רפאים',      category: 'shared',   weight: 5 },
+];
+
+function weightedRandom(items) {
+  const total = items.reduce((s, i) => s + i.weight, 0);
+  let r = Math.random() * total;
+  for (const item of items) {
+    r -= item.weight;
+    if (r <= 0) return item;
+  }
+  return items[items.length - 1];
+}
+
+function maybeSpawnPowerup(x, y, goingUp) {
+  if (Math.random() < 0.35) {
+    const catcher = goingUp ? 'p2' : 'p1';
+    let available = POWERUP_TYPES.slice();
+    if (gameState[catcher + 'ShieldUsed'] >= 2) {
+      available = available.filter(p => p.type !== 'shield');
+    }
+    if (available.length === 0) return;
+    const pt = weightedRandom(available);
+    gameState.powerups.push({
+      x, y, dy: goingUp ? -2 : 2,
+      type: pt.type, id: ++powerupIdCounter,
+      emoji: pt.emoji, category: pt.category,
+      w: 28, h: 16,
+    });
+  }
+}
+
+function showToast(text, color) {
+  const t = document.createElement('div'); t.className = 'powerup-toast'; t.textContent = text; t.style.background = color || '#333';
+  document.body.appendChild(t); setTimeout(() => t.remove(), 1500);
+}
+
+function spawnParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1 + Math.random() * 3;
+    particles.push({
+      x, y,
+      dx: Math.cos(angle) * speed,
+      dy: Math.sin(angle) * speed,
+      color,
+      life: 0,
+      maxLife: 300 + Math.random() * 300,
+      size: 1.5 + Math.random() * 2.5,
+    });
+  }
+}
+
+// פיצוץ סביב לבנה - שובר שכנות
+function splashBreak(brick, bricksArray, scorerKey, colorForDying) {
+  const cx = brick.x + brick.w / 2;
+  const cy = brick.y + brick.h / 2;
+  const splashR = brick.w * 1.5;
+  for (const nb of bricksArray) {
+    if (!nb.alive || nb === brick) continue;
+    const nx = nb.x + nb.w / 2, ny = nb.y + nb.h / 2;
+    if (Math.sqrt((cx - nx) ** 2 + (cy - ny) ** 2) < splashR) {
+      nb.hp--;
+      if (nb.hp <= 0) {
+        nb.alive = false;
+        if (scorerKey === 'p1') gameState.p1Score += 10; else gameState.p2Score += 10;
+        dyingBricks.push({ x: nb.x, y: nb.y, w: nb.w, h: nb.h, color: colorForDying, startTime: Date.now(), duration: 400 });
+        spawnParticles(nb.x + nb.w / 2, nb.y + nb.h / 2, colorForDying, 6);
+      }
+    }
+  }
+}
+
+function applyPowerup(type, catcher) {
+  const info = POWERUP_TYPES.find(p => p.type === type);
+  const opponent = catcher === 'p1' ? 'p2' : 'p1';
+  const now = Date.now();
+
+  switch (type) {
+    case 'wider':
+      if (catcher === 'p1') { gameState.p1PadW = Math.min(PAD_W * 1.8, gameState.p1PadW + 25); effects.animStart.p1Wider = now; }
+      else { gameState.p2PadW = Math.min(PAD_W * 1.8, gameState.p2PadW + 25); effects.animStart.p2Wider = now; }
+      break;
+
+    case 'shield': {
+      const usedKey = catcher + 'ShieldUsed';
+      if (gameState[usedKey] >= 2) break; // מקסימום 2 בסיבוב
+      gameState[usedKey]++;
+      effects[catcher].shield = Infinity;
+      effects.animStart[catcher + 'Shield'] = now;
+      break;
+    }
+
+    case 'magnet':
+      effects[catcher].magnet = now + 3000;
+      effects.animStart[catcher + 'Magnet'] = now;
+      break;
+
+    case 'shrink':
+      effects.animStart[opponent + 'Shrunk'] = now;
+      if (opponent === 'p1') gameState.p1PadW = Math.max(35, gameState.p1PadW - 30);
+      else gameState.p2PadW = Math.max(35, gameState.p2PadW - 30);
+      break;
+
+    case 'reverse':
+      effects[opponent].reversed = now + 3000;
+      effects.animStart[opponent + 'Reversed'] = now;
+      break;
+
+    case 'bomb': {
+      const enemyBricks = catcher === 'p1' ? gameState.topBricks : gameState.bottomBricks;
+      const enemyColor = catcher === 'p1' ? p1Color : p2Color;
+      const alive = enemyBricks.filter(b => b.alive);
+      const count = Math.min(3, alive.length);
+      for (let i = 0; i < count; i++) {
+        const idx = Math.floor(Math.random() * alive.length);
+        const pick = alive.splice(idx, 1)[0];
+        pick.alive = false; pick.hp = 0;
+        if (catcher === 'p1') gameState.p1Score += 10; else gameState.p2Score += 10;
+        dyingBricks.push({ x: pick.x, y: pick.y, w: pick.w, h: pick.h, color: enemyColor, startTime: Date.now(), duration: 400 });
+        spawnParticles(pick.x + pick.w / 2, pick.y + pick.h / 2, enemyColor, 10);
+      }
+      break;
+    }
+
+    case 'freeze':
+      effects[opponent].frozen = now + 3000;
+      effects.animStart[opponent + 'Frozen'] = now;
+      break;
+
+    case 'extra_ball':
+      gameState.balls.push({ x: gameState.ball.x, y: gameState.ball.y, dx: -gameState.ball.dx, dy: gameState.ball.dy });
+      break;
+
+    case 'meteor':
+      effects.p1.meteor = now + 3000;
+      effects.p2.meteor = now + 3000;
+      effects.animStart.meteor = now;
+      break;
+
+    case 'fog':
+      effects[opponent].fog = now + 3000;
+      effects.animStart[opponent + 'Fog'] = now;
+      break;
+
+    case 'ghost':
+      effects.shared.ghost = now + 3000;
+      effects.animStart.ghost = now;
+      break;
+  }
+}
+
+// ========== קלט ==========
+let lastTouchX = null;
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); lastTouchX = e.touches[0].clientX; }, { passive: false });
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault(); if (!gameState || lastTouchX === null) return;
+  const myKey = isP1 ? 'p1' : 'p2';
+  const now = Date.now();
+  // הקפאה - פד לא זז
+  if (effects[myKey].frozen > now) { lastTouchX = e.touches[0].clientX; return; }
+  const cur = e.touches[0].clientX;
+  let dx = (cur - lastTouchX) / (canvas.width / 420);
+  lastTouchX = cur;
+  if (effects[myKey].reversed > now) dx = -dx;
+  const padW = isP1 ? gameState.p1PadW : gameState.p2PadW;
+  myPadTarget = Math.max(0, Math.min(420 - padW, myPadTarget + dx));
+}, { passive: false });
+canvas.addEventListener('touchend', () => { lastTouchX = null; });
+canvas.addEventListener('touchcancel', () => { lastTouchX = null; });
+canvas.addEventListener('mousemove', (e) => {
+  if (!gameState) return;
+  const myKey = isP1 ? 'p1' : 'p2';
+  if (effects[myKey].frozen > Date.now()) return;
+  const rect = canvas.getBoundingClientRect();
+  let gx = (e.clientX - rect.left) / (canvas.width / 420);
+  if (effects[myKey].reversed > Date.now()) gx = 420 - gx;
+  const padW = isP1 ? gameState.p1PadW : gameState.p2PadW;
+  myPadTarget = Math.max(0, Math.min(420 - padW, gx - padW / 2));
+});
+
+// ========== Firebase ==========
+function syncFullState() {
+  if (isAIMode || isSoloMode || !isP1 || !gameState || !gameStateRef) return;
+  set(gameStateRef, gameState);
+}
+function syncMyPad() {
+  if (isAIMode || isSoloMode || !gameStateRef) return;
+  update(gameStateRef, { [isP1 ? 'p1PadX' : 'p2PadX']: myPadTarget }).catch(() => {});
+}
+
+function startGameStateListener() {
+  if (gameStateUnsubscribe) { gameStateUnsubscribe(); gameStateUnsubscribe = null; }
+  if (!gameStateRef) return;
+  gameStateUnsubscribe = onValue(gameStateRef, (snap) => {
+    const val = snap.val();
+    if (!val || !val.started) return;
+    if (!isP1) {
+      const myPad = val.p2PadX;
+      gameState = val;
+      gameState.p2PadX = myPad;
+    } else {
+      if (val.p2PadX !== undefined && gameState) gameState.p2PadX = val.p2PadX;
+      // Pick up rematch signals
+      if (val.rematchP2 !== undefined && gameState) gameState.rematchP2 = val.rematchP2;
+    }
+    // Sync match wins
+    if (val.p1Wins !== undefined) { p1Wins = val.p1Wins; document.getElementById('wins-p1').textContent = p1Wins; }
+    if (val.p2Wins !== undefined) { p2Wins = val.p2Wins; document.getElementById('wins-p2').textContent = p2Wins; }
+    if (val.rematchP1 && val.rematchP2 && val.gameOver) {
+      // Both agreed to rematch
+      document.getElementById('match-modal').style.display = 'none';
+      if (isP1) startNewMatch();
+    }
+    if (val.gameOver && val.winner && !gameRunning) {
+      handleRoundEnd(val.winner, false);
+    }
+  });
+}
+
+// ========== פיזיקה ==========
+function ballHitsBrick(b, brick) {
+  return b.x + BALL_R > brick.x && b.x - BALL_R < brick.x + brick.w && b.y + BALL_R > brick.y && b.y - BALL_R < brick.y + brick.h;
+}
+function padBounce(ball, padX, padW, goUp) {
+  const angle = ((ball.x - padX) / padW - 0.5) * Math.PI * 0.7;
+  const spd = Math.max(BALL_SPEED, Math.sqrt(ball.dx ** 2 + ball.dy ** 2));
+  ball.dx = spd * Math.sin(angle);
+  ball.dy = goUp ? -spd * Math.cos(angle) : spd * Math.cos(angle);
+  if (Math.abs(ball.dy) < 2) ball.dy = goUp ? -2 : 2;
+}
+function aiUpdate(dt) {
+  if (!gameState) return;
+  if (effects.p2.frozen > Date.now()) return; // הקפאה - AI לא זז
+  const ball = gameState.ball;
+  const padW = gameState.p2PadW;
+  const padX = gameState.p2PadX;
+  const padCenter = padX + padW / 2;
+
+  // בדוק אם יש פאוור-אפ שעולה לכיווני ואפשר לתפוס בבטחה
+  let targetX = ball.x; // ברירת מחדל - עקוב אחרי הכדור
+  let chasingPowerup = false;
+
+  if (gameState.powerups.length > 0 && ball.dy > 0) {
+    // הכדור הולך למטה (רחוק ממני) - יש זמן לתפוס פאוור-אפ
+    let bestPU = null;
+    let bestDist = Infinity;
+    for (const pu of gameState.powerups) {
+      if (pu.dy >= 0) continue; // רק אלה שעולים לכיווני
+      if (pu.y > P2_PAD_Y + PAD_H + 50) continue; // רחוק מדי
+      const dist = Math.abs(pu.x - padCenter);
+      if (dist < bestDist) { bestDist = dist; bestPU = pu; }
+    }
+    // תפוס רק אם הפאוור-אפ קרוב מספיק ויש זמן
+    if (bestPU && bestDist < 120) {
+      targetX = bestPU.x;
+      chasingPowerup = true;
+    }
+  }
+
+  // מהירות מעקב - יותר אגרסיבי כשכדור בא, רגוע כשהולך
+  let ease;
+  if (chasingPowerup) {
+    ease = 0.07;
+  } else if (ball.dy < 0) {
+    ease = 0.055; // כדור בא אלי
+  } else {
+    ease = 0.03; // כדור הולך, חזור לאמצע
+    targetX = ball.x * 0.6 + 210 * 0.4; // מעקב חלקי + חזרה למרכז
+  }
+
+  const target = targetX - padW / 2;
+  gameState.p2PadX += (target - gameState.p2PadX) * ease * dt;
+  gameState.p2PadX = Math.max(0, Math.min(420 - padW, gameState.p2PadX));
+}
+
+function updatePhysics(dt) {
+  if (!gameState || gameState.gameOver || gameState.paused) return;
+  const ball = gameState.ball;
+  ball.x += ball.dx * dt; ball.y += ball.dy * dt;
+
+  if (ball.x - BALL_R <= 0) { ball.x = BALL_R; ball.dx = Math.abs(ball.dx); }
+  if (ball.x + BALL_R >= 420) { ball.x = 420 - BALL_R; ball.dx = -Math.abs(ball.dx); }
+
+  if (ball.dy > 0 && ball.y + BALL_R >= P1_PAD_Y && ball.y + BALL_R <= P1_PAD_Y + PAD_H + 6) {
+    if (ball.x >= gameState.p1PadX - 6 && ball.x <= gameState.p1PadX + gameState.p1PadW + 6) {
+      ball.y = P1_PAD_Y - BALL_R; padBounce(ball, gameState.p1PadX, gameState.p1PadW, true);
+      padHits.p1 = Date.now();
+    }
+  }
+  if (!isSoloMode && ball.dy < 0 && ball.y - BALL_R <= P2_PAD_Y + PAD_H && ball.y - BALL_R >= P2_PAD_Y - 6) {
+    if (ball.x >= gameState.p2PadX - 6 && ball.x <= gameState.p2PadX + gameState.p2PadW + 6) {
+      ball.y = P2_PAD_Y + PAD_H + BALL_R; padBounce(ball, gameState.p2PadX, gameState.p2PadW, false);
+      padHits.p2 = Date.now();
+    }
+  }
+
+  const now2 = Date.now();
+  const meteorActive = effects.p1.meteor > now2 || effects.p2.meteor > now2;
+
+  // קו הגנה מגן (P1 = למטה, P2 = למעלה)
+  // P1 shield: קו מעל הלבנים התחתונות
+  // P1 shield: מתחת ללבנים התחתונות (בין הלבנים לקצה התחתון)
+  if (effects.p1.shield > now2 && ball.dy > 0) {
+    const shieldY = FIELD_H - 30 + 6;
+    if (ball.y + BALL_R >= shieldY && ball.y + BALL_R <= shieldY + 8) {
+      ball.y = shieldY - BALL_R;
+      ball.dy = -Math.abs(ball.dy);
+      effects.shieldHitAnim.p1 = Date.now();
+      effects.p1.shield = Date.now() + 300; // 300ms לאנימציה ואז נעלם
+    }
+  }
+  // P2 shield: מעל ללבנים העליונות (בין הלבנים לקצה העליון)
+  if (effects.p2.shield > now2 && ball.dy < 0) {
+    const shieldY = 30 - 6;
+    if (ball.y - BALL_R <= shieldY && ball.y - BALL_R >= shieldY - 8) {
+      ball.y = shieldY + BALL_R;
+      ball.dy = Math.abs(ball.dy);
+      effects.shieldHitAnim.p2 = Date.now();
+      effects.p2.shield = Date.now() + 300;
+    }
+  }
+
+  let bouncedTop = false;
+  for (const brick of gameState.topBricks) {
+    if (!brick.alive) continue;
+    if (ballHitsBrick(ball, brick)) {
+      brick.hp--;
+      if (brick.hp <= 0) {
+        brick.alive = false;
+        gameState.p1Score += 10;
+        dyingBricks.push({ x: brick.x, y: brick.y, w: brick.w, h: brick.h, color: p1Color, startTime: Date.now(), duration: 350 });
+        spawnParticles(brick.x + brick.w / 2, brick.y + brick.h / 2, p1Color, 8);
+        maybeSpawnPowerup(brick.x + brick.w / 2, brick.y + brick.h, false);
+        if (meteorActive) splashBreak(brick, gameState.topBricks, 'p1', p1Color);
+      }
+      if (!bouncedTop) { ball.dy = Math.abs(ball.dy); bouncedTop = true; }
+    }
+  }
+  let bouncedBottom = false;
+  for (const brick of gameState.bottomBricks) {
+    if (!brick.alive) continue;
+    if (ballHitsBrick(ball, brick)) {
+      brick.hp--;
+      if (brick.hp <= 0) {
+        brick.alive = false;
+        gameState.p2Score += 10;
+        dyingBricks.push({ x: brick.x, y: brick.y, w: brick.w, h: brick.h, color: p2Color, startTime: Date.now(), duration: 350 });
+        spawnParticles(brick.x + brick.w / 2, brick.y + brick.h / 2, p2Color, 8);
+        maybeSpawnPowerup(brick.x + brick.w / 2, brick.y - 10, true);
+        if (meteorActive) splashBreak(brick, gameState.bottomBricks, 'p2', p2Color);
+      }
+      if (!bouncedBottom) { ball.dy = -Math.abs(ball.dy); bouncedBottom = true; }
+    }
+  }
+
+  for (let i = gameState.balls.length - 1; i >= 0; i--) {
+    const eb = gameState.balls[i];
+    eb.x += eb.dx * dt; eb.y += eb.dy * dt;
+    if (eb.x - BALL_R <= 0) { eb.x = BALL_R; eb.dx = Math.abs(eb.dx); }
+    if (eb.x + BALL_R >= 420) { eb.x = 420 - BALL_R; eb.dx = -Math.abs(eb.dx); }
+    if (eb.y < -20 || eb.y > FIELD_H + 20) { gameState.balls.splice(i, 1); continue; }
+    if (eb.dy > 0 && eb.y + BALL_R >= P1_PAD_Y && eb.y + BALL_R <= P1_PAD_Y + PAD_H + 4) {
+      if (eb.x >= gameState.p1PadX - 4 && eb.x <= gameState.p1PadX + gameState.p1PadW + 4) eb.dy = -Math.abs(eb.dy);
+    }
+    if (eb.dy < 0 && eb.y - BALL_R <= P2_PAD_Y + PAD_H && eb.y - BALL_R >= P2_PAD_Y - 4) {
+      if (eb.x >= gameState.p2PadX - 4 && eb.x <= gameState.p2PadX + gameState.p2PadW + 4) eb.dy = Math.abs(eb.dy);
+    }
+    for (const brick of gameState.topBricks) { if (!brick.alive) continue; if (ballHitsBrick(eb, brick)) { brick.hp--; if (brick.hp <= 0) { brick.alive = false; gameState.p1Score += 10; } eb.dy = Math.abs(eb.dy); break; } }
+    for (const brick of gameState.bottomBricks) { if (!brick.alive) continue; if (ballHitsBrick(eb, brick)) { brick.hp--; if (brick.hp <= 0) { brick.alive = false; gameState.p2Score += 10; } eb.dy = -Math.abs(eb.dy); break; } }
+  }
+
+  for (let i = gameState.powerups.length - 1; i >= 0; i--) {
+    const pu = gameState.powerups[i]; pu.y += pu.dy * dt;
+    if (pu.dy > 0 && pu.y >= P1_PAD_Y && pu.y <= P1_PAD_Y + PAD_H + 10) {
+      if (pu.x >= gameState.p1PadX && pu.x <= gameState.p1PadX + gameState.p1PadW) { applyPowerup(pu.type, 'p1'); gameState.powerups.splice(i, 1); continue; }
+    }
+    if (pu.dy < 0 && pu.y <= P2_PAD_Y + PAD_H && pu.y >= P2_PAD_Y - 5) {
+      if (pu.x >= gameState.p2PadX && pu.x <= gameState.p2PadX + gameState.p2PadW) { applyPowerup(pu.type, 'p2'); gameState.powerups.splice(i, 1); continue; }
+    }
+    if (pu.y > FIELD_H + 20 || pu.y < -20) gameState.powerups.splice(i, 1);
+  }
+
+  // האצה הדרגתית כל 3 שניות
+  const now = Date.now();
+  if (now - lastSpeedUpTime >= SPEED_UP_INTERVAL) {
+    lastSpeedUpTime = now;
+    const curSpd = Math.sqrt(gameState.ball.dx ** 2 + gameState.ball.dy ** 2);
+    const MAX_SPEED = 7;
+    if (curSpd < MAX_SPEED) {
+      const factor = Math.min(SPEED_UP_FACTOR, MAX_SPEED / curSpd);
+      gameState.ball.dx *= factor;
+      gameState.ball.dy *= factor;
+      for (const eb of gameState.balls) {
+        eb.dx *= factor;
+        eb.dy *= factor;
+      }
+    }
+  }
+
+  if (isSoloMode) {
+    // סולו: כדור חוזר מלמעלה, נופל למטה = חיים
+    if (ball.y - BALL_R < 0) { ball.y = BALL_R; ball.dy = Math.abs(ball.dy); }
+    if (ball.y + BALL_R > FIELD_H + 10) {
+      gameState.soloLives = (gameState.soloLives || 3) - 1;
+      soloLives = gameState.soloLives;
+      document.getElementById('wins-p2').textContent = '❤️'.repeat(Math.max(0, soloLives));
+      if (soloLives <= 0) {
+        endRound('p2'); // הפסד
+      } else {
+        // אתחול כדור מחדש
+        ball.x = 210; ball.y = FIELD_H * 0.6;
+        ball.dx = BALL_SPEED * 0.9 * (Math.random() > 0.5 ? 1 : -1);
+        ball.dy = -BALL_SPEED * 0.9;
+        gameState.balls = [];
+        gameState.paused = true;
+        showCountdown(() => { if (gameState) gameState.paused = false; lastSpeedUpTime = Date.now(); });
+      }
+    }
+    if (gameState && !gameState.gameOver && gameState.topBricks.every(b => !b.alive)) endRound('p1'); // ניצחון
+  } else {
+    if (ball.y - BALL_R < -10) endRound('p1');
+    else if (ball.y + BALL_R > FIELD_H + 10) endRound('p2');
+    if (gameState && !gameState.gameOver && gameState.topBricks.every(b => !b.alive)) endRound('p1');
+    if (gameState && !gameState.gameOver && gameState.bottomBricks.every(b => !b.alive)) endRound('p2');
+  }
+}
+
+// ========== לולאה ==========
+function gameLoop(time) {
+  if (!gameRunning) return;
+  const dt = Math.min((time - lastTime) / 16.67, 3); lastTime = time;
+  if (!gameState || gameState.gameOver) { drawGame(); requestAnimationFrame(gameLoop); return; }
+
+  if (isP1) gameState.p1PadX += (myPadTarget - gameState.p1PadX) * 0.3 * dt;
+  else gameState.p2PadX += (myPadTarget - gameState.p2PadX) * 0.3 * dt;
+
+  // מגנט - פד עוקב אחרי הכדור
+  const nowEff = Date.now();
+  if (effects.p1.magnet > nowEff && gameState.ball.dy > 0) {
+    const target = gameState.ball.x - gameState.p1PadW / 2;
+    gameState.p1PadX += (target - gameState.p1PadX) * 0.15 * dt;
+    gameState.p1PadX = Math.max(0, Math.min(420 - gameState.p1PadW, gameState.p1PadX));
+  }
+  if (effects.p2.magnet > nowEff && gameState.ball.dy < 0) {
+    const target = gameState.ball.x - gameState.p2PadW / 2;
+    gameState.p2PadX += (target - gameState.p2PadX) * 0.15 * dt;
+    gameState.p2PadX = Math.max(0, Math.min(420 - gameState.p2PadW, gameState.p2PadX));
+  }
+
+  if (isP1 || isAIMode || isSoloMode) {
+    if (isAIMode && !isSoloMode) aiUpdate(dt);
+    updatePhysics(dt);
+    if (!isSoloMode) {
+      document.getElementById('wins-p1').textContent = p1Wins;
+      document.getElementById('wins-p2').textContent = p2Wins;
+    }
+    if (!isAIMode && !isSoloMode && Math.random() < 0.15) syncFullState();
+  }
+  syncMyPad();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+// ========== ציור ==========
+function drawGame() {
+  if (!gameState) return;
+  const w = canvas.width, h = canvas.height; ctx.clearRect(0, 0, w, h);
+  const flip = !isP1 && !isAIMode && !isSoloMode;
+  ctx.save();
+  if (flip) { ctx.translate(w, h); ctx.rotate(Math.PI); }
+
+  ctx.fillStyle = 'rgba(15, 19, 32, 0.6)'; ctx.fillRect(0, 0, w, h);
+
+  // מסגרת מגרש זוהרת
+  const brd = S(2);
+  const cornerR = S(10);
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = brd;
+  ctx.shadowColor = 'rgba(255,255,255,0.06)';
+  ctx.shadowBlur = S(8);
+  ctx.beginPath();
+  ctx.roundRect(brd / 2, brd / 2, w - brd, h - brd, cornerR);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // פינות מודגשות
+  const cLen = S(18);
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = S(2.5);
+  ctx.lineCap = 'round';
+  // top-left
+  ctx.beginPath(); ctx.moveTo(S(4), S(4) + cLen); ctx.lineTo(S(4), S(4)); ctx.lineTo(S(4) + cLen, S(4)); ctx.stroke();
+  // top-right
+  ctx.beginPath(); ctx.moveTo(w - S(4) - cLen, S(4)); ctx.lineTo(w - S(4), S(4)); ctx.lineTo(w - S(4), S(4) + cLen); ctx.stroke();
+  // bottom-left
+  ctx.beginPath(); ctx.moveTo(S(4), h - S(4) - cLen); ctx.lineTo(S(4), h - S(4)); ctx.lineTo(S(4) + cLen, h - S(4)); ctx.stroke();
+  // bottom-right
+  ctx.beginPath(); ctx.moveTo(w - S(4) - cLen, h - S(4)); ctx.lineTo(w - S(4), h - S(4)); ctx.lineTo(w - S(4), h - S(4) - cLen); ctx.stroke();
+
+  // קו מרכזי
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = S(1);
+  ctx.setLineDash([S(8), S(8)]); ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke(); ctx.setLineDash([]);
+
+  for (const b of gameState.topBricks) { if (b.alive) drawBrick(b, p2Color); }
+  if (!isSoloMode) { for (const b of gameState.bottomBricks) { if (b.alive) drawBrick(b, p1Color); } }
+
+  // לבנים מתות - אנימציית צבע + היעלמות
+  const now = Date.now();
+  for (let i = dyingBricks.length - 1; i >= 0; i--) {
+    const db = dyingBricks[i];
+    const elapsed = now - db.startTime;
+    const progress = Math.min(elapsed / db.duration, 1);
+    if (progress >= 1) { dyingBricks.splice(i, 1); continue; }
+    const alpha = 1 - progress;
+    const scale = 1 + progress * 0.3;
+    const cx = S(db.x + db.w / 2), cy = S(db.y + db.h / 2);
+    const bw = S(db.w) * scale, bh = S(db.h) * scale;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = db.color;
+    ctx.shadowColor = db.color;
+    ctx.shadowBlur = S(10) * alpha;
+    ctx.beginPath();
+    ctx.roundRect(cx - bw / 2, cy - bh / 2, bw, bh, S(4));
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  // חלקיקים
+  const pNow = Date.now();
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.life += 16; // ~60fps
+    if (p.life >= p.maxLife) { particles.splice(i, 1); continue; }
+    p.x += p.dx; p.y += p.dy;
+    p.dy += 0.05; // gravity
+    p.dx *= 0.98; // friction
+    const progress = p.life / p.maxLife;
+    const alpha = 1 - progress;
+    const size = S(p.size * (1 - progress * 0.5));
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = S(3);
+    ctx.beginPath();
+    ctx.arc(S(p.x), S(p.y), size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+  ctx.globalAlpha = 1;
+
+  if (!isSoloMode) drawPadWithEffects(gameState.p2PadX, P2_PAD_Y, gameState.p2PadW, p2Color, 'p2');
+  drawPadWithEffects(gameState.p1PadX, P1_PAD_Y, gameState.p1PadW, p1Color, 'p1');
+  drawBall(gameState.ball);
+  for (const eb of gameState.balls) drawBall(eb);
+
+  // פאוור-אפים
+  for (const pu of gameState.powerups) {
+    // רקע בהיר לנראות - עיגול לבן חצי-שקוף
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.beginPath();
+    ctx.arc(S(pu.x), S(pu.y), S(15), 0, Math.PI * 2);
+    ctx.fill();
+
+    if (pu.category === 'personal') {
+      const haloColor = pu.dy > 0 ? p1Color : p2Color;
+      ctx.fillStyle = haloColor;
+      ctx.shadowColor = haloColor;
+      ctx.shadowBlur = S(10);
+      ctx.globalAlpha = 0.45;
+      ctx.beginPath();
+      ctx.arc(S(pu.x), S(pu.y), S(15), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+    }
+    ctx.font = `${S(24)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(255,255,255,0.8)';
+    ctx.shadowBlur = S(6);
+    ctx.fillText(pu.emoji || '⭐', S(pu.x), S(pu.y));
+    ctx.shadowBlur = 0;
+    // +1 ליד כדור נוסף
+    if (pu.type === 'extra_ball') {
+      ctx.font = `bold ${S(12)}px Heebo, sans-serif`;
+      ctx.fillStyle = '#F5C842';
+      ctx.fillText('+1', S(pu.x + 16), S(pu.y - 12));
+    }
+  }
+
+  const nowDraw = Date.now();
+
+  // ערפל - מסתיר את הפד של מי שחטף (אישי)
+  const myFogKey = isP1 ? 'p1' : 'p2';
+  if (effects[myFogKey].fog > nowDraw) {
+    const fogAnimKey = myFogKey + 'Fog';
+    const fogAge = nowDraw - (effects.animStart[fogAnimKey] || 0);
+    const fadeIn = Math.min(fogAge / 300, 1);
+    const remaining = effects[myFogKey].fog - nowDraw;
+    const fadeOut = remaining < 300 ? remaining / 300 : 1;
+    const fogStr = fadeIn * fadeOut;
+    const t = nowDraw / 1500;
+    const fogH = S(PAD_H + 35);
+
+    ctx.save();
+    // הפד שלי (למטה אחרי flip) - מסתיר אותו
+    const myCy = S(P1_PAD_Y + PAD_H / 2); // תמיד למטה כי flip כבר קרה
+    const fogGrad = ctx.createRadialGradient(canvas.width / 2, myCy, S(15), canvas.width / 2, myCy, canvas.width * 0.6);
+    fogGrad.addColorStop(0, `rgba(20, 25, 45, ${0.95 * fogStr})`);
+    fogGrad.addColorStop(0.5, `rgba(20, 25, 45, ${0.9 * fogStr})`);
+    fogGrad.addColorStop(1, 'rgba(20, 25, 45, 0)');
+    ctx.fillStyle = fogGrad;
+    ctx.fillRect(0, myCy - fogH / 2, canvas.width, fogH);
+
+    // עננים זזים
+    ctx.globalAlpha = fogStr * 0.35;
+    for (let i = 0; i < 4; i++) {
+      const cx = (Math.sin(t * 0.25 + i * 1.8) * 0.4 + 0.5) * canvas.width;
+      const cr = S(18 + i * 5);
+      const cg = ctx.createRadialGradient(cx, myCy, 0, cx, myCy, cr);
+      cg.addColorStop(0, 'rgba(70, 90, 130, 0.5)'); cg.addColorStop(1, 'rgba(70, 90, 130, 0)');
+      ctx.fillStyle = cg; ctx.beginPath(); ctx.arc(cx, myCy, cr, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  // הקפאה - שכבת קרח מנצנצת
+  for (const pk of ['p1', 'p2']) {
+    if (effects[pk].frozen > nowDraw) {
+      const padX = pk === 'p1' ? gameState.p1PadX : gameState.p2PadX;
+      const padY = pk === 'p1' ? P1_PAD_Y : P2_PAD_Y;
+      const padW = pk === 'p1' ? gameState.p1PadW : gameState.p2PadW;
+      const age = nowDraw - effects.animStart[pk + 'Frozen'];
+      const fadeIn = Math.min(age / 200, 1);
+      const fx = S(padX), fy = S(padY), fw = S(padW), fh = S(PAD_H);
+      ctx.save();
+      ctx.globalAlpha = fadeIn * 0.5;
+      ctx.fillStyle = 'rgba(100, 200, 255, 0.5)';
+      ctx.shadowColor = '#64C8FF'; ctx.shadowBlur = S(14);
+      ctx.beginPath(); ctx.roundRect(fx - S(3), fy - S(3), fw + S(6), fh + S(6), S(9)); ctx.fill();
+      ctx.shadowBlur = 0;
+      // קריסטלים
+      ctx.globalAlpha = fadeIn * 0.7;
+      ctx.font = `${S(10)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('❄️', fx + fw * 0.25, fy + fh / 2);
+      ctx.fillText('❄️', fx + fw * 0.75, fy + fh / 2);
+      ctx.restore();
+    }
+  }
+
+  // מגן - קו זוהר קבוע + אנימציית היווצרות + פולס בפגיעה
+  for (const pk of ['p1', 'p2']) {
+    if (effects[pk].shield > nowDraw) {
+      const isBottom = pk === 'p1';
+      const sy = isBottom
+        ? S(FIELD_H - 30 + 6)
+        : S(30 - 6);
+      const color = pk === 'p1' ? p1Color : p2Color;
+      const age = nowDraw - effects.animStart[pk + 'Shield'];
+      const scaleIn = Math.min(age / 400, 1); // grow from center
+      const hitAge = nowDraw - (effects.shieldHitAnim[pk] || 0);
+      const hitGlow = hitAge < 300 ? (1 - hitAge / 300) : 0;
+
+      const totalW = S(420 - 2 * BRICK_PAD_X);
+      const drawW = totalW * scaleIn;
+      const cx = canvas.width / 2;
+
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = S(8 + hitGlow * 20);
+      ctx.lineWidth = S(3 + hitGlow * 4);
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(cx - drawW / 2, sy);
+      ctx.lineTo(cx + drawW / 2, sy);
+      ctx.stroke();
+      if (hitGlow > 0) {
+        ctx.globalAlpha = hitGlow * 0.5;
+        ctx.fillStyle = color;
+        ctx.fillRect(cx - drawW / 2, sy - S(4), drawW, S(8));
+      }
+      ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+  }
+
+  // מטאור - זוהר כתום עם אנימציית התעוררות
+  if (effects.p1.meteor > nowDraw || effects.p2.meteor > nowDraw) {
+    const mAge = nowDraw - effects.animStart.meteor;
+    const mFadeIn = Math.min(mAge / 300, 1);
+    const pulse = 0.5 + Math.sin(nowDraw / 150) * 0.15;
+    const allBalls = [gameState.ball, ...gameState.balls];
+    for (const b of allBalls) {
+      ctx.save();
+      ctx.globalAlpha = (pulse + 0.1) * mFadeIn;
+      ctx.fillStyle = '#FF6B35';
+      ctx.shadowColor = '#FF4500';
+      ctx.shadowBlur = S(18 * mFadeIn);
+      ctx.beginPath();
+      ctx.arc(S(b.x), S(b.y), S(BALL_R + 4 + mFadeIn * 2), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+  }
+
+  ctx.restore();
+}
+function drawBrick(brick, baseColor) {
+  const x = S(brick.x), y = S(brick.y), w = S(brick.w), h = S(brick.h);
+  const row = brick.row || 0;
+
+  // כהה יותר ככל שהשורה רחוקה (row 0 = בהיר, row 2 = כהה)
+  const darken = row * 0.2; // 0%, 20%, 40%
+
+  // צבע עם הכהייה
+  ctx.save();
+  ctx.fillStyle = baseColor;
+  ctx.shadowColor = baseColor;
+  ctx.shadowBlur = S(4);
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, S(3));
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // שכבת הכהייה
+  if (darken > 0) {
+    ctx.fillStyle = `rgba(0, 0, 0, ${darken})`;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, S(3));
+    ctx.fill();
+  }
+
+  // אפקט לבנה - קו עליון בהיר (אור)
+  ctx.fillStyle = `rgba(255, 255, 255, ${0.25 - darken * 0.3})`;
+  ctx.beginPath();
+  ctx.roundRect(x + S(1.5), y + S(1), w - S(3), S(3), S(1.5));
+  ctx.fill();
+
+  // אפקט לבנה - קו תחתון כהה (צל)
+  ctx.fillStyle = `rgba(0, 0, 0, ${0.15 + darken * 0.1})`;
+  ctx.beginPath();
+  ctx.roundRect(x + S(1.5), y + h - S(3.5), w - S(3), S(2.5), S(1.5));
+  ctx.fill();
+
+  // מרקם עדין - קו אמצעי
+  ctx.fillStyle = `rgba(0, 0, 0, 0.08)`;
+  ctx.fillRect(x + S(2), y + h * 0.45, w - S(4), S(0.8));
+
+  ctx.restore();
+}
+
+// פד עם אנימציות אפקטים
+function drawPadWithEffects(px, py, pw, color, playerKey) {
+  const x = S(px), y = S(py), w = S(pw), h = S(PAD_H);
+  const now = Date.now();
+
+  ctx.save();
+
+  // רטט בהיפוך
+  let offsetX = 0;
+  if (effects[playerKey].reversed > now) {
+    offsetX = Math.sin(now / 40) * S(2.5);
+  }
+
+  // אנימציית הגדלה - פולס קצר
+  const widerAge = now - effects.animStart[playerKey + 'Wider'];
+  let scaleX = 1;
+  if (widerAge < 300) {
+    scaleX = 1 + Math.sin((widerAge / 300) * Math.PI) * 0.12;
+  }
+
+  // אנימציית הקטנה - רטט + כיווץ
+  const shrunkAge = now - effects.animStart[playerKey + 'Shrunk'];
+  if (shrunkAge < 300) {
+    scaleX *= 1 - Math.sin((shrunkAge / 300) * Math.PI) * 0.1;
+    offsetX += Math.sin(now / 30) * S(1.5);
+  }
+
+  const drawX = x + offsetX;
+  const drawW = w * scaleX;
+
+  // מגנט - הילה סגולה
+  if (effects[playerKey].magnet > now) {
+    const mAge = now - effects.animStart[playerKey + 'Magnet'];
+    const mIn = Math.min(mAge / 250, 1);
+    ctx.globalAlpha = 0.25 * mIn;
+    ctx.fillStyle = '#B088F9';
+    ctx.shadowColor = '#B088F9';
+    ctx.shadowBlur = S(15);
+    ctx.beginPath(); ctx.roundRect(drawX - S(4), y - S(4), drawW + S(8), h + S(8), S(10)); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+  }
+
+  // פד עצמו - עם עומק
+  ctx.shadowColor = color; ctx.shadowBlur = S(10); ctx.fillStyle = color;
+  ctx.beginPath(); ctx.roundRect(drawX, y, drawW, h, S(7)); ctx.fill(); ctx.shadowBlur = 0;
+
+  // צל תחתון (עומק)
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+  ctx.beginPath(); ctx.roundRect(drawX + S(1), y + h - S(4), drawW - S(2), S(4), [0, 0, S(6), S(6)]); ctx.fill();
+
+  // הייליט עליון (אור)
+  const grad = ctx.createLinearGradient(drawX, y, drawX, y + h);
+  grad.addColorStop(0, 'rgba(255,255,255,0.4)'); grad.addColorStop(0.4, 'rgba(255,255,255,0.1)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.roundRect(drawX, y, drawW, h, S(7)); ctx.fill();
+
+  // קו בהיר למעלה
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = S(1);
+  ctx.beginPath(); ctx.roundRect(drawX + S(2), y + S(1), drawW - S(4), h - S(2), S(6)); ctx.stroke();
+
+  // היפוך - אייקון
+  if (effects[playerKey].reversed > now) {
+    ctx.globalAlpha = 0.6;
+    ctx.font = `${S(10)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('🔄', drawX + drawW / 2, y + h / 2);
+    ctx.globalAlpha = 1;
+  }
+
+  // אנימציית פגיעת כדור - גל אור מתפשט
+  const hitAge = now - (padHits[playerKey] || 0);
+  if (hitAge < 350) {
+    const hitProgress = hitAge / 350;
+    const waveR = S(10 + hitProgress * 40);
+    const waveAlpha = (1 - hitProgress) * 0.5;
+    ctx.globalAlpha = waveAlpha;
+    ctx.strokeStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = S(8);
+    ctx.lineWidth = S(2 * (1 - hitProgress));
+    ctx.beginPath();
+    ctx.arc(drawX + drawW / 2, y + h / 2, waveR, 0, Math.PI * 2);
+    ctx.stroke();
+    // גל שני קטן יותר
+    if (hitProgress > 0.1) {
+      const wave2R = S(5 + (hitProgress - 0.1) * 30);
+      ctx.globalAlpha = waveAlpha * 0.5;
+      ctx.beginPath();
+      ctx.arc(drawX + drawW / 2, y + h / 2, wave2R, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.restore();
+}
+
+function drawBall(ball) {
+  const x = S(ball.x), y = S(ball.y), r = S(BALL_R);
+  const now = Date.now();
+  const isGhost = effects.shared.ghost > now;
+
+  ctx.save();
+
+  // רפאים - כמעט נעלם לגמרי
+  if (isGhost) {
+    const ghostAge = now - effects.animStart.ghost;
+    const remaining = effects.shared.ghost - now;
+    const fadeIn = Math.min(ghostAge / 300, 1);
+    const fadeOut = remaining < 300 ? remaining / 300 : 1;
+    const vanish = fadeIn * fadeOut;
+    ctx.globalAlpha = 0.03 + (1 - vanish) * 0.97; // 3% opacity at peak
+  }
+
+  // קרניים מפוזרות
+  const rayCount = 6;
+  const time = now / 600;
+  ctx.strokeStyle = isGhost ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = S(1.5);
+  for (let i = 0; i < rayCount; i++) {
+    const angle = (i / rayCount) * Math.PI * 2 + time;
+    const innerR = r * 1.1;
+    const outerR = r * 2.2 + Math.sin(time * 2 + i) * r * 0.5;
+    ctx.beginPath();
+    ctx.moveTo(x + Math.cos(angle) * innerR, y + Math.sin(angle) * innerR);
+    ctx.lineTo(x + Math.cos(angle) * outerR, y + Math.sin(angle) * outerR);
+    ctx.stroke();
+  }
+
+  // הילה חיצונית
+  ctx.shadowColor = '#fff'; ctx.shadowBlur = S(12);
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.beginPath(); ctx.arc(x, y, r * 1.6, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // כדור מוצק
+  ctx.fillStyle = '#fff'; ctx.shadowColor = '#fff'; ctx.shadowBlur = S(6);
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+
+  // ברק פנימי
+  const grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.05, x, y, r);
+  grad.addColorStop(0, 'rgba(255,255,255,1)');
+  grad.addColorStop(0.4, 'rgba(255,255,255,0.7)');
+  grad.addColorStop(1, 'rgba(200,210,255,0.3)');
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+
+  ctx.restore();
+}
+
+// ========== Confetti ==========
+function launchConfetti(color) {
+  const c = document.createElement('div'); c.className = 'confetti-container'; document.body.appendChild(c);
+  const colors = [color, '#F5C842', '#3DD68C', '#FF5C7A', '#4DB8FF', '#FFB347', '#E879F9'];
+  for (let i = 0; i < 50; i++) {
+    const p = document.createElement('div'); p.className = 'confetti-piece';
+    p.style.left = `${Math.random() * 100}%`;
+    p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    p.style.animationDuration = `${1.5 + Math.random() * 2}s`;
+    p.style.animationDelay = `${Math.random() * 0.5}s`;
+    p.style.width = `${6 + Math.random() * 8}px`; p.style.height = `${6 + Math.random() * 8}px`;
+    p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    c.appendChild(p);
+  }
+  setTimeout(() => c.remove(), 4000);
+}
+
+// ========== סוף סיבוב ==========
+function endRound(winner) {
+  if (!gameState || gameState.gameOver) return;
+  gameState.gameOver = true; gameState.winner = winner;
+  gameRunning = false;
+
+  if (winner === 'p1') p1Wins++; else p2Wins++;
+  roundNum++;
+  gameState.p1Wins = p1Wins; gameState.p2Wins = p2Wins; gameState.roundNum = roundNum;
+  gameState.rematchP1 = false; gameState.rematchP2 = false;
+  syncFullState();
+  handleRoundEnd(winner, true);
+}
+
+function handleRoundEnd(winner, isLocal) {
+  gameRunning = false;
+  document.getElementById('wins-p1').textContent = p1Wins;
+  document.getElementById('wins-p2').textContent = p2Wins;
+
+  const winnerName = winner === 'p1' ? p1DisplayName : p2DisplayName;
+  const winnerColor = winner === 'p1' ? p1Color : p2Color;
+  const winnerEmoji = winner === 'p1' ? p1Emoji : p2Emoji;
+
+  // Check if match is over (best of 3)
+  const matchOver = p1Wins >= WINS_NEEDED || p2Wins >= WINS_NEEDED;
+
+  if (matchOver) {
+    // Show match winner modal after a brief delay
+    if (isLocal || true) launchConfetti(winnerColor);
+    setTimeout(() => showMatchModal(winner), 800);
+  } else {
+    // Show round banner, then auto-start next round
+    showRoundBanner(winnerName, winnerEmoji, winnerColor);
+    if (isP1 || isAIMode) {
+      setTimeout(() => startNextRound(), 2500);
+    }
+  }
+}
+
+function showRoundBanner(name, emoji, color) {
+  const banner = document.getElementById('round-banner');
+  banner.style.display = 'block';
+  banner.style.color = color;
+  banner.style.borderColor = color;
+  banner.style.boxShadow = `0 0 40px ${color}40`;
+  banner.innerHTML = `🏅 ${emoji} ${name}!`;
+  setTimeout(() => { banner.style.display = 'none'; }, 2200);
+}
+
+function startNextRound() {
+  if (!gameState) return;
+  dyingBricks = []; particles = [];
+  effects.p1 = { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0, fog: 0 };
+  effects.p2 = { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0, fog: 0 };
+  effects.shared = { ghost: 0 };
+  effects.shieldHitAnim = { p1: 0, p2: 0 };
+  const topBricks = [], bottomBricks = [];
+  const brickW = (420 - 2 * BRICK_PAD_X - (BRICK_COLS - 1) * BRICK_GAP) / BRICK_COLS;
+  for (let r = 0; r < BRICK_ROWS; r++) {
+    for (let c = 0; c < BRICK_COLS; c++) {
+      const x = BRICK_PAD_X + c * (brickW + BRICK_GAP);
+      topBricks.push({ x, y: 30 + r * (BRICK_H + BRICK_GAP), w: brickW, h: BRICK_H, alive: true, hp: 1, row: r });
+      bottomBricks.push({ x, y: FIELD_H - 30 - (BRICK_ROWS - r) * (BRICK_H + BRICK_GAP), w: brickW, h: BRICK_H, alive: true, hp: 1, row: r });
+    }
+  }
+  gameState.ball = { x: 210, y: FIELD_H / 2, dx: BALL_SPEED * 1.05, dy: (roundNum % 2 === 0 ? -1 : 1) * BALL_SPEED * 1.05 };
+  gameState.p1PadX = 210 - PAD_W / 2; gameState.p2PadX = 210 - PAD_W / 2;
+  gameState.p1PadW = PAD_W; gameState.p2PadW = PAD_W;
+  gameState.topBricks = topBricks; gameState.bottomBricks = bottomBricks;
+  gameState.powerups = []; gameState.balls = [];
+  gameState.p1Score = 0; gameState.p2Score = 0;
+  gameState.gameOver = false; gameState.winner = null;
+  gameState.p1Wins = p1Wins; gameState.p2Wins = p2Wins; gameState.roundNum = roundNum;
+  gameState.timestamp = Date.now();
+  myPadTarget = 210 - PAD_W / 2;
+  lastSpeedUpTime = Date.now();
+  if (gameStateRef) set(gameStateRef, gameState);
+  gameRunning = true; lastTime = performance.now();
+  gameState.paused = true;
+  requestAnimationFrame(gameLoop);
+  showCountdown(() => {
+    if (gameState) gameState.paused = false;
+    lastSpeedUpTime = Date.now();
+  });
+}
+
+// ========== Match Modal ==========
+function showMatchModal(winner) {
+  const isWinner = (winner === 'p1' && isP1) || (winner === 'p2' && !isP1);
+  const winnerName = winner === 'p1' ? p1DisplayName : p2DisplayName;
+  const winnerColor = winner === 'p1' ? p1Color : p2Color;
+  const winnerEmoji = winner === 'p1' ? p1Emoji : p2Emoji;
+
+  document.getElementById('mm-icon').textContent = isWinner || isAIMode ? '🏆' : '😢';
+  const titleEl = document.getElementById('mm-title');
+  titleEl.textContent = `${winnerEmoji} ${winnerName} 🏆`;
+  titleEl.style.color = winnerColor;
+  document.getElementById('mm-sub').textContent = `${p1Wins} - ${p2Wins}`;
+
+  const btnsDiv = document.getElementById('mm-btns');
+  btnsDiv.innerHTML = '';
+
+  if (isAIMode) {
+    btnsDiv.innerHTML = `
+      <button class="mbtn mbtn-primary" id="btn-rematch-ai">🔄 שחק שוב</button>
+      <button class="mbtn mbtn-secondary" onclick="goHome()">🏠 חזרה לתפריט</button>
+    `;
+    document.getElementById('match-modal').style.display = 'flex';
+    document.getElementById('btn-rematch-ai').onclick = () => {
+      document.getElementById('match-modal').style.display = 'none';
+      startNewMatch();
+    };
+  } else {
+    // Multiplayer - need mutual consent
+    btnsDiv.innerHTML = `
+      <button class="mbtn mbtn-primary" id="btn-rematch">🔄 שחק שוב</button>
+      <button class="mbtn mbtn-secondary" onclick="goHome()">🏠 חזרה לתפריט</button>
+    `;
+    document.getElementById('match-modal').style.display = 'flex';
+
+    document.getElementById('btn-rematch').onclick = () => {
+      // Signal my rematch wish
+      const key = isP1 ? 'rematchP1' : 'rematchP2';
+      update(gameStateRef, { [key]: true });
+
+      // Check if opponent already agreed
+      const otherKey = isP1 ? 'rematchP2' : 'rematchP1';
+      if (gameState && gameState[otherKey]) {
+        // Both ready
+        document.getElementById('match-modal').style.display = 'none';
+        if (isP1) startNewMatch();
+      } else {
+        // Wait for opponent
+        const btn = document.getElementById('btn-rematch');
+        btn.className = 'mbtn mbtn-waiting';
+        btn.textContent = '⏳ ממתין להסכמה...';
+        btn.onclick = null;
+      }
+    };
+  }
+}
+
+function startNewMatch() {
+  p1Wins = 0; p2Wins = 0; roundNum = 0;
+  dyingBricks = []; particles = [];
+  effects.p1 = { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0, fog: 0 };
+  effects.p2 = { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0, fog: 0 };
+  effects.shared = { ghost: 0 };
+  effects.shieldHitAnim = { p1: 0, p2: 0 };
+  gameState = createInitialState();
+  if (gameStateRef) set(gameStateRef, gameState);
+  document.getElementById('match-modal').style.display = 'none';
+  document.getElementById('wins-p1').textContent = '0';
+  document.getElementById('wins-p2').textContent = '0';
+  myPadTarget = 210 - PAD_W / 2;
+  lastSpeedUpTime = Date.now();
+  gameRunning = true; lastTime = performance.now();
+  gameState.paused = true;
+  requestAnimationFrame(gameLoop);
+  showCountdown(() => {
+    if (gameState) gameState.paused = false;
+    lastSpeedUpTime = Date.now();
+  });
+}
+
+// ========== HUD ==========
+function updateHUD(p1Name, p1Col, p1Em, p2Name, p2Col, p2Em) {
+  p1DisplayName = p1Name; p2DisplayName = p2Name;
+  p1Color = p1Col; p2Color = p2Col;
+  p1Emoji = p1Em; p2Emoji = p2Em;
+  document.getElementById('name-p1').textContent = `${p1Em} ${p1Name}`;
+  document.getElementById('name-p2').textContent = `${p2Em} ${p2Name}`;
+  document.getElementById('card-p1').style.borderColor = p1Col;
+  document.getElementById('card-p2').style.borderColor = p2Col;
+  document.getElementById('wins-p1').style.color = p1Col;
+  document.getElementById('wins-p2').style.color = p2Col;
+}
+
+function startGamePlay() {
+  document.getElementById('match-modal').style.display = 'none';
+  gameState = isSoloMode ? createSoloState() : createInitialState();
+  gameState.paused = true;
+  if (isP1 || isAIMode || isSoloMode) {
+    if (gameStateRef) set(gameStateRef, gameState);
+  }
+  startGameStateListener();
+  lastSpeedUpTime = Date.now();
+  gameRunning = true; lastTime = performance.now();
+  resizeCanvas();
+  requestAnimationFrame(gameLoop);
+  showCountdown(() => {
+    if (gameState) gameState.paused = false;
+    lastSpeedUpTime = Date.now();
+  });
+}
+
+function showCountdown(onDone) {
+  const banner = document.getElementById('round-banner');
+  let count = 3;
+  banner.style.display = 'block';
+  banner.style.color = 'var(--gold)';
+  banner.style.borderColor = 'var(--gold)';
+  banner.style.boxShadow = '0 0 40px rgba(245,200,66,0.3)';
+  banner.style.fontSize = '2.5rem';
+  banner.textContent = count;
+
+  const interval = setInterval(() => {
+    count--;
+    if (count > 0) {
+      banner.textContent = count;
+      banner.style.animation = 'none';
+      banner.offsetHeight; // reflow
+      banner.style.animation = 'bannerIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    } else {
+      banner.textContent = '!';
+      banner.style.color = 'var(--green)';
+      banner.style.borderColor = 'var(--green)';
+      banner.style.boxShadow = '0 0 40px rgba(61,214,140,0.3)';
+      banner.style.animation = 'none';
+      banner.offsetHeight;
+      banner.style.animation = 'bannerIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      setTimeout(() => {
+        banner.style.display = 'none';
+        banner.style.fontSize = '';
+        if (onDone) onDone();
+      }, 500);
+      clearInterval(interval);
+    }
+  }, 800);
+}
+
+// ========== initSession ==========
+async function initSession() {
+  try {
+    document.title = `init: AI=${isAIMode} Solo=${isSoloMode}`;
+    const roomPath = (isAIMode || isSoloMode) ? `rooms_v3/${GAME_ID}_ai/${myName}` : `rooms_v3/${GAME_ID}/${myName}`;
+    const myJoinedAt = Date.now();
+
+    if (isAIMode || isSoloMode) {
+      document.title = 'firebase set...';
+      await set(ref(db, roomPath), { name: displayName, color: myColor, emoji: myEmoji, joinedAt: myJoinedAt, timestamp: myJoinedAt, active: true });
+      document.title = 'heartbeat...';
+      startHeartbeat(roomPath, myJoinedAt);
+      isP1 = true;
+      if (isSoloMode) {
+        document.querySelector('.vs-box').style.display = 'none';
+        updateHUD(displayName, myColor, myEmoji, '', '#EF4444', '');
+        document.getElementById('name-p2').textContent = '❤️ חיים';
+        document.getElementById('wins-p2').textContent = '❤️❤️❤️';
+        document.getElementById('wins-p2').style.color = '#EF4444';
+        document.getElementById('card-p2').style.borderColor = '#EF4444';
+        document.querySelector('#card-p1 .wins-label').textContent = '🧱';
+        document.querySelector('#card-p2 .wins-label').textContent = '';
+      } else {
+        updateHUD(displayName, myColor, myEmoji, 'מחשב', '#FFB347', '🤖');
+      }
+      document.title = 'startGamePlay...';
+      startGamePlay();
+      document.title = 'RUNNING!';
+    } else {
+      const existingSnap = await get(ref(db, roomPath));
+      const existingData = existingSnap.val();
+      const myJoinedAtFinal = existingData?.joinedAt || myJoinedAt;
+
+      await set(ref(db, roomPath), { name: displayName, color: myColor, emoji: myEmoji, joinedAt: myJoinedAtFinal, timestamp: Date.now(), active: true });
+      startHeartbeat(roomPath, myJoinedAtFinal);
+
+      const snapAfter = await get(roomRef);
+      const playersAfter = snapAfter.val() || {};
+      const playerIds = Object.keys(playersAfter).sort((a, b) => (playersAfter[a].joinedAt || 0) - (playersAfter[b].joinedAt || 0));
+
+      if (playerIds.length <= 2) {
+        if (playerIds.length === 1) {
+          isP1 = true; currentGameId = null;
+          gameStateRef = ref(db, `game/${GAME_ID}/pending`);
+        } else {
+          const first = playerIds[0], second = playerIds[1];
+          isP1 = myName === first;
+          currentGameId = `${first}_${second}`;
+          gameStateRef = ref(db, `game/${GAME_ID}/${currentGameId}`);
+          remove(ref(db, `game/${GAME_ID}/pending`));
+          const p1D = playersAfter[first], p2D = playersAfter[second];
+          updateHUD(p1D.name, p1D.color, p1D.emoji, p2D.name, p2D.color, p2D.emoji);
+          startGamePlay();
+        }
+      } else {
+        stopHeartbeat(); await remove(ref(db, roomPath));
+        document.getElementById('alert-modal').style.display = 'flex';
+        document.getElementById('alert-modal').querySelector('.alert-icon').textContent = '🚫';
+        document.getElementById('modal-msg').textContent = 'המשחק מלא! כבר משחקים כאן שני שחקנים';
+        return;
+      }
+
+      roomListenerUnsubscribe = onValue(roomRef, (snap) => {
+        const players = snap.val() || {};
+        const names = Object.keys(players).sort((a, b) => (players[a].joinedAt || 0) - (players[b].joinedAt || 0));
+        if (names.length === 0 && gameStateRef && currentGameId) set(gameStateRef, null);
+        if (lastPlayerCount === 2 && names.length < 2) {
+          let ln = '', le = '';
+          if (window.lastPlayersSnapshot) { for (const [id, p] of Object.entries(window.lastPlayersSnapshot)) { if (!players[id]) { ln = p.name; le = p.emoji; break; } } }
+          handleOpponentLeft(ln, le);
+        }
+        if (!currentGameId && names.length === 2) {
+          const first = names[0], second = names[1];
+          isP1 = myName === first;
+          currentGameId = `${first}_${second}`;
+          gameStateRef = ref(db, `game/${GAME_ID}/${currentGameId}`);
+          remove(ref(db, `game/${GAME_ID}/pending`));
+          updateHUD(players[first].name, players[first].color, players[first].emoji, players[second].name, players[second].color, players[second].emoji);
+          get(gameStateRef).then(snap => { if (!snap.val()) startGamePlay(); });
+          startOpponentCheck();
+        }
+        window.lastPlayersSnapshot = players;
+        lastPlayerCount = names.length;
+      });
+      startOpponentCheck();
+    }
+  } catch (e) { document.title = 'ERROR: ' + e.message; }
+}
+
+try {
+
+if (modeFromURL === 'ai') {
+  // הגיע מכפתור "שחק לבד" באינדקס - הצג בחירה בין מול מחשב למשחק לבד
+  const modeEl = document.getElementById('mode-select');
+  modeEl.style.display = 'flex';
+  document.getElementById('mode-greeting').textContent = `${myEmoji} ${displayName}`;
+  document.querySelector('.header').style.display = 'none';
+  document.getElementById('gameCanvas').style.display = 'none';
+} else {
+  // מולטיפלייר - מגיע מחדר המתנה
+  initSession();
+}
+
+} catch(startErr) {
+  document.title = 'START ERR: ' + startErr.message;
+  document.body.innerHTML = '<div style="color:red;padding:20px;font-size:1.2em;direction:rtl;text-align:center;">' + 
+    '<h2>שגיאה</h2><p>' + startErr.message + '</p><p>' + startErr.stack + '</p></div>';
+}
 </script>
 </body>
 </html>
