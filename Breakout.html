@@ -311,6 +311,9 @@ let isAIMode = false;
 let isSoloMode = false;
 let isMultiplayer = !modeFromURL; // no mode = multiplayer from waiting room
 
+// דיבוג ויזואלי - יוסר אחרי תיקון
+document.title = `mode=${modeFromURL} user=${myName}`;
+
 const GAME_ID = 'breakout';
 let roomRef = isMultiplayer ? ref(db, `rooms_v3/${GAME_ID}`) : ref(db, `rooms_v3/${GAME_ID}_ai`);
 let gameStateRef = isMultiplayer ? null : ref(db, `game/${GAME_ID}_ai/${myName}`);
@@ -1785,6 +1788,8 @@ async function initSession() {
   } catch (e) { document.title = 'ERROR: ' + e.message; }
 }
 
+try {
+
 if (modeFromURL === 'ai') {
   // הגיע מכפתור "שחק לבד" באינדקס - הצג בחירה בין מול מחשב למשחק לבד
   const modeEl = document.getElementById('mode-select');
@@ -1795,6 +1800,12 @@ if (modeFromURL === 'ai') {
 } else {
   // מולטיפלייר - מגיע מחדר המתנה
   initSession();
+}
+
+} catch(startErr) {
+  document.title = 'START ERR: ' + startErr.message;
+  document.body.innerHTML = '<div style="color:red;padding:20px;font-size:1.2em;direction:rtl;text-align:center;">' + 
+    '<h2>שגיאה</h2><p>' + startErr.message + '</p><p>' + startErr.stack + '</p></div>';
 }
 </script>
 </body>
