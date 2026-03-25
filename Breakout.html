@@ -382,17 +382,16 @@ if (!userData) { window.location.href = 'index.html'; throw new Error('No user d
 const myName = userData.id;
 const myColor = userData.color;
 const myEmoji = userData.emoji;
+const isGuest = userData.rawId === 'guest';
 const modeFromURL = params.get('mode'); // 'ai' from index means "show choice screen"
 let isAIMode = false;
 let isSoloMode = false;
 let isMultiplayer = !modeFromURL; // no mode = multiplayer from waiting room
 
-// דיבוג ויזואלי - יוסר אחרי תיקון
-document.title = `mode=${modeFromURL} user=${myName}`;
-
 const GAME_ID = 'breakout';
 let roomRef = isMultiplayer ? ref(db, `rooms_v3/${GAME_ID}`) : ref(db, `rooms_v3/${GAME_ID}_ai`);
 let gameStateRef = isMultiplayer ? null : ref(db, `game/${GAME_ID}_ai/${myName}`);
+let progressRef = ref(db, `progress/${GAME_ID}/${myName}`);
 let currentGameId = null;
 
 // מסך בחירת מצב
@@ -408,10 +407,20 @@ window.chooseMode = (mode) => {
   }
   roomRef = ref(db, `rooms_v3/${GAME_ID}_ai`);
   gameStateRef = ref(db, `game/${GAME_ID}_ai/${myName}`);
-  setTimeout(() => {
-    document.title = 'resize...';
+  setTimeout(async () => {
     resizeCanvas();
-    document.title = 'init...';
+    // טעינת התקדמות שמורה
+    const saved = await loadProgress(mode === 'ai' ? 'ai' : 'solo');
+    if (saved) {
+      if (mode === 'solo') {
+        soloLevel = saved.soloLevel || 0;
+        soloLives = saved.soloLives || 3;
+      } else {
+        p1Wins = saved.p1Wins || 0;
+        p2Wins = saved.p2Wins || 0;
+        roundNum = saved.roundNum || 0;
+      }
+    }
     initSession();
   }, 100);
 };
@@ -525,6 +534,41 @@ function resetSoloTimers() {
   soloHeartsSpawned = 0;
 }
 
+// ========== שמירת/שחזור התקדמות ==========
+function saveProgress() {
+  if (!progressRef) return;
+  try {
+    if (isSoloMode) {
+      set(progressRef, {
+        mode: 'solo', soloLevel, soloLives,
+        p1Score: gameState ? gameState.p1Score : 0,
+        timestamp: Date.now()
+      });
+    } else if (isAIMode) {
+      set(progressRef, {
+        mode: 'ai', p1Wins, p2Wins, roundNum,
+        timestamp: Date.now()
+      });
+    }
+  } catch (e) { console.error('saveProgress err:', e); }
+}
+
+async function loadProgress(mode) {
+  if (!progressRef) return null;
+  try {
+    const snap = await get(progressRef);
+    const val = snap.val();
+    if (val && val.mode === mode && Date.now() - val.timestamp < 24 * 60 * 60 * 1000) {
+      return val; // תקף ל-24 שעות
+    }
+    return null;
+  } catch (e) { console.error('loadProgress err:', e); return null; }
+}
+
+function clearProgress() {
+  if (progressRef) remove(progressRef).catch(() => {});
+}
+
 function startHeartbeat(roomPath, joinedAt) {
   heartbeatInterval = setInterval(() => {
     set(ref(db, roomPath), { name: displayName, color: myColor, emoji: myEmoji, joinedAt, timestamp: Date.now(), active: true });
@@ -584,10 +628,11 @@ window.goHome = async () => {
 window.goToModeSelect = async () => {
   try {
     stopHeartbeat(); stopOpponentCheck(); gameRunning = false;
+    saveProgress(); // שמירת התקדמות לפני יציאה
     if (myName) await remove(ref(db, `rooms_v3/${GAME_ID}_ai/${myName}`));
     if (gameStateRef) await set(gameStateRef, null);
   } catch (e) { console.error('goToModeSelect err:', e); }
-  // איפוס מצב
+  // איפוס מצב מקומי
   gameState = null; isAIMode = false; isSoloMode = false;
   soloLevel = 0; soloLives = 3;
   p1Wins = 0; p2Wins = 0; roundNum = 0;
@@ -1281,6 +1326,7 @@ function updatePhysics(dt) {
         gameState.soloLives = (gameState.soloLives || 3) - 1;
         soloLives = gameState.soloLives;
         updateLivesDisplay();
+        saveProgress();
         if (soloLives <= 0) {
           endRound('p2'); // הפסד
         } else {
@@ -1339,6 +1385,7 @@ function advanceToNextLevel() {
   gameRunning = false;
   soloLevel++;
   gameState.soloLevel = soloLevel;
+  saveProgress();
 
   const level = SOLO_LEVELS[soloLevel];
   // הצג באנר מעבר שלב
@@ -2191,6 +2238,7 @@ function endRound(winner) {
   roundNum++;
   gameState.p1Wins = p1Wins; gameState.p2Wins = p2Wins; gameState.roundNum = roundNum;
   gameState.rematchP1 = false; gameState.rematchP2 = false;
+  if (isAIMode) saveProgress();
   syncFullState();
   handleRoundEnd(winner, true);
 }
@@ -2329,6 +2377,7 @@ function showMatchModal(winner) {
       document.getElementById('match-modal').style.display = 'none';
       soloLevel = 0;
       soloLives = 3;
+      clearProgress();
       startNewMatch();
     };
     return;
@@ -2353,6 +2402,7 @@ function showMatchModal(winner) {
     document.getElementById('match-modal').style.display = 'flex';
     document.getElementById('btn-rematch-ai').onclick = () => {
       document.getElementById('match-modal').style.display = 'none';
+      clearProgress();
       startNewMatch();
     };
   } else {
