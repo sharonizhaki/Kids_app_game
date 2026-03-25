@@ -190,6 +190,15 @@
   }
   .btn-home:active { transform: scale(0.9); }
 
+  .btn-home-inline {
+    position: absolute; top: 5px; left: 5px; z-index: 5;
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+    color: white; width: 26px; height: 26px; border-radius: 50%;
+    font-size: 0.75em; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    padding: 0; user-select: none;
+  }
+  .btn-home-inline:active { transform: scale(0.9); }
+
   /* Mode select */
   .mode-btn {
     width: 100%; max-width: 280px;
@@ -218,11 +227,11 @@
 <body>
 
 <div class="stars"></div>
-<button class="btn-home" onclick="goHome()">🏠</button>
 
 <!-- HEADER SCORE BAR -->
 <div class="header">
-  <div class="score-box" id="card-p1">
+  <div class="score-box" id="card-p1" style="position:relative;">
+    <button class="btn-home-inline" id="btn-home-header" onclick="goToModeSelect()">🏠</button>
     <div class="name" id="name-p1">שחקן 1</div>
     <div class="wins" id="wins-p1">0</div>
     <div class="wins-label">⭐</div>
@@ -492,6 +501,28 @@ window.goHome = async () => {
     } else if (myName) { await remove(ref(db, `rooms_v3/${GAME_ID}_ai/${myName}`)); }
   } catch (e) { console.error('goHome err:', e); }
   setTimeout(() => { window.location.href = 'index.html'; }, 200);
+};
+
+// חזרה למסך בחירת מצב (AI/סולו) בלי לצאת מהדף
+window.goToModeSelect = async () => {
+  try {
+    stopHeartbeat(); stopOpponentCheck(); gameRunning = false;
+    if (myName) await remove(ref(db, `rooms_v3/${GAME_ID}_ai/${myName}`));
+    if (gameStateRef) await set(gameStateRef, null);
+  } catch (e) { console.error('goToModeSelect err:', e); }
+  // איפוס מצב
+  gameState = null; isAIMode = false; isSoloMode = false;
+  soloLevel = 0; soloLives = 3;
+  p1Wins = 0; p2Wins = 0; roundNum = 0;
+  dyingBricks = []; particles = [];
+  // הסתר הכל, הצג מסך בחירה
+  document.getElementById('match-modal').style.display = 'none';
+  document.getElementById('round-banner').style.display = 'none';
+  document.querySelector('.header').style.display = 'none';
+  document.getElementById('gameCanvas').style.display = 'none';
+  const modeEl = document.getElementById('mode-select');
+  modeEl.style.display = 'flex';
+  document.getElementById('mode-greeting').textContent = `${myEmoji} ${displayName}`;
 };
 
 window.addEventListener('beforeunload', () => {
@@ -1104,7 +1135,7 @@ function showLifeLostModal(livesLeft) {
   subEl.textContent = `נשארו ${hearts.join('')}`;
   btnsDiv.innerHTML = `
     <button class="mbtn mbtn-primary" id="btn-continue-solo">▶️ המשך</button>
-    <button class="mbtn mbtn-secondary" onclick="goHome()">🏠 מסך בית</button>
+    <button class="mbtn mbtn-secondary" onclick="goToModeSelect()">🏠 מסך בית</button>
   `;
   modal.style.display = 'flex';
 
@@ -1505,8 +1536,8 @@ function drawPadWithEffects(px, py, pw, color, playerKey) {
     offsetX += Math.sin(now / 30) * S(1.5);
   }
 
-  const drawX = x + offsetX;
   const drawW = w * scaleX;
+  const drawX = x + offsetX - (drawW - w) / 2; // מרכוז - גדל משני הצדדים
 
   // מגנט - הילה סגולה
   if (effects[playerKey].magnet > now) {
@@ -1688,10 +1719,15 @@ function handleRoundEnd(winner, isLocal) {
     if (isLocal || true) launchConfetti(winnerColor);
     setTimeout(() => showMatchModal(winner), 800);
   } else {
-    // Show round banner, then auto-start next round
-    showRoundBanner(winnerName, winnerEmoji, winnerColor);
-    if (isP1 || isAIMode) {
-      setTimeout(() => startNextRound(), 2500);
+    // בין סיבובים - מודאל עם כפתור המשך + בית
+    if (isAIMode) {
+      showRoundEndModal(winnerName, winnerEmoji, winnerColor);
+    } else {
+      // מולטי - באנר ישן + אוטומטי
+      showRoundBanner(winnerName, winnerEmoji, winnerColor);
+      if (isP1) {
+        setTimeout(() => startNextRound(), 2500);
+      }
     }
   }
 }
@@ -1704,6 +1740,32 @@ function showRoundBanner(name, emoji, color) {
   banner.style.boxShadow = `0 0 40px ${color}40`;
   banner.innerHTML = `🏅 ${emoji} ${name}!`;
   setTimeout(() => { banner.style.display = 'none'; }, 2200);
+}
+
+// מודאל בין סיבובים (מול AI) - עם כפתורים
+function showRoundEndModal(winnerName, winnerEmoji, winnerColor) {
+  const modal = document.getElementById('match-modal');
+  const iconEl = document.getElementById('mm-icon');
+  const titleEl = document.getElementById('mm-title');
+  const subEl = document.getElementById('mm-sub');
+  const btnsDiv = document.getElementById('mm-btns');
+
+  const iWon = (winnerName === p1DisplayName);
+  iconEl.textContent = iWon ? '🏅' : '😤';
+  titleEl.textContent = `${winnerEmoji} ${winnerName}!`;
+  titleEl.style.color = winnerColor;
+  subEl.textContent = `${p1Wins} - ${p2Wins}`;
+
+  btnsDiv.innerHTML = `
+    <button class="mbtn mbtn-primary" id="btn-next-round">▶️ סיבוב הבא</button>
+    <button class="mbtn mbtn-secondary" onclick="goToModeSelect()">🏠 מסך בית</button>
+  `;
+  modal.style.display = 'flex';
+
+  document.getElementById('btn-next-round').onclick = () => {
+    modal.style.display = 'none';
+    startNextRound();
+  };
 }
 
 function startNextRound() {
@@ -1773,7 +1835,7 @@ function showMatchModal(winner) {
     }
     btnsDiv.innerHTML = `
       <button class="mbtn mbtn-primary" id="btn-solo-restart">🔄 שחק שוב מהתחלה</button>
-      <button class="mbtn mbtn-secondary" onclick="goHome()">🏠 חזרה לתפריט</button>
+      <button class="mbtn mbtn-secondary" onclick="goToModeSelect()">🏠 מסך בית</button>
     `;
     document.getElementById('match-modal').style.display = 'flex';
     document.getElementById('btn-solo-restart').onclick = () => {
@@ -1794,7 +1856,7 @@ function showMatchModal(winner) {
   if (isAIMode) {
     btnsDiv.innerHTML = `
       <button class="mbtn mbtn-primary" id="btn-rematch-ai">🔄 שחק שוב</button>
-      <button class="mbtn mbtn-secondary" onclick="goHome()">🏠 חזרה לתפריט</button>
+      <button class="mbtn mbtn-secondary" onclick="goToModeSelect()">🏠 מסך בית</button>
     `;
     document.getElementById('match-modal').style.display = 'flex';
     document.getElementById('btn-rematch-ai').onclick = () => {
@@ -1939,6 +2001,8 @@ async function initSession() {
     const myJoinedAt = Date.now();
 
     if (isAIMode || isSoloMode) {
+      // כפתור בית בהדר → חזרה למסך בחירה
+      document.getElementById('btn-home-header').onclick = goToModeSelect;
       document.title = 'firebase set...';
       await set(ref(db, roomPath), { name: displayName, color: myColor, emoji: myEmoji, joinedAt: myJoinedAt, timestamp: myJoinedAt, active: true });
       document.title = 'heartbeat...';
@@ -1963,6 +2027,8 @@ async function initSession() {
       startGamePlay();
       document.title = 'RUNNING!';
     } else {
+      // כפתור בית בהדר → חזרה לאינדקס (מולטי)
+      document.getElementById('btn-home-header').onclick = goHome;
       const existingSnap = await get(ref(db, roomPath));
       const existingData = existingSnap.val();
       const myJoinedAtFinal = existingData?.joinedAt || myJoinedAt;
