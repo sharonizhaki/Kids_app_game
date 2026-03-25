@@ -560,19 +560,19 @@ function createSoloState(levelIndex = 0) {
 
 // ========== פאוור-אפים ==========
 const POWERUP_TYPES = [
-  // 🎯 אישי (הילה בצבע שחקן)
-  { type: 'wider',      emoji: '↔️', label: '↔️ פד רחב',     category: 'personal', weight: 15 },
-  { type: 'shield',     emoji: '🛡️', label: '🛡️ מגן',        category: 'personal', weight: 4 },
-  { type: 'magnet',     emoji: '🧲', label: '🧲 מגנט',       category: 'personal', weight: 10 },
-  { type: 'shrink',     emoji: '🤏', label: '🤏 פד קטן',     category: 'personal', weight: 12 },
-  { type: 'reverse',    emoji: '🔄', label: '🔄 היפוך',      category: 'personal', weight: 6 },
-  { type: 'bomb',       emoji: '💣', label: '💣 פיצוץ',      category: 'personal', weight: 4 },
-  { type: 'freeze',     emoji: '❄️', label: '❄️ הקפאה',      category: 'personal', weight: 8 },
-  // 🌐 משותף (בלי הילה)
-  { type: 'extra_ball', emoji: '⚾', label: '⚾ כדור נוסף',  category: 'shared',   weight: 12 },
-  { type: 'meteor',     emoji: '☄️', label: '☄️ כדור חזק',   category: 'shared',   weight: 3 },
-  { type: 'fog',        emoji: '🌫️', label: '🌫️ ערפל',       category: 'shared',   weight: 5 },
-  { type: 'ghost',      emoji: '👻', label: '👻 רפאים',      category: 'shared',   weight: 5 },
+  // 🎯 טובים (הילה בצבע שחקן)
+  { type: 'wider',      emoji: '↔️', label: '↔️ פד רחב',     category: 'personal', danger: false, weight: 15 },
+  { type: 'shield',     emoji: '🛡️', label: '🛡️ מגן',        category: 'personal', danger: false, weight: 4 },
+  { type: 'magnet',     emoji: '🧲', label: '🧲 מגנט',       category: 'personal', danger: false, weight: 10 },
+  { type: 'bomb',       emoji: '💣', label: '💣 פיצוץ',      category: 'personal', danger: false, weight: 4 },
+  { type: 'extra_ball', emoji: '⚾', label: '⚾ כדור נוסף',  category: 'shared',   danger: false, weight: 12 },
+  { type: 'meteor',     emoji: '☄️', label: '☄️ כדור חזק',   category: 'shared',   danger: false, weight: 3 },
+  // ⚠️ מסוכנים (הילה אדומה מהבהבת)
+  { type: 'shrink',     emoji: '🤏', label: '🤏 פד קטן',     category: 'personal', danger: true, weight: 12 },
+  { type: 'reverse',    emoji: '🔄', label: '🔄 היפוך',      category: 'personal', danger: true, weight: 6 },
+  { type: 'freeze',     emoji: '❄️', label: '❄️ הקפאה',      category: 'personal', danger: true, weight: 8 },
+  { type: 'fog',        emoji: '🌫️', label: '🌫️ ערפל',       category: 'shared',   danger: true, weight: 5 },
+  { type: 'ghost',      emoji: '👻', label: '👻 רפאים',      category: 'shared',   danger: true, weight: 5 },
 ];
 
 function weightedRandom(items) {
@@ -598,6 +598,7 @@ function maybeSpawnPowerup(x, y, goingUp) {
       x, y, dy: goingUp ? -2 : 2,
       type: pt.type, id: ++powerupIdCounter,
       emoji: pt.emoji, category: pt.category,
+      danger: pt.danger || false,
       w: 28, h: 16,
     });
   }
@@ -982,14 +983,15 @@ function updatePhysics(dt) {
       if (soloLives <= 0) {
         endRound('p2'); // הפסד
       } else {
-        // אתחול כדור מחדש
+        // אתחול כדור מחדש - ממתין ללחיצת שחקן
         const level = SOLO_LEVELS[soloLevel] || SOLO_LEVELS[0];
         ball.x = 210; ball.y = p1PadY - 40;
         ball.dx = BALL_SPEED * level.speedMult * (Math.random() > 0.5 ? 1 : -1);
         ball.dy = -BALL_SPEED * level.speedMult;
         gameState.balls = [];
+        gameState.powerups = [];
         gameState.paused = true;
-        showCountdown(() => { if (gameState) gameState.paused = false; lastSpeedUpTime = Date.now(); });
+        showLifeLostModal(soloLives);
       }
     }
     // כל הלבנים נשברו = סיום שלב
@@ -1081,6 +1083,48 @@ function advanceToNextLevel() {
       lastSpeedUpTime = Date.now();
     });
   }, 2500);
+}
+
+// ========== הודעת איבוד חיים (סולו) ==========
+function showLifeLostModal(livesLeft) {
+  const hearts = [];
+  for (let i = 0; i < 3; i++) {
+    hearts.push(i < livesLeft ? '❤️' : '🖤');
+  }
+
+  const modal = document.getElementById('match-modal');
+  const titleEl = document.getElementById('mm-title');
+  const subEl = document.getElementById('mm-sub');
+  const iconEl = document.getElementById('mm-icon');
+  const btnsDiv = document.getElementById('mm-btns');
+
+  iconEl.textContent = '💔';
+  titleEl.textContent = 'אופס!';
+  titleEl.style.color = '#EF4444';
+  subEl.textContent = `נשארו ${hearts.join('')}`;
+  btnsDiv.innerHTML = `
+    <button class="mbtn mbtn-primary" id="btn-continue-solo">▶️ המשך</button>
+    <button class="mbtn mbtn-secondary" onclick="goHome()">🏠 מסך בית</button>
+  `;
+  modal.style.display = 'flex';
+
+  // סגירה אוטומטית אחרי 2 שניות
+  const autoCloseTimer = setTimeout(() => {
+    closeLostModalAndContinue();
+  }, 2000);
+
+  function closeLostModalAndContinue() {
+    clearTimeout(autoCloseTimer);
+    modal.style.display = 'none';
+    showCountdown(() => {
+      if (gameState) gameState.paused = false;
+      lastSpeedUpTime = Date.now();
+    });
+  }
+
+  document.getElementById('btn-continue-solo').onclick = () => {
+    closeLostModalAndContinue();
+  };
 }
 
 // ========== לולאה ==========
@@ -1217,31 +1261,49 @@ function drawGame() {
   for (const eb of gameState.balls) drawBall(eb);
 
   // פאוור-אפים
+  const puNow = Date.now();
   for (const pu of gameState.powerups) {
-    // רקע בהיר לנראות - עיגול לבן חצי-שקוף
-    ctx.fillStyle = 'rgba(255,255,255,0.3)';
-    ctx.beginPath();
-    ctx.arc(S(pu.x), S(pu.y), S(15), 0, Math.PI * 2);
-    ctx.fill();
+    const sx = S(pu.x), sy = S(pu.y);
 
-    if (pu.category === 'personal') {
-      const haloColor = pu.dy > 0 ? p1Color : p2Color;
-      ctx.fillStyle = haloColor;
-      ctx.shadowColor = haloColor;
-      ctx.shadowBlur = S(10);
-      ctx.globalAlpha = 0.45;
+    if (pu.danger) {
+      // מסוכן - הילה אדומה מהבהבת
+      const blink = 0.4 + Math.sin(puNow / 120) * 0.35; // 0.05-0.75
+      ctx.fillStyle = '#EF4444';
+      ctx.shadowColor = '#EF4444';
+      ctx.shadowBlur = S(14 + Math.sin(puNow / 100) * 4);
+      ctx.globalAlpha = blink;
       ctx.beginPath();
-      ctx.arc(S(pu.x), S(pu.y), S(15), 0, Math.PI * 2);
+      ctx.arc(sx, sy, S(16), 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
+    } else {
+      // רקע בהיר לנראות - עיגול לבן חצי-שקוף
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.beginPath();
+      ctx.arc(sx, sy, S(15), 0, Math.PI * 2);
+      ctx.fill();
+
+      if (pu.category === 'personal') {
+        const haloColor = pu.dy > 0 ? p1Color : p2Color;
+        ctx.fillStyle = haloColor;
+        ctx.shadowColor = haloColor;
+        ctx.shadowBlur = S(10);
+        ctx.globalAlpha = 0.45;
+        ctx.beginPath();
+        ctx.arc(sx, sy, S(15), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+      }
     }
+
     ctx.font = `${S(24)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(255,255,255,0.8)';
+    ctx.shadowColor = pu.danger ? 'rgba(255,100,100,0.8)' : 'rgba(255,255,255,0.8)';
     ctx.shadowBlur = S(6);
-    ctx.fillText(pu.emoji || '⭐', S(pu.x), S(pu.y));
+    ctx.fillText(pu.emoji || '⭐', sx, sy);
     ctx.shadowBlur = 0;
     // +1 ליד כדור נוסף
     if (pu.type === 'extra_ball') {
