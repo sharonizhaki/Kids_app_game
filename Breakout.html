@@ -447,6 +447,7 @@ let effects = {
 // ========== Heartbeat ==========
 let heartbeatInterval = null, opponentCheckInterval = null;
 let roomListenerUnsubscribe = null, gameStateUnsubscribe = null;
+let lastBombTime = 0; // עיכוב בדיקת ניצחון אחרי פצצה
 
 function startHeartbeat(roomPath, joinedAt) {
   heartbeatInterval = setInterval(() => {
@@ -678,7 +679,8 @@ function splashBreak(brick, bricksArray, scorerKey, colorForDying) {
 
 function applyPowerup(type, catcher) {
   const info = POWERUP_TYPES.find(p => p.type === type);
-  const opponent = catcher === 'p1' ? 'p2' : 'p1';
+  // בסולו: מסוכנים משפיעים על השחקן עצמו (p1), טובים על p1
+  const opponent = isSoloMode ? 'p1' : (catcher === 'p1' ? 'p2' : 'p1');
   const now = Date.now();
 
   switch (type) {
@@ -718,13 +720,14 @@ function applyPowerup(type, catcher) {
       const alive = enemyBricks.filter(b => b.alive);
       const count = Math.min(3, alive.length);
       for (let i = 0; i < count; i++) {
-        const idx = Math.floor(Math.random() * alive.length);
-        const pick = alive.splice(idx, 1)[0];
+        const nonprotest = Math.floor(Math.random() * alive.length);
+        const pick = alive.splice(nonprotest, 1)[0];
         pick.alive = false; pick.hp = 0;
         if (catcher === 'p1') gameState.p1Score += 10; else gameState.p2Score += 10;
         dyingBricks.push({ x: pick.x, y: pick.y, w: pick.w, h: pick.h, color: enemyColor, startTime: Date.now(), duration: 400 });
         spawnParticles(pick.x + pick.w / 2, pick.y + pick.h / 2, enemyColor, 10);
       }
+      lastBombTime = Date.now(); // עיכוב בדיקת ניצחון
       break;
     }
 
@@ -1025,8 +1028,9 @@ function updatePhysics(dt) {
         showLifeLostModal(soloLives);
       }
     }
-    // כל הלבנים נשברו = סיום שלב
-    if (gameState && !gameState.gameOver && gameState.topBricks.every(b => !b.alive)) {
+    // כל הלבנים נשברו = סיום שלב (עיכוב אחרי פצצה לאנימציה)
+    const bombCooldown = Date.now() - lastBombTime > 500;
+    if (bombCooldown && gameState && !gameState.gameOver && gameState.topBricks.every(b => !b.alive)) {
       if (soloLevel < SOLO_LEVELS.length - 1) {
         // מעבר לשלב הבא
         advanceToNextLevel();
@@ -1036,10 +1040,11 @@ function updatePhysics(dt) {
       }
     }
   } else {
+    const bombCooldown2 = Date.now() - lastBombTime > 500;
     if (ball.y - BALL_R < -10) endRound('p1');
     else if (ball.y + BALL_R > FIELD_H + 10) endRound('p2');
-    if (gameState && !gameState.gameOver && gameState.topBricks.every(b => !b.alive)) endRound('p1');
-    if (gameState && !gameState.gameOver && gameState.bottomBricks.every(b => !b.alive)) endRound('p2');
+    if (bombCooldown2 && gameState && !gameState.gameOver && gameState.topBricks.every(b => !b.alive)) endRound('p1');
+    if (bombCooldown2 && gameState && !gameState.gameOver && gameState.bottomBricks.every(b => !b.alive)) endRound('p2');
   }
 }
 
