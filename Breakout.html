@@ -34,6 +34,23 @@
     background-size: 60px 60px; opacity: 0.08; pointer-events: none;
   }
 
+  .floating-emoji {
+    position: fixed; font-size: 4.5rem; opacity: 0.12;
+    pointer-events: none; z-index: 0; filter: blur(2px);
+    user-select: none; -webkit-user-select: none;
+    animation: floatEmoji 26s infinite ease-in-out;
+  }
+  @keyframes floatEmoji {
+    0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    12.5% { transform: translate(110px, -95px) rotate(35deg) scale(1.05); }
+    25% { transform: translate(85px, 75px) rotate(15deg) scale(0.98); }
+    37.5% { transform: translate(-95px, 110px) rotate(-30deg) scale(0.95); }
+    50% { transform: translate(-110px, -80px) rotate(-20deg) scale(1.02); }
+    62.5% { transform: translate(-70px, -120px) rotate(40deg) scale(1.08); }
+    75% { transform: translate(100px, -65px) rotate(-10deg) scale(0.97); }
+    87.5% { transform: translate(75px, 90px) rotate(25deg) scale(1.03); }
+  }
+
   /* ========== HEADER / SCORE BAR ========== */
   .header {
     display: flex; justify-content: space-around; align-items: stretch;
@@ -269,6 +286,9 @@
 <body>
 
 <div class="stars"></div>
+<div class="floating-emoji" style="top: 12%; left: 5%; animation-delay: 0s;">🧱</div>
+<div class="floating-emoji" style="top: 55%; right: 6%; animation-delay: -8.5s;">☄️</div>
+<div class="floating-emoji" style="bottom: 18%; left: 8%; animation-delay: -17s;">⚾</div>
 
 <!-- HEADER SCORE BAR -->
 <div class="header">
@@ -314,7 +334,7 @@
   </button>
   <button class="mode-btn" id="btn-solo" onclick="chooseMode('solo')">
     <span style="font-size:1.8rem;">🎮</span>
-    <span style="font-weight:900; font-size:1rem;">משחק לבד</span>
+    <span style="font-weight:900; font-size:1rem;">משחק קלאסי</span>
     <span style="font-size:0.75rem; color:#aaa;">שבור את כל הלבנים • 3 חיים</span>
   </button>
   <button style="background:none; border:none; color:#888; font-size:0.85rem; cursor:pointer; margin-top:8px; text-decoration:underline; font-family:Heebo,sans-serif;" onclick="goHome()">🏠 חזרה</button>
@@ -429,7 +449,7 @@ function S(v) { return v * (canvas.width / 420); }
 
 // ========== קבועים ==========
 const BRICK_COLS = 7, BRICK_H = 13, BRICK_GAP = 2, BRICK_PAD_X = 20;
-const PAD_W = 80, PAD_H = 14, BALL_R = 7, BALL_SPEED = 4;
+const PAD_W = 80, PAD_H = 18, BALL_R = 7, BALL_SPEED = 4;
 const FIELD_H = 700;
 
 // שלבים למצב סולו
@@ -469,6 +489,9 @@ let particles = []; // { x, y, dx, dy, color, life, maxLife, size }
 
 // אנימציית פגיעת כדור בפד
 let padHits = { p1: 0, p2: 0 }; // timestamp of last hit
+
+// אנימציות פגיעה בקירות
+let wallHits = []; // { x, y, time, color }
 
 // אפקטים זמניים
 let effects = {
@@ -619,8 +642,8 @@ function createSoloState(levelIndex = 0) {
       topBricks.push({ x, y: 30 + r * (BRICK_H + BRICK_GAP), w: brickW, h: BRICK_H, alive: true, hp: 1, row: r });
     }
   }
-  // פד Y דינמי - מתחשב במספר שורות השלב
-  const soloPadY = FIELD_H - 30 - rows * (BRICK_H + BRICK_GAP) - 20;
+  // פד Y קבוע למטה - לא משתנה לפי שלב
+  const soloPadY = FIELD_H - 50;
   return {
     ball: { x: 210, y: soloPadY - 40, dx: BALL_SPEED * speedMult, dy: -BALL_SPEED * speedMult },
     p1PadX: 210 - PAD_W / 2, p2PadX: 0,
@@ -1063,8 +1086,10 @@ function updatePhysics(dt) {
   const p1PadY = getP1PadY();
   ball.x += ball.dx * dt; ball.y += ball.dy * dt;
 
-  if (ball.x - BALL_R <= 0) { ball.x = BALL_R; ball.dx = Math.abs(ball.dx); }
-  if (ball.x + BALL_R >= 420) { ball.x = 420 - BALL_R; ball.dx = -Math.abs(ball.dx); }
+  if (ball.x - BALL_R <= 0) { ball.x = BALL_R; ball.dx = Math.abs(ball.dx); wallHits.push({ x: 0, y: ball.y, time: Date.now() }); }
+  if (ball.x + BALL_R >= 420) { ball.x = 420 - BALL_R; ball.dx = -Math.abs(ball.dx); wallHits.push({ x: 420, y: ball.y, time: Date.now() }); }
+  // קיר עליון - בסולו ובכל המצבים
+  if (isSoloMode && ball.y - BALL_R <= 0) { wallHits.push({ x: ball.x, y: 0, time: Date.now() }); }
 
   if (ball.dy > 0 && ball.y + BALL_R >= p1PadY && ball.y + BALL_R <= p1PadY + PAD_H + 6) {
     if (ball.x >= gameState.p1PadX - 6 && ball.x <= gameState.p1PadX + gameState.p1PadW + 6) {
@@ -1459,7 +1484,7 @@ function drawGame() {
   for (const b of gameState.topBricks) { if (b.alive) drawBrick(b, p2Color); }
   if (!isSoloMode) { for (const b of gameState.bottomBricks) { if (b.alive) drawBrick(b, p1Color); } }
 
-  // לבנים מתות - אנימציית צבע + היעלמות
+  // לבנים מתות - פיצוץ + זוהר + שברים מתפזרים
   const now = Date.now();
   for (let i = dyingBricks.length - 1; i >= 0; i--) {
     const db = dyingBricks[i];
@@ -1467,18 +1492,39 @@ function drawGame() {
     const progress = Math.min(elapsed / db.duration, 1);
     if (progress >= 1) { dyingBricks.splice(i, 1); continue; }
     const alpha = 1 - progress;
-    const scale = 1 + progress * 0.3;
     const cx = S(db.x + db.w / 2), cy = S(db.y + db.h / 2);
-    const bw = S(db.w) * scale, bh = S(db.h) * scale;
+    const bw = S(db.w), bh = S(db.h);
+
     ctx.save();
-    ctx.globalAlpha = alpha;
+    // גל אור מתפשט
+    const waveR = S(5 + progress * 25);
+    ctx.globalAlpha = alpha * 0.4;
     ctx.fillStyle = db.color;
     ctx.shadowColor = db.color;
-    ctx.shadowBlur = S(10) * alpha;
+    ctx.shadowBlur = S(15) * alpha;
     ctx.beginPath();
-    ctx.roundRect(cx - bw / 2, cy - bh / 2, bw, bh, S(4));
+    ctx.arc(cx, cy, waveR, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
+
+    // שברי לבנה מתפזרים (4 חלקים)
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = db.color;
+    const scatter = progress * S(12);
+    const rot = progress * 0.5;
+    for (let q = 0; q < 4; q++) {
+      const ox = (q % 2 === 0 ? -1 : 1) * scatter;
+      const oy = (q < 2 ? -1 : 1) * scatter;
+      const sw = bw * 0.45 * (1 - progress * 0.3);
+      const sh = bh * 0.45 * (1 - progress * 0.3);
+      ctx.save();
+      ctx.translate(cx + ox, cy + oy);
+      ctx.rotate(rot * (q % 2 === 0 ? 1 : -1));
+      ctx.beginPath();
+      ctx.roundRect(-sw / 2, -sh / 2, sw, sh, S(2));
+      ctx.fill();
+      ctx.restore();
+    }
     ctx.globalAlpha = 1;
     ctx.restore();
   }
@@ -1628,6 +1674,29 @@ function drawGame() {
   }
 
   const nowDraw = Date.now();
+
+  // אנימציות פגיעה בקירות
+  for (let i = wallHits.length - 1; i >= 0; i--) {
+    const wh = wallHits[i];
+    const age = nowDraw - wh.time;
+    if (age > 350) { wallHits.splice(i, 1); continue; }
+    const progress = age / 350;
+    const alpha = (1 - progress) * 0.6;
+    const spread = S(8 + progress * 20);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    const gx = S(wh.x), gy = S(wh.y);
+    const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, spread);
+    grad.addColorStop(0, 'rgba(255,255,255,0.8)');
+    grad.addColorStop(0.5, 'rgba(200,220,255,0.3)');
+    grad.addColorStop(1, 'rgba(200,220,255,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(gx, gy, spread, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
 
   // ערפל - מסתיר את הפד של מי שחטף (אישי)
   const myFogKey = isP1 ? 'p1' : 'p2';
@@ -1872,28 +1941,47 @@ function drawPadWithEffects(px, py, pw, color, playerKey) {
     ctx.globalAlpha = 1;
   }
 
-  // אנימציית פגיעת כדור - גל אור מתפשט
+  // אנימציית פגיעת כדור - הבהוב פד + גלים + ניצוצות
   const hitAge = now - (padHits[playerKey] || 0);
-  if (hitAge < 350) {
-    const hitProgress = hitAge / 350;
-    const waveR = S(10 + hitProgress * 40);
+  if (hitAge < 400) {
+    const hitProgress = hitAge / 400;
+
+    // הבהוב הפד עצמו
+    if (hitProgress < 0.15) {
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.roundRect(drawX, y, drawW, h, S(7)); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // גל אור מתפשט
+    const waveR = S(10 + hitProgress * 50);
     const waveAlpha = (1 - hitProgress) * 0.5;
     ctx.globalAlpha = waveAlpha;
     ctx.strokeStyle = color;
     ctx.shadowColor = color;
-    ctx.shadowBlur = S(8);
-    ctx.lineWidth = S(2 * (1 - hitProgress));
+    ctx.shadowBlur = S(10);
+    ctx.lineWidth = S(2.5 * (1 - hitProgress));
     ctx.beginPath();
     ctx.arc(drawX + drawW / 2, y + h / 2, waveR, 0, Math.PI * 2);
     ctx.stroke();
-    // גל שני קטן יותר
-    if (hitProgress > 0.1) {
-      const wave2R = S(5 + (hitProgress - 0.1) * 30);
-      ctx.globalAlpha = waveAlpha * 0.5;
+    // גל שני
+    if (hitProgress > 0.08) {
+      const wave2R = S(5 + (hitProgress - 0.08) * 35);
+      ctx.globalAlpha = waveAlpha * 0.4;
       ctx.beginPath();
       ctx.arc(drawX + drawW / 2, y + h / 2, wave2R, 0, Math.PI * 2);
       ctx.stroke();
     }
+    // קו זוהר על הפד
+    ctx.globalAlpha = (1 - hitProgress) * 0.6;
+    ctx.fillStyle = '#fff';
+    ctx.shadowColor = '#fff';
+    ctx.shadowBlur = S(6);
+    ctx.beginPath();
+    ctx.roundRect(drawX + S(3), y + S(2), drawW - S(6), S(3), S(2));
+    ctx.fill();
+
     ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
   }
