@@ -377,11 +377,30 @@ window.addEventListener('resize', resizeCanvas);
 function S(v) { return v * (canvas.width / 420); }
 
 // ========== קבועים ==========
-const BRICK_ROWS = 5, BRICK_COLS = 7, BRICK_H = 13, BRICK_GAP = 2, BRICK_PAD_X = 20;
+const BRICK_COLS = 7, BRICK_H = 13, BRICK_GAP = 2, BRICK_PAD_X = 20;
 const PAD_W = 80, PAD_H = 14, BALL_R = 7, BALL_SPEED = 4;
 const FIELD_H = 700;
+
+// שלבים למצב סולו
+const SOLO_LEVELS = [
+  { rows: 5,  name: 'שלב 1', emoji: '🐣', title: 'חימום',  speedMult: 0.9  },
+  { rows: 9,  name: 'שלב 2', emoji: '💪', title: 'אתגר',   speedMult: 1.0  },
+  { rows: 15, name: 'שלב 3', emoji: '👑', title: 'אגדה',   speedMult: 1.1  },
+];
+
+// ברירת מחדל למצבים אחרים (מול מחשב / מולטי)
+const BRICK_ROWS = 5;
 const P1_PAD_Y = FIELD_H - 30 - BRICK_ROWS * (BRICK_H + BRICK_GAP) - 20;
 const P2_PAD_Y = 30 + BRICK_ROWS * (BRICK_H + BRICK_GAP) + 6;
+
+// מצב סולו - שלב נוכחי
+let soloLevel = 0; // 0-based index into SOLO_LEVELS
+
+// מיקום פד דינמי - במצב סולו מגיע מ-gameState
+function getP1PadY() {
+  if (isSoloMode && gameState && gameState.p1PadY !== undefined) return gameState.p1PadY;
+  return P1_PAD_Y;
+}
 
 let gameState = null, gameRunning = false, lastTime = 0;
 let myPadTarget = 210 - PAD_W / 2, powerupIdCounter = 0;
@@ -507,18 +526,24 @@ function createInitialState() {
   };
 }
 
-function createSoloState() {
+function createSoloState(levelIndex = 0) {
+  const level = SOLO_LEVELS[levelIndex] || SOLO_LEVELS[0];
+  const rows = level.rows;
+  const speedMult = level.speedMult;
   const topBricks = [];
   const brickW = (420 - 2 * BRICK_PAD_X - (BRICK_COLS - 1) * BRICK_GAP) / BRICK_COLS;
-  for (let r = 0; r < BRICK_ROWS; r++) {
+  for (let r = 0; r < rows; r++) {
     for (let c = 0; c < BRICK_COLS; c++) {
       const x = BRICK_PAD_X + c * (brickW + BRICK_GAP);
       topBricks.push({ x, y: 30 + r * (BRICK_H + BRICK_GAP), w: brickW, h: BRICK_H, alive: true, hp: 1, row: r });
     }
   }
+  // פד Y דינמי - מתחשב במספר שורות השלב
+  const soloPadY = FIELD_H - 30 - rows * (BRICK_H + BRICK_GAP) - 20;
   return {
-    ball: { x: 210, y: FIELD_H * 0.6, dx: BALL_SPEED * 0.9, dy: -BALL_SPEED * 0.9 },
+    ball: { x: 210, y: soloPadY - 40, dx: BALL_SPEED * speedMult, dy: -BALL_SPEED * speedMult },
     p1PadX: 210 - PAD_W / 2, p2PadX: 0,
+    p1PadY: soloPadY,
     topBricks, bottomBricks: [],
     p1Score: 0, p2Score: 0,
     p1PadW: PAD_W, p2PadW: 0,
@@ -527,7 +552,8 @@ function createSoloState() {
     p1Wins: 0, p2Wins: 0, roundNum: 0,
     rematchP1: false, rematchP2: false,
     p1ShieldUsed: 0, p2ShieldUsed: 0,
-    soloLives: 3,
+    soloLives: (typeof soloLives !== 'undefined' && soloLives > 0) ? soloLives : 3,
+    soloLevel: levelIndex,
     started: true, timestamp: Date.now()
   };
 }
@@ -824,14 +850,15 @@ function aiUpdate(dt) {
 function updatePhysics(dt) {
   if (!gameState || gameState.gameOver || gameState.paused) return;
   const ball = gameState.ball;
+  const p1PadY = getP1PadY();
   ball.x += ball.dx * dt; ball.y += ball.dy * dt;
 
   if (ball.x - BALL_R <= 0) { ball.x = BALL_R; ball.dx = Math.abs(ball.dx); }
   if (ball.x + BALL_R >= 420) { ball.x = 420 - BALL_R; ball.dx = -Math.abs(ball.dx); }
 
-  if (ball.dy > 0 && ball.y + BALL_R >= P1_PAD_Y && ball.y + BALL_R <= P1_PAD_Y + PAD_H + 6) {
+  if (ball.dy > 0 && ball.y + BALL_R >= p1PadY && ball.y + BALL_R <= p1PadY + PAD_H + 6) {
     if (ball.x >= gameState.p1PadX - 6 && ball.x <= gameState.p1PadX + gameState.p1PadW + 6) {
-      ball.y = P1_PAD_Y - BALL_R; padBounce(ball, gameState.p1PadX, gameState.p1PadW, true);
+      ball.y = p1PadY - BALL_R; padBounce(ball, gameState.p1PadX, gameState.p1PadW, true);
       padHits.p1 = Date.now();
     }
   }
@@ -907,7 +934,7 @@ function updatePhysics(dt) {
     if (eb.x - BALL_R <= 0) { eb.x = BALL_R; eb.dx = Math.abs(eb.dx); }
     if (eb.x + BALL_R >= 420) { eb.x = 420 - BALL_R; eb.dx = -Math.abs(eb.dx); }
     if (eb.y < -20 || eb.y > FIELD_H + 20) { gameState.balls.splice(i, 1); continue; }
-    if (eb.dy > 0 && eb.y + BALL_R >= P1_PAD_Y && eb.y + BALL_R <= P1_PAD_Y + PAD_H + 4) {
+    if (eb.dy > 0 && eb.y + BALL_R >= p1PadY && eb.y + BALL_R <= p1PadY + PAD_H + 4) {
       if (eb.x >= gameState.p1PadX - 4 && eb.x <= gameState.p1PadX + gameState.p1PadW + 4) eb.dy = -Math.abs(eb.dy);
     }
     if (eb.dy < 0 && eb.y - BALL_R <= P2_PAD_Y + PAD_H && eb.y - BALL_R >= P2_PAD_Y - 4) {
@@ -919,7 +946,7 @@ function updatePhysics(dt) {
 
   for (let i = gameState.powerups.length - 1; i >= 0; i--) {
     const pu = gameState.powerups[i]; pu.y += pu.dy * dt;
-    if (pu.dy > 0 && pu.y >= P1_PAD_Y && pu.y <= P1_PAD_Y + PAD_H + 10) {
+    if (pu.dy > 0 && pu.y >= p1PadY && pu.y <= p1PadY + PAD_H + 10) {
       if (pu.x >= gameState.p1PadX && pu.x <= gameState.p1PadX + gameState.p1PadW) { applyPowerup(pu.type, 'p1'); gameState.powerups.splice(i, 1); continue; }
     }
     if (pu.dy < 0 && pu.y <= P2_PAD_Y + PAD_H && pu.y >= P2_PAD_Y - 5) {
@@ -951,26 +978,109 @@ function updatePhysics(dt) {
     if (ball.y + BALL_R > FIELD_H + 10) {
       gameState.soloLives = (gameState.soloLives || 3) - 1;
       soloLives = gameState.soloLives;
-      document.getElementById('wins-p2').textContent = '❤️'.repeat(Math.max(0, soloLives));
+      updateLivesDisplay();
       if (soloLives <= 0) {
         endRound('p2'); // הפסד
       } else {
         // אתחול כדור מחדש
-        ball.x = 210; ball.y = FIELD_H * 0.6;
-        ball.dx = BALL_SPEED * 0.9 * (Math.random() > 0.5 ? 1 : -1);
-        ball.dy = -BALL_SPEED * 0.9;
+        const level = SOLO_LEVELS[soloLevel] || SOLO_LEVELS[0];
+        ball.x = 210; ball.y = p1PadY - 40;
+        ball.dx = BALL_SPEED * level.speedMult * (Math.random() > 0.5 ? 1 : -1);
+        ball.dy = -BALL_SPEED * level.speedMult;
         gameState.balls = [];
         gameState.paused = true;
         showCountdown(() => { if (gameState) gameState.paused = false; lastSpeedUpTime = Date.now(); });
       }
     }
-    if (gameState && !gameState.gameOver && gameState.topBricks.every(b => !b.alive)) endRound('p1'); // ניצחון
+    // כל הלבנים נשברו = סיום שלב
+    if (gameState && !gameState.gameOver && gameState.topBricks.every(b => !b.alive)) {
+      if (soloLevel < SOLO_LEVELS.length - 1) {
+        // מעבר לשלב הבא
+        advanceToNextLevel();
+      } else {
+        // שלב 3 הושלם = ניצחון סופי!
+        endRound('p1');
+      }
+    }
   } else {
     if (ball.y - BALL_R < -10) endRound('p1');
     else if (ball.y + BALL_R > FIELD_H + 10) endRound('p2');
     if (gameState && !gameState.gameOver && gameState.topBricks.every(b => !b.alive)) endRound('p1');
     if (gameState && !gameState.gameOver && gameState.bottomBricks.every(b => !b.alive)) endRound('p2');
   }
+}
+
+// ========== תצוגת חיים (סולו) ==========
+function updateLivesDisplay() {
+  const livesEl = document.getElementById('wins-p2');
+  const hearts = [];
+  for (let i = 0; i < 3; i++) {
+    hearts.push(i < soloLives ? '❤️' : '🖤');
+  }
+  livesEl.textContent = hearts.join('');
+}
+
+// ========== תצוגת שלב (סולו) ==========
+function updateLevelDisplay() {
+  const level = SOLO_LEVELS[soloLevel];
+  document.getElementById('wins-p1').textContent = gameState ? gameState.p1Score : 0;
+  document.querySelector('#card-p1 .wins-label').textContent = `${level.emoji} ${level.name}`;
+}
+
+// ========== מעבר שלב (סולו) ==========
+function advanceToNextLevel() {
+  if (!gameState) return;
+  gameRunning = false;
+  soloLevel++;
+  gameState.soloLevel = soloLevel;
+
+  const level = SOLO_LEVELS[soloLevel];
+  // הצג באנר מעבר שלב
+  const banner = document.getElementById('round-banner');
+  banner.style.display = 'block';
+  banner.style.color = '#F5C842';
+  banner.style.borderColor = '#F5C842';
+  banner.style.boxShadow = '0 0 40px rgba(245,200,66,0.3)';
+  banner.style.fontSize = '1.4rem';
+  banner.innerHTML = `${level.emoji} ${level.name} - ${level.title}`;
+
+  launchConfetti('#F5C842');
+
+  setTimeout(() => {
+    banner.style.display = 'none';
+    banner.style.fontSize = '';
+
+    // ניקוי אפקטים
+    dyingBricks = []; particles = [];
+    effects.p1 = { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0, fog: 0 };
+    effects.p2 = { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0, fog: 0 };
+    effects.shared = { ghost: 0 };
+    effects.shieldHitAnim = { p1: 0, p2: 0 };
+
+    // שמור ניקוד וחיים
+    const savedScore = gameState.p1Score;
+    const savedLives = soloLives;
+
+    // צור שלב חדש
+    gameState = createSoloState(soloLevel);
+    gameState.p1Score = savedScore;
+    gameState.soloLives = savedLives;
+
+    // עדכון תצוגה
+    updateLevelDisplay();
+    updateLivesDisplay();
+
+    myPadTarget = 210 - PAD_W / 2;
+    lastSpeedUpTime = Date.now();
+    if (gameStateRef) set(gameStateRef, gameState);
+    gameRunning = true; lastTime = performance.now();
+    gameState.paused = true;
+    requestAnimationFrame(gameLoop);
+    showCountdown(() => {
+      if (gameState) gameState.paused = false;
+      lastSpeedUpTime = Date.now();
+    });
+  }, 2500);
 }
 
 // ========== לולאה ==========
@@ -998,7 +1108,9 @@ function gameLoop(time) {
   if (isP1 || isAIMode || isSoloMode) {
     if (isAIMode && !isSoloMode) aiUpdate(dt);
     updatePhysics(dt);
-    if (!isSoloMode) {
+    if (isSoloMode) {
+      document.getElementById('wins-p1').textContent = gameState.p1Score;
+    } else {
       document.getElementById('wins-p1').textContent = p1Wins;
       document.getElementById('wins-p2').textContent = p2Wins;
     }
@@ -1100,7 +1212,7 @@ function drawGame() {
   ctx.globalAlpha = 1;
 
   if (!isSoloMode) drawPadWithEffects(gameState.p2PadX, P2_PAD_Y, gameState.p2PadW, p2Color, 'p2');
-  drawPadWithEffects(gameState.p1PadX, P1_PAD_Y, gameState.p1PadW, p1Color, 'p1');
+  drawPadWithEffects(gameState.p1PadX, getP1PadY(), gameState.p1PadW, p1Color, 'p1');
   drawBall(gameState.ball);
   for (const eb of gameState.balls) drawBall(eb);
 
@@ -1155,7 +1267,7 @@ function drawGame() {
 
     ctx.save();
     // הפד שלי (למטה אחרי flip) - מסתיר אותו
-    const myCy = S(P1_PAD_Y + PAD_H / 2); // תמיד למטה כי flip כבר קרה
+    const myCy = S(getP1PadY() + PAD_H / 2); // תמיד למטה כי flip כבר קרה
     const fogGrad = ctx.createRadialGradient(canvas.width / 2, myCy, S(15), canvas.width / 2, myCy, canvas.width * 0.6);
     fogGrad.addColorStop(0, `rgba(20, 25, 45, ${0.95 * fogStr})`);
     fogGrad.addColorStop(0.5, `rgba(20, 25, 45, ${0.9 * fogStr})`);
@@ -1180,7 +1292,7 @@ function drawGame() {
   for (const pk of ['p1', 'p2']) {
     if (effects[pk].frozen > nowDraw) {
       const padX = pk === 'p1' ? gameState.p1PadX : gameState.p2PadX;
-      const padY = pk === 'p1' ? P1_PAD_Y : P2_PAD_Y;
+      const padY = pk === 'p1' ? getP1PadY() : P2_PAD_Y;
       const padW = pk === 'p1' ? gameState.p1PadW : gameState.p2PadW;
       const age = nowDraw - effects.animStart[pk + 'Frozen'];
       const fadeIn = Math.min(age / 200, 1);
@@ -1479,6 +1591,16 @@ function endRound(winner) {
   gameState.gameOver = true; gameState.winner = winner;
   gameRunning = false;
 
+  if (isSoloMode) {
+    // סולו - ישר למודאל
+    if (winner === 'p1') {
+      // ניצחון שלב/סופי
+      launchConfetti(p1Color);
+    }
+    setTimeout(() => showMatchModal(winner), 800);
+    return;
+  }
+
   if (winner === 'p1') p1Wins++; else p2Wins++;
   roundNum++;
   gameState.p1Wins = p1Wins; gameState.p2Wins = p2Wins; gameState.roundNum = roundNum;
@@ -1566,14 +1688,46 @@ function showMatchModal(winner) {
   const winnerColor = winner === 'p1' ? p1Color : p2Color;
   const winnerEmoji = winner === 'p1' ? p1Emoji : p2Emoji;
 
+  const btnsDiv = document.getElementById('mm-btns');
+  btnsDiv.innerHTML = '';
+
+  if (isSoloMode) {
+    // מצב סולו - ניצחון או הפסד
+    if (winner === 'p1') {
+      // ניצחון סופי - עבר את כל 3 השלבים!
+      document.getElementById('mm-icon').textContent = '🏆';
+      const titleEl = document.getElementById('mm-title');
+      titleEl.textContent = '👑 אלוף/ה!';
+      titleEl.style.color = '#F5C842';
+      document.getElementById('mm-sub').textContent = `ניקוד: ${gameState.p1Score} • ${SOLO_LEVELS.map(l => l.emoji).join('')}`;
+    } else {
+      // הפסד
+      const level = SOLO_LEVELS[soloLevel];
+      document.getElementById('mm-icon').textContent = '😢';
+      const titleEl = document.getElementById('mm-title');
+      titleEl.textContent = 'נגמרו החיים!';
+      titleEl.style.color = '#EF4444';
+      document.getElementById('mm-sub').textContent = `ניקוד: ${gameState.p1Score} • ${level.emoji} ${level.name}`;
+    }
+    btnsDiv.innerHTML = `
+      <button class="mbtn mbtn-primary" id="btn-solo-restart">🔄 שחק שוב מהתחלה</button>
+      <button class="mbtn mbtn-secondary" onclick="goHome()">🏠 חזרה לתפריט</button>
+    `;
+    document.getElementById('match-modal').style.display = 'flex';
+    document.getElementById('btn-solo-restart').onclick = () => {
+      document.getElementById('match-modal').style.display = 'none';
+      soloLevel = 0;
+      soloLives = 3;
+      startNewMatch();
+    };
+    return;
+  }
+
   document.getElementById('mm-icon').textContent = isWinner || isAIMode ? '🏆' : '😢';
   const titleEl = document.getElementById('mm-title');
   titleEl.textContent = `${winnerEmoji} ${winnerName} 🏆`;
   titleEl.style.color = winnerColor;
   document.getElementById('mm-sub').textContent = `${p1Wins} - ${p2Wins}`;
-
-  const btnsDiv = document.getElementById('mm-btns');
-  btnsDiv.innerHTML = '';
 
   if (isAIMode) {
     btnsDiv.innerHTML = `
@@ -1622,11 +1776,22 @@ function startNewMatch() {
   effects.p2 = { magnet: 0, meteor: 0, shrunk: 0, reversed: 0, shield: 0, frozen: 0, fog: 0 };
   effects.shared = { ghost: 0 };
   effects.shieldHitAnim = { p1: 0, p2: 0 };
-  gameState = createInitialState();
-  if (gameStateRef) set(gameStateRef, gameState);
-  document.getElementById('match-modal').style.display = 'none';
-  document.getElementById('wins-p1').textContent = '0';
-  document.getElementById('wins-p2').textContent = '0';
+
+  if (isSoloMode) {
+    soloLives = 3;
+    gameState = createSoloState(soloLevel);
+    if (gameStateRef) set(gameStateRef, gameState);
+    document.getElementById('match-modal').style.display = 'none';
+    updateLevelDisplay();
+    updateLivesDisplay();
+  } else {
+    gameState = createInitialState();
+    if (gameStateRef) set(gameStateRef, gameState);
+    document.getElementById('match-modal').style.display = 'none';
+    document.getElementById('wins-p1').textContent = '0';
+    document.getElementById('wins-p2').textContent = '0';
+  }
+
   myPadTarget = 210 - PAD_W / 2;
   lastSpeedUpTime = Date.now();
   gameRunning = true; lastTime = performance.now();
@@ -1653,7 +1818,7 @@ function updateHUD(p1Name, p1Col, p1Em, p2Name, p2Col, p2Em) {
 
 function startGamePlay() {
   document.getElementById('match-modal').style.display = 'none';
-  gameState = isSoloMode ? createSoloState() : createInitialState();
+  gameState = isSoloMode ? createSoloState(soloLevel) : createInitialState();
   gameState.paused = true;
   if (isP1 || isAIMode || isSoloMode) {
     if (gameStateRef) set(gameStateRef, gameState);
@@ -1718,13 +1883,16 @@ async function initSession() {
       startHeartbeat(roomPath, myJoinedAt);
       isP1 = true;
       if (isSoloMode) {
+        soloLevel = 0;
+        soloLives = 3;
         document.querySelector('.vs-box').style.display = 'none';
         updateHUD(displayName, myColor, myEmoji, '', '#EF4444', '');
         document.getElementById('name-p2').textContent = '❤️ חיים';
         document.getElementById('wins-p2').textContent = '❤️❤️❤️';
         document.getElementById('wins-p2').style.color = '#EF4444';
         document.getElementById('card-p2').style.borderColor = '#EF4444';
-        document.querySelector('#card-p1 .wins-label').textContent = '🧱';
+        const level = SOLO_LEVELS[soloLevel];
+        document.querySelector('#card-p1 .wins-label').textContent = `${level.emoji} ${level.name}`;
         document.querySelector('#card-p2 .wins-label').textContent = '';
       } else {
         updateHUD(displayName, myColor, myEmoji, 'מחשב', '#FFB347', '🤖');
