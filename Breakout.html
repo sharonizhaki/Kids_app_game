@@ -458,7 +458,7 @@ function getP1PadY() {
 let gameState = null, gameRunning = false, lastTime = 0;
 let myPadTarget = 210 - PAD_W / 2, powerupIdCounter = 0;
 let lastSpeedUpTime = 0;
-const SPEED_UP_INTERVAL = 3000;
+const SPEED_UP_INTERVAL = 5000;
 const SPEED_UP_FACTOR = 1.08;
 
 // אנימציית לבנים מתות
@@ -1022,27 +1022,29 @@ function aiUpdate(dt) {
   let targetX = ball.x; // ברירת מחדל - עקוב אחרי הכדור
   let chasingPowerup = false;
 
-  if (gameState.powerups.length > 0 && ball.dy > 0) {
-    // הכדור הולך למטה (רחוק ממני) - יש זמן לתפוס פאוור-אפ
+  if (gameState.powerups.length > 0) {
+    // AI רודף פאוור-אפים שעולים אליו - מעדיף טובים
     let bestPU = null;
-    let bestDist = Infinity;
+    let bestScore = -Infinity;
     for (const pu of gameState.powerups) {
       if (pu.dy >= 0) continue; // רק אלה שעולים לכיווני
-      if (pu.y > P2_PAD_Y + PAD_H + 50) continue; // רחוק מדי
+      if (pu.y > P2_PAD_Y + PAD_H + 80) continue;
       const dist = Math.abs(pu.x - padCenter);
-      if (dist < bestDist) { bestDist = dist; bestPU = pu; }
+      // העדפה לפאוור-אפים טובים (לא danger), קרובים יותר
+      const goodBonus = pu.danger ? 0 : 60;
+      const score = goodBonus - dist;
+      if (score > bestScore) { bestScore = score; bestPU = pu; }
     }
-    // תפוס רק אם הפאוור-אפ קרוב מספיק ויש זמן
-    if (bestPU && bestDist < 120) {
+    if (bestPU && Math.abs(bestPU.x - padCenter) < 180) {
       targetX = bestPU.x;
       chasingPowerup = true;
     }
   }
 
-  // מהירות מעקב - יותר אגרסיבי כשכדור בא, רגוע כשהולך
+  // מהירות מעקב
   let ease;
   if (chasingPowerup) {
-    ease = 0.07;
+    ease = 0.12; // מהיר יותר לתפיסת פאוור-אפים
   } else if (ball.dy < 0) {
     ease = 0.055; // כדור בא אלי
   } else {
@@ -1086,8 +1088,8 @@ function updatePhysics(dt) {
     for (let si = effects.p1.shields.length - 1; si >= 0; si--) {
       const sh = effects.p1.shields[si];
       if (!sh.active) continue;
-      const shieldY = FIELD_H - 30 + 6 + si * 10; // כל מגן 10px יותר למטה
-      if (ball.y + BALL_R >= shieldY && ball.y + BALL_R <= shieldY + 8) {
+      const shieldY = FIELD_H - 30 + 6 + si * 10;
+      if (ball.y + BALL_R >= shieldY && ball.y + BALL_R <= shieldY + 14) {
         ball.y = shieldY - BALL_R;
         ball.dy = -Math.abs(ball.dy);
         sh.hitTime = Date.now();
@@ -1101,8 +1103,8 @@ function updatePhysics(dt) {
     for (let si = effects.p2.shields.length - 1; si >= 0; si--) {
       const sh = effects.p2.shields[si];
       if (!sh.active) continue;
-      const shieldY = 30 - 6 - si * 10; // כל מגן 10px יותר למעלה
-      if (ball.y - BALL_R <= shieldY && ball.y - BALL_R >= shieldY - 8) {
+      const shieldY = 30 - 6 - si * 10;
+      if (ball.y - BALL_R <= shieldY && ball.y - BALL_R >= shieldY - 14) {
         ball.y = shieldY + BALL_R;
         ball.dy = Math.abs(ball.dy);
         sh.hitTime = Date.now();
@@ -1193,7 +1195,7 @@ function updatePhysics(dt) {
   if (now - lastSpeedUpTime >= SPEED_UP_INTERVAL) {
     lastSpeedUpTime = now;
     const curSpd = Math.sqrt(gameState.ball.dx ** 2 + gameState.ball.dy ** 2);
-    const MAX_SPEED = 7;
+    const MAX_SPEED = 10;
     if (curSpd < MAX_SPEED) {
       const factor = Math.min(SPEED_UP_FACTOR, MAX_SPEED / curSpd);
       gameState.ball.dx *= factor;
@@ -1267,7 +1269,7 @@ function updateLivesDisplay() {
 // ========== תצוגת שלב (סולו) ==========
 function updateLevelDisplay() {
   const level = SOLO_LEVELS[soloLevel];
-  document.getElementById('wins-p1').textContent = `💎 ${gameState ? gameState.p1Score : 0}`;
+  document.getElementById('wins-p1').innerHTML = `${gameState ? gameState.p1Score : 0}<span style="font-size:0.6em;margin-right:2px;">💎</span>`;
   document.querySelector('#card-p1 .wins-label').textContent = `${level.emoji} ${level.name}`;
 }
 
@@ -1315,6 +1317,7 @@ function advanceToNextLevel() {
     updateLivesDisplay();
 
     myPadTarget = 210 - PAD_W / 2;
+  if (gameState) gameState.p1PadX = 210 - PAD_W / 2;
     lastSpeedUpTime = Date.now();
     resetSoloTimers();
     if (gameStateRef) set(gameStateRef, gameState);
@@ -1353,6 +1356,9 @@ function showLifeLostModal(livesLeft) {
 
   function closeLostModalAndContinue() {
     modal.style.display = 'none';
+    myPadTarget = 210 - PAD_W / 2;
+  if (gameState) gameState.p1PadX = 210 - PAD_W / 2;
+    if (gameState) gameState.p1PadX = 210 - PAD_W / 2;
     showCountdown(() => {
       if (gameState) gameState.paused = false;
       lastSpeedUpTime = Date.now();
@@ -1396,7 +1402,7 @@ function gameLoop(time) {
     if (isAIMode && !isSoloMode) aiUpdate(dt);
     updatePhysics(dt);
     if (isSoloMode) {
-      document.getElementById('wins-p1').textContent = `💎 ${gameState.p1Score}`;
+      document.getElementById('wins-p1').innerHTML = `${gameState.p1Score}<span style="font-size:0.6em;margin-right:2px;">💎</span>`;
     } else {
       document.getElementById('wins-p1').textContent = p1Wins;
       document.getElementById('wins-p2').textContent = p2Wins;
@@ -1606,17 +1612,18 @@ function drawGame() {
     ctx.fillText(pu.emoji || '⭐', sx, sy);
     ctx.shadowBlur = 0;
     // תגיות ליד פאוור-אפים
-    ctx.font = `bold ${S(11)}px Heebo, sans-serif`;
+    const tagX = S(pu.x + 17), tagY = S(pu.y - 13);
+    ctx.font = `bold ${S(10)}px Heebo, sans-serif`;
     ctx.fillStyle = '#F5C842';
     ctx.textAlign = 'center';
     if (pu.type === 'extra_ball') {
-      ctx.fillText('+1', S(pu.x + 16), S(pu.y - 12));
+      ctx.fillText('+1', tagX, tagY);
     } else if (pu.type === 'triple_ball') {
-      ctx.fillText('×3', S(pu.x + 16), S(pu.y - 12));
+      ctx.fillText('×3', tagX, tagY);
     } else if (pu.type === 'bomb') {
-      ctx.fillText('×3', S(pu.x + 16), S(pu.y - 12));
+      ctx.fillText('×3', tagX, tagY);
     } else if (['magnet', 'meteor', 'reverse', 'freeze', 'fog', 'ghost'].includes(pu.type)) {
-      ctx.fillText('+3s', S(pu.x + 18), S(pu.y - 12));
+      ctx.fillText('+3s', tagX, tagY);
     }
   }
 
@@ -2080,6 +2087,7 @@ function startNextRound() {
   gameState.p1Wins = p1Wins; gameState.p2Wins = p2Wins; gameState.roundNum = roundNum;
   gameState.timestamp = Date.now();
   myPadTarget = 210 - PAD_W / 2;
+  if (gameState) gameState.p1PadX = 210 - PAD_W / 2;
   lastSpeedUpTime = Date.now();
   if (gameStateRef) set(gameStateRef, gameState);
   gameRunning = true; lastTime = performance.now();
@@ -2204,6 +2212,7 @@ function startNewMatch() {
   }
 
   myPadTarget = 210 - PAD_W / 2;
+  if (gameState) gameState.p1PadX = 210 - PAD_W / 2;
   lastSpeedUpTime = Date.now();
   gameRunning = true; lastTime = performance.now();
   gameState.paused = true;
@@ -2232,6 +2241,7 @@ function startGamePlay() {
   gameState = isSoloMode ? createSoloState(soloLevel) : createInitialState();
   gameState.paused = true;
   myPadTarget = 210 - PAD_W / 2;
+  if (gameState) gameState.p1PadX = 210 - PAD_W / 2;
   if (isSoloMode) resetSoloTimers();
   if (isP1 || isAIMode || isSoloMode) {
     if (gameStateRef) set(gameStateRef, gameState);
