@@ -538,6 +538,7 @@ let items = [], playerCarEl = null, aiCarEl = null, animFrameId = null;
 let playerY = 0, aiY = 0, aiLane = 2, aiSpeed = 0;
 let aiFrozen = false, aiFrozenUntil = 0;
 let aiMoveCooldown = 0, aiBoostCooldownUntil = 0, aiFinished = false;
+let aiLastEqualizeTime = 0; // boost שווים כל 10 שניות
 let tiltTimeout = null, isRainMode = false, lightningTimeout = null;
 
 const gameArea = document.getElementById('gameArea');
@@ -633,7 +634,7 @@ function resetGameState() {
     pointsAtRoundStart = points;
     gameFinished = false; frozen = false; frozenUntil = 0; iceSkidding = false;
     window._mpStarted = false;
-    aiFrozen = false; aiFrozenUntil = 0; aiMoveCooldown = 0; aiBoostCooldownUntil = 0; aiFinished = false;
+    aiFrozen = false; aiFrozenUntil = 0; aiMoveCooldown = 0; aiBoostCooldownUntil = 0; aiFinished = false; aiLastEqualizeTime = 0;
     playerY = 0; aiY = 0; aiSpeed = 0;
     oppY = 0; oppSpeed = 0; oppFinishedFlag = false;
     
@@ -1503,7 +1504,29 @@ function gameLoop() {
     if (mode==='ai'&&aiCarEl) {
         const aiF = aiFrozen && Date.now() < aiFrozenUntil;
         const aiSpd = aiF ? 0 : SPEEDS[aiSpeed];
-        if (!aiF) aiY += aiSpd;
+
+        // ─── Rubber-band: AI מתכוונן לפי פער ───
+        let rubberBonus = 0;
+        if (!aiF && !aiFinished) {
+            const gap = playerY - aiY; // חיובי = שחקן מוביל
+            if (gap > 200) {
+                // שחקן מוביל → AI מאיץ קצת
+                rubberBonus = Math.min(gap / 1500, 0.3) * SPEEDS[Math.max(aiSpeed, 1)];
+            }
+            // AI מוביל → לא מאט, אלא "מטופש" יותר בהתחמקות (ב-scanLane למטה)
+
+            // ─── Boost שווים כל 10 שניות ───
+            const now = Date.now();
+            if (now - aiLastEqualizeTime > 10000) {
+                aiLastEqualizeTime = now;
+                if (aiSpeed < playerSpeed) {
+                    aiSpeed = Math.min(aiSpeed + 1, 4);
+                    updateExhaust(aiCarEl, aiSpeed);
+                }
+            }
+        }
+
+        if (!aiF) aiY += aiSpd + rubberBonus;
         
         // מיקום AI יחסי לשחקן
         const delta = aiY - playerY;
@@ -1541,14 +1564,21 @@ function gameLoop() {
         // AI חכם
         if (!aiF && aiMoveCooldown <= 0) {
             const aiSY2 = gameH - aiBot - CAR_HEIGHT/2;
-            const LA = 120 + aiSpeed * 20; // ראייה רחוקה יותר במהירות גבוהה
+            const LA = 120 + aiSpeed * 20;
+
+            // סיכוי לפספס = ככל שה-AI מוביל יותר, מפספס יותר
+            const leadGap = aiY - playerY; // חיובי = AI מוביל
+            let missChance = 0;
+            if (leadGap > 150) missChance = Math.min((leadGap - 150) / 800, 0.55); // עד 55% סיכוי לפספס
+
             function scanLane(lane) {
                 let threat=null,hasBoost=false;
                 for(const it of items){if(it.collected||it.lane!==lane)continue;const iSY=getItemScreenY(it.worldY);const dy=aiSY2-(iSY+13);if(dy>0&&dy<LA){if(it.type==='bomb')threat='bomb';else if((it.type==='rock'||it.type==='ice'||it.type==='puddle'||it.type==='pit')&&threat!=='bomb')threat='rock';else if(it.type==='boost')hasBoost=true;}}
                 return{threat,hasBoost};
             }
             const cur=scanLane(aiLane);let moved=false;
-            if(cur.threat){
+            if(cur.threat && Math.random() >= missChance){
+                // מתחמק רק אם לא "פיספס"
                 const lL=aiLane-1,rL=aiLane+1;
                 const left=lL>=0?scanLane(lL):{threat:'wall',hasBoost:false};
                 const right=rL<LANE_COUNT?scanLane(rL):{threat:'wall',hasBoost:false};
