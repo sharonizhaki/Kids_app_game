@@ -1072,6 +1072,10 @@ function startGameStateListener() {
       gameState.p2PadX = myPadLocal;
       gameState.p2PadW = myPadWLocal;
       document.title = `p2: ball=${val.ball?'Y':'N'} paused=${val.paused} pad=${Math.round(myPadLocal)}`;
+      // debug ויזואלי על המסך
+      let dbg = document.getElementById('p2-debug');
+      if (!dbg) { dbg = document.createElement('div'); dbg.id = 'p2-debug'; dbg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;font-size:12px;z-index:9999;text-align:center;padding:2px;'; document.body.appendChild(dbg); }
+      dbg.textContent = `ball=${val.ball?'Y':'N'} dx=${val.ball?.dx?.toFixed(1)} dy=${val.ball?.dy?.toFixed(1)} paused=${val.paused} go=${gameState.gameOver}`;
     } else {
       if (val.p2PadX !== undefined && gameState) gameState.p2PadX = val.p2PadX;
       if (val.p2PadW !== undefined && gameState) gameState.p2PadW = val.p2PadW;
