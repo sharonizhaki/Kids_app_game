@@ -1052,7 +1052,10 @@ function syncFullState() {
 }
 function syncMyPad() {
   if (isAIMode || isSoloMode || !gameStateRef) return;
-  update(gameStateRef, { [isP1 ? 'p1PadX' : 'p2PadX']: myPadTarget }).catch(() => {});
+  if (!window._lastPadSync || Date.now() - window._lastPadSync > 80) {
+    window._lastPadSync = Date.now();
+    update(gameStateRef, { [isP1 ? 'p1PadX' : 'p2PadX']: myPadTarget }).catch(() => {});
+  }
 }
 
 function startGameStateListener() {
@@ -1366,8 +1369,26 @@ function updatePhysics(dt) {
     }
   } else {
     const winCheckReady2 = Date.now() - lastBombTime > 500 && Date.now() - lastBrickBreakTime > 350;
-    if (ball.y - BALL_R < -10) endRound('p1');
-    else if (ball.y + BALL_R > FIELD_H + 10) { vibrateShort(); endRound('p2'); }
+    // כדור ראשי נפל למטה
+    if (ball.y + BALL_R > FIELD_H + 10) {
+      if (gameState.balls.length > 0) {
+        const replacement = gameState.balls.shift();
+        ball.x = replacement.x; ball.y = replacement.y;
+        ball.dx = replacement.dx; ball.dy = replacement.dy;
+      } else {
+        vibrateShort(); endRound('p2');
+      }
+    }
+    // כדור ראשי יצא למעלה
+    if (ball.y - BALL_R < -10) {
+      if (gameState.balls.length > 0) {
+        const replacement = gameState.balls.shift();
+        ball.x = replacement.x; ball.y = replacement.y;
+        ball.dx = replacement.dx; ball.dy = replacement.dy;
+      } else {
+        endRound('p1');
+      }
+    }
     if (winCheckReady2 && gameState && !gameState.gameOver && gameState.topBricks.every(b => !b.alive)) endRound('p1');
     if (winCheckReady2 && gameState && !gameState.gameOver && gameState.bottomBricks.every(b => !b.alive)) endRound('p2');
   }
@@ -1527,8 +1548,8 @@ function gameLoop(time) {
     if (isSoloMode) {
       document.getElementById('wins-p1').innerHTML = `${gameState.p1Score}<span style="font-size:0.6em;margin-right:2px;">💎</span>`;
     } else {
-      document.getElementById('wins-p1').textContent = p1Wins;
-      document.getElementById('wins-p2').textContent = p2Wins;
+      document.getElementById('wins-p1').textContent = isP1 ? p1Wins : p2Wins;
+      document.getElementById('wins-p2').textContent = isP1 ? p2Wins : p1Wins;
     }
     if (!isAIMode && !isSoloMode) {
       if (!window._lastSync || Date.now() - window._lastSync > 100) {
@@ -1536,6 +1557,25 @@ function gameLoop(time) {
         syncFullState();
       }
     }
+  } else {
+    // p2: אינטרפולציה מקומית - כדור זז חלק בין עדכוני Firebase
+    if (gameState.ball && !gameState.paused && !gameState.gameOver) {
+      gameState.ball.x += gameState.ball.dx * dt;
+      gameState.ball.y += gameState.ball.dy * dt;
+      // bounce מקירות
+      if (gameState.ball.x - BALL_R <= 0) { gameState.ball.x = BALL_R; gameState.ball.dx = Math.abs(gameState.ball.dx); }
+      if (gameState.ball.x + BALL_R >= 420) { gameState.ball.x = 420 - BALL_R; gameState.ball.dx = -Math.abs(gameState.ball.dx); }
+    }
+    // כדורים נוספים
+    if (gameState.balls) {
+      for (const eb of gameState.balls) {
+        eb.x += eb.dx * dt; eb.y += eb.dy * dt;
+        if (eb.x - BALL_R <= 0) { eb.x = BALL_R; eb.dx = Math.abs(eb.dx); }
+        if (eb.x + BALL_R >= 420) { eb.x = 420 - BALL_R; eb.dx = -Math.abs(eb.dx); }
+      }
+    }
+    document.getElementById('wins-p1').textContent = isP1 ? p1Wins : p2Wins;
+    document.getElementById('wins-p2').textContent = isP1 ? p2Wins : p1Wins;
   }
   // שמירת trail כדור
   if (gameState && !gameState.paused && !gameState.gameOver) {
