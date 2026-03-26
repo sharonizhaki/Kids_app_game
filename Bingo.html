@@ -71,6 +71,121 @@
       font-weight: 600;
     }
 
+    /* SCORE HEADER כמו xo */
+    .score-header {
+      display: flex;
+      justify-content: space-around;
+      align-items: stretch;
+      width: 100%;
+      max-width: 420px;
+      padding: 10px 12px 6px;
+      gap: 8px;
+      margin: 0 auto;
+    }
+
+    .score-box {
+      flex: 1;
+      background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+      padding: 10px 8px 8px;
+      border-radius: 18px;
+      text-align: center;
+      border: 2.5px solid transparent;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .score-box::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .score-box.active {
+      transform: scale(1.05);
+      animation: borderGlow 0.8s ease-in-out infinite;
+    }
+
+    #card-p1.active { border-color: var(--p1-glow); box-shadow: 0 0 25px rgba(168,85,247,0.4); }
+    #card-p2.active { border-color: var(--p2-glow); box-shadow: 0 0 25px rgba(249,115,22,0.4); }
+
+    @keyframes borderGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(245,200,66,0.3); }
+      50% { box-shadow: 0 0 40px rgba(245,200,66,0.8); }
+    }
+
+    .vs-box {
+      max-width: 60px;
+      min-width: 50px;
+    }
+
+    .score-box .player-name {
+      font-weight: 900;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+
+    .score-box .player-score {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    #card-p1 .player-score { color: var(--p1-glow); }
+    #card-p2 .player-score { color: var(--p2-glow); }
+
+    .score-box .player-sub {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .my-grid-section {
+      padding: 8px 16px;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    /* CONTROLS כמו xo */
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin: 16px auto;
+      width: 90vw;
+      max-width: 350px;
+    }
+    .ctrl-btn {
+      flex: 1;
+      padding: 14px;
+      border-radius: 20px;
+      border: 1.5px solid rgba(255,255,255,0.2);
+      background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%);
+      color: white;
+      font-weight: 900;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      font-family: 'Heebo', sans-serif;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
+    .ctrl-btn:active { transform: scale(0.95); }
+    .ctrl-reset {
+      background: linear-gradient(135deg, rgba(255,215,0,0.12) 0%, rgba(255,215,0,0.05) 100%);
+      border-color: rgba(255,215,0,0.3);
+    }
+
     /* DRAWN HISTORY */
     .drawn-history {
       display: flex;
@@ -799,10 +914,28 @@
   <div class="glow-dot glow-dot-1"></div>
   <div class="glow-dot glow-dot-2"></div>
 
-  <!-- HEADER -->
-  <div class="header">
-    <h1>✨ BINGO ✨</h1>
-    <div class="header-sub">ראשון ל-10 אימוג'ים מנצח! 🏆</div>
+  <!-- SCORE HEADER למעלה -->
+  <div class="score-header">
+    <div class="score-box" id="card-p1">
+      <div class="player-name" id="name-p1">שחקן 1</div>
+      <div class="player-score" id="score-p1">0</div>
+      <div class="player-sub" id="found-p1">מצא: 0</div>
+    </div>
+    <div class="score-box vs-box">
+      <div class="player-name">סיבוב</div>
+      <div class="player-score" id="round-num">0</div>
+      <div class="player-sub" id="round-total">מתוך 10</div>
+    </div>
+    <div class="score-box" id="card-p2">
+      <div class="player-name" id="name-p2">🤖 מחשב</div>
+      <div class="player-score" id="score-p2">0</div>
+      <div class="player-sub" id="found-p2">מצא: 0</div>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar" id="statusBar">
+    <span>לחץ על "הגרל!" כדי להתחיל</span>
   </div>
 
   <!-- DRAWN HISTORY -->
@@ -810,11 +943,6 @@
     <span class="history-label">הוגרלו:</span>
     <div class="history-emojis" id="historyEmojis"></div>
     <span class="history-label" id="historyEmpty" style="color:rgba(255,255,255,0.2)">אין עדיין...</span>
-  </div>
-
-  <!-- STATUS BAR -->
-  <div class="status-bar" id="statusBar">
-    <span>לחץ על "הגרל!" כדי להתחיל</span>
   </div>
 
   <!-- LOTTERY ZONE -->
@@ -828,51 +956,19 @@
 
     <div class="lottery-controls">
       <button class="draw-btn" id="drawBtn" onclick="drawEmoji()">הגרל!</button>
-      <div class="draw-count" id="drawCount">נותרו 50 אימוג'ים בכד</div>
-      <button onclick="goHome()" style="margin-top:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:#94a3b8;padding:6px 16px;border-radius:20px;font-size:0.75rem;cursor:pointer;">🏠 דף הבית</button>
+      <div class="draw-count" id="drawCount">10 סיבובים</div>
     </div>
   </div>
 
-  <!-- GAME AREA -->
-  <div class="game-area">
-    <!-- הלוח שלי -->
-    <div class="player-card p1" id="card-p1">
-      <div class="player-header">
-        <div class="player-name" id="name-p1">👧 אמה</div>
-        <div class="player-badge" id="badge-p1">הלוח שלי</div>
-      </div>
-      <div class="emoji-grid" id="grid-p1"></div>
-      <div class="progress-section">
-        <div class="progress-header">
-          <span class="progress-label">התקדמות ל-10</span>
-          <span class="progress-count" id="score-p1">0 / 10</span>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill" id="fill-p1" style="width:0%"></div>
-        </div>
-        <div class="progress-milestones" id="milestones-p1"></div>
-        <div class="progress-steps" id="steps-p1"></div>
-      </div>
-    </div>
+  <!-- MY GRID -->
+  <div class="my-grid-section">
+    <div class="emoji-grid" id="grid-p1"></div>
+  </div>
 
-    <!-- ניקוד יריב בלבד -->
-    <div class="player-card p2" id="card-p2" style="min-height:auto; padding:12px 16px;">
-      <div class="player-header">
-        <div class="player-name" id="name-p2">👦 ריף</div>
-        <div class="player-badge" id="badge-p2">יריב</div>
-      </div>
-      <div class="progress-section" style="margin-top:8px;">
-        <div class="progress-header">
-          <span class="progress-label">התקדמות</span>
-          <span class="progress-count" id="score-p2">0 / 10</span>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill" id="fill-p2" style="width:0%"></div>
-        </div>
-        <div class="progress-milestones" id="milestones-p2"></div>
-        <div class="progress-steps" id="steps-p2"></div>
-      </div>
-    </div>
+  <!-- CONTROLS כמו xo -->
+  <div class="controls">
+    <button class="ctrl-btn" onclick="goHome()">🏠 בית</button>
+    <button class="ctrl-btn ctrl-reset" onclick="restartGame()">🔄 איפוס</button>
   </div>
 
   <!-- WIN OVERLAY -->
@@ -904,25 +1000,40 @@ const firebaseConfig = {
 };
 const fbApp   = initializeApp(firebaseConfig);
 const db      = getDatabase(fbApp);
-const gameRef = ref(db, 'game/bingo');
+let gameRef = ref(db, 'game/bingo'); // יעודכן אחרי זיהוי שחקן
 
-const params   = new URLSearchParams(location.search);
-const myPlayer = params.get('player') || 'emma';
-const solo     = params.get('solo') === 'true';
-const myKey    = myPlayer === 'emma' ? 'p1' : 'p2';
-const oppKey   = myKey === 'p1' ? 'p2' : 'p1';
-const canDraw  = solo || myPlayer === 'emma'; // רק אמה מגרילה
-let lastTs     = null;
+// ========== זיהוי שחקן ==========
+const params = new URLSearchParams(location.search);
+const displayName = params.get('player') || 'משתמש';
+const userDataStr = sessionStorage.getItem('myUser');
+const userData = userDataStr ? JSON.parse(userDataStr) : null;
+if (!userData) { window.location.href = 'index.html'; throw new Error('No user data'); }
 
-// עדכן שמות לפי שחקן
+const myName = userData.id;
+const myColor = userData.color;
+const myEmoji = userData.emoji;
+const modeFromURL = params.get('mode'); // 'ai' from index
+const solo = modeFromURL === 'ai'; // מצב AI = סולו
+const myKey = 'p1'; // תמיד p1 (אני)
+const oppKey = 'p2';
+const canDraw = true; // תמיד אני מגריל
+let lastTs = null;
+
+// עדכן שמות לפי userData
 (function setPlayerNames() {
-  const myName  = myPlayer==='emma' ? '👧 אמה' : '👦 ריף';
-  const oppName = myPlayer==='emma' ? '👦 ריף'  : '👧 אמה';
-  document.getElementById('name-p1').textContent  = myName;
+  document.getElementById('name-p1').textContent = `${myEmoji} ${displayName}`;
   document.getElementById('badge-p1').textContent = 'הלוח שלי';
-  document.getElementById('name-p2').textContent  = oppName;
-  document.getElementById('badge-p2').textContent = 'יריב';
+  document.getElementById('name-p2').textContent = solo ? '🤖 מחשב' : 'יריב';
+  document.getElementById('badge-p2').textContent = solo ? 'מחשב' : 'יריב';
 })();
+
+// gameRef לפי מצב
+if (solo) {
+  gameRef = ref(db, `game/bingo_ai/${myName}`);
+} else {
+  gameRef = ref(db, 'game/bingo');
+}
+
     // ─── EMOJI POOL (50 unique emojis) ───────────────────────────────────────
     const EMOJI_POOL = [
       '🦊','🐼','🦁','🐯','🦋','🦄','🐉','🦅','🐬','🦜',
@@ -933,13 +1044,17 @@ let lastTs     = null;
     ];
 
     // ─── GAME STATE ───────────────────────────────────────────────────────────
-    let pool = [];           // remaining emojis to draw
-    let boards = { p1: [], p2: [] };
-    let matched = { p1: new Set(), p2: new Set() };
-    let scores = { p1: 0, p2: 0 };
+    let pool = [];
+    let boards = { p1: [] };
+    let matched = { p1: new Set() };
+    let scores = { p1: 0 };
     let isDrawing = false;
     let gameOver = false;
-    const WIN_TARGET = 10;
+    let currentDrawn = null;
+    let roundTimer = null;
+    let canClick = false;
+    const MAX_ROUNDS = 10;
+    const ROUND_TIME = 5000;
 
     // ─── INIT ─────────────────────────────────────────────────────────────────
     function shuffle(arr) {
@@ -953,37 +1068,39 @@ let lastTs     = null;
 
     function initGame() {
       pool = shuffle(EMOJI_POOL);
-      const shuffledForBoards = shuffle(EMOJI_POOL);
-      boards.p1 = shuffledForBoards.slice(0, 20);
-      boards.p2 = shuffledForBoards.slice(20, 40);
-      matched = { p1: new Set(), p2: new Set() };
-      scores = { p1: 0, p2: 0 };
+      const shared20 = shuffle(EMOJI_POOL).slice(0, 20);
+      boards.p1 = shuffle([...shared20]);
+      matched = { p1: new Set() };
+      scores = { p1: 0 };
       gameOver = false;
       isDrawing = false;
+      currentDrawn = null;
+      canClick = false;
+      if (roundTimer) clearInterval(roundTimer);
 
-      // כל שחקן רואה את הלוח שלו ב-grid-p1 (הלוח שלי)
       renderGridInSlot(myKey, 'p1');
-      renderMilestones('p1');
-      renderMilestones('p2');
       updateScore('p1');
-      updateScore('p2');
+      roundCount = 0;
+      document.getElementById('round-num').textContent = '0';
+      document.getElementById('round-total').textContent = `מתוך ${MAX_ROUNDS}`;
+      setActivePlayer(null);
+
+      // הסתר p2 ב-AI
+      if (solo) {
+        document.getElementById('card-p2').style.display = 'none';
+      }
+
       document.getElementById('historyEmojis').innerHTML = '';
       document.getElementById('historyEmpty').style.display = '';
       document.getElementById('machineEmoji').textContent = '🎱';
-      document.getElementById('drawCount').textContent = `נותרו ${pool.length} אימוג'ים בכד`;
-      document.getElementById('drawBtn').disabled = !canDraw;
+      document.getElementById('drawCount').textContent = `${MAX_ROUNDS} סיבובים`;
+      document.getElementById('drawBtn').disabled = false;
       document.getElementById('drawBtn').classList.remove('drawing');
-      document.getElementById('drawBtn').textContent = canDraw ? 'הגרל!' : '⏳ ממתין לאמה...';
+      document.getElementById('drawBtn').textContent = 'הגרל!';
       document.getElementById('card-p1').classList.remove('winner');
-      document.getElementById('card-p2').classList.remove('winner');
       document.getElementById('winOverlay').classList.remove('show');
       document.getElementById('confettiContainer').innerHTML = '';
-      setStatus(canDraw ? 'לחץ על "הגרל!" כדי להתחיל' : 'ממתין לאמה שתגריל...');
-
-      if (!solo && myPlayer === 'emma') {
-        const ts = Date.now(); lastTs = ts;
-        set(gameRef, { pool, boards, drawn: [], scores: {p1:0,p2:0}, gameOver: false, ts });
-      }
+      setStatus('לחץ על "הגרל!" כדי להתחיל');
     }
 
     // ─── FIREBASE LISTEN ─────────────────────────────────────────────────────
@@ -993,18 +1110,12 @@ let lastTs     = null;
         const s = snap.val(); if (!s) return;
         if (s.ts === lastTs) return;
         lastTs = s.ts;
-
-        // קבל boards מאמה
         if (s.boards) {
           boards.p1 = s.boards.p1;
           boards.p2 = s.boards.p2;
-          renderGrid('p1');
-          renderGrid('p2');
         }
         pool = s.pool || [];
-        document.getElementById('drawCount').textContent = `נותרו ${pool.length} אימוג'ים בכד`;
-
-        // אם יש drawn חדש — הרץ אנימציה
+        document.getElementById('drawCount').textContent = `נותרו ${pool.length} הגרלות`;
         if (s.lastDrawn && !isDrawing) {
           isDrawing = true;
           const drawn = s.lastDrawn;
@@ -1014,19 +1125,16 @@ let lastTs     = null;
             machine.classList.add('flash');
             setTimeout(() => machine.classList.remove('flash'), 500);
             addToHistory(drawn);
-            processMatch(drawn);
-            isDrawing = false;
-            document.getElementById('drawBtn').textContent = canDraw ? 'הגרל!' : '⏳ ממתין לאמה...';
+            startSearchRound(drawn);
           });
         }
-
         if (s.gameOver && s.winner) {
           triggerWin(s.winner);
         }
       });
     }
 
-    // מרנדר לוח של שחקן `player` לתוך slot בממשק (`slot`)
+    // מרנדר לוח עם תאים לחיצים
     function renderGridInSlot(player, slot) {
       const grid = document.getElementById(`grid-${slot}`);
       if (!grid) return;
@@ -1040,62 +1148,41 @@ let lastTs     = null;
           <div class="check-overlay"><div class="check-dot">✓</div></div>
           <div class="sparkle-burst"></div>
         `;
+        cell.onclick = () => onCellClick(player, i, emoji);
         grid.appendChild(cell);
       });
     }
 
     function renderGrid(player) {
-      // legacy — renders into its own slot (used for solo)
       renderGridInSlot(player, player);
     }
 
     function renderMilestones(player) {
-      const container = document.getElementById(`milestones-${player}`);
-      const stepsContainer = document.getElementById(`steps-${player}`);
-      container.innerHTML = '';
-      stepsContainer.innerHTML = '';
-      for (let i = 0; i <= WIN_TARGET; i++) {
-        const dot = document.createElement('div');
-        dot.className = 'milestone-dot';
-        dot.id = `milestone-${player}-${i}`;
-        container.appendChild(dot);
-
-        const num = document.createElement('div');
-        num.className = 'step-num';
-        num.textContent = i;
-        stepsContainer.appendChild(num);
-      }
+      // לא נחוץ יותר - milestones הוסרו מה-HTML
     }
 
+    let roundCount = 0;
+
     function updateScore(player) {
-      const score = scores[player];
-      document.getElementById(`score-${player}`).textContent = `${score} / ${WIN_TARGET}`;
-      document.getElementById(`fill-${player}`).style.width = `${(score / WIN_TARGET) * 100}%`;
-
-      for (let i = 0; i <= WIN_TARGET; i++) {
-        const dot = document.getElementById(`milestone-${player}-${i}`);
-        const num = document.getElementById(`steps-${player}`)?.children[i];
-        if (dot) {
-          if (i <= score) {
-            dot.classList.add('passed');
-          } else {
-            dot.classList.remove('passed');
-          }
-        }
-        if (num) {
-          if (i <= score) {
-            num.classList.add('active');
-          } else {
-            num.classList.remove('active');
-          }
-        }
-      }
-
-      // Bump animation
+      if (player !== 'p1') return;
+      const score = scores[player] || 0;
+      const found = matched[player] ? matched[player].size : 0;
+      document.getElementById(`score-${player}`).textContent = score;
+      document.getElementById(`found-${player}`).textContent = `מצא: ${found}`;
       const scoreEl = document.getElementById(`score-${player}`);
       scoreEl.classList.remove('score-bump');
       void scoreEl.offsetWidth;
       scoreEl.classList.add('score-bump');
+    }
+
+    function updateRoundNum() {
+      roundCount++;
+      document.getElementById('round-num').textContent = roundCount;
+    }
+
+    function setActivePlayer(player) {
+      document.getElementById('card-p1').classList.toggle('active', player === 'p1');
+      document.getElementById('card-p2').classList.toggle('active', player === 'p2');
     }
 
     function setStatus(text) {
@@ -1103,23 +1190,115 @@ let lastTs     = null;
       bar.innerHTML = `<span>${text}</span>`;
     }
 
-    // ─── DRAW ─────────────────────────────────────────────────────────────────
-    function processMatch(drawn) {
-      const p1Match = boards.p1.includes(drawn) && !matched.p1.has(drawn);
-      const p2Match = boards.p2.includes(drawn) && !matched.p2.has(drawn);
-      let statusText = `הוגרל: ${drawn}`;
-      if (p1Match) { matched.p1.add(drawn); scores.p1++; markCell('p1', drawn); updateScore('p1'); statusText += ` — שחקן 1 סימן! 🟣`; }
-      if (p2Match) { matched.p2.add(drawn); scores.p2++; markCell('p2', drawn); updateScore('p2'); statusText += ` — שחקן 2 סימן! 🟠`; }
-      if (!p1Match && !p2Match) statusText += ` — אף שחקן לא מחזיק אותו`;
-      setStatus(statusText);
-      if (scores.p1 >= WIN_TARGET && scores.p2 >= WIN_TARGET) { triggerWin('tie'); return; }
-      else if (scores.p1 >= WIN_TARGET) { triggerWin('p1'); return; }
-      else if (scores.p2 >= WIN_TARGET) { triggerWin('p2'); return; }
-      if (pool.length === 0) { setStatus("כל האימוג'ים הוגרלו!"); gameOver=true; }
+    // ─── CELL CLICK ───────────────────────────────────────────────────────────
+    function onCellClick(player, index, emoji) {
+      if (!canClick || !currentDrawn || gameOver) return;
+      if (matched[myKey].has(emoji)) return; // כבר נמצא
+
+      if (emoji === currentDrawn) {
+        // נכון!
+        canClick = false;
+        matched[myKey].add(emoji);
+        scores[myKey]++;
+        markCell(myKey, emoji);
+        updateScore(myKey);
+        setStatus(`✅ מצאת! ${currentDrawn}`);
+        if (navigator.vibrate) navigator.vibrate(30);
+        checkWin();
+      } else {
+        // לא נכון - רטט שגיאה
+        const cell = document.getElementById(`cell-${player}-${index}`);
+        if (cell) {
+          cell.classList.add('no-match-flash');
+          setTimeout(() => cell.classList.remove('no-match-flash'), 400);
+        }
+        if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+      }
     }
 
+    // ─── SEARCH ROUND ─────────────────────────────────────────────────────────
+    function startSearchRound(drawn) {
+      currentDrawn = drawn;
+      canClick = true;
+      isDrawing = false;
+      roundTimeLeft = ROUND_TIME;
+
+      setStatus(`🔍 חפש את ${drawn} ! (5 שניות)`);
+
+      // טיימר ויזואלי
+      const timerStart = Date.now();
+      if (roundTimer) clearInterval(roundTimer);
+      roundTimer = setInterval(() => {
+        const elapsed = Date.now() - timerStart;
+        const left = Math.max(0, ROUND_TIME - elapsed);
+        const secs = Math.ceil(left / 1000);
+        if (left <= 0) {
+          clearInterval(roundTimer);
+          endSearchRound(false);
+        } else {
+          setStatus(`🔍 חפש את ${drawn} ! (${secs}s)`);
+        }
+      }, 200);
+
+    }
+
+    function endSearchRound(found) {
+      canClick = false;
+      currentDrawn = null;
+      setActivePlayer(null);
+      if (roundTimer) { clearInterval(roundTimer); roundTimer = null; }
+
+      if (!found && !gameOver) {
+        setStatus('⏰ נגמר הזמן!');
+      }
+
+      // בדיקה אם 10 סיבובים הסתיימו
+      if (roundCount >= MAX_ROUNDS) {
+        gameOver = true;
+        setTimeout(() => triggerEnd(), 1500);
+        return;
+      }
+
+      if (!gameOver) {
+        setTimeout(() => {
+          if (gameOver) return;
+          document.getElementById('drawBtn').disabled = false;
+          document.getElementById('drawBtn').textContent = 'הגרל!';
+          setStatus('לחץ על "הגרל!" להמשיך');
+        }, 2000);
+      }
+      }
+    }
+
+    function checkWin() {
+      // מצאתי - סיום סיבוב אחרי 2 שניות
+      setTimeout(() => endSearchRound(true), 2000);
+    }
+
+    // מודאל סיכום אחרי 10 סיבובים
+    function triggerEnd() {
+      gameOver = true;
+      const found = matched.p1 ? matched.p1.size : 0;
+      const score = scores.p1 || 0;
+
+      const nameEl = document.getElementById('winPlayerName');
+      const overlay = document.getElementById('winOverlay');
+      const btn = document.getElementById('drawBtn');
+      btn.disabled = true;
+      btn.textContent = '🏁 הסתיים!';
+
+      document.querySelector('.win-title').textContent = '🏁 סיום!';
+      document.querySelector('.win-trophy').textContent = score >= 7 ? '🌟' : score >= 4 ? '👏' : '💪';
+      nameEl.innerHTML = `${myEmoji} ${displayName}<br><span style="font-size:0.9rem;color:var(--text-muted);">מצאת ${found} מתוך ${MAX_ROUNDS}<br>ניקוד: ${score}</span>`;
+      nameEl.className = 'win-player-name p1-win';
+
+      if (score >= 7) launchConfetti();
+      setTimeout(() => overlay.classList.add('show'), 500);
+    }
+
+    // ─── DRAW ─────────────────────────────────────────────────────────────────
     async function drawEmoji() {
-      if (isDrawing || gameOver || pool.length === 0 || !canDraw) return;
+      if (isDrawing || gameOver || roundCount >= MAX_ROUNDS) return;
       isDrawing = true;
 
       const btn = document.getElementById('drawBtn');
@@ -1128,7 +1307,7 @@ let lastTs     = null;
       btn.textContent = '🎰 מגריל...';
 
       const drawn = pool.pop();
-      document.getElementById('drawCount').textContent = `נותרו ${pool.length} אימוג'ים בכד`;
+      document.getElementById('drawCount').textContent = `נותרו ${pool.length} הגרלות`;
 
       const machineEmoji = document.getElementById('machineEmoji');
       const machine = document.getElementById('machine');
@@ -1138,87 +1317,64 @@ let lastTs     = null;
       setTimeout(() => machine.classList.remove('flash'), 500);
 
       addToHistory(drawn);
+      updateRoundNum();
+      setActivePlayer('p1'); // תור השחקן לחפש
       await new Promise(r => setTimeout(r, 200));
-      processMatch(drawn);
-      await new Promise(r => setTimeout(r, 600));
 
-      // דחוף ל-Firebase
+      // התחל סיבוב חיפוש
+      startSearchRound(drawn);
+
+      // Firebase
       if (!solo) {
         const ts = Date.now(); lastTs = ts;
         set(gameRef, {
           pool, boards,
           lastDrawn: drawn,
           scores, gameOver,
-          winner: scores.p1 >= WIN_TARGET && scores.p2 >= WIN_TARGET ? 'tie' : scores.p1 >= WIN_TARGET ? 'p1' : scores.p2 >= WIN_TARGET ? 'p2' : null,
+          winner: null,
           ts
         });
-      }
-
-      if (!gameOver) {
-        btn.disabled = false;
-        btn.classList.remove('drawing');
-        btn.textContent = 'הגרל!';
-        isDrawing = false;
       }
     }
 
     function spinMachine(el, finalEmoji) {
       return new Promise(resolve => {
         let spins = 0;
-        const fastPhase   = 18 + Math.floor(Math.random() * 6);  // rapid spins
-        const slowPhase   = 7;                                    // dramatic crawl
-        const maxSpins    = fastPhase + slowPhase;
+        const fastPhase = 18 + Math.floor(Math.random() * 6);
+        const slowPhase = 7;
+        const maxSpins = fastPhase + slowPhase;
         el.className = 'machine-emoji';
         el.style.filter = '';
 
         const doSpin = () => {
           spins++;
-          const progress = spins / maxSpins;
-
           if (spins <= fastPhase) {
-            // ── FAST PHASE: flicker rapidly ──────────────────────────────
             el.textContent = EMOJI_POOL[Math.floor(Math.random() * EMOJI_POOL.length)];
             const scale = 0.7 + Math.random() * 0.5;
             el.style.transform = `scale(${scale}) rotate(${(Math.random()-0.5)*20}deg)`;
             el.style.opacity = Math.random() > 0.25 ? '1' : '0.3';
             el.style.filter = '';
-            // speed: 30ms → 80ms during fast phase
             const t = spins / fastPhase;
             const delay = 30 + t * 50;
             setTimeout(doSpin, delay);
-
           } else {
-            // ── SLOW PHASE: dramatic deceleration ────────────────────────
-            const slowStep = spins - fastPhase;           // 1 … slowPhase
-            const slowT    = slowStep / slowPhase;        // 0 → 1
-
-            // Pick emoji: for the very last spin show the real one
+            const slowStep = spins - fastPhase;
+            const slowT = slowStep / slowPhase;
             const isLast = (slowStep === slowPhase);
-            const shown  = isLast
-              ? finalEmoji
-              : EMOJI_POOL[Math.floor(Math.random() * EMOJI_POOL.length)];
-
+            const shown = isLast ? finalEmoji : EMOJI_POOL[Math.floor(Math.random() * EMOJI_POOL.length)];
             el.textContent = shown;
-
-            // Scale settles toward 1, slight wobble early
             const wobble = isLast ? 0 : (Math.random() - 0.5) * 6 * (1 - slowT);
-            const scale  = isLast ? 1.15 : (0.85 + slowT * 0.2);
+            const scale = isLast ? 1.15 : (0.85 + slowT * 0.2);
             el.style.transform = `scale(${scale}) rotate(${wobble}deg)`;
             el.style.opacity = '1';
-
-            // Glow builds up to a peak then snaps on landing
             if (!isLast) {
               const glow = Math.floor(slowT * 40);
               el.style.filter = `drop-shadow(0 0 ${glow}px rgba(255,215,0,${slowT * 0.8}))`;
             }
-
-            // Exponential ease-out: 120ms → 480ms
             const delay = isLast ? 0 : 120 + Math.pow(slowT, 1.8) * 360;
-
             if (!isLast) {
               setTimeout(doSpin, delay);
             } else {
-              // ── LAND ──────────────────────────────────────────────────
               el.style.filter = 'drop-shadow(0 0 24px rgba(255,215,0,0.9))';
               el.className = 'machine-emoji landing';
               setTimeout(() => {
@@ -1230,7 +1386,6 @@ let lastTs     = null;
             }
           }
         };
-
         doSpin();
       });
     }
@@ -1239,14 +1394,10 @@ let lastTs     = null;
       const container = document.getElementById('historyEmojis');
       const empty = document.getElementById('historyEmpty');
       empty.style.display = 'none';
-
       const chip = document.createElement('span');
       chip.className = 'history-chip';
       chip.textContent = emoji;
-      // Add to beginning (most recent first)
       container.insertBefore(chip, container.firstChild);
-
-      // Keep max 20 visible
       while (container.children.length > 20) {
         container.removeChild(container.lastChild);
       }
@@ -1255,21 +1406,19 @@ let lastTs     = null;
     function markCell(player, emoji) {
       const idx = boards[player].indexOf(emoji);
       if (idx === -1) return;
-
       const cell = document.getElementById(`cell-${player}-${idx}`);
       if (!cell) return;
-
       cell.classList.add('matched', 'ripple', 'matching-now');
-
-      setTimeout(() => {
-        cell.classList.remove('matching-now');
-      }, 500);
+      setTimeout(() => cell.classList.remove('matching-now'), 500);
     }
 
     // ─── WIN ──────────────────────────────────────────────────────────────────
     function triggerWin(winner) {
       gameOver = true;
       isDrawing = false;
+      canClick = false;
+      if (roundTimer) clearInterval(roundTimer);
+      if (aiTimeout) clearTimeout(aiTimeout);
 
       const nameEl = document.getElementById('winPlayerName');
       const overlay = document.getElementById('winOverlay');
@@ -1279,15 +1428,16 @@ let lastTs     = null;
       btn.classList.remove('drawing');
 
       if (winner === 'p1') {
-        nameEl.textContent = '🟣 שחקן 1 ניצח!';
+        nameEl.textContent = `${myEmoji} ${displayName} ניצח/ה!`;
         nameEl.className = 'win-player-name p1-win';
         document.getElementById('card-p1').classList.add('winner');
-        setStatus('🎉 שחקן 1 ניצח! ✨');
+        setStatus(`🎉 ${myEmoji} ${displayName} ניצח/ה! ✨`);
       } else if (winner === 'p2') {
-        nameEl.textContent = '🟠 שחקן 2 ניצח!';
+        const oppName = solo ? '🤖 מחשב' : 'יריב';
+        nameEl.textContent = `${oppName} ניצח!`;
         nameEl.className = 'win-player-name p2-win';
         document.getElementById('card-p2').classList.add('winner');
-        setStatus('🎉 שחקן 2 ניצח! ✨');
+        setStatus(`🎉 ${oppName} ניצח! ✨`);
       } else {
         nameEl.textContent = '🤝 תיקו מדהים!';
         nameEl.className = 'win-player-name';
@@ -1296,10 +1446,7 @@ let lastTs     = null;
       }
 
       launchConfetti();
-
-      setTimeout(() => {
-        overlay.classList.add('show');
-      }, 800);
+      setTimeout(() => overlay.classList.add('show'), 800);
     }
 
     // ─── CONFETTI ─────────────────────────────────────────────────────────────
@@ -1339,23 +1486,19 @@ let lastTs     = null;
     window.goHome = function() { if (!solo) remove(gameRef); window.location.href='index.html'; };
 
     // ─── WAITING ROOM ─────────────────────────────────────────────────────────
-    window.startBingoSolo = function() {
-      document.getElementById('bingo-waiting').style.display = 'none';
-      initGame();
-    };
-
     function initWaiting() {
-      if (solo) { initGame(); listenToState(); return; }
-      // הצג overlay
+      if (solo) { initGame(); return; }
+      // מולטיפלייר - הצג overlay
       const overlay = document.getElementById('bingo-waiting');
-      overlay.style.display = 'flex';
-      // כתוב נוכחות
+      if (overlay) overlay.style.display = 'flex';
       import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js").then(({ update, onValue: ov }) => {
-        update(gameRef, { [`ready_${myPlayer}`]: true });
+        update(gameRef, { [`ready_${myName}`]: true });
         ov(gameRef, snap => {
           const s = snap.val(); if (!s) return;
-          if (s.ready_emma && s.ready_rif) {
-            overlay.style.display = 'none';
+          // בדוק אם יש 2 שחקנים מוכנים
+          const readyKeys = Object.keys(s).filter(k => k.startsWith('ready_'));
+          if (readyKeys.length >= 2) {
+            if (overlay) overlay.style.display = 'none';
             initGame();
             listenToState();
           }
