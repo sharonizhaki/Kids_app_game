@@ -2496,6 +2496,8 @@ function updateHUD(p1Name, p1Col, p1Em, p2Name, p2Col, p2Em) {
   document.getElementById('card-p2').style.borderColor = p2Col;
   document.getElementById('wins-p1').style.color = p1Col;
   document.getElementById('wins-p2').style.color = p2Col;
+  document.querySelector('#card-p1 .wins-label').textContent = '⭐';
+  document.querySelector('#card-p2 .wins-label').textContent = '⭐';
 }
 
 function startGamePlay() {
