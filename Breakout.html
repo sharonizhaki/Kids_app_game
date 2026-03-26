@@ -1521,6 +1521,13 @@ function gameLoop(time) {
   const dt = Math.min((time - lastTime) / 16.67, 3); lastTime = time;
   if (!gameState || gameState.gameOver) { drawGame(); requestAnimationFrame(gameLoop); return; }
 
+  // DEBUG - תמיד, פעם בשנייה
+  if (!window._dbgTop || Date.now() - window._dbgTop > 1000) {
+    window._dbgTop = Date.now();
+    let dbg = document.getElementById('p2-debug');
+    if (dbg) dbg.textContent = `isP1=${isP1} | ball=${Math.round(gameState.ball?.x)},${Math.round(gameState.ball?.y)} | pad2=${Math.round(gameState.p2PadX)} | tgt=${Math.round(myPadTarget)} | p=${gameState.paused}`;
+  }
+
   if (isP1) gameState.p1PadX += (myPadTarget - gameState.p1PadX) * 0.3 * dt;
 
   // מגנט - פד נצמד לכדור (חזק מספיק להגיע מכל מקום)
@@ -1574,12 +1581,6 @@ function gameLoop(time) {
     }
     // p2 פד
     gameState.p2PadX += (myPadTarget - gameState.p2PadX) * 0.3 * dt;
-    // debug - פעם בשנייה
-    if (!window._dbgLast || Date.now() - window._dbgLast > 1000) {
-      window._dbgLast = Date.now();
-      let dbg = document.getElementById('p2-debug');
-      if (dbg) dbg.textContent = `LOOP | ball=${Math.round(gameState.ball?.x)},${Math.round(gameState.ball?.y)} | pad=${Math.round(gameState.p2PadX)} tgt=${Math.round(myPadTarget)} | p=${gameState.paused}`;
-    }
     document.getElementById('wins-p1').textContent = isP1 ? p1Wins : p2Wins;
     document.getElementById('wins-p2').textContent = isP1 ? p2Wins : p1Wins;
   }
