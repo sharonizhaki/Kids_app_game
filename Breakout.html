@@ -2610,15 +2610,28 @@ async function initSession() {
         if (playerIds.length === 1) {
           isP1 = true; currentGameId = null;
           gameStateRef = ref(db, `game/${GAME_ID}/pending`);
+          // p1 ממתין - HUD עם השם שלי
+          updateHUD(displayName, myColor, myEmoji, 'ממתין...', '#888', '⏳');
         } else {
           const first = playerIds[0], second = playerIds[1];
           isP1 = myName === first;
           currentGameId = `${first}_${second}`;
           gameStateRef = ref(db, `game/${GAME_ID}/${currentGameId}`);
           remove(ref(db, `game/${GAME_ID}/pending`));
-          const p1D = playersAfter[first], p2D = playersAfter[second];
-          updateHUD(p1D.name, p1D.color, p1D.emoji, p2D.name, p2D.color, p2D.emoji);
-          startGamePlay();
+          // כל שחקן רואה את עצמו ב-card-p1
+          const meData = playersAfter[myName];
+          const oppId = isP1 ? second : first;
+          const oppData = playersAfter[oppId];
+          updateHUD(meData.name, meData.color, meData.emoji, oppData.name, oppData.color, oppData.emoji);
+          if (isP1) {
+            startGamePlay();
+          } else {
+            // p2 ממתין ל-state מ-p1 דרך listener
+            startGameStateListener();
+            gameRunning = true; lastTime = performance.now();
+            resizeCanvas();
+            requestAnimationFrame(gameLoop);
+          }
         }
       } else {
         stopHeartbeat(); await remove(ref(db, roomPath));
@@ -2643,8 +2656,18 @@ async function initSession() {
           currentGameId = `${first}_${second}`;
           gameStateRef = ref(db, `game/${GAME_ID}/${currentGameId}`);
           remove(ref(db, `game/${GAME_ID}/pending`));
-          updateHUD(players[first].name, players[first].color, players[first].emoji, players[second].name, players[second].color, players[second].emoji);
-          get(gameStateRef).then(snap => { if (!snap.val()) startGamePlay(); });
+          // כל שחקן רואה את עצמו ב-card-p1
+          const oppId = isP1 ? second : first;
+          updateHUD(displayName, myColor, myEmoji, players[oppId].name, players[oppId].color, players[oppId].emoji);
+          if (isP1) {
+            startGamePlay();
+          } else {
+            // p2 ממתין ל-state מ-p1
+            startGameStateListener();
+            gameRunning = true; lastTime = performance.now();
+            resizeCanvas();
+            requestAnimationFrame(gameLoop);
+          }
           startOpponentCheck();
         }
         window.lastPlayersSnapshot = players;
