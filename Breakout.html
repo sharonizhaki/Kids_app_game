@@ -1072,10 +1072,6 @@ function startGameStateListener() {
       gameState.p2PadX = myPadLocal;
       gameState.p2PadW = myPadWLocal;
       document.title = `p2: ball=${val.ball?'Y':'N'} paused=${val.paused} pad=${Math.round(myPadLocal)}`;
-      // debug ויזואלי על המסך
-      let dbg = document.getElementById('p2-debug');
-      if (!dbg) { dbg = document.createElement('div'); dbg.id = 'p2-debug'; dbg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;font-size:12px;z-index:9999;text-align:center;padding:2px;'; document.body.appendChild(dbg); }
-      dbg.textContent = `ball=${val.ball?'Y':'N'} dx=${val.ball?.dx?.toFixed(1)} dy=${val.ball?.dy?.toFixed(1)} paused=${val.paused} go=${gameState.gameOver}`;
     } else {
       if (val.p2PadX !== undefined && gameState) gameState.p2PadX = val.p2PadX;
       if (val.p2PadW !== undefined && gameState) gameState.p2PadW = val.p2PadW;
@@ -1578,9 +1574,12 @@ function gameLoop(time) {
     }
     // p2 פד
     gameState.p2PadX += (myPadTarget - gameState.p2PadX) * 0.3 * dt;
-    // debug
-    let dbg = document.getElementById('p2-debug');
-    if (dbg) dbg.textContent = `LOOP | ball=${Math.round(gameState.ball?.x)},${Math.round(gameState.ball?.y)} | pad=${Math.round(gameState.p2PadX)} | target=${Math.round(myPadTarget)} | paused=${gameState.paused}`;
+    // debug - פעם בשנייה
+    if (!window._dbgLast || Date.now() - window._dbgLast > 1000) {
+      window._dbgLast = Date.now();
+      let dbg = document.getElementById('p2-debug');
+      if (dbg) dbg.textContent = `LOOP | ball=${Math.round(gameState.ball?.x)},${Math.round(gameState.ball?.y)} | pad=${Math.round(gameState.p2PadX)} tgt=${Math.round(myPadTarget)} | p=${gameState.paused}`;
+    }
     document.getElementById('wins-p1').textContent = isP1 ? p1Wins : p2Wins;
     document.getElementById('wins-p2').textContent = isP1 ? p2Wins : p1Wins;
   }
