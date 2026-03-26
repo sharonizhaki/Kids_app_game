@@ -35,6 +35,12 @@
         .trophy.won { filter: none; opacity: 1; transform: scale(1.1); }
         .trophy.just-won { animation: trophyPop 0.6s ease; }
         @keyframes trophyPop { 0% { transform: scale(1); } 40% { transform: scale(1.5) rotate(-10deg); } 70% { transform: scale(1.2) rotate(5deg); } 100% { transform: scale(1.1); } }
+        .result-trophies { display: flex; justify-content: center; gap: 12px; margin: 10px 0 8px; }
+        .modal-trophy { font-size: 2.2rem; transition: all 0.4s; display: inline-block; }
+        .modal-trophy.dim { filter: grayscale(100%) brightness(0.3); opacity: 0.35; }
+        .modal-trophy.won { filter: none; opacity: 1; }
+        .modal-trophy.just-won { animation: modalTrophyPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes modalTrophyPop { 0% { transform: scale(0.5) rotate(-20deg); opacity: 0.3; } 50% { transform: scale(1.5) rotate(10deg); opacity: 1; } 100% { transform: scale(1) rotate(0deg); } }
         .heart { transition: all 0.3s; }
         .heart.lost { opacity: 0.15; filter: grayscale(100%); transform: scale(0.8); }
         .heart.just-lost { animation: heartLost 0.7s ease; }
@@ -382,6 +388,11 @@
     <div class="result-box">
         <div class="result-icon" id="resultIcon">🏆</div>
         <div class="result-title" id="resultTitle"></div>
+        <div class="result-trophies" id="resultTrophies" style="display:none;">
+            <span class="modal-trophy dim" id="mt-0">🏆</span>
+            <span class="modal-trophy dim" id="mt-1">🏆</span>
+            <span class="modal-trophy dim" id="mt-2">🏆</span>
+        </div>
         <div class="result-sub" id="resultSub"></div>
         <div class="result-waiting" id="resultWaiting" style="display:none; font-size:0.85rem; opacity:0.6; margin-bottom:14px;"></div>
         <div class="result-buttons">
@@ -667,6 +678,24 @@ function updateWins() {
         const wasWon = t.classList.contains('won');
         if (i < myWins) { t.classList.remove('dim'); t.classList.add('won'); if (!wasWon) { t.classList.add('just-won'); setTimeout(() => t.classList.remove('just-won'), 600); } }
         else { t.classList.remove('won', 'just-won'); t.classList.add('dim'); }
+
+function updateModalTrophies(wins, animate) {
+    const container = document.getElementById('resultTrophies');
+    container.style.display = 'flex';
+    for (let i = 0; i < 3; i++) {
+        const t = document.getElementById(`mt-${i}`);
+        t.classList.remove('won', 'just-won', 'dim');
+        if (i < wins) {
+            t.classList.add('won');
+            if (animate && i === wins - 1) {
+                t.classList.add('just-won');
+                setTimeout(() => t.classList.remove('just-won'), 800);
+            }
+        } else {
+            t.classList.add('dim');
+        }
+    }
+}
     });
 }
 function updateProgress() { progressFill.style.width = `${Math.min((playerY / RACE_LENGTH) * 100, 100)}%`; }
@@ -681,6 +710,7 @@ function showResult(icon, title, sub, canRetry=true) {
     document.getElementById('btnPlayAgain').style.display = 'none';
     document.getElementById('btnPlayAgain').textContent = '🔄 שחק שוב';
     document.getElementById('btnPlayAgain').disabled = false;
+    document.getElementById('resultTrophies').style.display = 'none'; // ברירת מחדל מוסתר
     
     if (multiGameId) {
         mpSetStatus(icon === '💥' ? 'crashed' : (icon === '🏆' ? 'finished' : 'lost'));
@@ -698,9 +728,11 @@ function showResult(icon, title, sub, canRetry=true) {
         }
         
         if (myWins >= WINS_TO_SERIES) {
-            document.getElementById('resultIcon').textContent = '🏆';
-            document.getElementById('resultTitle').textContent = '🎉 אלוף המרוץ!';
-            document.getElementById('resultSub').textContent = `${myWins} נצחונות | ${points} נקודות`;
+            // ניצחון סופי - 3 גביעים!
+            document.getElementById('resultIcon').textContent = '🎉';
+            document.getElementById('resultTitle').textContent = 'אלוף המרוץ!';
+            document.getElementById('resultSub').textContent = `${points} נקודות`;
+            updateModalTrophies(3, true);
             document.getElementById('btnPlayAgain').style.display = canRetry ? 'block' : 'none';
             document.getElementById('btnPlayAgain').textContent = '🔄 מרוץ חדש';
             document.getElementById('btnPlayAgain').onclick = function() {
@@ -711,7 +743,15 @@ function showResult(icon, title, sub, canRetry=true) {
                 resetGameState();
                 startCountdown(startGame);
             };
+        } else if (icon === '🏆') {
+            // ניצחון סיבוב - גביעים עם אנימציה
+            document.getElementById('resultIcon').textContent = '';
+            updateModalTrophies(myWins, true);
+            document.getElementById('btnPlayAgain').style.display = canRetry ? 'block' : 'none';
         } else {
+            // הפסד סיבוב - 😔 + גביעים מושחרים
+            document.getElementById('resultIcon').textContent = '😔';
+            updateModalTrophies(myWins, false);
             document.getElementById('btnPlayAgain').style.display = canRetry ? 'block' : 'none';
         }
     }
