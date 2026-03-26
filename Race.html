@@ -629,7 +629,7 @@ function resetGameState() {
     gameArea.querySelectorAll('.item, .float-text, .swipe-hint, .collected, .skid-mark').forEach(el => el.remove());
     
     playerSpeed = 0;
-    // חיים לא מתאפסים בין סיבובים! רק במרוץ חדש
+    lives = 3; // איפוס חיים בכל סיבוב
     pointsAtRoundStart = points;
     gameFinished = false; frozen = false; frozenUntil = 0; iceSkidding = false;
     window._mpStarted = false;
@@ -1567,10 +1567,9 @@ function gameLoop() {
         if(aiMoveCooldown>0)aiMoveCooldown--;
         if(aiY>=RACE_LENGTH&&!aiFinished){
             aiFinished=true; aiSpeed=4; updateExhaust(aiCarEl,4); updateHeadlights(aiCarEl,4);
-            aiCarEl.classList.add('speed-5');
         }
         // AI שסיים — ממשיך לנסוע קדימה מהר עד שנעלם מהמסך
-        if(aiFinished){ aiY += SPEEDS[4] * 0.5; }
+        if(aiFinished){ aiY += SPEEDS[4]; }
     }
 
     updateTrackDots();
@@ -1581,7 +1580,10 @@ function gameLoop() {
 function finishFlyUp(isLoss) {
     updateExhaust(playerCarEl, playerSpeed); updateHeadlights(playerCarEl, playerSpeed);
     
-    const finishSpeed = SPEEDS[playerSpeed];
+    // הסתר את ה-AI כשסיים
+    if (aiCarEl && aiFinished) aiCarEl.style.display = 'none';
+    
+    const finishSpeed = Math.max(SPEEDS[playerSpeed], SPEEDS[1]); // מינימום מהירות 1
     let finishAnimId = null;
     let carBottom = parseFloat(playerCarEl.style.bottom) || 0;
     const finishLineEl = document.getElementById('finishLine');
