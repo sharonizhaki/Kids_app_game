@@ -678,6 +678,8 @@ function updateWins() {
         const wasWon = t.classList.contains('won');
         if (i < myWins) { t.classList.remove('dim'); t.classList.add('won'); if (!wasWon) { t.classList.add('just-won'); setTimeout(() => t.classList.remove('just-won'), 600); } }
         else { t.classList.remove('won', 'just-won'); t.classList.add('dim'); }
+    });
+}
 
 function updateModalTrophies(wins, animate) {
     const container = document.getElementById('resultTrophies');
@@ -695,8 +697,6 @@ function updateModalTrophies(wins, animate) {
             t.classList.add('dim');
         }
     }
-}
-    });
 }
 function updateProgress() { progressFill.style.width = `${Math.min((playerY / RACE_LENGTH) * 100, 100)}%`; }
 
@@ -744,13 +744,13 @@ function showResult(icon, title, sub, canRetry=true) {
                 startCountdown(startGame);
             };
         } else if (icon === '🏆') {
-            // ניצחון סיבוב - גביעים עם אנימציה
+            // ניצחון סיבוב
             document.getElementById('resultIcon').textContent = '';
+            document.getElementById('resultTitle').textContent = 'ניצחת! 🏁';
             updateModalTrophies(myWins, true);
             document.getElementById('btnPlayAgain').style.display = canRetry ? 'block' : 'none';
         } else {
-            // הפסד סיבוב - 😔 + גביעים מושחרים
-            document.getElementById('resultIcon').textContent = '😔';
+            // הפסד/התרסקות - שומר icon מקורי (😔 או 💥)
             updateModalTrophies(myWins, false);
             document.getElementById('btnPlayAgain').style.display = canRetry ? 'block' : 'none';
         }
