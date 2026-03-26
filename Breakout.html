@@ -1062,17 +1062,26 @@ function startGameStateListener() {
     const val = snap.val();
     if (!val || !val.started) return;
     if (!isP1) {
-      const myPad = val.p2PadX;
+      // p2: קבל state מ-p1 אבל שמור פד מקומי
+      const myPadLocal = gameState ? gameState.p2PadX : myPadTarget;
+      const myPadWLocal = gameState ? gameState.p2PadW : PAD_W;
       gameState = val;
-      gameState.p2PadX = myPad;
+      gameState.p2PadX = myPadLocal;
+      gameState.p2PadW = myPadWLocal;
     } else {
       if (val.p2PadX !== undefined && gameState) gameState.p2PadX = val.p2PadX;
-      // Pick up rematch signals
+      if (val.p2PadW !== undefined && gameState) gameState.p2PadW = val.p2PadW;
       if (val.rematchP2 !== undefined && gameState) gameState.rematchP2 = val.rematchP2;
     }
-    // Sync match wins (לא בסולו - שם wins-p2 מציג חיים)
-    if (val.p1Wins !== undefined && !isSoloMode) { p1Wins = val.p1Wins; document.getElementById('wins-p1').textContent = p1Wins; }
-    if (val.p2Wins !== undefined && !isSoloMode) { p2Wins = val.p2Wins; document.getElementById('wins-p2').textContent = p2Wins; }
+    // Sync match wins - כל שחקן רואה את עצמו ב-card-p1
+    if (val.p1Wins !== undefined && !isSoloMode) {
+      p1Wins = val.p1Wins;
+      document.getElementById(isP1 ? 'wins-p1' : 'wins-p2').textContent = p1Wins;
+    }
+    if (val.p2Wins !== undefined && !isSoloMode) {
+      p2Wins = val.p2Wins;
+      document.getElementById(isP1 ? 'wins-p2' : 'wins-p1').textContent = p2Wins;
+    }
     if (val.rematchP1 && val.rematchP2 && val.gameOver) {
       // Both agreed to rematch
       document.getElementById('match-modal').style.display = 'none';
@@ -1521,7 +1530,12 @@ function gameLoop(time) {
       document.getElementById('wins-p1').textContent = p1Wins;
       document.getElementById('wins-p2').textContent = p2Wins;
     }
-    if (!isAIMode && !isSoloMode && Math.random() < 0.15) syncFullState();
+    if (!isAIMode && !isSoloMode) {
+      if (!window._lastSync || Date.now() - window._lastSync > 100) {
+        window._lastSync = Date.now();
+        syncFullState();
+      }
+    }
   }
   // שמירת trail כדור
   if (gameState && !gameState.paused && !gameState.gameOver) {
@@ -1575,8 +1589,11 @@ function drawGame() {
     ctx.setLineDash([S(8), S(8)]); ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke(); ctx.setLineDash([]);
   }
 
-  for (const b of gameState.topBricks) { if (b.alive) drawBrick(b, p2Color, true); }
-  if (!isSoloMode) { for (const b of gameState.bottomBricks) { if (b.alive) drawBrick(b, p1Color, false); } }
+  // בflip (p2), top=שלי ו-bottom=יריב, אז צבעים הפוכים
+  const topBrickColor = flip ? p1Color : p2Color;
+  const bottomBrickColor = flip ? p2Color : p1Color;
+  for (const b of gameState.topBricks) { if (b.alive) drawBrick(b, topBrickColor, true); }
+  if (!isSoloMode) { for (const b of gameState.bottomBricks) { if (b.alive) drawBrick(b, bottomBrickColor, false); } }
 
   // לבנים מתות - רסיסים קטנים מתנפצים
   const now = Date.now();
@@ -1643,8 +1660,11 @@ function drawGame() {
   }
   ctx.globalAlpha = 1;
 
-  if (!isSoloMode) drawPadWithEffects(gameState.p2PadX, P2_PAD_Y, gameState.p2PadW, p2Color, 'p2');
-  drawPadWithEffects(gameState.p1PadX, getP1PadY(), gameState.p1PadW, p1Color, 'p1');
+  // בflip, p2 pad נראה למטה (שלי) ו-p1 pad למעלה (יריב)
+  const p2PadColor = flip ? p1Color : p2Color;
+  const p1PadColor = flip ? p2Color : p1Color;
+  if (!isSoloMode) drawPadWithEffects(gameState.p2PadX, P2_PAD_Y, gameState.p2PadW, p2PadColor, 'p2');
+  drawPadWithEffects(gameState.p1PadX, getP1PadY(), gameState.p1PadW, p1PadColor, 'p1');
 
   // trail כדור - זנב אור
   const isGhostNow = effects.shared.ghost > Date.now();
@@ -1728,7 +1748,7 @@ function drawGame() {
         ctx.beginPath();
         ctx.arc(sx, sy, S(15), 0, Math.PI * 2);
         ctx.fill();
-        const haloColor = pu.dy > 0 ? p1Color : p2Color;
+        const haloColor = flip ? (pu.dy > 0 ? p2Color : p1Color) : (pu.dy > 0 ? p1Color : p2Color);
         ctx.fillStyle = haloColor;
         ctx.shadowColor = haloColor;
         ctx.shadowBlur = S(10);
@@ -1747,7 +1767,7 @@ function drawGame() {
       ctx.fill();
 
       if (pu.category === 'personal') {
-        const haloColor = pu.dy > 0 ? p1Color : p2Color;
+        const haloColor = flip ? (pu.dy > 0 ? p2Color : p1Color) : (pu.dy > 0 ? p1Color : p2Color);
         ctx.fillStyle = haloColor;
         ctx.shadowColor = haloColor;
         ctx.shadowBlur = S(10);
@@ -2259,8 +2279,9 @@ function endRound(winner) {
 
 function handleRoundEnd(winner, isLocal) {
   gameRunning = false;
-  document.getElementById('wins-p1').textContent = p1Wins;
-  document.getElementById('wins-p2').textContent = p2Wins;
+  // כל שחקן רואה את עצמו ב-card-p1
+  document.getElementById('wins-p1').textContent = isP1 ? p1Wins : p2Wins;
+  document.getElementById('wins-p2').textContent = isP1 ? p2Wins : p1Wins;
 
   const winnerName = winner === 'p1' ? p1DisplayName : p2DisplayName;
   const winnerColor = winner === 'p1' ? p1Color : p2Color;
@@ -2631,6 +2652,7 @@ async function initSession() {
             gameRunning = true; lastTime = performance.now();
             resizeCanvas();
             requestAnimationFrame(gameLoop);
+            showCountdown(() => {});
           }
         }
       } else {
@@ -2667,6 +2689,7 @@ async function initSession() {
             gameRunning = true; lastTime = performance.now();
             resizeCanvas();
             requestAnimationFrame(gameLoop);
+            showCountdown(() => {});
           }
           startOpponentCheck();
         }
