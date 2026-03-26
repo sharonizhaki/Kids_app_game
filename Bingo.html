@@ -1011,6 +1011,15 @@
   <!-- CONFETTI CONTAINER -->
   <div class="confetti-container" id="confettiContainer"></div>
 
+  <!-- ALERT MODAL (opponent left) -->
+  <div id="alert-modal" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; flex-direction:column; backdrop-filter:blur(8px);">
+    <div style="background:var(--surface); border-radius:24px; padding:40px 30px; text-align:center; max-width:320px; width:85%; border:2px solid rgba(255,255,255,0.1);">
+      <div style="font-size:3rem; margin-bottom:12px;">👋</div>
+      <div id="modal-msg" style="font-size:1rem; font-weight:700; margin-bottom:20px; color:var(--text);"></div>
+      <button class="ctrl-btn" onclick="goHome()" style="width:100%;">🏠 חזרה לתפריט</button>
+    </div>
+  </div>
+
   <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -1354,16 +1363,105 @@ document.title = `OK: ${displayName} solo=${solo}`;
       setTimeout(initGame, 300);
     }
 
-    window.goHome = function() { if (!solo) remove(gameRef); window.location.href='index.html'; };
+    window.goHome = function() {
+      stopHeartbeat(); stopOpponentCheck();
+      if (!solo) {
+        remove(ref(db, `rooms_v3/bingo/${myName}`));
+        remove(gameRef);
+      }
+      window.location.href = 'index.html';
+    };
     window.drawEmoji = drawEmoji;
     window.restartGame = restartGame;
+
+    // ─── HEARTBEAT + OPPONENT CHECK ──────────────────────────────────────────
+    let heartbeatInterval = null;
+    let opponentCheckInterval = null;
+    let lastPlayersSnapshot = null;
+
+    function startHeartbeat(roomPath) {
+      stopHeartbeat();
+      heartbeatInterval = setInterval(() => {
+        set(ref(db, roomPath), {
+          name: displayName, emoji: myEmoji, color: myColor,
+          timestamp: Date.now(), active: true
+        });
+      }, 1000);
+    }
+
+    function stopHeartbeat() {
+      if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; }
+    }
+
+    function startOpponentCheck() {
+      if (solo || opponentCheckInterval) return;
+      const roomRef2 = ref(db, 'rooms_v3/bingo');
+      opponentCheckInterval = setInterval(async () => {
+        try {
+          const snap = await get(roomRef2);
+          const players = snap.val() || {};
+          const ids = Object.keys(players);
+          lastPlayersSnapshot = players;
+
+          if (ids.length === 1 && ids[0] === myName && roundCount > 0) {
+            let leftName = '', leftEmoji = '';
+            if (lastPlayersSnapshot) {
+              for (const [id, p] of Object.entries(lastPlayersSnapshot)) {
+                if (id !== myName) { leftName = p.name; leftEmoji = p.emoji; break; }
+              }
+            }
+            handleOpponentLeft(leftName, leftEmoji);
+            return;
+          }
+
+          if (ids.length === 2) {
+            const oppId = ids.find(n => n !== myName);
+            if (oppId && players[oppId]) {
+              const timeSince = Date.now() - (players[oppId].timestamp || 0);
+              if (timeSince > 5000) {
+                await remove(ref(db, `rooms_v3/bingo/${oppId}`));
+                handleOpponentLeft(players[oppId].name || '', players[oppId].emoji || '');
+              }
+            }
+          }
+        } catch (e) { console.error('opponent check err:', e); }
+      }, 3000);
+    }
+
+    function stopOpponentCheck() {
+      if (opponentCheckInterval) { clearInterval(opponentCheckInterval); opponentCheckInterval = null; }
+    }
+
+    function handleOpponentLeft(leftName, leftEmoji) {
+      stopHeartbeat(); stopOpponentCheck();
+      gameOver = true; canClick = false;
+      if (roundTimer) { clearInterval(roundTimer); roundTimer = null; }
+      remove(ref(db, `rooms_v3/bingo/${myName}`));
+
+      const msg = (leftName && leftEmoji)
+        ? `${leftEmoji} ${leftName} עזב/ה את המשחק`
+        : 'השחקן השני עזב/ה את המשחק';
+      document.getElementById('alert-modal').style.display = 'flex';
+      document.getElementById('modal-msg').textContent = msg;
+    }
+
+    window.addEventListener('beforeunload', () => {
+      stopHeartbeat(); stopOpponentCheck();
+      if (!solo) {
+        remove(ref(db, `rooms_v3/bingo/${myName}`));
+      }
+    });
 
     function initWaiting() {
       if (solo) { initGame(); return; }
       const roomRef2 = ref(db, 'rooms_v3/bingo');
-      set(ref(db, `rooms_v3/bingo/${myName}`), { name:displayName, emoji:myEmoji, color:myColor, timestamp:Date.now(), active:true });
+      const myRoomPath = `rooms_v3/bingo/${myName}`;
+      set(ref(db, myRoomPath), { name:displayName, emoji:myEmoji, color:myColor, timestamp:Date.now(), active:true });
+      startHeartbeat(myRoomPath);
+
       onValue(roomRef2, snap => {
         const players = snap.val(); if (!players) return;
+        lastPlayersSnapshot = players;
         const ids = Object.keys(players);
         if (ids.length >= 2) {
           isP1 = ids[0] === myName;
@@ -1374,6 +1472,7 @@ document.title = `OK: ${displayName} solo=${solo}`;
           document.getElementById('name-p2').textContent = isP1 ? `${opp.emoji} ${opp.name}` : `${myEmoji} ${displayName}`;
           if (isP1) initGame();
           listenToState();
+          startOpponentCheck();
           if (!isP1) renderGrid();
         }
       });
