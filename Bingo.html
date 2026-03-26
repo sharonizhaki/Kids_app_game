@@ -1137,21 +1137,16 @@ if (solo) {
         lastTs = s.ts;
         if (s.boards) {
           boards.p1 = s.boards.p1;
-          boards.p2 = s.boards.p2;
+          if (s.boards.p2) boards.p2 = s.boards.p2;
         }
         pool = s.pool || [];
-        document.getElementById('drawCount').textContent = `נותרו ${pool.length} הגרלות`;
         if (s.lastDrawn && !isDrawing) {
           isDrawing = true;
           const drawn = s.lastDrawn;
-          const machineEmoji = document.getElementById('machineEmoji');
-          const machine = document.getElementById('machine');
-          spinMachine(machineEmoji, drawn).then(() => {
-            machine.classList.add('flash');
-            setTimeout(() => machine.classList.remove('flash'), 500);
-            addToHistory(drawn);
-            startSearchRound(drawn);
-          });
+          document.getElementById('currentEmoji').textContent = drawn;
+          document.getElementById('currentEmojiDisplay').classList.add('searching');
+          addToHistory(drawn);
+          startSearchRound(drawn);
         }
         if (s.gameOver && s.winner) {
           triggerWin(s.winner);
@@ -1367,59 +1362,6 @@ if (solo) {
       startSearchRound(drawn);
     }
 
-    function spinMachine(el, finalEmoji) {
-      return new Promise(resolve => {
-        let spins = 0;
-        const fastPhase = 18 + Math.floor(Math.random() * 6);
-        const slowPhase = 7;
-        const maxSpins = fastPhase + slowPhase;
-        el.className = 'machine-emoji';
-        el.style.filter = '';
-
-        const doSpin = () => {
-          spins++;
-          if (spins <= fastPhase) {
-            el.textContent = EMOJI_POOL[Math.floor(Math.random() * EMOJI_POOL.length)];
-            const scale = 0.7 + Math.random() * 0.5;
-            el.style.transform = `scale(${scale}) rotate(${(Math.random()-0.5)*20}deg)`;
-            el.style.opacity = Math.random() > 0.25 ? '1' : '0.3';
-            el.style.filter = '';
-            const t = spins / fastPhase;
-            const delay = 30 + t * 50;
-            setTimeout(doSpin, delay);
-          } else {
-            const slowStep = spins - fastPhase;
-            const slowT = slowStep / slowPhase;
-            const isLast = (slowStep === slowPhase);
-            const shown = isLast ? finalEmoji : EMOJI_POOL[Math.floor(Math.random() * EMOJI_POOL.length)];
-            el.textContent = shown;
-            const wobble = isLast ? 0 : (Math.random() - 0.5) * 6 * (1 - slowT);
-            const scale = isLast ? 1.15 : (0.85 + slowT * 0.2);
-            el.style.transform = `scale(${scale}) rotate(${wobble}deg)`;
-            el.style.opacity = '1';
-            if (!isLast) {
-              const glow = Math.floor(slowT * 40);
-              el.style.filter = `drop-shadow(0 0 ${glow}px rgba(255,215,0,${slowT * 0.8}))`;
-            }
-            const delay = isLast ? 0 : 120 + Math.pow(slowT, 1.8) * 360;
-            if (!isLast) {
-              setTimeout(doSpin, delay);
-            } else {
-              el.style.filter = 'drop-shadow(0 0 24px rgba(255,215,0,0.9))';
-              el.className = 'machine-emoji landing';
-              setTimeout(() => {
-                el.className = 'machine-emoji';
-                el.style.transform = '';
-                el.style.filter = '';
-                resolve();
-              }, 600);
-            }
-          }
-        };
-        doSpin();
-      });
-    }
-
     function addToHistory(emoji) {
       const container = document.getElementById('historyEmojis');
       const empty = document.getElementById('historyEmpty');
@@ -1514,6 +1456,8 @@ if (solo) {
     }
 
     window.goHome = function() { if (!solo) remove(gameRef); window.location.href='index.html'; };
+    window.drawEmoji = drawEmoji;
+    window.restartGame = restartGame;
 
     // ─── WAITING ROOM ─────────────────────────────────────────────────────────
     function initWaiting() {
