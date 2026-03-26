@@ -1519,8 +1519,9 @@ function gameLoop() {
             const now = Date.now();
             if (now - aiLastEqualizeTime > 10000) {
                 aiLastEqualizeTime = now;
-                if (aiSpeed < playerSpeed) {
-                    aiSpeed = Math.min(aiSpeed + 1, 4);
+                const eqMax = (aiY > playerY + 100) ? 3 : 4;
+                if (aiSpeed < playerSpeed && aiSpeed < eqMax) {
+                    aiSpeed = Math.min(aiSpeed + 1, eqMax);
                     updateExhaust(aiCarEl, aiSpeed);
                 }
             }
@@ -1545,7 +1546,9 @@ function gameLoop() {
                 if(iSY<-40||iSY>gameH+40)continue;
                 const dx=aiCX-getLaneCenter(it.lane),dy=aiSY-(iSY+13);
                 if(Math.sqrt(dx*dx+dy*dy)<HIT_RADIUS){
-                    if(it.type==='boost'&&aiSpeed>=4)continue;
+                    const aiLeading = aiY > playerY + 100;
+                    const aiMaxSpd = aiLeading ? 3 : 4; // מוביל = מקסימום רמה לפני הכי מהר
+                    if(it.type==='boost'&&aiSpeed>=aiMaxSpd)continue;
                     it.collected=true;
                     const fx=parseFloat(it.el.style.left)+12,fy=iSY;
                     if(it.type==='diamond'){}
