@@ -1077,6 +1077,7 @@ document.title = `OK: ${displayName} solo=${solo}`;
     let gameOver = false;
     let currentDrawn = null;
     let roundTimer = null;
+    let roundStartTime = 0;
     let canClick = false;
     const MAX_ROUNDS = 10;
     const ROUND_TIME = 5000;
@@ -1212,20 +1213,22 @@ document.title = `OK: ${displayName} solo=${solo}`;
     // ─── CELL CLICK ───────────────────────────────────────────────────────────
     function onCellClick(player, index, emoji) {
       if (!canClick || !currentDrawn || gameOver) return;
-      if (matched[myKey].has(emoji)) return; // כבר נמצא
+      if (matched[myKey].has(emoji)) return;
 
       if (emoji === currentDrawn) {
-        // נכון!
         canClick = false;
         matched[myKey].add(emoji);
-        scores[myKey]++;
+        // ניקוד = שניות שנשארו (עיגול למעלה)
+        const elapsed = Date.now() - roundStartTime;
+        const secsLeft = Math.ceil(Math.max(0, ROUND_TIME - elapsed) / 1000);
+        const points = Math.max(1, secsLeft); // מינימום 1 אם מצא
+        scores[myKey] += points;
         markCell(myKey, emoji);
         updateScore(myKey);
-        setStatus(`✅ מצאת! ${currentDrawn}`);
+        setStatus(`✅ מצאת! +${points} נקודות`);
         if (navigator.vibrate) navigator.vibrate(30);
         checkWin();
       } else {
-        // לא נכון - רטט שגיאה
         const cell = document.getElementById(`cell-${player}-${index}`);
         if (cell) {
           cell.classList.add('no-match-flash');
@@ -1240,12 +1243,11 @@ document.title = `OK: ${displayName} solo=${solo}`;
       currentDrawn = drawn;
       canClick = true;
       isDrawing = false;
-      roundTimeLeft = ROUND_TIME;
+      roundStartTime = Date.now();
 
-      setStatus(`🔍 חפש את ${drawn} ! (5 שניות)`);
+      setStatus(`🔍 חפש את ${drawn} ! (5s)`);
 
-      // טיימר ויזואלי
-      const timerStart = Date.now();
+      const timerStart = roundStartTime;
       if (roundTimer) clearInterval(roundTimer);
       roundTimer = setInterval(() => {
         const elapsed = Date.now() - timerStart;
@@ -1258,7 +1260,6 @@ document.title = `OK: ${displayName} solo=${solo}`;
           setStatus(`🔍 חפש את ${drawn} ! (${secs}s)`);
         }
       }, 200);
-
     }
 
     function endSearchRound(found) {
@@ -1299,6 +1300,7 @@ document.title = `OK: ${displayName} solo=${solo}`;
       gameOver = true;
       const found = matched.p1 ? matched.p1.size : 0;
       const score = scores.p1 || 0;
+      const maxScore = MAX_ROUNDS * 5;
 
       const nameEl = document.getElementById('winPlayerName');
       const overlay = document.getElementById('winOverlay');
@@ -1306,12 +1308,13 @@ document.title = `OK: ${displayName} solo=${solo}`;
       btn.disabled = true;
       btn.textContent = '🏁 הסתיים!';
 
+      const emoji = score >= maxScore * 0.7 ? '🌟' : score >= maxScore * 0.4 ? '👏' : '💪';
       document.querySelector('.win-title').textContent = '🏁 סיום!';
-      document.querySelector('.win-trophy').textContent = score >= 7 ? '🌟' : score >= 4 ? '👏' : '💪';
-      nameEl.innerHTML = `${myEmoji} ${displayName}<br><span style="font-size:0.9rem;color:var(--text-muted);">מצאת ${found} מתוך ${MAX_ROUNDS}<br>ניקוד: ${score}</span>`;
+      document.querySelector('.win-trophy').textContent = emoji;
+      nameEl.innerHTML = `${myEmoji} ${displayName}<br><span style="font-size:1rem;color:var(--gold);font-weight:900;">${score} נקודות</span><br><span style="font-size:0.85rem;color:var(--text-muted);">מצאת ${found} מתוך ${MAX_ROUNDS}</span>`;
       nameEl.className = 'win-player-name p1-win';
 
-      if (score >= 7) launchConfetti();
+      if (score >= maxScore * 0.7) launchConfetti();
       setTimeout(() => overlay.classList.add('show'), 500);
     }
 
