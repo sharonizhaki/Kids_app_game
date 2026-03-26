@@ -152,9 +152,40 @@
     }
 
     .my-grid-section {
-      padding: 8px 16px;
+      padding: 4px 16px;
       max-width: 420px;
       margin: 0 auto;
+    }
+
+    /* CURRENT EMOJI DISPLAY */
+    .current-zone {
+      text-align: center;
+      padding: 8px 20px 4px;
+    }
+    .current-emoji-display {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 3px solid rgba(255,215,0,0.3);
+      box-shadow: 0 0 20px rgba(255,215,0,0.15);
+      margin: 0 auto;
+    }
+    .current-emoji {
+      font-size: 3rem;
+      display: inline-block;
+    }
+    .current-emoji-display.searching {
+      border-color: var(--gold);
+      box-shadow: 0 0 30px rgba(255,215,0,0.4);
+      animation: searchPulse 0.6s ease-in-out infinite;
+    }
+    @keyframes searchPulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.3); }
+      50% { box-shadow: 0 0 40px rgba(255,215,0,0.6); }
     }
 
     /* CONTROLS כמו xo */
@@ -933,9 +964,24 @@
     </div>
   </div>
 
-  <!-- STATUS BAR -->
-  <div class="status-bar" id="statusBar">
-    <span>לחץ על "הגרל!" כדי להתחיל</span>
+  <!-- CURRENT EMOJI + STATUS -->
+  <div class="current-zone">
+    <div class="current-emoji-display" id="currentEmojiDisplay">
+      <span class="current-emoji" id="currentEmoji">❓</span>
+    </div>
+    <div class="status-bar" id="statusBar">
+      <span>לחץ על "הגרל!" כדי להתחיל</span>
+    </div>
+  </div>
+
+  <!-- MY GRID -->
+  <div class="my-grid-section">
+    <div class="emoji-grid" id="grid-p1"></div>
+  </div>
+
+  <!-- DRAW BUTTON -->
+  <div style="text-align:center; padding: 8px;">
+    <button class="draw-btn" id="drawBtn" onclick="drawEmoji()">הגרל!</button>
   </div>
 
   <!-- DRAWN HISTORY -->
@@ -945,27 +991,7 @@
     <span class="history-label" id="historyEmpty" style="color:rgba(255,255,255,0.2)">אין עדיין...</span>
   </div>
 
-  <!-- LOTTERY ZONE -->
-  <div class="lottery-zone">
-    <div class="machine" id="machine">
-      <div class="machine-ring"></div>
-      <div class="machine-inner" onclick="drawEmoji()" title="לחץ להגרלה">
-        <span class="machine-emoji" id="machineEmoji">🎱</span>
-      </div>
-    </div>
-
-    <div class="lottery-controls">
-      <button class="draw-btn" id="drawBtn" onclick="drawEmoji()">הגרל!</button>
-      <div class="draw-count" id="drawCount">10 סיבובים</div>
-    </div>
-  </div>
-
-  <!-- MY GRID -->
-  <div class="my-grid-section">
-    <div class="emoji-grid" id="grid-p1"></div>
-  </div>
-
-  <!-- CONTROLS כמו xo -->
+  <!-- CONTROLS -->
   <div class="controls">
     <button class="ctrl-btn" onclick="goHome()">🏠 בית</button>
     <button class="ctrl-btn ctrl-reset" onclick="restartGame()">🔄 איפוס</button>
@@ -1067,9 +1093,9 @@ if (solo) {
     }
 
     function initGame() {
-      pool = shuffle(EMOJI_POOL);
       const shared20 = shuffle(EMOJI_POOL).slice(0, 20);
       boards.p1 = shuffle([...shared20]);
+      pool = shuffle([...shared20]); // מגרילים רק מתוך ה-20 שבלוח!
       matched = { p1: new Set() };
       scores = { p1: 0 };
       gameOver = false;
@@ -1085,15 +1111,14 @@ if (solo) {
       document.getElementById('round-total').textContent = `מתוך ${MAX_ROUNDS}`;
       setActivePlayer(null);
 
-      // הסתר p2 ב-AI
       if (solo) {
         document.getElementById('card-p2').style.display = 'none';
       }
 
       document.getElementById('historyEmojis').innerHTML = '';
       document.getElementById('historyEmpty').style.display = '';
-      document.getElementById('machineEmoji').textContent = '🎱';
-      document.getElementById('drawCount').textContent = `${MAX_ROUNDS} סיבובים`;
+      document.getElementById('currentEmoji').textContent = '❓';
+      document.getElementById('currentEmojiDisplay').classList.remove('searching');
       document.getElementById('drawBtn').disabled = false;
       document.getElementById('drawBtn').classList.remove('drawing');
       document.getElementById('drawBtn').textContent = 'הגרל!';
@@ -1246,6 +1271,7 @@ if (solo) {
       canClick = false;
       currentDrawn = null;
       setActivePlayer(null);
+      document.getElementById('currentEmojiDisplay').classList.remove('searching');
       if (roundTimer) { clearInterval(roundTimer); roundTimer = null; }
 
       if (!found && !gameOver) {
@@ -1303,38 +1329,42 @@ if (solo) {
 
       const btn = document.getElementById('drawBtn');
       btn.disabled = true;
-      btn.classList.add('drawing');
       btn.textContent = '🎰 מגריל...';
 
       const drawn = pool.pop();
-      document.getElementById('drawCount').textContent = `נותרו ${pool.length} הגרלות`;
 
-      const machineEmoji = document.getElementById('machineEmoji');
-      const machine = document.getElementById('machine');
-
-      await spinMachine(machineEmoji, drawn);
-      machine.classList.add('flash');
-      setTimeout(() => machine.classList.remove('flash'), 500);
+      // אנימציית ספין באימוג'י המוגרל
+      const emojiEl = document.getElementById('currentEmoji');
+      const displayEl = document.getElementById('currentEmojiDisplay');
+      
+      // ספין מהיר
+      let spins = 0;
+      const totalSpins = 12;
+      await new Promise(resolve => {
+        const doSpin = () => {
+          spins++;
+          emojiEl.textContent = boards.p1[Math.floor(Math.random() * boards.p1.length)];
+          emojiEl.style.transform = `scale(${0.7 + Math.random() * 0.4}) rotate(${(Math.random()-0.5)*15}deg)`;
+          if (spins < totalSpins) {
+            setTimeout(doSpin, 50 + spins * 15);
+          } else {
+            emojiEl.textContent = drawn;
+            emojiEl.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+              emojiEl.style.transform = '';
+              resolve();
+            }, 300);
+          }
+        };
+        doSpin();
+      });
 
       addToHistory(drawn);
       updateRoundNum();
-      setActivePlayer('p1'); // תור השחקן לחפש
-      await new Promise(r => setTimeout(r, 200));
+      setActivePlayer('p1');
+      displayEl.classList.add('searching');
 
-      // התחל סיבוב חיפוש
       startSearchRound(drawn);
-
-      // Firebase
-      if (!solo) {
-        const ts = Date.now(); lastTs = ts;
-        set(gameRef, {
-          pool, boards,
-          lastDrawn: drawn,
-          scores, gameOver,
-          winner: null,
-          ts
-        });
-      }
     }
 
     function spinMachine(el, finalEmoji) {
