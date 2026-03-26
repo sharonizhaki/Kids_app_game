@@ -1563,13 +1563,14 @@ function gameLoop(time) {
     }
   } else {
     // p2: אינטרפולציה מקומית - כדור זז חלק בין עדכוני Firebase
-    if (gameState.ball && !gameState.paused && !gameState.gameOver) {
+    // p2 מתעלם מ-paused - p1 שולט בזה
+    if (gameState.ball && !gameState.gameOver) {
       gameState.ball.x += gameState.ball.dx * dt;
       gameState.ball.y += gameState.ball.dy * dt;
       if (gameState.ball.x - BALL_R <= 0) { gameState.ball.x = BALL_R; gameState.ball.dx = Math.abs(gameState.ball.dx); }
       if (gameState.ball.x + BALL_R >= 420) { gameState.ball.x = 420 - BALL_R; gameState.ball.dx = -Math.abs(gameState.ball.dx); }
     }
-    if (gameState.balls && !gameState.paused) {
+    if (gameState.balls && !gameState.gameOver) {
       for (const eb of gameState.balls) {
         eb.x += eb.dx * dt; eb.y += eb.dy * dt;
         if (eb.x - BALL_R <= 0) { eb.x = BALL_R; eb.dx = Math.abs(eb.dx); }
