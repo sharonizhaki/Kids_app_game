@@ -1562,8 +1562,7 @@ function gameLoop(time) {
       }
     }
   } else {
-    // p2: אינטרפולציה מקומית - כדור זז חלק בין עדכוני Firebase
-    // p2 מתעלם מ-paused - p1 שולט בזה
+    // p2: אינטרפולציה מקומית
     if (gameState.ball && !gameState.gameOver) {
       gameState.ball.x += gameState.ball.dx * dt;
       gameState.ball.y += gameState.ball.dy * dt;
@@ -1577,8 +1576,11 @@ function gameLoop(time) {
         if (eb.x + BALL_R >= 420) { eb.x = 420 - BALL_R; eb.dx = -Math.abs(eb.dx); }
       }
     }
-    // p2 פד: תמיד מ-myPadTarget (לא מ-Firebase)
+    // p2 פד
     gameState.p2PadX += (myPadTarget - gameState.p2PadX) * 0.3 * dt;
+    // debug
+    let dbg = document.getElementById('p2-debug');
+    if (dbg) dbg.textContent = `LOOP | ball=${Math.round(gameState.ball?.x)},${Math.round(gameState.ball?.y)} | pad=${Math.round(gameState.p2PadX)} | target=${Math.round(myPadTarget)} | paused=${gameState.paused}`;
     document.getElementById('wins-p1').textContent = isP1 ? p1Wins : p2Wins;
     document.getElementById('wins-p2').textContent = isP1 ? p2Wins : p1Wins;
   }
