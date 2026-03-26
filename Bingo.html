@@ -1013,7 +1013,7 @@
 
   <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, get, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
@@ -1070,19 +1070,22 @@ document.title = `OK: ${displayName} solo=${solo}`;
 
     // ─── GAME STATE ───────────────────────────────────────────────────────────
     let pool = [];
-    let boards = { p1: [] };
-    let matched = { p1: new Set() };
-    let scores = { p1: 0 };
+    let boards = { p1: [], p2: [] };
+    let matched = { p1: new Set(), p2: new Set() };
+    let scores = { p1: 0, p2: 0 };
     let isDrawing = false;
     let gameOver = false;
     let currentDrawn = null;
     let roundTimer = null;
     let roundStartTime = 0;
     let canClick = false;
+    let roundCount = 0;
+    let drawer = 'p1';
+    let isP1 = true;
+    let p2Name = '', p2Emoji = '', p2Color = '';
     const MAX_ROUNDS = 10;
     const ROUND_TIME = 5000;
 
-    // ─── INIT ─────────────────────────────────────────────────────────────────
     function shuffle(arr) {
       const a = [...arr];
       for (let i = a.length - 1; i > 0; i--) {
@@ -1095,361 +1098,256 @@ document.title = `OK: ${displayName} solo=${solo}`;
     function initGame() {
       const shared20 = shuffle(EMOJI_POOL).slice(0, 20);
       boards.p1 = shuffle([...shared20]);
-      pool = shuffle([...shared20]); // מגרילים רק מתוך ה-20 שבלוח!
-      matched = { p1: new Set() };
-      scores = { p1: 0 };
-      gameOver = false;
-      isDrawing = false;
-      currentDrawn = null;
-      canClick = false;
+      boards.p2 = shuffle([...shared20]);
+      pool = shuffle([...shared20]);
+      matched = { p1: new Set(), p2: new Set() };
+      scores = { p1: 0, p2: 0 };
+      gameOver = false; isDrawing = false; currentDrawn = null; canClick = false;
+      roundCount = 0; drawer = 'p1';
       if (roundTimer) clearInterval(roundTimer);
 
-      renderGridInSlot(myKey, 'p1');
-      updateScore('p1');
-      roundCount = 0;
+      renderGrid();
+      updateScore('p1'); updateScore('p2');
       document.getElementById('round-num').textContent = '0';
       document.getElementById('round-total').textContent = `מתוך ${MAX_ROUNDS}`;
       setActivePlayer(null);
-
-      if (solo) {
-        document.getElementById('card-p2').style.display = 'none';
-      }
-
+      if (solo) { document.getElementById('card-p2').style.display = 'none'; }
+      else { document.getElementById('card-p2').style.display = ''; }
       document.getElementById('historyEmojis').innerHTML = '';
       document.getElementById('historyEmpty').style.display = '';
       document.getElementById('currentEmoji').textContent = '❓';
       document.getElementById('currentEmojiDisplay').classList.remove('searching');
       document.getElementById('drawBtn').disabled = false;
-      document.getElementById('drawBtn').classList.remove('drawing');
       document.getElementById('drawBtn').textContent = 'הגרל!';
       document.getElementById('card-p1').classList.remove('winner');
+      document.getElementById('card-p2').classList.remove('winner');
       document.getElementById('winOverlay').classList.remove('show');
       document.getElementById('confettiContainer').innerHTML = '';
+      updateDrawButton();
       setStatus('לחץ על "הגרל!" כדי להתחיל');
+      if (!solo && isP1) {
+        set(gameRef, { boards, pool, scores:{p1:0,p2:0}, roundNum:0, drawer:'p1', state:'waiting', currentDrawn:null, found:{p1:false,p2:false}, gameOver:false,
+          players:{ p1:{name:displayName,emoji:myEmoji,color:myColor}, p2:{name:p2Name,emoji:p2Emoji,color:p2Color} }
+        });
+      }
     }
 
-    // ─── FIREBASE LISTEN ─────────────────────────────────────────────────────
-    function listenToState() {
-      if (solo) return;
-      onValue(gameRef, snap => {
-        const s = snap.val(); if (!s) return;
-        if (s.ts === lastTs) return;
-        lastTs = s.ts;
-        if (s.boards) {
-          boards.p1 = s.boards.p1;
-          if (s.boards.p2) boards.p2 = s.boards.p2;
-        }
-        pool = s.pool || [];
-        if (s.lastDrawn && !isDrawing) {
-          isDrawing = true;
-          const drawn = s.lastDrawn;
-          document.getElementById('currentEmoji').textContent = drawn;
-          document.getElementById('currentEmojiDisplay').classList.add('searching');
-          addToHistory(drawn);
-          startSearchRound(drawn);
-        }
-        if (s.gameOver && s.winner) {
-          triggerWin(s.winner);
-        }
-      });
-    }
-
-    // מרנדר לוח עם תאים לחיצים
-    function renderGridInSlot(player, slot) {
-      const grid = document.getElementById(`grid-${slot}`);
+    function renderGrid() {
+      const myBoard = isP1 ? 'p1' : 'p2';
+      const grid = document.getElementById('grid-p1');
       if (!grid) return;
       grid.innerHTML = '';
-      boards[player].forEach((emoji, i) => {
+      boards[myBoard].forEach((emoji, i) => {
         const cell = document.createElement('div');
         cell.className = 'emoji-cell';
-        cell.id = `cell-${player}-${i}`;
-        cell.innerHTML = `
-          <span>${emoji}</span>
-          <div class="check-overlay"><div class="check-dot">✓</div></div>
-          <div class="sparkle-burst"></div>
-        `;
-        cell.onclick = () => onCellClick(player, i, emoji);
+        cell.id = `cell-${myBoard}-${i}`;
+        cell.innerHTML = `<span>${emoji}</span><div class="check-overlay"><div class="check-dot">✓</div></div><div class="sparkle-burst"></div>`;
+        cell.onclick = () => onCellClick(myBoard, i, emoji);
         grid.appendChild(cell);
       });
     }
 
-    function renderGrid(player) {
-      renderGridInSlot(player, player);
-    }
-
-    function renderMilestones(player) {
-      // לא נחוץ יותר - milestones הוסרו מה-HTML
-    }
-
-    let roundCount = 0;
-
     function updateScore(player) {
-      if (player !== 'p1') return;
-      const score = scores[player] || 0;
-      const found = matched[player] ? matched[player].size : 0;
-      document.getElementById(`score-${player}`).textContent = score;
-      document.getElementById(`found-${player}`).textContent = `מצא: ${found}`;
-      const scoreEl = document.getElementById(`score-${player}`);
-      scoreEl.classList.remove('score-bump');
-      void scoreEl.offsetWidth;
-      scoreEl.classList.add('score-bump');
+      const el = document.getElementById(`score-${player}`);
+      const foundEl = document.getElementById(`found-${player}`);
+      if (!el) return;
+      el.textContent = scores[player] || 0;
+      if (foundEl) foundEl.textContent = `מצא: ${matched[player] ? matched[player].size : 0}`;
+      el.classList.remove('score-bump'); void el.offsetWidth; el.classList.add('score-bump');
     }
 
-    function updateRoundNum() {
-      roundCount++;
-      document.getElementById('round-num').textContent = roundCount;
-    }
+    function updateRoundNum() { roundCount++; document.getElementById('round-num').textContent = roundCount; }
 
     function setActivePlayer(player) {
       document.getElementById('card-p1').classList.toggle('active', player === 'p1');
       document.getElementById('card-p2').classList.toggle('active', player === 'p2');
     }
 
-    function setStatus(text) {
-      const bar = document.getElementById('statusBar');
-      bar.innerHTML = `<span>${text}</span>`;
+    function setStatus(text) { document.getElementById('statusBar').innerHTML = `<span>${text}</span>`; }
+
+    function updateDrawButton() {
+      if (solo) return;
+      const myKey = isP1 ? 'p1' : 'p2';
+      const isMyTurn = drawer === myKey;
+      document.getElementById('drawBtn').disabled = !isMyTurn || isDrawing || gameOver;
+      document.getElementById('drawBtn').textContent = isMyTurn ? 'הגרל!' : '⏳ תור היריב...';
     }
 
-    // ─── CELL CLICK ───────────────────────────────────────────────────────────
     function onCellClick(player, index, emoji) {
       if (!canClick || !currentDrawn || gameOver) return;
+      const myKey = isP1 ? 'p1' : 'p2';
       if (matched[myKey].has(emoji)) return;
-
       if (emoji === currentDrawn) {
         canClick = false;
         matched[myKey].add(emoji);
-        // ניקוד = שניות שנשארו (עיגול למעלה)
         const elapsed = Date.now() - roundStartTime;
         const secsLeft = Math.ceil(Math.max(0, ROUND_TIME - elapsed) / 1000);
-        const points = Math.max(1, secsLeft); // מינימום 1 אם מצא
+        const points = Math.max(1, secsLeft);
         scores[myKey] += points;
         markCell(myKey, emoji);
         updateScore(myKey);
         setStatus(`✅ מצאת! +${points} נקודות`);
         if (navigator.vibrate) navigator.vibrate(30);
-        checkWin();
+        if (solo) { setTimeout(() => endSearchRound(true), 2000); }
+        else { update(gameRef, { [`found.${myKey}`]:true, [`found.${myKey}_time`]:elapsed, [`scores.${myKey}`]:scores[myKey] }); }
       } else {
         const cell = document.getElementById(`cell-${player}-${index}`);
-        if (cell) {
-          cell.classList.add('no-match-flash');
-          setTimeout(() => cell.classList.remove('no-match-flash'), 400);
-        }
+        if (cell) { cell.classList.add('no-match-flash'); setTimeout(() => cell.classList.remove('no-match-flash'), 400); }
         if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
       }
     }
 
-    // ─── SEARCH ROUND ─────────────────────────────────────────────────────────
     function startSearchRound(drawn) {
-      currentDrawn = drawn;
-      canClick = true;
-      isDrawing = false;
-      roundStartTime = Date.now();
-
-      setStatus(`🔍 חפש את ${drawn} ! (5s)`);
-
+      currentDrawn = drawn; canClick = true; isDrawing = false; roundStartTime = Date.now();
+      setStatus(`🔍 חפש את ${drawn}! (5s)`);
       const timerStart = roundStartTime;
       if (roundTimer) clearInterval(roundTimer);
       roundTimer = setInterval(() => {
-        const elapsed = Date.now() - timerStart;
-        const left = Math.max(0, ROUND_TIME - elapsed);
-        const secs = Math.ceil(left / 1000);
-        if (left <= 0) {
-          clearInterval(roundTimer);
-          endSearchRound(false);
-        } else {
-          setStatus(`🔍 חפש את ${drawn} ! (${secs}s)`);
-        }
+        const left = Math.max(0, ROUND_TIME - (Date.now() - timerStart));
+        if (left <= 0) { clearInterval(roundTimer); endSearchRound(false); }
+        else { setStatus(`🔍 חפש את ${drawn}! (${Math.ceil(left/1000)}s)`); }
       }, 200);
     }
 
     function endSearchRound(found) {
-      canClick = false;
-      currentDrawn = null;
-      setActivePlayer(null);
+      canClick = false; currentDrawn = null; setActivePlayer(null);
       document.getElementById('currentEmojiDisplay').classList.remove('searching');
       if (roundTimer) { clearInterval(roundTimer); roundTimer = null; }
-
-      if (!found && !gameOver) {
-        setStatus('⏰ נגמר הזמן!');
-      }
-
-      // בדיקה אם 10 סיבובים הסתיימו
+      if (!found && !gameOver) setStatus('⏰ נגמר הזמן!');
       if (roundCount >= MAX_ROUNDS) {
         gameOver = true;
-        setTimeout(() => triggerEnd(), 1500);
+        setTimeout(() => solo ? triggerEndSolo() : triggerEndMulti(), 1500);
         return;
       }
-
       if (!gameOver) {
+        if (!solo) { drawer = drawer === 'p1' ? 'p2' : 'p1'; if (isP1) update(gameRef, { drawer, state:'waiting', found:{p1:false,p2:false} }); }
         setTimeout(() => {
           if (gameOver) return;
-          document.getElementById('drawBtn').disabled = false;
-          document.getElementById('drawBtn').textContent = 'הגרל!';
-          setStatus('לחץ על "הגרל!" להמשיך');
+          if (solo) { document.getElementById('drawBtn').disabled = false; document.getElementById('drawBtn').textContent = 'הגרל!'; }
+          else updateDrawButton();
+          const myKey = isP1 ? 'p1' : 'p2';
+          setStatus(solo ? 'לחץ על "הגרל!" להמשיך' : (drawer === myKey ? 'תורך להגריל!' : '⏳ תור היריב...'));
         }, 2000);
       }
     }
 
-    function checkWin() {
-      // מצאתי - סיום סיבוב אחרי 2 שניות
-      setTimeout(() => endSearchRound(true), 2000);
-    }
-
-    // מודאל סיכום אחרי 10 סיבובים
-    function triggerEnd() {
-      gameOver = true;
-      const found = matched.p1 ? matched.p1.size : 0;
-      const score = scores.p1 || 0;
-      const maxScore = MAX_ROUNDS * 5;
-
-      const nameEl = document.getElementById('winPlayerName');
-      const overlay = document.getElementById('winOverlay');
-      const btn = document.getElementById('drawBtn');
-      btn.disabled = true;
-      btn.textContent = '🏁 הסתיים!';
-
-      const emoji = score >= maxScore * 0.7 ? '🌟' : score >= maxScore * 0.4 ? '👏' : '💪';
-      document.querySelector('.win-title').textContent = '🏁 סיום!';
-      document.querySelector('.win-trophy').textContent = emoji;
-      nameEl.innerHTML = `${myEmoji} ${displayName}<br><span style="font-size:1rem;color:var(--gold);font-weight:900;">${score} נקודות</span><br><span style="font-size:0.85rem;color:var(--text-muted);">מצאת ${found} מתוך ${MAX_ROUNDS}</span>`;
-      nameEl.className = 'win-player-name p1-win';
-
-      if (score >= maxScore * 0.7) launchConfetti();
-      setTimeout(() => overlay.classList.add('show'), 500);
-    }
-
-    // ─── DRAW ─────────────────────────────────────────────────────────────────
     async function drawEmoji() {
       if (isDrawing || gameOver || roundCount >= MAX_ROUNDS) return;
+      if (!solo) { const myKey = isP1 ? 'p1' : 'p2'; if (drawer !== myKey) return; }
       isDrawing = true;
-
-      const btn = document.getElementById('drawBtn');
-      btn.disabled = true;
-      btn.textContent = '🎰 מגריל...';
-
+      document.getElementById('drawBtn').disabled = true;
+      document.getElementById('drawBtn').textContent = '🎰 מגריל...';
       const drawn = pool.pop();
-
-      // אנימציית ספין באימוג'י המוגרל
+      if (!solo) await update(gameRef, { currentDrawn:drawn, state:'searching', pool, roundNum:roundCount+1, found:{p1:false,p2:false} });
       const emojiEl = document.getElementById('currentEmoji');
       const displayEl = document.getElementById('currentEmojiDisplay');
-      
-      // ספין מהיר
+      const myBoard = isP1 ? 'p1' : 'p2';
       let spins = 0;
-      const totalSpins = 12;
       await new Promise(resolve => {
         const doSpin = () => {
           spins++;
-          emojiEl.textContent = boards.p1[Math.floor(Math.random() * boards.p1.length)];
-          emojiEl.style.transform = `scale(${0.7 + Math.random() * 0.4}) rotate(${(Math.random()-0.5)*15}deg)`;
-          if (spins < totalSpins) {
-            setTimeout(doSpin, 50 + spins * 15);
-          } else {
-            emojiEl.textContent = drawn;
-            emojiEl.style.transform = 'scale(1.2)';
-            setTimeout(() => {
-              emojiEl.style.transform = '';
-              resolve();
-            }, 300);
-          }
+          emojiEl.textContent = boards[myBoard][Math.floor(Math.random() * boards[myBoard].length)];
+          emojiEl.style.transform = `scale(${0.7+Math.random()*0.4}) rotate(${(Math.random()-0.5)*15}deg)`;
+          if (spins < 12) setTimeout(doSpin, 50+spins*15);
+          else { emojiEl.textContent = drawn; emojiEl.style.transform = 'scale(1.2)'; setTimeout(() => { emojiEl.style.transform = ''; resolve(); }, 300); }
         };
         doSpin();
       });
-
-      addToHistory(drawn);
-      updateRoundNum();
-      setActivePlayer('p1');
-      displayEl.classList.add('searching');
-
+      addToHistory(drawn); updateRoundNum(); displayEl.classList.add('searching');
       startSearchRound(drawn);
     }
 
+    function listenToState() {
+      if (solo) return;
+      onValue(gameRef, snap => {
+        const s = snap.val(); if (!s) return;
+        if (s.boards) { boards.p1 = s.boards.p1||[]; boards.p2 = s.boards.p2||[]; }
+        if (s.pool) pool = s.pool;
+        if (s.scores) { scores.p1 = s.scores.p1||0; scores.p2 = s.scores.p2||0; updateScore('p1'); updateScore('p2'); }
+        if (s.roundNum !== undefined) { roundCount = s.roundNum; document.getElementById('round-num').textContent = roundCount; }
+        if (s.drawer) { drawer = s.drawer; updateDrawButton(); }
+        if (s.players) {
+          if (s.players.p1) document.getElementById('name-p1').textContent = isP1 ? `${myEmoji} ${displayName}` : `${s.players.p1.emoji} ${s.players.p1.name}`;
+          if (s.players.p2) document.getElementById('name-p2').textContent = isP1 ? `${s.players.p2.emoji} ${s.players.p2.name}` : `${myEmoji} ${displayName}`;
+        }
+        const myKey = isP1 ? 'p1' : 'p2';
+        if (s.state === 'searching' && s.currentDrawn && !isDrawing && currentDrawn !== s.currentDrawn) {
+          currentDrawn = s.currentDrawn;
+          document.getElementById('currentEmoji').textContent = s.currentDrawn;
+          document.getElementById('currentEmojiDisplay').classList.add('searching');
+          addToHistory(s.currentDrawn);
+          roundCount = s.roundNum || roundCount;
+          document.getElementById('round-num').textContent = roundCount;
+          startSearchRound(s.currentDrawn);
+        }
+        if (s.found && s.found.p1 && s.found.p2 && s.state === 'searching') {
+          if (canClick) endSearchRound(true);
+        }
+        if (s.gameOver) gameOver = true;
+      });
+    }
+
     function addToHistory(emoji) {
-      const container = document.getElementById('historyEmojis');
-      const empty = document.getElementById('historyEmpty');
-      empty.style.display = 'none';
-      const chip = document.createElement('span');
-      chip.className = 'history-chip';
-      chip.textContent = emoji;
-      container.insertBefore(chip, container.firstChild);
-      while (container.children.length > 20) {
-        container.removeChild(container.lastChild);
-      }
+      const c = document.getElementById('historyEmojis');
+      document.getElementById('historyEmpty').style.display = 'none';
+      const chip = document.createElement('span'); chip.className = 'history-chip'; chip.textContent = emoji;
+      c.insertBefore(chip, c.firstChild);
+      while (c.children.length > 20) c.removeChild(c.lastChild);
     }
 
     function markCell(player, emoji) {
-      const idx = boards[player].indexOf(emoji);
-      if (idx === -1) return;
-      const cell = document.getElementById(`cell-${player}-${idx}`);
-      if (!cell) return;
+      const idx = boards[player].indexOf(emoji); if (idx === -1) return;
+      const cell = document.getElementById(`cell-${player}-${idx}`); if (!cell) return;
       cell.classList.add('matched', 'ripple', 'matching-now');
       setTimeout(() => cell.classList.remove('matching-now'), 500);
     }
 
-    // ─── WIN ──────────────────────────────────────────────────────────────────
-    function triggerWin(winner) {
+    function triggerEndSolo() {
       gameOver = true;
-      isDrawing = false;
-      canClick = false;
-      if (roundTimer) clearInterval(roundTimer);
-      if (aiTimeout) clearTimeout(aiTimeout);
-
-      const nameEl = document.getElementById('winPlayerName');
-      const overlay = document.getElementById('winOverlay');
-      const btn = document.getElementById('drawBtn');
-      btn.disabled = true;
-      btn.textContent = '🏆 הסתיים!';
-      btn.classList.remove('drawing');
-
-      if (winner === 'p1') {
-        nameEl.textContent = `${myEmoji} ${displayName} ניצח/ה!`;
-        nameEl.className = 'win-player-name p1-win';
-        document.getElementById('card-p1').classList.add('winner');
-        setStatus(`🎉 ${myEmoji} ${displayName} ניצח/ה! ✨`);
-      } else if (winner === 'p2') {
-        const oppName = solo ? '🤖 מחשב' : 'יריב';
-        nameEl.textContent = `${oppName} ניצח!`;
-        nameEl.className = 'win-player-name p2-win';
-        document.getElementById('card-p2').classList.add('winner');
-        setStatus(`🎉 ${oppName} ניצח! ✨`);
-      } else {
-        nameEl.textContent = '🤝 תיקו מדהים!';
-        nameEl.className = 'win-player-name';
-        nameEl.style.color = 'var(--gold)';
-        setStatus('🎉 תיקו! שני השחקנים הגיעו ל-10!');
-      }
-
-      launchConfetti();
-      setTimeout(() => overlay.classList.add('show'), 800);
+      const found = matched.p1 ? matched.p1.size : 0;
+      const score = scores.p1 || 0;
+      const maxScore = MAX_ROUNDS * 5;
+      const emoji = score >= maxScore*0.7 ? '🌟' : score >= maxScore*0.4 ? '👏' : '💪';
+      document.querySelector('.win-trophy').textContent = emoji;
+      document.querySelector('.win-title').textContent = '🏁 סיום!';
+      document.getElementById('winPlayerName').innerHTML = `${myEmoji} ${displayName}<br><span style="font-size:1rem;color:var(--gold);font-weight:900;">${score} נקודות</span><br><span style="font-size:0.85rem;color:var(--text-muted);">מצאת ${found} מתוך ${MAX_ROUNDS}</span>`;
+      document.getElementById('drawBtn').disabled = true;
+      if (score >= maxScore*0.7) launchConfetti();
+      setTimeout(() => document.getElementById('winOverlay').classList.add('show'), 500);
     }
 
-    // ─── CONFETTI ─────────────────────────────────────────────────────────────
+    function triggerEndMulti() {
+      gameOver = true;
+      const myKey = isP1 ? 'p1' : 'p2';
+      const oppK = isP1 ? 'p2' : 'p1';
+      const my = scores[myKey]||0, opp = scores[oppK]||0;
+      let trophy, title, msg;
+      if (my > opp) { trophy='🏆'; title='ניצחת!'; msg=`${myEmoji} ${displayName} 🏆`; launchConfetti(); }
+      else if (my < opp) { trophy='😢'; title='הפסדת'; msg='היריב ניצח!'; }
+      else { trophy='🤝'; title='תיקו!'; msg='תיקו מדהים!'; launchConfetti(); }
+      document.querySelector('.win-trophy').textContent = trophy;
+      document.querySelector('.win-title').textContent = title;
+      document.getElementById('winPlayerName').innerHTML = `${msg}<br><span style="font-size:1rem;color:var(--gold);">${my} - ${opp}</span>`;
+      document.getElementById('drawBtn').disabled = true;
+      if (isP1) update(gameRef, { gameOver: true });
+      setTimeout(() => document.getElementById('winOverlay').classList.add('show'), 500);
+    }
+
     function launchConfetti() {
-      const colors = [
-        '#a855f7','#f97316','#ffd700','#ec4899','#3b82f6',
-        '#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'
-      ];
-      const container = document.getElementById('confettiContainer');
-      container.innerHTML = '';
-
-      for (let i = 0; i < 120; i++) {
+      const colors = ['#a855f7','#f97316','#ffd700','#ec4899','#3b82f6','#10b981','#f59e0b','#ef4444'];
+      const c = document.getElementById('confettiContainer'); c.innerHTML = '';
+      for (let i = 0; i < 80; i++) {
         setTimeout(() => {
-          const piece = document.createElement('div');
-          piece.className = 'confetti-piece';
-          piece.style.left = Math.random() * 100 + 'vw';
-          piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-          piece.style.width = (6 + Math.random() * 10) + 'px';
-          piece.style.height = (8 + Math.random() * 16) + 'px';
-          piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
-          const duration = 2 + Math.random() * 3;
-          piece.style.animationDuration = duration + 's';
-          piece.style.animationDelay = (Math.random() * 1.5) + 's';
-          container.appendChild(piece);
-          setTimeout(() => piece.remove(), (duration + 2) * 1000);
-        }, i * 15);
+          const p = document.createElement('div'); p.className = 'confetti-piece';
+          p.style.left = Math.random()*100+'vw'; p.style.background = colors[Math.floor(Math.random()*colors.length)];
+          p.style.width = (6+Math.random()*10)+'px'; p.style.height = (8+Math.random()*16)+'px';
+          p.style.borderRadius = Math.random()>0.5?'50%':'2px';
+          const d = 2+Math.random()*3; p.style.animationDuration = d+'s'; p.style.animationDelay = Math.random()+'s';
+          c.appendChild(p); setTimeout(() => p.remove(), (d+2)*1000);
+        }, i*12);
       }
     }
 
-    // ─── RESTART ─────────────────────────────────────────────────────────────
     function restartGame() {
       document.getElementById('winOverlay').classList.remove('show');
       if (!solo) remove(gameRef);
@@ -1460,34 +1358,28 @@ document.title = `OK: ${displayName} solo=${solo}`;
     window.drawEmoji = drawEmoji;
     window.restartGame = restartGame;
 
-    // ─── WAITING ROOM ─────────────────────────────────────────────────────────
     function initWaiting() {
       if (solo) { initGame(); return; }
-      // מולטיפלייר - הצג overlay
-      const overlay = document.getElementById('bingo-waiting');
-      if (overlay) overlay.style.display = 'flex';
-      import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js").then(({ update, onValue: ov }) => {
-        update(gameRef, { [`ready_${myName}`]: true });
-        ov(gameRef, snap => {
-          const s = snap.val(); if (!s) return;
-          // בדוק אם יש 2 שחקנים מוכנים
-          const readyKeys = Object.keys(s).filter(k => k.startsWith('ready_'));
-          if (readyKeys.length >= 2) {
-            if (overlay) overlay.style.display = 'none';
-            initGame();
-            listenToState();
-          }
-        });
+      const roomRef2 = ref(db, 'rooms_v3/bingo');
+      set(ref(db, `rooms_v3/bingo/${myName}`), { name:displayName, emoji:myEmoji, color:myColor, timestamp:Date.now(), active:true });
+      onValue(roomRef2, snap => {
+        const players = snap.val(); if (!players) return;
+        const ids = Object.keys(players);
+        if (ids.length >= 2) {
+          isP1 = ids[0] === myName;
+          const oppId = ids.find(id => id !== myName);
+          const opp = players[oppId];
+          p2Name = opp.name; p2Emoji = opp.emoji; p2Color = opp.color;
+          document.getElementById('name-p1').textContent = isP1 ? `${myEmoji} ${displayName}` : `${opp.emoji} ${opp.name}`;
+          document.getElementById('name-p2').textContent = isP1 ? `${opp.emoji} ${opp.name}` : `${myEmoji} ${displayName}`;
+          if (isP1) initGame();
+          listenToState();
+          if (!isP1) renderGrid();
+        }
       });
     }
 
-    // ─── START ────────────────────────────────────────────────────────────────
-    try {
-      initWaiting();
-      document.title += ' | INIT OK';
-    } catch(e) {
-      document.title = 'ERR-INIT: ' + e.message;
-    }
+    try { initWaiting(); } catch(e) { document.title = 'ERR: ' + e.message; }
   </script>
 </body>
 </html>
