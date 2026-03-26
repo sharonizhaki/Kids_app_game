@@ -1065,12 +1065,24 @@ function startGameStateListener() {
     const val = snap.val();
     if (!val || !val.started) return;
     if (!isP1) {
-      // p2: קבל state מ-p1 אבל שמור פד מקומי
       const myPadLocal = gameState ? gameState.p2PadX : myPadTarget;
       const myPadWLocal = gameState ? gameState.p2PadW : PAD_W;
+      // שמור מיקום כדור מקומי - p2 מזיז בעצמו
+      const localBallX = gameState?.ball?.x;
+      const localBallY = gameState?.ball?.y;
       gameState = val;
       gameState.p2PadX = myPadLocal;
       gameState.p2PadW = myPadWLocal;
+      // snap למיקום p1 רק אם הפער גדול (>30px) - אחרת אינטרפולציה
+      if (localBallX !== undefined && gameState.ball) {
+        const diffX = Math.abs(gameState.ball.x - localBallX);
+        const diffY = Math.abs(gameState.ball.y - localBallY);
+        if (diffX < 30 && diffY < 30) {
+          gameState.ball.x = localBallX;
+          gameState.ball.y = localBallY;
+        }
+        // dx/dy תמיד מ-p1 (authority)
+      }
       document.title = `p2: ball=${val.ball?'Y':'N'} paused=${val.paused} pad=${Math.round(myPadLocal)}`;
     } else {
       if (val.p2PadX !== undefined && gameState) gameState.p2PadX = val.p2PadX;
@@ -1565,8 +1577,8 @@ function gameLoop(time) {
       }
     }
   } else {
-    // p2: אינטרפולציה מקומית
-    if (gameState.ball && !gameState.gameOver) {
+    // p2: אינטרפולציה מקומית - תמיד מזיז כדור לפי dx/dy
+    if (gameState.ball && !gameState.gameOver && (gameState.ball.dx !== 0 || gameState.ball.dy !== 0)) {
       gameState.ball.x += gameState.ball.dx * dt;
       gameState.ball.y += gameState.ball.dy * dt;
       if (gameState.ball.x - BALL_R <= 0) { gameState.ball.x = BALL_R; gameState.ball.dx = Math.abs(gameState.ball.dx); }
