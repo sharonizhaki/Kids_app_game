@@ -1071,6 +1071,7 @@ function startGameStateListener() {
       gameState = val;
       gameState.p2PadX = myPadLocal;
       gameState.p2PadW = myPadWLocal;
+      document.title = `p2: ball=${val.ball?'Y':'N'} paused=${val.paused} pad=${Math.round(myPadLocal)}`;
     } else {
       if (val.p2PadX !== undefined && gameState) gameState.p2PadX = val.p2PadX;
       if (val.p2PadW !== undefined && gameState) gameState.p2PadW = val.p2PadW;
@@ -1521,7 +1522,6 @@ function gameLoop(time) {
   if (!gameState || gameState.gameOver) { drawGame(); requestAnimationFrame(gameLoop); return; }
 
   if (isP1) gameState.p1PadX += (myPadTarget - gameState.p1PadX) * 0.3 * dt;
-  else gameState.p2PadX += (myPadTarget - gameState.p2PadX) * 0.3 * dt;
 
   // מגנט - פד נצמד לכדור (חזק מספיק להגיע מכל מקום)
   const nowEff = Date.now();
@@ -1562,18 +1562,18 @@ function gameLoop(time) {
     if (gameState.ball && !gameState.paused && !gameState.gameOver) {
       gameState.ball.x += gameState.ball.dx * dt;
       gameState.ball.y += gameState.ball.dy * dt;
-      // bounce מקירות
       if (gameState.ball.x - BALL_R <= 0) { gameState.ball.x = BALL_R; gameState.ball.dx = Math.abs(gameState.ball.dx); }
       if (gameState.ball.x + BALL_R >= 420) { gameState.ball.x = 420 - BALL_R; gameState.ball.dx = -Math.abs(gameState.ball.dx); }
     }
-    // כדורים נוספים
-    if (gameState.balls) {
+    if (gameState.balls && !gameState.paused) {
       for (const eb of gameState.balls) {
         eb.x += eb.dx * dt; eb.y += eb.dy * dt;
         if (eb.x - BALL_R <= 0) { eb.x = BALL_R; eb.dx = Math.abs(eb.dx); }
         if (eb.x + BALL_R >= 420) { eb.x = 420 - BALL_R; eb.dx = -Math.abs(eb.dx); }
       }
     }
+    // p2 פד: תמיד מ-myPadTarget (לא מ-Firebase)
+    gameState.p2PadX += (myPadTarget - gameState.p2PadX) * 0.3 * dt;
     document.getElementById('wins-p1').textContent = isP1 ? p1Wins : p2Wins;
     document.getElementById('wins-p2').textContent = isP1 ? p2Wins : p1Wins;
   }
