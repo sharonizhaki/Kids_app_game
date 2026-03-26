@@ -2692,6 +2692,10 @@ async function initSession() {
             startGamePlay();
           } else {
             // p2 ממתין ל-state מ-p1 דרך listener
+            // DEBUG
+            let dbg = document.getElementById('p2-debug');
+            if (!dbg) { dbg = document.createElement('div'); dbg.id = 'p2-debug'; dbg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;font-size:11px;z-index:9999;text-align:center;padding:4px;direction:ltr;'; document.body.appendChild(dbg); }
+            dbg.textContent = `P2 INIT | isP1=${isP1} | ref=${gameStateRef ? gameStateRef.toString() : 'NULL'} | gameRunning=${gameRunning}`;
             startGameStateListener();
             gameRunning = true; lastTime = performance.now();
             resizeCanvas();
@@ -2729,6 +2733,9 @@ async function initSession() {
             startGamePlay();
           } else {
             // p2 ממתין ל-state מ-p1
+            let dbg = document.getElementById('p2-debug');
+            if (!dbg) { dbg = document.createElement('div'); dbg.id = 'p2-debug'; dbg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:orange;color:black;font-size:11px;z-index:9999;text-align:center;padding:4px;direction:ltr;'; document.body.appendChild(dbg); }
+            dbg.textContent = `P2 ROOM | isP1=${isP1} | gameId=${currentGameId} | ref=${gameStateRef ? 'OK' : 'NULL'}`;
             startGameStateListener();
             gameRunning = true; lastTime = performance.now();
             resizeCanvas();
