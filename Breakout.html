@@ -1536,8 +1536,9 @@ function gameLoop(time) {
   // DEBUG - תמיד, פעם בשנייה
   if (!window._dbgTop || Date.now() - window._dbgTop > 1000) {
     window._dbgTop = Date.now();
+    const inElse = !(isP1 || isAIMode || isSoloMode);
     let dbg = document.getElementById('p2-debug');
-    if (dbg) dbg.textContent = `isP1=${isP1} | ball=${Math.round(gameState.ball?.x)},${Math.round(gameState.ball?.y)} | pad2=${Math.round(gameState.p2PadX)} | tgt=${Math.round(myPadTarget)} | p=${gameState.paused}`;
+    if (dbg) dbg.textContent = `P1=${isP1} AI=${isAIMode} SOLO=${isSoloMode} ELSE=${inElse} | b=${Math.round(gameState.ball?.x)},${Math.round(gameState.ball?.y)} dx=${gameState.ball?.dx?.toFixed(1)} | tgt=${Math.round(myPadTarget)}`;
   }
 
   if (isP1) gameState.p1PadX += (myPadTarget - gameState.p1PadX) * 0.3 * dt;
