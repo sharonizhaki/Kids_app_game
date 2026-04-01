@@ -14,7 +14,7 @@ import {
   createParentInviteCode, verifyChildCode,
   showChildInviteModal, shareCode, shareParentCode,
   CHILD_EMOJIS, CHILD_COLORS,
-  renderDashboardChildren, renderDashTaskRows
+  renderDashboardChildren, renderDashTaskRows, saveWeeklySnapshot
 } from './family.js';
 import {
   openAddTask, saveTask, loadAllTasks,
@@ -33,6 +33,7 @@ window.showScreen = (id) => {
     renderDashboardChildren(currentFamilyId);
     refreshQuickTasksBanner(currentFamilyId);
     renderDashTaskRows(currentFamilyId);
+    saveWeeklySnapshot(currentFamilyId).catch(() => {});
   }
 };
 
@@ -92,6 +93,8 @@ function renderDashboard(user) {
   renderDashboardChildren(currentFamilyId);
   refreshQuickTasksBanner(currentFamilyId);
   renderDashTaskRows(currentFamilyId);
+  // Fire-and-forget: save last week's stats if new week began
+  saveWeeklySnapshot(currentFamilyId).catch(() => {});
   const uid = user?.uid;
   if (uid && !localStorage.getItem('dashTourDone_' + uid)) {
     setTimeout(() => startDashTour(currentFamilyId, uid), 1000);
@@ -764,6 +767,19 @@ async function startDashTour(familyId, uid) {
       ov.remove(); spot.remove(); infoCard.remove(); st.remove(); sb.remove();
       localStorage.setItem(DONE_KEY, '1');
       renderDashTaskRows(familyId);
+      // Highlight quick-tasks banner if visible (no tasks yet)
+      const banner = document.getElementById('quick-tasks-banner');
+      if (banner && banner.style.display !== 'none') {
+        setTimeout(() => {
+          banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const inner = document.getElementById('quick-tasks-inner');
+          if (inner) {
+            inner.style.transition = 'box-shadow 0.4s';
+            inner.style.boxShadow = '0 0 0 5px rgba(99,102,241,0.5),0 0 0 14px rgba(99,102,241,0.15)';
+            setTimeout(() => { inner.style.boxShadow = ''; inner.style.transition = ''; }, 2200);
+          }
+        }, 200);
+      }
     }, 580);
   }
 
@@ -793,16 +809,34 @@ async function startDashTour(familyId, uid) {
       spot.style.width = diag + 'px'; spot.style.height = diag + 'px';
       spot.style.left = (window.innerWidth/2 - diag/2) + 'px';
       spot.style.top  = (window.innerHeight/2 - diag/2) + 'px';
-      await new Promise(r => setTimeout(r, 580));
+      await new Promise(r => setTimeout(r, 520));
       fadeLight();
-      await new Promise(r => setTimeout(r, 220));
+      await new Promise(r => setTimeout(r, 160));
 
-      if (!childCards.length) { endTour(); resolve(); return; }
+      // ── Inter-phase shutter (like task tour) ──
+      const ish_t = document.createElement('div');
+      ish_t.style.cssText = 'position:fixed;top:0;left:0;right:0;height:0;background:#0F172A;z-index:9200;transition:height .38s ease-in;pointer-events:none;';
+      const ish_b = document.createElement('div');
+      ish_b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;height:0;background:#0F172A;z-index:9200;transition:height .38s ease-in;pointer-events:none;';
+      document.body.appendChild(ish_t); document.body.appendChild(ish_b);
+      await new Promise(r => setTimeout(r, 40));
+      ish_t.style.height = '52vh'; ish_b.style.height = '52vh';
+      await new Promise(r => setTimeout(r, 440));
 
-      // Reset spot (no transition) to child card position
+      if (!childCards.length) { ish_t.remove(); ish_b.remove(); endTour(); resolve(); return; }
+
+      // While screen is covered: reposition spot silently
       spot.style.transition = 'none';
       setSpot(childCards[0], 18);
       await new Promise(r => setTimeout(r, 30));
+
+      // Open shutters
+      ish_t.style.transition = 'height .38s ease-out';
+      ish_b.style.transition = 'height .38s ease-out';
+      ish_t.style.height = '0'; ish_b.style.height = '0';
+      await new Promise(r => setTimeout(r, 420));
+      ish_t.remove(); ish_b.remove();
+
       spot.style.transition = 'width .55s ease,height .55s ease,left .55s ease,top .55s ease,box-shadow .6s';
 
       // ── Phase 2: Child card ──

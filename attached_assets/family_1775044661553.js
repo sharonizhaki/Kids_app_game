@@ -348,6 +348,49 @@ export async function renderDashboardChildren(familyId) {
   }).join('');
 }
 
+// =========== WEEKLY HISTORY SNAPSHOT ===========
+function _getWeekId(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = d.getUTCDay() || 7; d.setUTCDate(d.getUTCDate() + 4 - day);
+  const yr = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const wk = Math.ceil((((d - yr) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(wk).padStart(2,'0')}`;
+}
+
+export async function saveWeeklySnapshot(familyId) {
+  const now = new Date();
+  const thisSunday = new Date(now); thisSunday.setHours(0,0,0,0); thisSunday.setDate(now.getDate() - now.getDay());
+  const lastSunday = new Date(thisSunday); lastSunday.setDate(thisSunday.getDate() - 7);
+  const weekId = _getWeekId(lastSunday);
+  const savedKey = `weekSnap_${familyId}_${weekId}`;
+  if (localStorage.getItem(savedKey)) return;
+
+  const children = childrenCache;
+  if (!children.length) return;
+
+  const weekStart = lastSunday.getTime();
+  const weekEnd   = thisSunday.getTime();
+  const monthStart = (() => { const d = new Date(now); d.setDate(1); d.setHours(0,0,0,0); return d.getTime(); })();
+
+  const childrenData = {};
+  for (const child of children) {
+    try {
+      const stSnap = await getDoc(doc(db, 'families', familyId, 'children', child.id, 'state', 'current'));
+      const hist = stSnap.exists() ? (stSnap.data().hist || []) : [];
+      const weekPts  = hist.filter(h => (h.ts||0) >= weekStart && (h.ts||0) < weekEnd).reduce((s,h) => s+(h.pts||0), 0);
+      const monthPts = hist.filter(h => (h.ts||0) >= monthStart).reduce((s,h) => s+(h.pts||0), 0);
+      childrenData[child.id] = { name: child.name, weekPts, monthPts };
+    } catch(e) {}
+  }
+
+  try {
+    await setDoc(doc(db, 'families', familyId, 'weeklyHistory', weekId), {
+      weekId, weekStart, weekEnd, children: childrenData, savedAt: Date.now()
+    });
+    localStorage.setItem(savedKey, '1');
+  } catch(e) {}
+}
+
 // =========== DASH TASK ROWS ===========
 const _dtrIntervals = [];
 
