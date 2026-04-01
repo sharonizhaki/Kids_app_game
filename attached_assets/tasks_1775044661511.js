@@ -488,14 +488,33 @@ function selectCatByName(name, scrollId, newWrapId, onSelect) {
 
 export function renderTaskEmojiGrid(gridId, current, onSelect) {
   const grid = document.getElementById(gridId);
-  grid.innerHTML = TASK_EMOJIS.map(e => `<div class="task-emoji-opt${e===current?' selected':''}" data-emoji="${e}">${e}</div>`).join('');
-  grid.querySelectorAll('.task-emoji-opt').forEach(el => {
-    el.onclick = () => {
-      grid.querySelectorAll('.task-emoji-opt').forEach(x => x.classList.remove('selected'));
-      el.classList.add('selected');
-      onSelect(el.dataset.emoji);
-    };
-  });
+  const SHOW_INITIAL = 12;
+
+  function buildGrid(showAll) {
+    const visible = showAll ? TASK_EMOJIS : TASK_EMOJIS.slice(0, SHOW_INITIAL);
+    const remaining = TASK_EMOJIS.length - SHOW_INITIAL;
+    grid.innerHTML = visible.map(e =>
+      `<div class="task-emoji-opt${e === current ? ' selected' : ''}" data-emoji="${e}">${e}</div>`
+    ).join('') + (!showAll && remaining > 0
+      ? `<div class="task-emoji-opt" id="${gridId}-show-more" style="font-size:0.72rem;font-weight:800;color:var(--primary);background:#EEF2FF;border:1.5px dashed var(--primary);">+${remaining}</div>`
+      : '');
+
+    grid.querySelectorAll('.task-emoji-opt').forEach(el => {
+      if (el.id === `${gridId}-show-more`) {
+        el.onclick = () => buildGrid(true);
+      } else {
+        el.onclick = () => {
+          grid.querySelectorAll('.task-emoji-opt').forEach(x => x.classList.remove('selected'));
+          el.classList.add('selected');
+          onSelect(el.dataset.emoji);
+        };
+      }
+    });
+  }
+
+  // if selected emoji is beyond initial set, expand fully from start
+  const currentIdx = TASK_EMOJIS.indexOf(current);
+  buildGrid(currentIdx >= SHOW_INITIAL);
 }
 
 export function initStarsPicker(pickerId, current, onChange) {
@@ -563,7 +582,7 @@ export function startTaskTour(familyId) {
     { el: '#task-name-input',    title: 'שם המטלה',    text: 'הכנס שם למטלה — ולחץ על "לחץ למשימות לדוגמא" לרשימת רעיונות מוכנים' },
     { el: '#task-cat-scroll',    title: 'קטגוריה',     text: 'בחר קטגוריה — היגיינה, לימודים, מטלות בית...' },
     { el: '#task-assign-grid',   title: 'שיוך לילד/ים', text: 'כאן מופיעים הילדים שלך — בחר לאיזה ילד/ים המטלה משויכת' },
-    { el: '#task-emoji-grid',    title: 'אייקון',       text: 'בחר אייקון שיופיע ליד שם המטלה — גלול לראות עוד' },
+    { el: '#task-emoji-grid',    title: 'אייקון',       text: 'בחר אייקון שיופיע ליד שם המטלה' },
     { el: '#task-stars-picker',  title: 'כוכבים',      text: 'כמה כוכבים שווה המטלה? לחץ על הכוכב הרצוי' },
     { el: '#task-freq-grid',     title: 'תדירות',      text: 'כל יום, פעם בשבוע, ימים ספציפיים, או חד פעמית' },
     { el: '#task-reminder-input', title: 'תזכורת ותיאור', text: 'בחר שעה לתזכורת ומתחת הוסף הסבר קצר על המטלה — שניהם לא חובה' },
