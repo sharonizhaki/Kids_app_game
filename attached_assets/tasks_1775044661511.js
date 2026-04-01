@@ -84,8 +84,16 @@ export async function openAddTask(familyId) {
   // Frequency
   initFreqGrid('task-freq-grid', 'task-days-grid', '', [], (freq) => { taskSelectedFreq = freq; }, (days) => { taskSelectedDays = days; });
 
-  // Assign grid
-  renderAssignGrid('task-assign-grid', [], (children) => { taskAssignedChildren = children; });
+  // Assign grid + no-child warning
+  const noChildWarn = document.getElementById('task-no-child-warning');
+  if (childrenCache.length === 0) {
+    noChildWarn.style.display = 'block';
+    document.getElementById('task-assign-grid').style.display = 'none';
+  } else {
+    noChildWarn.style.display = 'none';
+    document.getElementById('task-assign-grid').style.display = '';
+    renderAssignGrid('task-assign-grid', [], (children) => { taskAssignedChildren = children; });
+  }
 
   showScreen('screen-add-task');
 

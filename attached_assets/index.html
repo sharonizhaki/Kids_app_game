@@ -369,8 +369,8 @@
   </div>
   <div class="section-label" style="margin-top:20px;">הורים</div>
   <div id="parents-list" style="width:100%;max-width:420px;"></div>
-  <button class="btn btn-outline btn-sm" id="btn-invite-parent" style="max-width:420px;margin-top:12px;">👫 הזמנת הורה נוסף</button>
   <button class="btn btn-primary btn-sm" id="btn-create-child" style="max-width:420px;margin-top:12px;">👶 הוספת ילד/ה</button>
+  <button class="btn btn-outline btn-sm" id="btn-invite-parent" style="max-width:420px;margin-top:12px;">👫 הזמנת הורה נוסף</button>
 </div>
 
 <!-- ==================== SCREEN: CREATE CHILD ==================== -->
@@ -560,6 +560,12 @@
 
     <div class="form-section">
       <div class="form-label"><span class="fl-icon">👧👦</span> שיוך לילד/ים</div>
+      <div id="task-no-child-warning" style="display:none;background:#FFF7ED;border:1.5px solid #FED7AA;border-radius:14px;padding:14px 16px;text-align:center;margin-bottom:4px;">
+        <div style="font-size:1.4rem;margin-bottom:6px;">👶</div>
+        <div style="font-weight:800;color:#92400E;font-size:0.9rem;margin-bottom:4px;">אין עדיין ילדים במשפחה</div>
+        <div style="font-size:0.8rem;color:#78350F;margin-bottom:10px;">כדי ליצור מטלה, יש להוסיף ילד תחילה</div>
+        <button onclick="showScreen('screen-manage-family')" style="background:linear-gradient(135deg,#F59E0B,#D97706);color:white;border:none;border-radius:10px;padding:8px 20px;font-size:0.85rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">➕ הוספת ילד</button>
+      </div>
       <div class="assign-grid" id="task-assign-grid"></div>
     </div>
 
