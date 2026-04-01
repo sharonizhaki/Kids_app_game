@@ -716,7 +716,8 @@ document.getElementById('tutorial-next').onclick = () => {
     const dy = e.touches[0].clientY - startY;
     if (Math.abs(dy) > Math.abs(dx)) return;
     const base   = -(current * (100 / total));
-    const offset = (dx / slider.offsetWidth) * (100 / total);
+    // invert offset: finger right → track left (reveals next slide to the right)
+    const offset = -(dx / slider.offsetWidth) * (100 / total);
     track.style.transform = `translateX(${base + offset}%)`;
   }, { passive: true });
 
@@ -726,7 +727,8 @@ document.getElementById('tutorial-next').onclick = () => {
     track.style.transition = 'transform 0.38s cubic-bezier(0.4,0,0.2,1)';
     const dx = e.changedTouches[0].clientX - startX;
     if (Math.abs(dx) > 48) {
-      goTo(dx < 0 ? current + 1 : current - 1);
+      // RTL: swipe right = next slide, swipe left = previous
+      goTo(dx > 0 ? current + 1 : current - 1);
     } else {
       goTo(current);
     }
