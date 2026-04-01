@@ -13,7 +13,8 @@ import {
   createChild, saveChild, deleteChild,
   createParentInviteCode, verifyChildCode,
   showChildInviteModal, shareCode, shareParentCode,
-  CHILD_EMOJIS, CHILD_COLORS
+  CHILD_EMOJIS, CHILD_COLORS,
+  renderDashboardChildren
 } from './family.js';
 import {
   openAddTask, saveTask, loadAllTasks,
@@ -26,7 +27,12 @@ import {
 } from './points.js';
 
 // =========== GLOBALS (needed by inline onclick in HTML) ===========
-window.showScreen = showScreen;
+window.showScreen = (id) => {
+  showScreen(id);
+  if (id === 'screen-dashboard' && currentFamilyId) {
+    renderDashboardChildren(currentFamilyId);
+  }
+};
 window.showChildInviteModal = (childId) => showChildInviteModal(childId, getFamilyId());
 window.openEditChild = openEditChild;
 window.renderFamily = () => renderFamily(getFamilyId());
@@ -50,6 +56,7 @@ function renderDashboard(user) {
   const name = user.displayName ? user.displayName.split(' ')[0] : 'הורה';
   document.getElementById('dash-greeting').textContent = `שלום ${name}! 👋`;
   showScreen('screen-dashboard');
+  renderDashboardChildren(currentFamilyId);
 }
 
 // =========== WHO ARE YOU ===========

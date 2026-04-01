@@ -261,6 +261,101 @@ export function shareCode(code, childName = '') {
   }
 }
 
+// =========== DASHBOARD CHILDREN CARDS ===========
+export async function renderDashboardChildren(familyId) {
+  const grid = document.getElementById('dash-children-grid');
+  if (!grid) return;
+
+  await loadChildren(familyId);
+  const children = childrenCache;
+
+  if (children.length === 0) {
+    grid.innerHTML = `
+      <div style="
+        width:min(200px,80vw);
+        background:#F8FAFC;
+        border:2.5px dashed var(--border);
+        border-radius:20px;
+        padding:24px 16px;
+        text-align:center;
+        color:var(--muted);
+      ">
+        <div style="font-size:2.2rem;margin-bottom:8px;">👶</div>
+        <div style="font-size:0.85rem;font-weight:600;">עדיין אין ילדים</div>
+      </div>`;
+    return;
+  }
+
+  // Calculate card width based on count
+  let cardWidth;
+  if (children.length === 1) cardWidth = 'min(200px,80vw)';
+  else if (children.length === 2) cardWidth = 'min(160px,44vw)';
+  else cardWidth = 'min(120px,30vw)';
+
+  // Get weekly/monthly stars for each child
+  const now = Date.now();
+  const startOfWeek = (() => {
+    const d = new Date(); d.setHours(0,0,0,0);
+    d.setDate(d.getDate() - d.getDay()); // Sunday
+    return d.getTime();
+  })();
+  const startOfMonth = (() => {
+    const d = new Date(); d.setDate(1); d.setHours(0,0,0,0);
+    return d.getTime();
+  })();
+
+  const statsPromises = children.map(async (child) => {
+    try {
+      const stateSnap = await getDoc(doc(db, 'families', familyId, 'children', child.id, 'state', 'current'));
+      if (!stateSnap.exists()) return { weekly: 0, monthly: 0 };
+      const hist = stateSnap.data().hist || [];
+      const weekly = hist.filter(h => (h.ts || 0) >= startOfWeek).reduce((s, h) => s + (h.pts || 0), 0);
+      const monthly = hist.filter(h => (h.ts || 0) >= startOfMonth).reduce((s, h) => s + (h.pts || 0), 0);
+      return { weekly, monthly };
+    } catch(e) { return { weekly: 0, monthly: 0 }; }
+  });
+
+  const stats = await Promise.all(statsPromises);
+
+  grid.innerHTML = children.map((child, i) => {
+    const genderEmoji = child.gender === 'female' ? '👧' : '👦';
+    const displayEmoji = child.emoji || genderEmoji;
+    const hasPhoto = child.photo && child.photo.length > 10;
+    const { weekly, monthly } = stats[i];
+
+    const photoHTML = hasPhoto
+      ? `<img src="${child.photo}" alt="${child.name}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">`
+      : `<div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#E0E7FF,#C7D2FE);display:flex;align-items:center;justify-content:center;font-size:1.8rem;">${displayEmoji}</div>`;
+
+    return `
+      <div style="
+        width:${cardWidth};
+        background:white;
+        border-radius:20px;
+        box-shadow:0 2px 12px rgba(0,0,0,0.08);
+        padding:16px 10px 14px;
+        text-align:center;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        gap:6px;
+        flex-shrink:0;
+      ">
+        ${photoHTML}
+        <div style="font-weight:800;font-size:0.9rem;color:var(--text);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;">${child.name}</div>
+        <div style="font-size:1.3rem;">${displayEmoji}</div>
+        <div style="display:flex;flex-direction:column;gap:3px;width:100%;margin-top:2px;">
+          <div style="background:#FEF9C3;border-radius:8px;padding:4px 6px;font-size:0.75rem;font-weight:700;color:#713F12;">
+            ⭐ שבוע: ${weekly}
+          </div>
+          <div style="background:#DCFCE7;border-radius:8px;padding:4px 6px;font-size:0.75rem;font-weight:700;color:#14532D;">
+            📅 חודש: ${monthly}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
 export function shareParentCode(code) {
   const url = window.location.origin + window.location.pathname.replace(/[^/]*$/, 'index.html');
   const text = `🏠 משימות משפחתיות — הזמנה להורה נוסף\n\nשלום! קיבלת הזמנה להצטרף כהורה לניהול משימות המשפחה.\n\n📱 שלב 1: פתח את הקישור במכשיר שלך\n👨‍👩‍👧‍👦 שלב 2: בחר "הורה" והתחבר עם Google או Facebook\n🔢 שלב 3: הזן את הקוד: ${code}\n\n⏰ הקוד תקף ל-24 שעות\n\n🔗 ${url}`;
