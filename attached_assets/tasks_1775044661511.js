@@ -624,7 +624,7 @@ export function startTaskTour(familyId) {
     shutterBottom.style.height = '0px';
     rawEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    // wait for smooth-scroll to finish before measuring position
+    // wait for shutters to fully close (0.5s transition) + scroll to settle
     setTimeout(() => {
       const rect = el.getBoundingClientRect();
       shutterTop.style.height = Math.max(0, rect.top - PAD) + 'px';
@@ -634,7 +634,7 @@ export function startTaskTour(familyId) {
         const dotsHTML = steps.map((_, i) => `<span class="tour-dot${i === idx ? ' active' : ''}"></span>`).join('');
         card.innerHTML = `
           <div class="tour-card-btns" style="margin-bottom:10px;">
-            <span style="font-size:0.78rem;color:var(--muted);">${idx + 1} / ${steps.length}</span>
+            <span dir="ltr" style="font-size:0.78rem;color:var(--muted);">${idx + 1} / ${steps.length}</span>
             <button class="tour-skip-btn" id="tour-skip">דלג</button>
           </div>
           <h4>${step.title}</h4>
@@ -654,14 +654,15 @@ export function startTaskTour(familyId) {
           if (currentStep >= steps.length) endTour(); else showStep(currentStep);
         };
         document.getElementById('tour-skip').onclick = endTour;
-      }, 550);
-    }, 380);
+      }, 480);
+    }, 520);
   }
 
   function endTour() {
     card.classList.remove('visible');
-    shutterTop.style.height = '0px';
-    shutterBottom.style.height = '0px';
+    // close shutters inward to cover full screen — no exposed area
+    shutterTop.style.height = Math.ceil(window.innerHeight / 2 + 2) + 'px';
+    shutterBottom.style.height = Math.ceil(window.innerHeight / 2 + 2) + 'px';
     setTimeout(() => {
       overlay.remove();
       document.body.style.overflow = '';
@@ -669,7 +670,7 @@ export function startTaskTour(familyId) {
         updateDoc(doc(db, 'families', familyId), { taskTourDone: true }).catch(() => {});
       });
       setTimeout(() => document.getElementById('task-name-input').focus(), 200);
-    }, 500);
+    }, 540);
   }
 
   overlay.onclick = (e) => e.stopPropagation();
