@@ -1,0 +1,156 @@
+// =========== SCREEN NAVIGATION ===========
+export function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active','visible'); });
+  const next = document.getElementById(id);
+  next.classList.add('active');
+  requestAnimationFrame(() => requestAnimationFrame(() => next.classList.add('visible')));
+  window.scrollTo(0, 0);
+}
+
+// =========== TOAST ===========
+export function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// =========== FIELD HIGHLIGHT ===========
+export function highlightField(el) {
+  if (!el) return;
+  el.classList.add('field-error');
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (navigator.vibrate) navigator.vibrate(100);
+  setTimeout(() => el.classList.remove('field-error'), 1500);
+}
+
+// =========== LOADING ===========
+let loadingTimer = null;
+
+export function showLoading(msg) {
+  hideLoading();
+  const ov = document.createElement('div');
+  ov.className = 'loading-overlay';
+  ov.id = 'global-loading';
+  ov.innerHTML = `<div class="loading-box">
+    <div class="spinner-lg"></div>
+    <p style="font-weight:700;font-size:0.95rem;">${msg || 'טוען...'}</p>
+  </div>`;
+  document.body.appendChild(ov);
+  loadingTimer = setTimeout(() => hideLoading(), 8000);
+}
+
+export function hideLoading() {
+  if (loadingTimer) { clearTimeout(loadingTimer); loadingTimer = null; }
+  document.querySelectorAll('.loading-overlay').forEach(el => el.remove());
+}
+
+// =========== SIDE MENU ===========
+export function openSideMenu({ auth, onAction }) {
+  closeSideMenu();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'side-overlay';
+  overlay.id = 'side-overlay';
+  overlay.onclick = closeSideMenu;
+
+  const menu = document.createElement('div');
+  menu.className = 'side-menu';
+  menu.id = 'side-menu';
+
+  const parentName = auth.currentUser?.displayName?.split(' ')[0] || 'הורה';
+
+  menu.innerHTML = `
+    <div class="side-header">
+      <div class="side-settings-icon" id="side-settings-close">⚙️</div>
+      <div class="side-header-text">
+        <h3>תפריט</h3>
+        <p>שלום ${parentName}</p>
+      </div>
+    </div>
+    <div class="side-item" data-action="manage-family">
+      <div class="side-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);">👨‍👩‍👧‍👦</div>
+      <span class="side-item-text">ניהול משפחה</span>
+    </div>
+    <div class="side-item" data-action="add-tasks">
+      <div class="side-icon" style="background:linear-gradient(135deg,#D1FAE5,#A7F3D0);">📋</div>
+      <span class="side-item-text">הוספת מטלות</span>
+    </div>
+    <div class="side-item" data-action="edit-tasks">
+      <div class="side-icon" style="background:linear-gradient(135deg,#E0E7FF,#C7D2FE);">✏️</div>
+      <span class="side-item-text">עריכת מטלות</span>
+    </div>
+    <div class="side-item" data-action="add-prizes">
+      <div class="side-icon" style="background:linear-gradient(135deg,#FCE7F3,#FBCFE8);">🎁</div>
+      <span class="side-item-text">הוספת פרסים</span>
+    </div>
+    <div class="side-item" data-action="manage-prizes">
+      <div class="side-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);">🏆</div>
+      <span class="side-item-text">ניהול פרסים</span>
+    </div>
+    <div class="side-item" data-action="manage-points">
+      <div class="side-icon" style="background:linear-gradient(135deg,#CCFBF1,#99F6E4);">⭐</div>
+      <span class="side-item-text">ניהול ניקוד ומטלות</span>
+    </div>
+    <div class="side-item danger" data-action="logout">
+      <div class="side-icon" style="background:linear-gradient(135deg,#FEE2E2,#FECACA);">🚪</div>
+      <span class="side-item-text">התנתק</span>
+    </div>
+  `;
+
+  menu.querySelectorAll('.side-item').forEach(item => {
+    item.onclick = () => {
+      closeSideMenu();
+      onAction(item.dataset.action);
+    };
+  });
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(menu);
+
+  document.getElementById('side-settings-close').onclick = closeSideMenu;
+
+  // Swipe to close
+  let swStartX = 0, swCurrentX = 0, swSwiping = false;
+
+  function handleSwipeStart(e) {
+    swStartX = e.touches[0].clientX;
+    swCurrentX = 0;
+    swSwiping = true;
+    menu.style.transition = 'none';
+  }
+  function handleSwipeMove(e) {
+    if (!swSwiping) return;
+    swCurrentX = Math.max(0, e.touches[0].clientX - swStartX);
+    menu.style.transform = `translateX(${swCurrentX}px)`;
+  }
+  function handleSwipeEnd() {
+    swSwiping = false;
+    if (swCurrentX > 80) {
+      menu.style.transition = 'transform 0.2s ease';
+      menu.style.transform = 'translateX(100%)';
+      setTimeout(closeSideMenu, 200);
+    } else {
+      menu.style.transition = 'transform 0.2s ease';
+      menu.style.transform = 'translateX(0)';
+    }
+  }
+
+  menu.addEventListener('touchstart', handleSwipeStart, { passive: true });
+  menu.addEventListener('touchmove', handleSwipeMove, { passive: true });
+  menu.addEventListener('touchend', handleSwipeEnd);
+
+  overlay.addEventListener('touchstart', handleSwipeStart, { passive: true });
+  overlay.addEventListener('touchmove', (e) => {
+    if (!swSwiping) return;
+    swCurrentX = Math.max(0, e.touches[0].clientX - swStartX);
+    menu.style.transition = 'none';
+    menu.style.transform = `translateX(${swCurrentX}px)`;
+  }, { passive: true });
+  overlay.addEventListener('touchend', handleSwipeEnd);
+}
+
+export function closeSideMenu() {
+  document.getElementById('side-overlay')?.remove();
+  document.getElementById('side-menu')?.remove();
+}

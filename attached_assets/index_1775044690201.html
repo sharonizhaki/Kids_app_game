@@ -1,0 +1,3026 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>משפחה - ניהול מטלות</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary:#6366F1; --primary-dark:#4F46E5; --primary-light:#A5B4FC;
+      --accent:#F59E0B; --accent-light:#FDE68A;
+      --success:#10B981; --danger:#EF4444;
+      --bg:#F0F4FF; --card:#FFFFFF;
+      --text:#1E293B; --muted:#94A3B8; --border:#E2E8F0;
+      --shadow:0 4px 24px rgba(0,0,0,0.08);
+      --shadow-lg:0 8px 32px rgba(0,0,0,0.12);
+      --radius:18px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    html,body{height:100%;}
+    body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+    /* === SCREENS === */
+    .screen{display:none;min-height:100vh;padding:20px 16px 40px;opacity:0;transition:opacity 0.3s ease;}
+    .screen.active{display:flex;flex-direction:column;align-items:center;}
+    .screen.visible{opacity:1;}
+
+    /* === COMMON === */
+    .page-header{text-align:center;padding:32px 0 24px;width:100%;max-width:420px;}
+    .page-header h1{font-size:1.8rem;font-weight:900;}
+    .page-header p{color:var(--muted);margin-top:6px;font-size:0.95rem;}
+
+    .screen-header{display:flex;align-items:center;gap:12px;max-width:480px;width:100%;margin-bottom:20px;padding-top:16px;}
+    .back-btn{background:var(--card);border:2px solid var(--border);border-radius:50%;width:44px;height:44px;font-size:1.3rem;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text);transition:transform 0.15s;}
+    .back-btn:active{transform:scale(0.93);}
+    .screen-header h2{font-size:1.4rem;font-weight:900;flex:1;}
+
+    .btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:420px;padding:18px 20px;border:none;border-radius:16px;font-size:1.05rem;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;transition:transform 0.12s,box-shadow 0.12s;box-shadow:var(--shadow);}
+    .btn:active{transform:scale(0.97);}
+    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;box-shadow:0 4px 16px rgba(99,102,241,0.35);}
+    .btn-secondary{background:var(--card);color:var(--text);border:2px solid var(--border);}
+    .btn-success{background:linear-gradient(135deg,var(--success),#059669);color:white;box-shadow:0 4px 16px rgba(16,185,129,0.35);}
+    .btn-danger{background:var(--danger);color:white;}
+    .btn-google{background:white;color:#444;border:2px solid var(--border);box-shadow:var(--shadow);font-weight:600;}
+    .btn-google img{width:22px;height:22px;}
+    .btn-outline{background:transparent;color:var(--primary);border:2px solid var(--primary);}
+    .btn-sm{padding:12px 16px;font-size:0.92rem;border-radius:12px;}
+    .btn+.btn{margin-top:12px;}
+    .btn-row{display:flex;gap:10px;width:100%;max-width:420px;}
+    .btn-row .btn{flex:1;}
+
+    .card{background:var(--card);border-radius:var(--radius);padding:22px 20px;box-shadow:var(--shadow);width:100%;max-width:420px;}
+
+    .input-group{margin-bottom:16px;width:100%;}
+    .input-group label{display:block;font-weight:700;font-size:0.9rem;margin-bottom:6px;color:var(--text);}
+    .input-group input{width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:14px;font-size:1rem;font-family:'Heebo',sans-serif;background:var(--card);color:var(--text);transition:border-color 0.2s;}
+    .input-group input:focus{outline:none;border-color:var(--primary);}
+
+    .error-msg{color:var(--danger);font-size:0.85rem;font-weight:600;text-align:center;min-height:20px;margin:8px 0;}
+    .success-msg{color:var(--success);font-size:0.85rem;font-weight:600;text-align:center;min-height:20px;margin:8px 0;}
+
+    .loading-spinner{display:inline-block;width:22px;height:22px;border:3px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.5);display:flex;align-items:center;justify-content:center;z-index:2000;}
+    .loading-box{background:var(--card);border-radius:var(--radius);padding:32px 40px;text-align:center;box-shadow:var(--shadow-lg);}
+    .loading-box .spinner-lg{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px;}
+
+    .emoji-big{font-size:4rem;display:block;text-align:center;margin-bottom:12px;}
+
+    /* === WHO ARE YOU === */
+    .who-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:420px;width:100%;margin-top:8px;}
+    .who-card{background:var(--card);border-radius:var(--radius);padding:32px 16px;text-align:center;cursor:pointer;border:3px solid transparent;box-shadow:var(--shadow);transition:transform 0.15s,border-color 0.2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;}
+    .who-card:active{transform:scale(0.96);}
+    .who-card .wc-emoji{font-size:3rem;}
+    .who-card .wc-label{font-size:1.1rem;font-weight:800;}
+    .who-card .wc-sub{font-size:0.8rem;color:var(--muted);}
+    .who-card[data-role="parent"]{border-color:var(--primary);}
+    .who-card[data-role="parent"]:active{border-color:var(--primary-dark);}
+    .who-card[data-role="child"]{border-color:var(--accent);}
+    .who-card[data-role="child"]:active{border-color:#D97706;}
+
+    /* === PARENT DASHBOARD === */
+    .dash-grid{display:flex;flex-direction:column;gap:12px;width:100%;max-width:420px;}
+    .dash-btn{background:var(--card);border:none;border-radius:var(--radius);padding:18px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:var(--shadow);transition:transform 0.15s;text-align:right;width:100%;}
+    .dash-btn:active{transform:scale(0.97);}
+    .dash-icon{font-size:1.6rem;width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .dash-info{flex:1;}
+    .dash-info strong{display:block;font-weight:700;font-size:0.98rem;}
+    .dash-info span{color:var(--muted);font-size:0.8rem;}
+    .dash-arrow{color:var(--muted);font-size:1.1rem;}
+
+    .dash-btn.create-child .dash-icon{background:linear-gradient(135deg,#DBEAFE,#EDE9FE);}
+    .dash-btn.manage-family .dash-icon{background:linear-gradient(135deg,#FEF3C7,#FDE68A);}
+    .dash-btn.add-tasks .dash-icon{background:linear-gradient(135deg,#D1FAE5,#A7F3D0);}
+    .dash-btn.edit-tasks .dash-icon{background:linear-gradient(135deg,#E0E7FF,#C7D2FE);}
+    .dash-btn.add-prizes .dash-icon{background:linear-gradient(135deg,#FCE7F3,#FBCFE8);}
+    .dash-btn.manage-prizes .dash-icon{background:linear-gradient(135deg,#FEF3C7,#FDE68A);}
+    .dash-btn.manage-points .dash-icon{background:linear-gradient(135deg,#CCFBF1,#99F6E4);}
+    .dash-btn.logout .dash-icon{background:linear-gradient(135deg,#FEE2E2,#FECACA);}
+
+    /* === GENDER PICKER === */
+    .gender-picker{display:flex;gap:16px;justify-content:center;margin:12px 0;}
+    .gender-opt{width:80px;height:80px;border-radius:50%;border:3px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:2.6rem;cursor:pointer;transition:transform 0.15s,border-color 0.2s,box-shadow 0.2s;}
+    .gender-opt:active{transform:scale(0.93);}
+    .gender-opt.selected{border-color:var(--primary);box-shadow:0 0 0 4px rgba(99,102,241,0.2);}
+
+    /* === INVITE CODE === */
+    .invite-code-display{font-size:2.4rem;font-weight:900;letter-spacing:12px;text-align:center;color:var(--primary);padding:20px;background:#F0F0FF;border-radius:16px;margin:16px 0;direction:ltr;}
+    .invite-timer{text-align:center;color:var(--muted);font-size:0.85rem;margin-bottom:12px;}
+
+    /* === CHILD CARDS IN FAMILY === */
+    .family-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:420px;}
+    .child-card{background:var(--card);border-radius:var(--radius);padding:18px 14px;text-align:center;cursor:pointer;box-shadow:var(--shadow);transition:transform 0.15s;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:140px;justify-content:center;}
+    .child-card:active{transform:scale(0.96);}
+    .child-card .cc-photo{width:56px;height:56px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1.8rem;overflow:hidden;object-fit:cover;}
+    .child-card .cc-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+    .child-card .cc-name{font-weight:700;font-size:0.95rem;}
+    .child-card .cc-gender{font-size:0.8rem;color:var(--muted);}
+    .child-card .cc-status{font-size:0.72rem;padding:3px 8px;border-radius:6px;font-weight:600;}
+    .cc-status.waiting{background:#FEF3C7;color:#92400E;}
+    .cc-status.active{background:#DCFCE7;color:#15803D;}
+    .child-card .cc-code{font-size:0.75rem;color:var(--primary);font-weight:700;direction:ltr;letter-spacing:2px;}
+
+    /* === EMOJI PICKER === */
+    .emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px 0;}
+    .emoji-opt{width:100%;aspect-ratio:1;border-radius:12px;border:3px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:1.5rem;cursor:pointer;transition:transform 0.12s,border-color 0.2s;}
+    .emoji-opt:active{transform:scale(0.9);}
+    .emoji-opt.selected{border-color:var(--primary);background:#F0F0FF;box-shadow:0 0 0 3px rgba(99,102,241,0.2);}
+
+    /* === COLOR PICKER === */
+    .color-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:12px 0;}
+    .color-opt{width:100%;aspect-ratio:1;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:transform 0.12s,box-shadow 0.2s;}
+    .color-opt:active{transform:scale(0.88);}
+    .color-opt.selected{border-color:var(--text);box-shadow:0 0 0 4px rgba(30,41,59,0.15);}
+
+    /* === CHILD CODE INPUT === */
+    .code-input-wrap{display:flex;gap:8px;justify-content:center;direction:ltr;margin:20px 0;}
+    .code-digit{width:46px;height:56px;border:2px solid var(--border);border-radius:14px;text-align:center;font-size:1.5rem;font-weight:800;font-family:'Heebo',sans-serif;background:var(--card);color:var(--text);transition:border-color 0.2s;}
+    .code-digit:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,0.15);}
+    .code-attempts{text-align:center;color:var(--muted);font-size:0.82rem;margin-top:8px;}
+
+    /* === PHOTO UPLOAD === */
+    .photo-upload{width:100px;height:100px;border-radius:50%;border:3px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;margin:12px auto;overflow:hidden;transition:border-color 0.2s;position:relative;background:var(--card);}
+    .photo-upload:active{border-color:var(--primary);}
+    .photo-upload img{width:100%;height:100%;object-fit:cover;}
+    .photo-upload .ph-placeholder{text-align:center;color:var(--muted);}
+    .photo-upload .ph-placeholder span{font-size:1.6rem;display:block;}
+    .photo-upload .ph-placeholder small{font-size:0.7rem;}
+    .photo-upload input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+
+    /* === TOAST === */
+    .toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);background:linear-gradient(135deg,var(--success),#059669);color:white;padding:22px 44px;border-radius:22px;font-size:1.3rem;font-weight:800;z-index:3000;opacity:0;transition:opacity 0.25s,transform 0.25s;pointer-events:none;text-align:center;box-shadow:0 8px 40px rgba(16,185,129,0.4);}
+    .toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+
+    /* === MODALS === */
+    .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.65);display:flex;align-items:center;justify-content:center;z-index:1000;animation:fadeIn 0.2s ease;}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .modal-sheet{background:var(--card);border-radius:24px;width:90%;max-width:420px;max-height:80vh;overflow-y:auto;animation:modalPop 0.25s cubic-bezier(.4,0,.2,1);}
+    @keyframes modalPop{from{transform:scale(0.9);opacity:0}to{transform:scale(1);opacity:1}}
+    .modal-handle{width:44px;height:5px;background:#E2E8F0;border-radius:3px;margin:14px auto 0;}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;}
+    .modal-header h2{font-size:1.15rem;font-weight:800;}
+    .modal-close{background:#F1F5F9;border:none;border-radius:50%;width:36px;height:36px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .modal-body{padding:8px 16px 40px;}
+
+    .empty-state{text-align:center;padding:28px;color:var(--muted);font-size:0.92rem;}
+
+    /* === SECTION LABEL === */
+    .section-label{font-size:0.88rem;font-weight:700;color:var(--muted);max-width:420px;width:100%;margin-bottom:8px;margin-top:8px;}
+
+    /* === TASK FORM === */
+    .form-section{margin-bottom:18px;}
+    .form-label{font-weight:700;font-size:0.9rem;display:flex;align-items:center;gap:6px;margin-bottom:8px;color:var(--text);}
+    .form-label .fl-icon{font-size:1rem;}
+
+    .task-emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;}
+    .task-emoji-opt{width:100%;aspect-ratio:1;border-radius:12px;border:2px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:1.4rem;cursor:pointer;transition:transform 0.12s,border-color 0.2s;}
+    .task-emoji-opt:active{transform:scale(0.9);}
+    .task-emoji-opt.selected{border-color:var(--primary);background:#F0F0FF;box-shadow:0 0 0 3px rgba(99,102,241,0.2);}
+
+    .pts-input{width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:14px;font-size:1.1rem;font-family:'Heebo',sans-serif;background:var(--card);color:var(--text);text-align:center;font-weight:700;}
+    .pts-input:focus{outline:none;border-color:var(--primary);}
+
+    .stars-picker{display:flex;gap:8px;justify-content:center;direction:ltr;}
+    .star-btn{font-size:2rem;cursor:pointer;transition:transform 0.12s;-webkit-user-select:none;user-select:none;filter:grayscale(1) opacity(0.3);}
+    .star-btn:active{transform:scale(1.2);}
+    .star-btn.filled{filter:none;}
+    .stars-display{display:inline;letter-spacing:1px;font-size:0.85em;}
+
+    .assign-grid{display:flex;gap:12px;flex-wrap:wrap;}
+    .assign-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;border:2px solid var(--border);background:var(--card);cursor:pointer;transition:transform 0.12s,border-color 0.2s;min-width:70px;}
+    .assign-opt:active{transform:scale(0.93);}
+    .assign-opt.selected{border-color:var(--primary);background:#F0F0FF;box-shadow:0 0 0 3px rgba(99,102,241,0.2);}
+    .assign-photo{width:44px;height:44px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.5rem;background:var(--border);}
+    .assign-photo img{width:100%;height:100%;object-fit:cover;}
+    .assign-name{font-size:0.78rem;font-weight:700;text-align:center;}
+
+    .freq-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+    .freq-opt{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border-radius:14px;border:2px solid var(--border);background:var(--card);cursor:pointer;transition:transform 0.12s,border-color 0.2s;}
+    .freq-opt:active{transform:scale(0.93);}
+    .freq-opt.selected{border-color:var(--primary);background:#F0F0FF;box-shadow:0 0 0 3px rgba(99,102,241,0.2);}
+    .freq-opt .fo-icon{font-size:1.3rem;}
+    .freq-opt .fo-label{font-size:0.68rem;font-weight:700;text-align:center;line-height:1.2;}
+
+    .days-grid{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+    .day-opt{width:40px;height:40px;border-radius:50%;border:2px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;cursor:pointer;transition:transform 0.12s,border-color 0.2s;}
+    .day-opt:active{transform:scale(0.9);}
+    .day-opt.selected{border-color:var(--primary);background:var(--primary);color:white;}
+
+    .reminder-input{width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:14px;font-size:1rem;font-family:'Heebo',sans-serif;background:var(--card);color:var(--text);}
+    .reminder-input:focus{outline:none;border-color:var(--primary);}
+
+    .suggestions-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+    .suggestion-chip{padding:8px 14px;border-radius:20px;background:#F1F5F9;border:1px solid var(--border);font-size:0.82rem;font-weight:600;cursor:pointer;transition:background 0.15s;}
+    .suggestion-chip:active{background:#E2E8F0;}
+
+    .cat-scroll{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+    .cat-scroll::-webkit-scrollbar{display:none;}
+    .cat-chip{flex-shrink:0;padding:8px 16px;border-radius:20px;background:var(--card);border:2px solid var(--border);font-size:0.85rem;font-weight:600;cursor:pointer;transition:border-color 0.15s,background 0.15s;font-family:'Heebo',sans-serif;white-space:nowrap;}
+    .cat-chip:active{transform:scale(0.95);}
+    .cat-chip.selected{border-color:var(--primary);background:#F0F0FF;color:var(--primary);}
+    .cat-chip.new-cat{border-style:dashed;color:var(--muted);}
+
+    /* === SIDE MENU === */
+    .settings-btn{position:fixed;top:16px;right:16px;z-index:1500;background:var(--card);border:2px solid var(--border);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;cursor:pointer;box-shadow:var(--shadow);transition:transform 0.15s;}
+    .settings-btn:active{transform:scale(0.9);}
+    .side-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:1600;animation:fadeIn 0.2s ease;}
+    .side-menu{position:fixed;top:0;right:0;bottom:0;width:280px;max-width:80vw;background:var(--card);z-index:1700;box-shadow:-4px 0 24px rgba(0,0,0,0.15);animation:slideLeft 0.25s cubic-bezier(.4,0,.2,1);overflow-y:auto;display:flex;flex-direction:column;}
+    @keyframes slideLeft{from{transform:translateX(100%)}to{transform:translateX(0)}}
+    .side-header{padding:16px 16px 16px 20px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;gap:12px;direction:rtl;}
+    .side-header-text h3{font-size:1.1rem;font-weight:800;}
+    .side-header-text p{font-size:0.8rem;color:var(--muted);margin-top:2px;}
+    .side-settings-icon{background:var(--card);border:2px solid var(--border);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;box-shadow:var(--shadow);cursor:pointer;}
+    .side-item{display:flex;align-items:center;gap:12px;padding:14px 20px;cursor:pointer;transition:background 0.15s;border-bottom:1px solid #F8FAFC;}
+    .side-item:active{background:#F1F5F9;}
+    .side-icon{font-size:1.3rem;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .side-item-text{font-weight:600;font-size:0.92rem;}
+    .side-item.danger .side-item-text{color:var(--danger);}
+    .side-close{position:absolute;top:16px;left:16px;background:#F1F5F9;border:none;border-radius:50%;width:32px;height:32px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+    /* === EDIT TASKS === */
+    .filter-scroll{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none;max-width:420px;width:100%;}
+    .filter-scroll::-webkit-scrollbar{display:none;}
+    .filter-chip{flex-shrink:0;padding:8px 14px;border-radius:20px;background:var(--card);border:2px solid var(--border);font-size:0.82rem;font-weight:600;cursor:pointer;font-family:'Heebo',sans-serif;white-space:nowrap;transition:border-color 0.15s,background 0.15s;}
+    .filter-chip.active{border-color:var(--primary);background:var(--primary);color:white;}
+    .sub-filter-scroll{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none;max-width:420px;width:100%;}
+    .sub-filter-scroll::-webkit-scrollbar{display:none;}
+    .sub-chip{flex-shrink:0;padding:6px 12px;border-radius:16px;background:#F1F5F9;font-size:0.78rem;font-weight:600;cursor:pointer;font-family:'Heebo',sans-serif;white-space:nowrap;}
+    .sub-chip.active{background:var(--primary);color:white;}
+
+    .etask-list{max-width:420px;width:100%;}
+    .etask-wrap{position:relative;margin-bottom:10px;overflow:hidden;border-radius:16px;}
+    .etask-actions{position:absolute;top:0;bottom:0;left:0;display:flex;align-items:stretch;z-index:1;direction:ltr;}
+    .etask-action{display:flex;align-items:center;justify-content:center;width:70px;font-size:0.8rem;font-weight:700;color:white;cursor:pointer;flex-direction:column;gap:2px;}
+    .etask-action.act-delete{background:#EF4444;}
+    .etask-action.act-hide{background:#F59E0B;}
+    .etask-action.act-show{background:#10B981;}
+    .etask-action span{font-size:1.2rem;}
+    .etask-card{background:var(--card);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;cursor:pointer;position:relative;z-index:2;transition:transform 0.2s ease;}
+    .etask-card.hidden-task{background:#F1F5F9;border:2px dashed #CBD5E1;}
+    .etask-emoji{font-size:1.6rem;flex-shrink:0;}
+    .etask-info{flex:1;min-width:0;}
+    .etask-info strong{display:block;font-weight:700;font-size:0.9rem;}
+    .etask-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:3px;}
+    .etask-tag{font-size:0.68rem;padding:2px 7px;border-radius:6px;font-weight:600;}
+    .etask-tag.cat-tag{background:#EDE9FE;color:#6D28D9;}
+    .etask-tag.freq-tag{background:#DBEAFE;color:#1D4ED8;}
+    .etask-tag.child-tag{background:#DCFCE7;color:#15803D;}
+    .etask-tag.hidden-tag{background:#FEE2E2;color:#EF4444;}
+    .etask-stars{flex-shrink:0;font-size:0.85rem;}
+
+    /* === VALIDATION SHAKE === */
+    @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+    .field-error{animation:shake 0.4s ease;outline:2px solid var(--danger)!important;border-color:var(--danger)!important;border-radius:14px;}
+
+    /* === GUIDED TOUR (Shutter style) === */
+    .tour-overlay{position:fixed;inset:0;z-index:2500;pointer-events:all;}
+    .tour-shutter-top{position:fixed;top:0;left:0;right:0;background:rgba(15,23,42,0.82);z-index:2501;transition:height 0.5s cubic-bezier(.4,0,.2,1);}
+    .tour-shutter-bottom{position:fixed;bottom:0;left:0;right:0;background:rgba(15,23,42,0.82);z-index:2501;transition:height 0.5s cubic-bezier(.4,0,.2,1);}
+    .tour-card{position:fixed;z-index:2502;background:var(--card);border-radius:18px;padding:18px 20px;box-shadow:0 8px 32px rgba(0,0,0,0.25);max-width:300px;width:calc(100vw - 48px);left:50%;transform:translateX(-50%);transition:top 0.5s cubic-bezier(.4,0,.2,1),bottom 0.5s cubic-bezier(.4,0,.2,1),opacity 0.3s;opacity:0;}
+    .tour-card.visible{opacity:1;}
+    .tour-card h4{font-size:1rem;font-weight:800;margin-bottom:4px;color:var(--text);}
+    .tour-card p{font-size:0.85rem;color:var(--muted);line-height:1.5;margin-bottom:14px;}
+    .tour-card-btns{display:flex;align-items:center;justify-content:space-between;}
+    .tour-next-btn{padding:10px 24px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;border:none;border-radius:12px;font-size:0.88rem;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;box-shadow:0 4px 12px rgba(99,102,241,0.3);}
+    .tour-next-btn:active{transform:scale(0.95);}
+    .tour-skip-btn{background:none;border:none;color:var(--muted);font-size:0.82rem;font-weight:600;cursor:pointer;font-family:'Heebo',sans-serif;padding:8px;}
+    .tour-skip-btn:active{color:var(--text);}
+    .tour-dots{display:flex;gap:5px;}
+    .tour-dot{width:7px;height:7px;border-radius:50%;background:var(--border);}
+    .tour-dot.active{background:var(--primary);}
+  </style>
+</head>
+<body>
+
+<!-- ==================== SCREEN: WHO ARE YOU ==================== -->
+<div id="screen-who" class="screen">
+  <div class="page-header">
+    <div style="font-size:3.2rem;margin-bottom:8px;">🏠</div>
+    <h1>שלום!</h1>
+    <p>מי אתה?</p>
+  </div>
+  <div class="who-cards">
+    <div class="who-card" data-role="parent" id="btn-who-parent">
+      <span class="wc-emoji">👨‍👩‍👧‍👦</span>
+      <span class="wc-label">הורה</span>
+      <span class="wc-sub">ניהול המשפחה</span>
+    </div>
+    <div class="who-card" data-role="child" id="btn-who-child">
+      <span class="wc-emoji">🧒</span>
+      <span class="wc-label">ילד/ה</span>
+      <span class="wc-sub">יש לי קוד!</span>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: PARENT LOGIN ==================== -->
+<div id="screen-parent-login" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-who')">→</button>
+    <h2>כניסת הורה</h2>
+  </div>
+  <div style="text-align:center;margin:40px 0 30px;">
+    <div class="emoji-big">🔐</div>
+    <p style="color:var(--muted);font-size:0.95rem;">התחבר כדי להמשיך</p>
+  </div>
+  <button class="btn btn-google" id="btn-google-login">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+    התחבר עם Google
+  </button>
+  <button class="btn" id="btn-facebook-login" style="background:#1877F2;color:white;box-shadow:0 4px 16px rgba(24,119,242,0.35);">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+    התחבר עם Facebook
+  </button>
+  <div class="error-msg" id="login-error"></div>
+</div>
+
+<!-- ==================== SCREEN: PARENT DASHBOARD ==================== -->
+<div id="screen-dashboard" class="screen">
+  <button class="settings-btn" id="btn-open-menu">⚙️</button>
+  <div class="page-header">
+    <div style="font-size:2rem;margin-bottom:4px;">👋</div>
+    <h1 id="dash-greeting">שלום!</h1>
+    <p id="dash-sub">ניהול המשפחה</p>
+  </div>
+  <div class="dash-grid">
+    <button class="dash-btn manage-family" id="btn-manage-family">
+      <div class="dash-icon">👨‍👩‍👧‍👦</div>
+      <div class="dash-info"><strong>ניהול משפחה</strong><span>עריכת ילדים ופרטים</span></div>
+      <span class="dash-arrow">←</span>
+    </button>
+    <button class="dash-btn add-tasks" id="btn-add-tasks">
+      <div class="dash-icon">📋</div>
+      <div class="dash-info"><strong>הוספת מטלות</strong><span>בקרוב</span></div>
+      <span class="dash-arrow">←</span>
+    </button>
+    <button class="dash-btn edit-tasks" id="btn-edit-tasks">
+      <div class="dash-icon">✏️</div>
+      <div class="dash-info"><strong>עריכת מטלות</strong><span>בקרוב</span></div>
+      <span class="dash-arrow">←</span>
+    </button>
+    <button class="dash-btn add-prizes" id="btn-add-prizes">
+      <div class="dash-icon">🎁</div>
+      <div class="dash-info"><strong>הוספת פרסים</strong><span>בקרוב</span></div>
+      <span class="dash-arrow">←</span>
+    </button>
+    <button class="dash-btn manage-prizes" id="btn-manage-prizes">
+      <div class="dash-icon">🏆</div>
+      <div class="dash-info"><strong>ניהול פרסים</strong><span>בקרוב</span></div>
+      <span class="dash-arrow">←</span>
+    </button>
+    <button class="dash-btn manage-points" id="btn-manage-points">
+      <div class="dash-icon">⭐</div>
+      <div class="dash-info"><strong>ניהול ניקוד ומטלות</strong><span>בקרוב</span></div>
+      <span class="dash-arrow">←</span>
+    </button>
+    <button class="dash-btn logout" id="btn-logout">
+      <div class="dash-icon">🚪</div>
+      <div class="dash-info"><strong>התנתק</strong><span>יציאה מהחשבון</span></div>
+      <span class="dash-arrow">←</span>
+    </button>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: CREATE CHILD ==================== -->
+<div id="screen-create-child" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-dashboard')">→</button>
+    <h2>הוספת ילד/ה 👶</h2>
+  </div>
+  <div class="card">
+    <div class="input-group">
+      <label>שם הילד/ה</label>
+      <input type="text" id="child-name-input" placeholder="הכנס שם..." autocomplete="off">
+    </div>
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin-bottom:8px;">מין</label>
+    <div class="gender-picker" id="create-gender-picker">
+      <div class="gender-opt" data-gender="male" id="gender-male">👦</div>
+      <div class="gender-opt" data-gender="female" id="gender-female">👧</div>
+    </div>
+    <div class="error-msg" id="create-child-error"></div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-primary btn-sm" id="btn-do-create-child">צור ילד/ה</button>
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-dashboard')">חזרה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: INVITE CODE ==================== -->
+<div id="screen-invite-code" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="document.getElementById('btn-manage-family').click()">→</button>
+    <h2>קוד הזמנה 🎉</h2>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div class="emoji-big">🔑</div>
+    <p style="font-weight:700;font-size:1.1rem;margin-bottom:16px;">הילד/ה נוצר/ה בהצלחה!</p>
+
+    <div style="text-align:right;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">1</span>
+        <span style="font-size:0.92rem;font-weight:600;">פתח את האפליקציה במכשיר של הילד/ה</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">2</span>
+        <span style="font-size:0.92rem;font-weight:600;">בחר <strong>"אני ילד/ה"</strong></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">3</span>
+        <span style="font-size:0.92rem;font-weight:600;">הזן את קוד ההזמנה למטה</span>
+      </div>
+    </div>
+
+    <p style="color:var(--muted);font-size:0.82rem;margin-bottom:12px;">הקוד תקף ל-24 שעות ולבן משפחה אחד</p>
+    <div class="invite-code-display" id="invite-code-value">000000</div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-primary btn-sm" id="btn-share-code">📤 שתף קוד</button>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('btn-manage-family').click()">חזרה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: MANAGE FAMILY ==================== -->
+<div id="screen-manage-family" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-dashboard')">→</button>
+    <h2>ניהול משפחה 👨‍👩‍👧‍👦</h2>
+  </div>
+  <div class="section-label">ילדים</div>
+  <div class="family-grid" id="family-grid">
+    <div class="empty-state" style="grid-column:1/-1;">עדיין לא נוספו ילדים</div>
+  </div>
+  <button class="btn btn-primary btn-sm" id="btn-create-child" style="max-width:420px;margin-top:12px;">👶 הוספת ילד/ה</button>
+  <div class="section-label" style="margin-top:20px;">הורים</div>
+  <div id="parents-list" style="width:100%;max-width:420px;"></div>
+  <button class="btn btn-outline btn-sm" id="btn-invite-parent" style="max-width:420px;margin-top:12px;">👫 הזמנת הורה נוסף</button>
+</div>
+
+<!-- ==================== SCREEN: PARENT INVITE CODE ==================== -->
+<div id="screen-parent-invite" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-manage-family');renderFamily();">→</button>
+    <h2>הזמנת הורה 👫</h2>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div class="emoji-big">👨‍👩‍👧‍👦</div>
+    <p style="font-weight:700;font-size:1.1rem;margin-bottom:16px;">הזמנת הורה נוסף</p>
+
+    <div style="text-align:right;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">1</span>
+        <span style="font-size:0.92rem;font-weight:600;">פתח את האפליקציה במכשיר של ההורה הנוסף</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">2</span>
+        <span style="font-size:0.92rem;font-weight:600;">בחר <strong>"הורה"</strong> והתחבר עם Google או Facebook</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">3</span>
+        <span style="font-size:0.92rem;font-weight:600;">הזן את קוד ההזמנה למטה</span>
+      </div>
+    </div>
+
+    <p style="color:var(--muted);font-size:0.82rem;margin-bottom:12px;">הקוד תקף ל-24 שעות</p>
+    <div class="invite-code-display" id="parent-invite-code-value">000000</div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-primary btn-sm" id="btn-share-parent-code">📤 שתף קוד</button>
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-manage-family');renderFamily();">חזרה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: JOIN FAMILY (for new parent) ==================== -->
+<div id="screen-join-family" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" id="btn-join-back">→</button>
+    <h2>הצטרפות למשפחה 👨‍👩‍👧‍👦</h2>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div class="emoji-big">🏠</div>
+    <p style="font-weight:700;font-size:1.05rem;margin-bottom:4px;">ברוכים הבאים!</p>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:16px;">יש לך קוד הזמנה? הכנס אותו כאן. או צור משפחה חדשה.</p>
+    <div class="code-input-wrap" id="parent-code-input-wrap">
+      <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="0" inputmode="numeric">
+      <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="1" inputmode="numeric">
+      <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="2" inputmode="numeric">
+      <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="3" inputmode="numeric">
+      <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="4" inputmode="numeric">
+      <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="5" inputmode="numeric">
+    </div>
+    <div class="error-msg" id="join-family-error"></div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-success btn-sm" id="btn-join-family">הצטרף למשפחה</button>
+    </div>
+    <div style="margin:20px 0 8px;color:var(--muted);font-size:0.85rem;">— או —</div>
+    <button class="btn btn-primary btn-sm" id="btn-create-new-family">צור משפחה חדשה</button>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: EDIT CHILD ==================== -->
+<div id="screen-edit-child" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-manage-family');renderFamily();">→</button>
+    <h2>עריכת ילד/ה ✏️</h2>
+  </div>
+  <div class="card">
+    <div class="input-group">
+      <label>שם</label>
+      <input type="text" id="edit-child-name" placeholder="שם הילד/ה" autocomplete="off">
+    </div>
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin-bottom:8px;">מין</label>
+    <div class="gender-picker">
+      <div class="gender-opt" data-gender="male" id="edit-gender-male">👦</div>
+      <div class="gender-opt" data-gender="female" id="edit-gender-female">👧</div>
+    </div>
+
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">צבע 🎨</label>
+    <div id="edit-child-color-display" style="width:48px;height:48px;border-radius:50%;margin:0 auto 4px;border:3px solid var(--border);cursor:pointer;" title="לחץ לעריכה"></div>
+
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">אימוג'י</label>
+    <div id="edit-child-emoji-display" style="font-size:2.4rem;text-align:center;min-height:48px;cursor:pointer;" title="לחץ לעריכה"></div>
+
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">תמונה</label>
+    <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
+      <div class="photo-upload" id="edit-photo-upload" style="margin:0;">
+        <div class="ph-placeholder" id="edit-photo-placeholder">
+          <span>📷</span>
+          <small>בחר תמונה</small>
+        </div>
+        <img id="edit-photo-preview" style="display:none;" alt="">
+        <input type="file" accept="image/*" id="edit-photo-input">
+      </div>
+      <button class="btn btn-sm btn-secondary" id="btn-clear-photo" style="width:auto;padding:10px 14px;font-size:0.8rem;">🗑️ נקה</button>
+    </div>
+
+    <!-- Invite code for waiting children -->
+    <div id="edit-child-invite-section" style="display:none;margin-top:16px;padding:16px;background:#F8FAFC;border-radius:14px;">
+      <p style="font-weight:700;font-size:0.95rem;text-align:center;margin-bottom:14px;">⏳ ממתין לכניסה</p>
+      <div style="text-align:right;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span style="background:var(--primary);color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;flex-shrink:0;">1</span>
+          <span style="font-size:0.85rem;font-weight:600;">פתח את האפליקציה במכשיר של הילד/ה</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span style="background:var(--primary);color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;flex-shrink:0;">2</span>
+          <span style="font-size:0.85rem;font-weight:600;">בחר <strong>"אני ילד/ה"</strong></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="background:var(--primary);color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;flex-shrink:0;">3</span>
+          <span style="font-size:0.85rem;font-weight:600;">הזן את הקוד למטה</span>
+        </div>
+      </div>
+      <p style="color:var(--muted);font-size:0.78rem;text-align:center;margin-bottom:10px;">הקוד תקף ל-24 שעות ולבן משפחה אחד</p>
+      <div style="font-size:1.6rem;font-weight:900;letter-spacing:8px;color:var(--primary);direction:ltr;text-align:center;" id="edit-child-invite-code">000000</div>
+      <div style="text-align:center;margin-top:12px;">
+        <button class="btn btn-primary btn-sm" id="btn-share-child-code-edit" style="width:auto;padding:10px 24px;display:inline-flex;">📤 שתף קוד</button>
+      </div>
+    </div>
+
+    <div class="error-msg" id="edit-child-error"></div>
+    <div style="display:flex;gap:8px;margin-top:18px;">
+      <button class="btn btn-primary btn-sm" id="btn-save-child" style="flex:2;">שמור</button>
+      <button class="btn btn-danger btn-sm" id="btn-delete-child" style="flex:1;">מחק</button>
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-manage-family');renderFamily();" style="flex:1;">חזרה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: ADD TASK ==================== -->
+<div id="screen-add-task" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-dashboard')">→</button>
+    <h2>הוספת מטלה 📋</h2>
+  </div>
+  <div class="card">
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">✏️</span> שם המטלה</div>
+      <div class="input-group" style="margin-bottom:6px;">
+        <input type="text" id="task-name-input" placeholder="לדוגמה: צחצוח שיניים" autocomplete="off">
+      </div>
+      <button class="btn btn-sm" id="btn-task-suggestions" style="padding:8px 16px;font-size:0.82rem;background:#FCE7F3;color:#BE185D;border:none;border-radius:20px;width:auto;max-width:none;display:inline-flex;box-shadow:none;">💡 הצעות מטלות</button>
+      <div class="suggestions-wrap" id="suggestions-wrap" style="display:none;"></div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📂</span> קטגוריה</div>
+      <div class="cat-scroll" id="task-cat-scroll">
+        <!-- filled by JS -->
+      </div>
+      <div id="new-cat-input-wrap" style="display:none;margin-top:8px;">
+        <div class="input-group" style="margin-bottom:0;">
+          <input type="text" id="task-new-cat-input" placeholder="שם קטגוריה חדשה..." autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">👧👦</span> שיוך לילד/ים</div>
+      <div class="assign-grid" id="task-assign-grid"></div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">🎨</span> אייקון</div>
+      <div class="task-emoji-grid" id="task-emoji-grid"></div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">⭐</span> מספר כוכבים</div>
+      <div class="stars-picker" id="task-stars-picker">
+        <span class="star-btn" data-val="1">⭐</span>
+        <span class="star-btn" data-val="2">⭐</span>
+        <span class="star-btn" data-val="3">⭐</span>
+        <span class="star-btn" data-val="4">⭐</span>
+        <span class="star-btn" data-val="5">⭐</span>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📅</span> תדירות</div>
+      <div class="freq-grid" id="task-freq-grid">
+        <div class="freq-opt" data-freq="daily"><span class="fo-icon">📆</span><span class="fo-label">כל יום</span></div>
+        <div class="freq-opt" data-freq="specific"><span class="fo-icon">🗓️</span><span class="fo-label">ימים<br>ספציפיים</span></div>
+        <div class="freq-opt" data-freq="weekly"><span class="fo-icon">📋</span><span class="fo-label">פעם<br>בשבוע</span></div>
+        <div class="freq-opt" data-freq="once"><span class="fo-icon">☝️</span><span class="fo-label">חד פעמית</span></div>
+      </div>
+      <div class="days-grid" id="task-days-grid" style="display:none;">
+        <div class="day-opt" data-day="0">א'</div>
+        <div class="day-opt" data-day="1">ב'</div>
+        <div class="day-opt" data-day="2">ג'</div>
+        <div class="day-opt" data-day="3">ד'</div>
+        <div class="day-opt" data-day="4">ה'</div>
+        <div class="day-opt" data-day="5">ו'</div>
+        <div class="day-opt" data-day="6">ש'</div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">🔔</span> תזכורת</div>
+      <input type="time" class="reminder-input" id="task-reminder-input">
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📝</span> תיאור (לא חובה)</div>
+      <div class="input-group" style="margin-bottom:0;">
+        <input type="text" id="task-desc-input" placeholder="הסבר קצר על המטלה" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="error-msg" id="add-task-error"></div>
+    <button class="btn btn-success" id="btn-save-task" style="margin-top:18px;">שמור מטלה ✅</button>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: EDIT TASKS LIST ==================== -->
+<div id="screen-edit-tasks" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-dashboard')">→</button>
+    <h2>עריכת מטלות ✏️</h2>
+  </div>
+  <div class="filter-scroll" id="edit-tasks-filter">
+    <span class="filter-chip active" data-filter="all">📋 הכל</span>
+    <span class="filter-chip" data-filter="child">👧👦 לפי ילד</span>
+    <span class="filter-chip" data-filter="cat">📂 לפי קטגוריה</span>
+    <span class="filter-chip" data-filter="stars">⭐ לפי כוכבים</span>
+    <span class="filter-chip" data-filter="freq">📅 לפי תדירות</span>
+  </div>
+  <div class="sub-filter-scroll" id="edit-tasks-sub-filter" style="display:none;"></div>
+  <div class="etask-list" id="edit-tasks-list">
+    <div class="empty-state">טוען...</div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: EDIT SINGLE TASK ==================== -->
+<div id="screen-edit-task" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" id="btn-back-edit-task">→</button>
+    <h2>עריכת מטלה ✏️</h2>
+  </div>
+  <div class="card">
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">✏️</span> שם המטלה</div>
+      <div class="input-group" style="margin-bottom:0;">
+        <input type="text" id="et-name" placeholder="שם המטלה" autocomplete="off">
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📂</span> קטגוריה</div>
+      <div class="cat-scroll" id="et-cat-scroll"></div>
+      <div id="et-new-cat-wrap" style="display:none;margin-top:8px;">
+        <div class="input-group" style="margin-bottom:0;">
+          <input type="text" id="et-new-cat" placeholder="קטגוריה חדשה..." autocomplete="off">
+        </div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">👧👦</span> שיוך לילד/ים</div>
+      <div class="assign-grid" id="et-assign-grid"></div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">🎨</span> אייקון</div>
+      <div class="task-emoji-grid" id="et-emoji-grid"></div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">⭐</span> מספר כוכבים</div>
+      <div class="stars-picker" id="et-stars-picker">
+        <span class="star-btn" data-val="1">⭐</span>
+        <span class="star-btn" data-val="2">⭐</span>
+        <span class="star-btn" data-val="3">⭐</span>
+        <span class="star-btn" data-val="4">⭐</span>
+        <span class="star-btn" data-val="5">⭐</span>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📅</span> תדירות</div>
+      <div class="freq-grid" id="et-freq-grid">
+        <div class="freq-opt" data-freq="daily"><span class="fo-icon">📆</span><span class="fo-label">כל יום</span></div>
+        <div class="freq-opt" data-freq="specific"><span class="fo-icon">🗓️</span><span class="fo-label">ימים<br>ספציפיים</span></div>
+        <div class="freq-opt" data-freq="weekly"><span class="fo-icon">📋</span><span class="fo-label">פעם<br>בשבוע</span></div>
+        <div class="freq-opt" data-freq="once"><span class="fo-icon">☝️</span><span class="fo-label">חד פעמית</span></div>
+      </div>
+      <div class="days-grid" id="et-days-grid" style="display:none;">
+        <div class="day-opt" data-day="0">א'</div>
+        <div class="day-opt" data-day="1">ב'</div>
+        <div class="day-opt" data-day="2">ג'</div>
+        <div class="day-opt" data-day="3">ד'</div>
+        <div class="day-opt" data-day="4">ה'</div>
+        <div class="day-opt" data-day="5">ו'</div>
+        <div class="day-opt" data-day="6">ש'</div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">🔔</span> תזכורת</div>
+      <input type="time" class="reminder-input" id="et-reminder">
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📝</span> תיאור</div>
+      <div class="input-group" style="margin-bottom:0;">
+        <input type="text" id="et-desc" placeholder="הסבר קצר" autocomplete="off">
+      </div>
+    </div>
+    <div class="error-msg" id="et-error"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-success btn-sm" id="btn-et-save" style="flex:2;">שמור ✅</button>
+      <button class="btn btn-sm" id="btn-et-hide" style="flex:1;background:#FEF3C7;color:#92400E;border:none;">👁️ הסתר</button>
+    </div>
+    <button class="btn btn-danger btn-sm" id="btn-et-delete" style="margin-top:8px;">🗑️ מחק מטלה</button>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: MANAGE POINTS ==================== -->
+<div id="screen-manage-points" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-dashboard')">→</button>
+    <h2>ניהול ניקוד ⭐</h2>
+  </div>
+  <p style="color:var(--muted);font-size:0.85rem;max-width:420px;width:100%;margin-bottom:10px;">מטלות שבוצעו השבוע. סוויפ לביטול ביצוע.</p>
+  <div class="filter-scroll" id="mp-filter">
+    <span class="filter-chip active" data-filter="all">📋 הכל</span>
+    <span class="filter-chip" data-filter="child">👧👦 לפי ילד</span>
+    <span class="filter-chip" data-filter="cat">📂 לפי קטגוריה</span>
+    <span class="filter-chip" data-filter="stars">⭐ לפי כוכבים</span>
+    <span class="filter-chip" data-filter="day">📅 לפי יום</span>
+  </div>
+  <div class="sub-filter-scroll" id="mp-sub-filter" style="display:none;"></div>
+  <div class="etask-list" id="mp-list">
+    <div class="empty-state">טוען...</div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: CHILD CODE ENTRY ==================== -->
+<div id="screen-child-code" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-who')">→</button>
+    <h2>כניסת ילד/ה 🎮</h2>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div class="emoji-big">🔢</div>
+    <p style="font-weight:700;font-size:1.05rem;margin-bottom:4px;">הכנס קוד הזמנה</p>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:16px;">קיבלת קוד מההורים? הכנס אותו כאן</p>
+    <div class="code-input-wrap" id="code-input-wrap">
+      <input class="code-digit" type="tel" maxlength="1" data-idx="0" inputmode="numeric">
+      <input class="code-digit" type="tel" maxlength="1" data-idx="1" inputmode="numeric">
+      <input class="code-digit" type="tel" maxlength="1" data-idx="2" inputmode="numeric">
+      <input class="code-digit" type="tel" maxlength="1" data-idx="3" inputmode="numeric">
+      <input class="code-digit" type="tel" maxlength="1" data-idx="4" inputmode="numeric">
+      <input class="code-digit" type="tel" maxlength="1" data-idx="5" inputmode="numeric">
+    </div>
+    <div class="error-msg" id="child-code-error"></div>
+    <div class="code-attempts" id="code-attempts"></div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-success btn-sm" id="btn-verify-code">המשך</button>
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-who')">חזרה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: CHILD SETUP ==================== -->
+<div id="screen-child-setup" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-child-code')">→</button>
+    <h2 id="child-setup-title">הגדרת פרופיל 🌟</h2>
+  </div>
+  <div class="card">
+    <p style="text-align:center;font-weight:700;font-size:1.1rem;margin-bottom:16px;" id="child-setup-name"></p>
+
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin-bottom:8px;">בחר/י אימוג'י 😊</label>
+    <div class="emoji-grid" id="emoji-picker">
+      <!-- filled by JS -->
+    </div>
+    <div class="error-msg" id="emoji-error"></div>
+
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">בחר/י צבע 🎨</label>
+    <div class="color-grid" id="color-picker">
+      <!-- filled by JS -->
+    </div>
+    <div class="error-msg" id="color-error"></div>
+
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">תמונה (לא חובה) 📸</label>
+    <div class="photo-upload" id="child-photo-upload">
+      <div class="ph-placeholder" id="child-photo-placeholder">
+        <span>📷</span>
+        <small>בחר תמונה</small>
+      </div>
+      <img id="child-photo-preview" style="display:none;" alt="">
+      <input type="file" accept="image/*" id="child-photo-input">
+    </div>
+
+    <div class="error-msg" id="setup-error"></div>
+    <div class="btn-row" style="margin-top:18px;">
+      <button class="btn btn-success btn-sm" id="btn-finish-setup">המשך</button>
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-child-code')">חזרה</button>
+    </div>
+  </div>
+</div>
+
+<!-- SPLASH LOADING -->
+<div id="screen-splash" class="screen active visible" style="justify-content:center;min-height:100vh;">
+  <div style="text-align:center;">
+    <div style="font-size:3.5rem;margin-bottom:16px;">🏠</div>
+    <div class="spinner-lg" style="width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px;"></div>
+    <p style="font-weight:700;color:var(--muted);">טוען...</p>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ==================== FIREBASE + LOGIC ==================== -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, signInAnonymously, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where, updateDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
+  authDomain: "kidssapp-izhaki.firebaseapp.com",
+  databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kidssapp-izhaki",
+  storageBucket: "kidssapp-izhaki.firebasestorage.app",
+  messagingSenderId: "663906163746",
+  appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// =========== STATE ===========
+let currentParentUid = null;
+let currentFamilyId = null;
+let childrenCache = [];
+let editingChildId = null;
+let pendingChildData = null; // for child setup flow
+let codeAttempts = 0;
+const MAX_ATTEMPTS = 5;
+const CODE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+const CHILD_EMOJIS = ["🦁","🐱","🦄","🐶","🐸","🦊","🐼","🦋","🌟","🎈","🐯","🐰","🦜","🐻","🎀","🚀","⚽","🎸","🌈","🧸","🐬","🦕","🐝","🍀"];
+const CHILD_COLORS = ["#EF4444","#F59E0B","#10B981","#3B82F6","#8B5CF6","#EC4899","#06B6D4","#F97316","#84CC16","#6366F1"];
+
+// =========== SCREEN NAVIGATION ===========
+window.showScreen = function(id) {
+  document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active','visible'); });
+  const next = document.getElementById(id);
+  next.classList.add('active');
+  requestAnimationFrame(() => requestAnimationFrame(() => next.classList.add('visible')));
+  // scroll to top
+  window.scrollTo(0,0);
+};
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function highlightField(el) {
+  if (!el) return;
+  el.classList.add('field-error');
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (navigator.vibrate) navigator.vibrate(100);
+  setTimeout(() => el.classList.remove('field-error'), 1500);
+}
+
+let loadingTimer = null;
+function showLoading(msg) {
+  hideLoading();
+  const ov = document.createElement('div');
+  ov.className = 'loading-overlay';
+  ov.id = 'global-loading';
+  ov.innerHTML = `<div class="loading-box"><div class="spinner-lg"></div><p style="font-weight:700;font-size:0.95rem;">${msg||'טוען...'}</p></div>`;
+  document.body.appendChild(ov);
+  // Safety: auto-hide after 8 seconds to prevent stuck loading
+  loadingTimer = setTimeout(() => hideLoading(), 8000);
+}
+function hideLoading() {
+  if (loadingTimer) { clearTimeout(loadingTimer); loadingTimer = null; }
+  document.querySelectorAll('.loading-overlay').forEach(el => el.remove());
+}
+
+// =========== GENERATE INVITE CODE ===========
+function generateCode() {
+  let code = '';
+  for (let i = 0; i < 6; i++) code += Math.floor(Math.random() * 10);
+  return code;
+}
+
+// =========== AUTH STATE ===========
+function checkChildLocalOrShowWho() {
+  const savedChildId = localStorage.getItem('childId');
+  const savedFamilyId = localStorage.getItem('childFamilyId');
+  if (savedChildId && savedFamilyId) {
+    window.location.href = 'tasks.html';
+    return;
+  }
+  hideLoading();
+  showScreen('screen-who');
+}
+
+// Timeout — if nothing happens in 1.5 seconds, show who screen
+const splashTimeout = setTimeout(() => {
+  if (!auth.currentUser) {
+    checkChildLocalOrShowWho();
+  }
+}, 1500);
+
+onAuthStateChanged(auth, async (user) => {
+  clearTimeout(splashTimeout);
+
+  if (!user) {
+    checkChildLocalOrShowWho();
+    return;
+  }
+
+  // Anonymous user — child flow
+  if (user.isAnonymous) {
+    const savedChildId = localStorage.getItem('childId');
+    const savedFamilyId = localStorage.getItem('childFamilyId');
+    if (savedChildId && savedFamilyId) {
+      window.location.href = 'tasks.html';
+      return;
+    }
+    showScreen('screen-who');
+    return;
+  }
+
+  // Google user — parent
+  currentParentUid = user.uid;
+  try {
+    // Check if primary parent
+    let famSnap = await getDocs(query(collection(db, 'families'), where('parentUid', '==', user.uid)));
+    if (!famSnap.empty) {
+      const famDoc = famSnap.docs[0];
+      currentFamilyId = famDoc.id;
+      renderDashboard(user);
+      return;
+    }
+    // Check if secondary parent
+    famSnap = await getDocs(query(collection(db, 'families'), where('secondaryParentUid', '==', user.uid)));
+    if (!famSnap.empty) {
+      const famDoc = famSnap.docs[0];
+      currentFamilyId = famDoc.id;
+      renderDashboard(user);
+      return;
+    }
+    // No family found — show join/create screen
+    showScreen('screen-join-family');
+  } catch(e) {
+    console.error('Firestore error:', e);
+    showScreen('screen-join-family');
+  }
+});
+
+// =========== WHO ARE YOU ===========
+document.getElementById('btn-who-parent').onclick = () => {
+  // Check if already logged in
+  if (auth.currentUser && !auth.currentUser.isAnonymous) {
+    // onAuthStateChanged will handle
+    return;
+  }
+  showScreen('screen-parent-login');
+};
+
+document.getElementById('btn-who-child').onclick = () => {
+  codeAttempts = 0;
+  document.getElementById('child-code-error').textContent = '';
+  document.getElementById('code-attempts').textContent = '';
+  document.querySelectorAll('.code-digit').forEach(d => d.value = '');
+  showScreen('screen-child-code');
+};
+
+// =========== GOOGLE LOGIN ===========
+document.getElementById('btn-google-login').onclick = async () => {
+  const provider = new GoogleAuthProvider();
+  try {
+    showLoading('מתחבר...');
+    await signInWithPopup(auth, provider);
+    // onAuthStateChanged handles the rest
+  } catch(e) {
+    hideLoading();
+    // If popup blocked/failed on mobile, try redirect
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+      showLoading('מעביר ל-Google...');
+      try {
+        await signInWithRedirect(auth, provider);
+      } catch(e2) {
+        hideLoading();
+        document.getElementById('login-error').textContent = `שגיאה: ${e2.code || e2.message}`;
+      }
+    } else {
+      document.getElementById('login-error').textContent = `שגיאה: ${e.code || e.message}`;
+    }
+  }
+};
+
+// =========== FACEBOOK LOGIN ===========
+document.getElementById('btn-facebook-login').onclick = async () => {
+  const provider = new FacebookAuthProvider();
+  try {
+    showLoading('מתחבר...');
+    await signInWithPopup(auth, provider);
+  } catch(e) {
+    hideLoading();
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+      showLoading('מעביר ל-Facebook...');
+      try {
+        await signInWithRedirect(auth, provider);
+      } catch(e2) {
+        hideLoading();
+        document.getElementById('login-error').textContent = `שגיאה: ${e2.code || e2.message}`;
+      }
+    } else if (e.code === 'auth/account-exists-with-different-credential') {
+      document.getElementById('login-error').textContent = 'חשבון קיים עם Google. התחבר עם Google במקום.';
+    } else {
+      document.getElementById('login-error').textContent = `שגיאה: ${e.code || e.message}`;
+    }
+  }
+};
+
+// =========== DASHBOARD ===========
+function renderDashboard(user) {
+  const name = user.displayName ? user.displayName.split(' ')[0] : 'הורה';
+  document.getElementById('dash-greeting').textContent = `שלום ${name}! 👋`;
+  showScreen('screen-dashboard');
+}
+
+document.getElementById('btn-create-child').onclick = () => {
+  document.getElementById('child-name-input').value = '';
+  document.getElementById('create-child-error').textContent = '';
+  document.querySelectorAll('.gender-opt').forEach(g => g.classList.remove('selected'));
+  showScreen('screen-create-child');
+  setTimeout(() => document.getElementById('child-name-input').focus(), 350);
+};
+
+document.getElementById('btn-manage-family').onclick = async () => {
+  showScreen('screen-manage-family');
+  await loadChildren();
+  renderFamily();
+};
+
+document.getElementById('btn-logout').onclick = async () => {
+  await signOut(auth);
+  currentParentUid = null;
+  currentFamilyId = null;
+  childrenCache = [];
+  showScreen('screen-who');
+};
+
+// "Coming soon" buttons
+['btn-add-prizes','btn-manage-prizes'].forEach(id => {
+  document.getElementById(id).onclick = () => showToast('בקרוב! 🚧');
+});
+
+// =========== CREATE CHILD ===========
+let selectedGender = '';
+document.getElementById('gender-male').onclick = () => {
+  selectedGender = 'male';
+  document.getElementById('gender-male').classList.add('selected');
+  document.getElementById('gender-female').classList.remove('selected');
+};
+document.getElementById('gender-female').onclick = () => {
+  selectedGender = 'female';
+  document.getElementById('gender-female').classList.add('selected');
+  document.getElementById('gender-male').classList.remove('selected');
+};
+
+document.getElementById('btn-do-create-child').onclick = async () => {
+  const name = document.getElementById('child-name-input').value.trim();
+  const err = document.getElementById('create-child-error');
+  if (!name) { err.textContent = 'חובה להכניס שם'; highlightField(document.getElementById('child-name-input')); return; }
+  if (!selectedGender) { err.textContent = 'חובה לבחור מין'; highlightField(document.getElementById('create-gender-picker')); return; }
+  err.textContent = '';
+
+  showLoading('יוצר...');
+  try {
+    const code = generateCode();
+    const childRef = doc(collection(db, 'families', currentFamilyId, 'children'));
+    await setDoc(childRef, {
+      name,
+      gender: selectedGender,
+      emoji: '',
+      color: '',
+      photo: '',
+      inviteCode: code,
+      codeCreatedAt: Timestamp.now(),
+      codeAttempts: 0,
+      status: 'waiting', // waiting | active
+      anonUid: '',
+      createdAt: serverTimestamp()
+    });
+    // Also store invite code in top-level for lookup
+    await setDoc(doc(db, 'inviteCodes', code), {
+      familyId: currentFamilyId,
+      childId: childRef.id,
+      createdAt: Timestamp.now(),
+      used: false
+    });
+
+    hideLoading();
+    // Show invite code screen
+    document.getElementById('invite-code-value').textContent = code;
+    showScreen('screen-invite-code');
+  } catch(e) {
+    hideLoading();
+    err.textContent = 'שגיאה ביצירה, נסה שוב';
+    console.error(e);
+  }
+};
+
+// =========== SHARE CODE ===========
+document.getElementById('btn-share-code').onclick = () => {
+  const code = document.getElementById('invite-code-value').textContent;
+  const url = window.location.origin + window.location.pathname.replace(/[^/]*$/, 'index.html');
+  const text = `🏠 משימות משפחתיות — קוד הזמנה\n\nשלום! קיבלת הזמנה להצטרף למשימות המשפחה.\n\n📱 שלב 1: פתח את הקישור במכשיר שלך\n👧 שלב 2: בחר "אני ילד/ה"\n🔢 שלב 3: הזן את הקוד: ${code}\n\n⏰ הקוד תקף ל-24 שעות\n\n🔗 ${url}`;
+  if (navigator.share) {
+    navigator.share({ title: 'קוד הזמנה למשימות משפחתיות', text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('הקוד הועתק! 📋'));
+  }
+};
+
+// =========== LOAD CHILDREN ===========
+async function loadChildren() {
+  if (!currentFamilyId) return;
+  const snap = await getDocs(collection(db, 'families', currentFamilyId, 'children'));
+  childrenCache = [];
+  snap.forEach(d => childrenCache.push({ id: d.id, ...d.data() }));
+}
+
+// =========== RENDER FAMILY ===========
+window.renderFamily = function() {
+  const grid = document.getElementById('family-grid');
+  if (childrenCache.length === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">עדיין לא נוספו ילדים</div>';
+    return;
+  }
+  grid.innerHTML = childrenCache.map(c => {
+    const genderEmoji = c.gender === 'male' ? '👦' : '👧';
+    const hasPhoto = c.photo && c.photo.length > 10;
+    const photoHTML = hasPhoto
+      ? `<img src="${c.photo}" alt="${c.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+      : `<span style="font-size:1.8rem;">${c.emoji || genderEmoji}</span>`;
+    const isWaiting = c.status === 'waiting';
+    return `
+      <div class="child-card" onclick="${isWaiting ? `showChildInviteModal('${c.id}')` : `openEditChild('${c.id}')`}">
+        <div class="cc-photo">${photoHTML}</div>
+        <div class="cc-name">${c.name}</div>
+        <div class="cc-gender">${genderEmoji} ${c.gender === 'male' ? 'זכר' : 'נקבה'}</div>
+        ${isWaiting ? `
+          <span class="cc-status waiting">ממתין לכניסה</span>
+          <span class="cc-code">${c.inviteCode || ''}</span>
+        ` : `
+          <span class="cc-status active">פעיל ✅</span>
+        `}
+      </div>`;
+  }).join('');
+};
+
+// =========== CHILD INVITE MODAL (for waiting children) ===========
+window.showChildInviteModal = function(childId) {
+  const child = childrenCache.find(c => c.id === childId);
+  if (!child) return;
+  const code = child.inviteCode || '------';
+  
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  const sh = document.createElement('div'); sh.className = 'modal-sheet';
+  sh.innerHTML = `<div class="modal-handle"></div>
+    <div class="modal-header"><h2>🔑 קוד הזמנה — ${child.name}</h2><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div style="text-align:right;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">1</span>
+          <span style="font-size:0.92rem;font-weight:600;">פתח את האפליקציה במכשיר של הילד/ה</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">2</span>
+          <span style="font-size:0.92rem;font-weight:600;">בחר <strong>"אני ילד/ה"</strong></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">3</span>
+          <span style="font-size:0.92rem;font-weight:600;">הזן את הקוד למטה</span>
+        </div>
+      </div>
+      <p style="color:var(--muted);font-size:0.82rem;text-align:center;margin-bottom:10px;">הקוד תקף ל-24 שעות ולבן משפחה אחד</p>
+      <div class="invite-code-display">${code}</div>
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <button class="btn btn-primary btn-sm" id="modal-share-code" style="flex:1;">📤 שתף קוד</button>
+        <button class="btn btn-secondary btn-sm" id="modal-edit-child" style="flex:1;">✏️ עריכה</button>
+      </div>
+    </div>`;
+  sh.querySelector('.modal-close').onclick = () => ov.remove();
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  sh.querySelector('#modal-share-code').onclick = () => {
+    const url = window.location.origin + window.location.pathname.replace(/[^/]*$/, 'index.html');
+    const text = `🏠 משימות משפחתיות — קוד הזמנה ל${child.name}\n\nשלום ${child.name}! קיבלת הזמנה להצטרף למשימות המשפחה.\n\n📱 שלב 1: פתח את הקישור במכשיר שלך\n👧 שלב 2: בחר "אני ילד/ה"\n🔢 שלב 3: הזן את הקוד: ${code}\n\n⏰ הקוד תקף ל-24 שעות\n\n🔗 ${url}`;
+    if (navigator.share) {
+      navigator.share({ title: 'קוד הזמנה', text }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(text).then(() => showToast('הקוד הועתק! 📋'));
+    }
+  };
+  sh.querySelector('#modal-edit-child').onclick = () => {
+    ov.remove();
+    openEditChild(childId);
+  };
+  ov.appendChild(sh);
+  document.body.appendChild(ov);
+};
+
+// =========== EDIT CHILD ===========
+const CHILD_EMOJIS_EDIT = ["🦁","🐱","🦄","🐶","🐸","🦊","🐼","🦋","🌟","🎈","🐯","🐰","🦜","🐻","🎀","🚀","⚽","🎸","🌈","🧸","🐬","🦕","🐝","🍀"];
+const CHILD_COLORS_EDIT = ["#EF4444","#F59E0B","#10B981","#3B82F6","#8B5CF6","#EC4899","#06B6D4","#F97316","#84CC16","#6366F1"];
+let editEmoji = '';
+let editColor = '';
+let editPhotoCleared = false;
+
+window.openEditChild = function(childId) {
+  const child = childrenCache.find(c => c.id === childId);
+  if (!child) return;
+  editingChildId = childId;
+  editPhotoData = null;
+  editPhotoCleared = false;
+
+  document.getElementById('edit-child-name').value = child.name;
+  // gender
+  editGender = child.gender;
+  document.getElementById('edit-gender-male').classList.toggle('selected', child.gender === 'male');
+  document.getElementById('edit-gender-female').classList.toggle('selected', child.gender === 'female');
+  // color
+  editColor = child.color || '';
+  const colorEl = document.getElementById('edit-child-color-display');
+  colorEl.style.background = child.color || 'var(--border)';
+  colorEl.onclick = () => showEditColorModal(child.color);
+  // emoji
+  editEmoji = child.emoji || '';
+  const emojiEl = document.getElementById('edit-child-emoji-display');
+  emojiEl.textContent = child.emoji || '—';
+  emojiEl.onclick = () => showEditEmojiModal(child.emoji);
+  // photo
+  const preview = document.getElementById('edit-photo-preview');
+  const placeholder = document.getElementById('edit-photo-placeholder');
+  if (child.photo && child.photo.length > 10) {
+    preview.src = child.photo;
+    preview.style.display = 'block';
+    placeholder.style.display = 'none';
+  } else {
+    preview.style.display = 'none';
+    placeholder.style.display = '';
+  }
+  // Invite code section (only for waiting children)
+  const inviteSection = document.getElementById('edit-child-invite-section');
+  if (child.status === 'waiting' && child.inviteCode) {
+    inviteSection.style.display = 'block';
+    document.getElementById('edit-child-invite-code').textContent = child.inviteCode;
+  } else {
+    inviteSection.style.display = 'none';
+  }
+
+  document.getElementById('edit-child-error').textContent = '';
+  showScreen('screen-edit-child');
+};
+
+// Share child code from edit screen
+document.getElementById('btn-share-child-code-edit').onclick = () => {
+  const code = document.getElementById('edit-child-invite-code').textContent;
+  const child = childrenCache.find(c => c.id === editingChildId);
+  const childName = child?.name || 'ילד/ה';
+  const url = window.location.origin + window.location.pathname.replace(/[^/]*$/, 'index.html');
+  const text = `🏠 משימות משפחתיות — קוד הזמנה ל${childName}\n\nשלום ${childName}! קיבלת הזמנה להצטרף למשימות המשפחה.\n\n📱 שלב 1: פתח את הקישור במכשיר שלך\n👧 שלב 2: בחר "אני ילד/ה"\n🔢 שלב 3: הזן את הקוד: ${code}\n\n⏰ הקוד תקף ל-24 שעות\n\n🔗 ${url}`;
+  if (navigator.share) {
+    navigator.share({ title: 'קוד הזמנה', text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('הקוד הועתק! 📋'));
+  }
+};
+
+// Emoji picker modal
+function showEditEmojiModal(current) {
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  const sh = document.createElement('div'); sh.className = 'modal-sheet';
+  sh.innerHTML = `<div class="modal-handle"></div>
+    <div class="modal-header"><h2>בחר אימוג'י</h2><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="emoji-grid">${CHILD_EMOJIS_EDIT.map(e => `<div class="emoji-opt${e===current?' selected':''}" data-emoji="${e}">${e}</div>`).join('')}</div>
+    </div>`;
+  sh.querySelector('.modal-close').onclick = () => ov.remove();
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  sh.querySelectorAll('.emoji-opt').forEach(el => {
+    el.onclick = () => {
+      editEmoji = el.dataset.emoji;
+      document.getElementById('edit-child-emoji-display').textContent = editEmoji;
+      ov.remove();
+    };
+  });
+  ov.appendChild(sh);
+  document.body.appendChild(ov);
+}
+
+// Color picker modal
+function showEditColorModal(current) {
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  const sh = document.createElement('div'); sh.className = 'modal-sheet';
+  sh.innerHTML = `<div class="modal-handle"></div>
+    <div class="modal-header"><h2>בחר צבע</h2><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="color-grid">${CHILD_COLORS_EDIT.map(c => `<div class="color-opt${c===current?' selected':''}" data-color="${c}" style="background:${c}"></div>`).join('')}</div>
+    </div>`;
+  sh.querySelector('.modal-close').onclick = () => ov.remove();
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  sh.querySelectorAll('.color-opt').forEach(el => {
+    el.onclick = () => {
+      editColor = el.dataset.color;
+      document.getElementById('edit-child-color-display').style.background = editColor;
+      ov.remove();
+    };
+  });
+  ov.appendChild(sh);
+  document.body.appendChild(ov);
+}
+
+// Edit gender in edit screen
+let editGender = '';
+document.getElementById('edit-gender-male').onclick = () => {
+  editGender = 'male';
+  document.getElementById('edit-gender-male').classList.add('selected');
+  document.getElementById('edit-gender-female').classList.remove('selected');
+};
+document.getElementById('edit-gender-female').onclick = () => {
+  editGender = 'female';
+  document.getElementById('edit-gender-female').classList.add('selected');
+  document.getElementById('edit-gender-male').classList.remove('selected');
+};
+
+// Edit photo
+let editPhotoData = null;
+document.getElementById('edit-photo-input').onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  editPhotoCleared = false;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    editPhotoData = ev.target.result;
+    document.getElementById('edit-photo-preview').src = editPhotoData;
+    document.getElementById('edit-photo-preview').style.display = 'block';
+    document.getElementById('edit-photo-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+};
+
+// Clear photo
+document.getElementById('btn-clear-photo').onclick = () => {
+  editPhotoData = null;
+  editPhotoCleared = true;
+  document.getElementById('edit-photo-preview').style.display = 'none';
+  document.getElementById('edit-photo-placeholder').style.display = '';
+  document.getElementById('edit-photo-input').value = '';
+};
+
+// Save child
+document.getElementById('btn-save-child').onclick = async () => {
+  const name = document.getElementById('edit-child-name').value.trim();
+  const err = document.getElementById('edit-child-error');
+  if (!name) { err.textContent = 'חובה להכניס שם'; return; }
+
+  const child = childrenCache.find(c => c.id === editingChildId);
+  const gender = editGender || child.gender;
+
+  showLoading('שומר...');
+  try {
+    const updates = { name, gender };
+    if (editEmoji) updates.emoji = editEmoji;
+    if (editColor) updates.color = editColor;
+    if (editPhotoData) updates.photo = editPhotoData;
+    if (editPhotoCleared) updates.photo = '';
+    await updateDoc(doc(db, 'families', currentFamilyId, 'children', editingChildId), updates);
+    await loadChildren();
+    renderFamily();
+    hideLoading();
+    showToast('נשמר בהצלחה! ✅');
+    showScreen('screen-manage-family');
+    editPhotoData = null;
+    editPhotoCleared = false;
+  } catch(e) {
+    hideLoading();
+    err.textContent = 'שגיאה בשמירה';
+    console.error(e);
+  }
+};
+
+// Delete child
+document.getElementById('btn-delete-child').onclick = async () => {
+  if (!confirm('למחוק את הילד/ה? פעולה זו לא ניתנת לביטול')) return;
+  showLoading('מוחק...');
+  try {
+    const child = childrenCache.find(c => c.id === editingChildId);
+    // Delete invite code doc
+    if (child && child.inviteCode) {
+      try { await deleteDoc(doc(db, 'inviteCodes', child.inviteCode)); } catch(e) {}
+    }
+    await deleteDoc(doc(db, 'families', currentFamilyId, 'children', editingChildId));
+    await loadChildren();
+    renderFamily();
+    hideLoading();
+    showToast('נמחק! 🗑️');
+    showScreen('screen-manage-family');
+  } catch(e) {
+    hideLoading();
+    console.error(e);
+  }
+};
+
+// =========== CHILD CODE ENTRY ===========
+// Auto-advance digits
+const codeDigits = document.querySelectorAll('#code-input-wrap .code-digit');
+codeDigits.forEach((input, idx) => {
+  input.addEventListener('input', (e) => {
+    const val = e.target.value.replace(/\D/g, '');
+    e.target.value = val.slice(0,1);
+    if (val && idx < 5) codeDigits[idx+1].focus();
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+      codeDigits[idx-1].focus();
+    }
+  });
+  // paste support
+  input.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const paste = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0,6);
+    paste.split('').forEach((ch, i) => {
+      if (codeDigits[i]) codeDigits[i].value = ch;
+    });
+    if (paste.length > 0) codeDigits[Math.min(paste.length, 5)].focus();
+  });
+});
+
+document.getElementById('btn-verify-code').onclick = async () => {
+  const code = Array.from(codeDigits).map(d => d.value).join('');
+  const err = document.getElementById('child-code-error');
+
+  if (code.length < 6) { err.textContent = 'הכנס 6 ספרות'; return; }
+
+  if (codeAttempts >= MAX_ATTEMPTS) {
+    err.textContent = 'יותר מדי ניסיונות. נסה שוב מאוחר יותר';
+    return;
+  }
+
+  codeAttempts++;
+  document.getElementById('code-attempts').textContent = `ניסיון ${codeAttempts}/${MAX_ATTEMPTS}`;
+
+  showLoading('בודק...');
+  try {
+    const codeSnap = await getDoc(doc(db, 'inviteCodes', code));
+    if (!codeSnap.exists()) {
+      hideLoading();
+      err.textContent = 'קוד שגוי, נסה שוב';
+      return;
+    }
+    const codeData = codeSnap.data();
+
+    // Check expiry
+    const created = codeData.createdAt?.toDate ? codeData.createdAt.toDate() : new Date(0);
+    if (Date.now() - created.getTime() > CODE_EXPIRY_MS) {
+      hideLoading();
+      err.textContent = 'הקוד פג תוקף. בקש קוד חדש מההורים';
+      return;
+    }
+
+    if (codeData.used) {
+      hideLoading();
+      err.textContent = 'הקוד כבר שומש';
+      return;
+    }
+
+    // Load child
+    const childSnap = await getDoc(doc(db, 'families', codeData.familyId, 'children', codeData.childId));
+    if (!childSnap.exists()) {
+      hideLoading();
+      err.textContent = 'שגיאה, פנה להורים';
+      return;
+    }
+
+    pendingChildData = {
+      familyId: codeData.familyId,
+      childId: codeData.childId,
+      code: code,
+      ...childSnap.data()
+    };
+
+    hideLoading();
+
+    // Show setup screen
+    document.getElementById('child-setup-name').textContent = `שלום ${pendingChildData.name}! 👋`;
+    setupEmojiPicker();
+    setupColorPicker();
+    resetChildPhoto();
+    showScreen('screen-child-setup');
+
+  } catch(e) {
+    hideLoading();
+    err.textContent = 'שגיאה, נסה שוב';
+    console.error(e);
+  }
+};
+
+// =========== CHILD SETUP ===========
+let selectedEmoji = '';
+let selectedColor = '';
+let childPhotoData = null;
+
+function setupEmojiPicker() {
+  selectedEmoji = '';
+  const grid = document.getElementById('emoji-picker');
+  grid.innerHTML = CHILD_EMOJIS.map(e => `<div class="emoji-opt" data-emoji="${e}">${e}</div>`).join('');
+  grid.querySelectorAll('.emoji-opt').forEach(el => {
+    el.onclick = () => {
+      grid.querySelectorAll('.emoji-opt').forEach(x => x.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedEmoji = el.dataset.emoji;
+    };
+  });
+}
+
+function setupColorPicker() {
+  selectedColor = '';
+  const grid = document.getElementById('color-picker');
+  grid.innerHTML = CHILD_COLORS.map(c => `<div class="color-opt" data-color="${c}" style="background:${c}"></div>`).join('');
+  grid.querySelectorAll('.color-opt').forEach(el => {
+    el.onclick = () => {
+      grid.querySelectorAll('.color-opt').forEach(x => x.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedColor = el.dataset.color;
+    };
+  });
+}
+
+function resetChildPhoto() {
+  childPhotoData = null;
+  document.getElementById('child-photo-preview').style.display = 'none';
+  document.getElementById('child-photo-placeholder').style.display = '';
+  document.getElementById('child-photo-input').value = '';
+}
+
+document.getElementById('child-photo-input').onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    childPhotoData = ev.target.result;
+    document.getElementById('child-photo-preview').src = childPhotoData;
+    document.getElementById('child-photo-preview').style.display = 'block';
+    document.getElementById('child-photo-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+};
+
+document.getElementById('btn-finish-setup').onclick = async () => {
+  const err = document.getElementById('setup-error');
+  if (!selectedEmoji) { document.getElementById('emoji-error').textContent = 'חובה לבחור אימוג\'י'; return; }
+  document.getElementById('emoji-error').textContent = '';
+  if (!selectedColor) { document.getElementById('color-error').textContent = 'חובה לבחור צבע'; return; }
+  document.getElementById('color-error').textContent = '';
+  err.textContent = '';
+
+  showLoading('שומר...');
+  try {
+    // Sign in anonymously
+    const cred = await signInAnonymously(auth);
+    const anonUid = cred.user.uid;
+
+    // Update child in Firestore
+    const childRef = doc(db, 'families', pendingChildData.familyId, 'children', pendingChildData.childId);
+    const updates = {
+      emoji: selectedEmoji,
+      color: selectedColor,
+      status: 'active',
+      anonUid: anonUid,
+    };
+    if (childPhotoData) updates.photo = childPhotoData;
+    await updateDoc(childRef, updates);
+
+    // Mark invite code as used
+    await updateDoc(doc(db, 'inviteCodes', pendingChildData.code), { used: true });
+
+    // Save to localStorage for auto-login
+    localStorage.setItem('childId', pendingChildData.childId);
+    localStorage.setItem('childFamilyId', pendingChildData.familyId);
+    localStorage.setItem('childAnonUid', anonUid);
+
+    hideLoading();
+    showToast('מוכן! 🎉');
+
+    // Navigate to tasks
+    setTimeout(() => {
+      window.location.href = 'tasks.html';
+    }, 800);
+
+  } catch(e) {
+    hideLoading();
+    err.textContent = 'שגיאה, נסה שוב';
+    console.error(e);
+  }
+};
+
+// =========== PARENT INVITE CODE ===========
+document.getElementById('btn-invite-parent').onclick = async () => {
+  showLoading('יוצר קוד...');
+  try {
+    const code = generateCode();
+    await setDoc(doc(db, 'parentInviteCodes', code), {
+      familyId: currentFamilyId,
+      createdAt: Timestamp.now(),
+      used: false
+    });
+    hideLoading();
+    document.getElementById('parent-invite-code-value').textContent = code;
+    showScreen('screen-parent-invite');
+  } catch(e) {
+    hideLoading();
+    showToast('שגיאה ביצירת קוד');
+    console.error(e);
+  }
+};
+
+document.getElementById('btn-share-parent-code').onclick = () => {
+  const code = document.getElementById('parent-invite-code-value').textContent;
+  const url = window.location.origin + window.location.pathname.replace(/[^/]*$/, 'index.html');
+  const text = `🏠 משימות משפחתיות — הזמנה להורה נוסף\n\nשלום! קיבלת הזמנה להצטרף כהורה לניהול משימות המשפחה.\n\n📱 שלב 1: פתח את הקישור במכשיר שלך\n👨‍👩‍👧‍👦 שלב 2: בחר "הורה" והתחבר עם Google או Facebook\n🔢 שלב 3: הזן את הקוד: ${code}\n\n⏰ הקוד תקף ל-24 שעות\n\n🔗 ${url}`;
+  if (navigator.share) {
+    navigator.share({ title: 'הזמנה להצטרפות כהורה', text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('הקוד הועתק! 📋'));
+  }
+};
+
+// =========== RENDER PARENTS LIST IN MANAGE FAMILY ===========
+async function renderParentsList() {
+  const list = document.getElementById('parents-list');
+  if (!currentFamilyId) { list.innerHTML = ''; return; }
+  try {
+    const famDoc = await getDoc(doc(db, 'families', currentFamilyId));
+    if (!famDoc.exists()) return;
+    const fam = famDoc.data();
+    let html = `<div class="card" style="padding:14px 16px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.4rem;">👑</span>
+        <div style="flex:1;">
+          <strong style="font-size:0.92rem;">${fam.parentName || 'הורה ראשי'}</strong>
+          <div style="font-size:0.78rem;color:var(--muted);">${fam.parentEmail || ''}</div>
+        </div>
+        <span style="font-size:0.72rem;background:#DBEAFE;color:#1D4ED8;padding:3px 8px;border-radius:6px;font-weight:600;">ראשי</span>
+      </div>
+    </div>`;
+    if (fam.secondaryParentUid) {
+      html += `<div class="card" style="padding:14px 16px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.4rem;">👫</span>
+          <div style="flex:1;">
+            <strong style="font-size:0.92rem;">${fam.secondaryParentName || 'הורה משני'}</strong>
+            <div style="font-size:0.78rem;color:var(--muted);">${fam.secondaryParentEmail || ''}</div>
+          </div>
+          <span style="font-size:0.72rem;background:#DCFCE7;color:#15803D;padding:3px 8px;border-radius:6px;font-weight:600;">משני</span>
+        </div>
+      </div>`;
+    }
+    list.innerHTML = html;
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// Update renderFamily to also render parents
+const origRenderFamily = window.renderFamily;
+window.renderFamily = function() {
+  origRenderFamily();
+  renderParentsList();
+};
+
+// =========== JOIN FAMILY (secondary parent) ===========
+const parentCodeDigits = document.querySelectorAll('.parent-code-digit');
+parentCodeDigits.forEach((input, idx) => {
+  input.addEventListener('input', (e) => {
+    const val = e.target.value.replace(/\D/g, '');
+    e.target.value = val.slice(0,1);
+    if (val && idx < 5) parentCodeDigits[idx+1].focus();
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+      parentCodeDigits[idx-1].focus();
+    }
+  });
+  input.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const paste = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0,6);
+    paste.split('').forEach((ch, i) => { if (parentCodeDigits[i]) parentCodeDigits[i].value = ch; });
+    if (paste.length > 0) parentCodeDigits[Math.min(paste.length, 5)].focus();
+  });
+});
+
+document.getElementById('btn-join-family').onclick = async () => {
+  const code = Array.from(parentCodeDigits).map(d => d.value).join('');
+  const err = document.getElementById('join-family-error');
+  if (code.length < 6) { err.textContent = 'הכנס 6 ספרות'; return; }
+
+  showLoading('בודק...');
+  try {
+    const codeSnap = await getDoc(doc(db, 'parentInviteCodes', code));
+    if (!codeSnap.exists()) { hideLoading(); err.textContent = 'קוד שגוי'; return; }
+    const codeData = codeSnap.data();
+
+    // Check expiry
+    const created = codeData.createdAt?.toDate ? codeData.createdAt.toDate() : new Date(0);
+    if (Date.now() - created.getTime() > CODE_EXPIRY_MS) {
+      hideLoading(); err.textContent = 'הקוד פג תוקף'; return;
+    }
+    if (codeData.used) { hideLoading(); err.textContent = 'הקוד כבר שומש'; return; }
+
+    const user = auth.currentUser;
+    // Add as secondary parent
+    await updateDoc(doc(db, 'families', codeData.familyId), {
+      secondaryParentUid: user.uid,
+      secondaryParentName: user.displayName || '',
+      secondaryParentEmail: user.email || ''
+    });
+    // Mark code as used
+    await updateDoc(doc(db, 'parentInviteCodes', code), { used: true });
+
+    currentFamilyId = codeData.familyId;
+    hideLoading();
+    showToast('הצטרפת למשפחה! 🎉');
+    renderDashboard(user);
+  } catch(e) {
+    hideLoading();
+    err.textContent = 'שגיאה, נסה שוב';
+    console.error(e);
+  }
+};
+
+document.getElementById('btn-create-new-family').onclick = async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+  showLoading('יוצר משפחה...');
+  try {
+    const famRef = doc(collection(db, 'families'));
+    currentFamilyId = famRef.id;
+    await setDoc(famRef, {
+      parentUid: user.uid,
+      parentName: user.displayName || '',
+      parentEmail: user.email || '',
+      createdAt: serverTimestamp()
+    });
+    hideLoading();
+    showToast('משפחה נוצרה! 🏠');
+    renderDashboard(user);
+  } catch(e) {
+    hideLoading();
+    showToast('שגיאה, נסה שוב');
+    console.error(e);
+  }
+};
+
+document.getElementById('btn-join-back').onclick = async () => {
+  await signOut(auth);
+  currentParentUid = null;
+  currentFamilyId = null;
+  showScreen('screen-who');
+};
+
+// =========== ADD TASK ===========
+const TASK_EMOJIS = ["🪥","🛏️","🚿","🧹","🧼","👕","🗑️","🍽️","🎒","📚","📖","✏️","🧮","🎨","🎵","💪","🌱","🐕","🍳","🚲","🧸","🎯","🎹","⭐"];
+const TASK_SUGGESTIONS = [
+  {name:'צחצוח שיניים בוקר', emoji:'🪥', cat:'🧼 היגיינה', pts:1, freq:'daily'},
+  {name:'צחצוח שיניים ערב', emoji:'🪥', cat:'🧼 היגיינה', pts:1, freq:'daily'},
+  {name:'סידור המיטה', emoji:'🛏️', cat:'🏠 מטלות בית', pts:1, freq:'daily'},
+  {name:'להתקלח', emoji:'🚿', cat:'🧼 היגיינה', pts:2, freq:'daily'},
+  {name:'קריאה 15 דקות', emoji:'📖', cat:'📚 לימודים', pts:3, freq:'daily'},
+  {name:'תרגול חשבון', emoji:'🧮', cat:'📚 לימודים', pts:3, freq:'daily'},
+  {name:'סידור חדר', emoji:'🧹', cat:'🏠 מטלות בית', pts:2, freq:'weekly'},
+  {name:'לקפל כביסה', emoji:'👕', cat:'🏠 מטלות בית', pts:3, freq:'weekly'},
+  {name:'להכין תיק', emoji:'🎒', cat:'🎯 אחריות', pts:2, freq:'daily'},
+  {name:'לערוך שולחן', emoji:'🍽️', cat:'🏠 מטלות בית', pts:1, freq:'daily'},
+  {name:'להוריד זבל', emoji:'🗑️', cat:'🏠 מטלות בית', pts:1, freq:'daily'},
+  {name:'תרגול אנגלית', emoji:'📚', cat:'📚 לימודים', pts:3, freq:'daily'},
+  {name:'יום בלי מסכים', emoji:'⭐', cat:'⭐ מיוחדות', pts:5, freq:'weekly'},
+  {name:'לעזור לבשל', emoji:'🍳', cat:'⭐ מיוחדות', pts:4, freq:'weekly'},
+  {name:'לצייר ציור למישהו', emoji:'🎨', cat:'⭐ מיוחדות', pts:3, freq:'weekly'},
+];
+
+let taskSelectedEmoji = '';
+let taskSelectedStars = 0;
+let taskSelectedFreq = '';
+let taskSelectedDays = [];
+let taskAssignedChildren = [];
+let taskSelectedCat = '';
+const DEFAULT_CATS = ['🧼 היגיינה', '🏠 מטלות בית', '📚 לימודים', '🎯 אחריות', '⭐ מיוחדות'];
+
+// Open add task screen
+document.getElementById('btn-add-tasks').onclick = async () => {
+  // Reset form
+  document.getElementById('task-name-input').value = '';
+  taskSelectedStars = 0;
+  document.querySelectorAll('#task-stars-picker .star-btn').forEach(s => s.classList.remove('filled'));
+  taskSelectedCat = '';
+  document.getElementById('task-new-cat-input') && (document.getElementById('task-new-cat-input').value = '');
+  document.getElementById('new-cat-input-wrap').style.display = 'none';
+  document.getElementById('task-desc-input').value = '';
+  document.getElementById('task-reminder-input').value = '';
+  document.getElementById('add-task-error').textContent = '';
+  document.getElementById('suggestions-wrap').style.display = 'none';
+  document.getElementById('task-days-grid').style.display = 'none';
+  taskSelectedEmoji = '';
+  taskSelectedFreq = '';
+  taskSelectedDays = [];
+  taskAssignedChildren = [];
+
+  // Build category list from defaults + existing tasks
+  await loadChildren();
+  const existingCats = new Set(DEFAULT_CATS);
+  try {
+    const tasksSnap = await getDocs(collection(db, 'families', currentFamilyId, 'tasks'));
+    tasksSnap.forEach(d => { if (d.data().cat) existingCats.add(d.data().cat); });
+  } catch(e) {}
+  renderCatScroll([...existingCats]);
+
+  // Render emoji grid
+  const emojiGrid = document.getElementById('task-emoji-grid');
+  emojiGrid.innerHTML = TASK_EMOJIS.map(e => `<div class="task-emoji-opt" data-emoji="${e}">${e}</div>`).join('');
+  emojiGrid.querySelectorAll('.task-emoji-opt').forEach(el => {
+    el.onclick = () => {
+      emojiGrid.querySelectorAll('.task-emoji-opt').forEach(x => x.classList.remove('selected'));
+      el.classList.add('selected');
+      taskSelectedEmoji = el.dataset.emoji;
+    };
+  });
+
+  // Stars picker
+  document.querySelectorAll('#task-stars-picker .star-btn').forEach(star => {
+    star.onclick = () => {
+      taskSelectedStars = parseInt(star.dataset.val);
+      document.querySelectorAll('#task-stars-picker .star-btn').forEach(s => {
+        s.classList.toggle('filled', parseInt(s.dataset.val) <= taskSelectedStars);
+      });
+    };
+  });
+
+  // Render frequency options
+  document.querySelectorAll('#task-freq-grid .freq-opt').forEach(el => {
+    el.classList.remove('selected');
+    el.onclick = () => {
+      document.querySelectorAll('#task-freq-grid .freq-opt').forEach(x => x.classList.remove('selected'));
+      el.classList.add('selected');
+      taskSelectedFreq = el.dataset.freq;
+      document.getElementById('task-days-grid').style.display = taskSelectedFreq === 'specific' ? 'flex' : 'none';
+    };
+  });
+
+  // Render days
+  document.querySelectorAll('#task-days-grid .day-opt').forEach(el => {
+    el.classList.remove('selected');
+    el.onclick = () => {
+      el.classList.toggle('selected');
+      const day = parseInt(el.dataset.day);
+      if (taskSelectedDays.includes(day)) {
+        taskSelectedDays = taskSelectedDays.filter(d => d !== day);
+      } else {
+        taskSelectedDays.push(day);
+      }
+    };
+  });
+
+  // Load children for assignment
+  await loadChildren();
+  const assignGrid = document.getElementById('task-assign-grid');
+  assignGrid.innerHTML = childrenCache.map(c => {
+    const genderEmoji = c.gender === 'male' ? '👦' : '👧';
+    const hasPhoto = c.photo && c.photo.length > 10;
+    const photoHTML = hasPhoto
+      ? `<img src="${c.photo}" alt="${c.name}">`
+      : `<span>${c.emoji || genderEmoji}</span>`;
+    return `<div class="assign-opt" data-child-id="${c.id}">
+      <div class="assign-photo">${photoHTML}</div>
+      <span class="assign-name">${c.name}</span>
+    </div>`;
+  }).join('');
+
+  assignGrid.querySelectorAll('.assign-opt').forEach(el => {
+    el.onclick = () => {
+      el.classList.toggle('selected');
+      const cid = el.dataset.childId;
+      if (taskAssignedChildren.includes(cid)) {
+        taskAssignedChildren = taskAssignedChildren.filter(id => id !== cid);
+      } else {
+        taskAssignedChildren.push(cid);
+      }
+    };
+  });
+
+  showScreen('screen-add-task');
+  setTimeout(async () => {
+    try {
+      const famDoc = await getDoc(doc(db, 'families', currentFamilyId));
+      const tourDone = famDoc.exists() && famDoc.data().taskTourDone;
+      if (!tourDone) {
+        startTaskTour();
+      } else {
+        document.getElementById('task-name-input').focus();
+      }
+    } catch(e) {
+      document.getElementById('task-name-input').focus();
+    }
+  }, 400);
+};
+
+// Category scroll rendering
+function renderCatScroll(cats) {
+  const scroll = document.getElementById('task-cat-scroll');
+  scroll.innerHTML = cats.map(c => `<span class="cat-chip" data-cat="${c}">${c}</span>`).join('') +
+    '<span class="cat-chip new-cat" id="btn-new-cat">+ חדשה</span>';
+  
+  scroll.querySelectorAll('.cat-chip:not(.new-cat)').forEach(chip => {
+    chip.onclick = () => {
+      scroll.querySelectorAll('.cat-chip').forEach(x => x.classList.remove('selected'));
+      chip.classList.add('selected');
+      taskSelectedCat = chip.dataset.cat;
+      document.getElementById('new-cat-input-wrap').style.display = 'none';
+    };
+  });
+
+  document.getElementById('btn-new-cat').onclick = () => {
+    scroll.querySelectorAll('.cat-chip').forEach(x => x.classList.remove('selected'));
+    document.getElementById('btn-new-cat').classList.add('selected');
+    taskSelectedCat = '';
+    document.getElementById('new-cat-input-wrap').style.display = 'block';
+    document.getElementById('task-new-cat-input').focus();
+  };
+}
+
+function selectCatByName(name) {
+  const scroll = document.getElementById('task-cat-scroll');
+  let selectedChip = null;
+  scroll.querySelectorAll('.cat-chip').forEach(x => {
+    const isMatch = x.dataset.cat === name;
+    x.classList.toggle('selected', isMatch);
+    if (isMatch) selectedChip = x;
+  });
+  taskSelectedCat = name;
+  document.getElementById('new-cat-input-wrap').style.display = 'none';
+  // Scroll selected chip into view
+  if (selectedChip) {
+    selectedChip.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+}
+
+// Suggestions
+document.getElementById('btn-task-suggestions').onclick = () => {
+  const wrap = document.getElementById('suggestions-wrap');
+  if (wrap.style.display === 'none') {
+    wrap.style.display = 'flex';
+    wrap.innerHTML = TASK_SUGGESTIONS.map((s, i) => `<span class="suggestion-chip" data-idx="${i}">${s.emoji} ${s.name}</span>`).join('');
+    wrap.querySelectorAll('.suggestion-chip').forEach(chip => {
+      chip.onclick = () => {
+        const s = TASK_SUGGESTIONS[parseInt(chip.dataset.idx)];
+        document.getElementById('task-name-input').value = s.name;
+        // Set stars
+        taskSelectedStars = s.pts;
+        document.querySelectorAll('#task-stars-picker .star-btn').forEach(st => {
+          st.classList.toggle('filled', parseInt(st.dataset.val) <= taskSelectedStars);
+        });
+        selectCatByName(s.cat);
+        // Select emoji
+        taskSelectedEmoji = s.emoji;
+        document.querySelectorAll('#task-emoji-grid .task-emoji-opt').forEach(el => {
+          el.classList.toggle('selected', el.dataset.emoji === s.emoji);
+        });
+        // Select freq
+        taskSelectedFreq = s.freq;
+        document.querySelectorAll('#task-freq-grid .freq-opt').forEach(el => {
+          el.classList.toggle('selected', el.dataset.freq === s.freq);
+        });
+        wrap.style.display = 'none';
+      };
+    });
+  } else {
+    wrap.style.display = 'none';
+  }
+};
+
+// Save task
+document.getElementById('btn-save-task').onclick = async () => {
+  const name = document.getElementById('task-name-input').value.trim();
+  const pts = taskSelectedStars;
+  const cat = taskSelectedCat || (document.getElementById('task-new-cat-input')?.value?.trim()) || '';
+  const desc = document.getElementById('task-desc-input').value.trim();
+  const reminder = document.getElementById('task-reminder-input').value;
+  const err = document.getElementById('add-task-error');
+
+  if (!name) { err.textContent = 'חובה להכניס שם מטלה'; highlightField(document.getElementById('task-name-input')); return; }
+  if (!cat) { err.textContent = 'חובה לבחור קטגוריה'; highlightField(document.getElementById('task-cat-scroll')); return; }
+  if (taskAssignedChildren.length === 0) { err.textContent = 'חובה לשייך לפחות ילד אחד'; highlightField(document.getElementById('task-assign-grid')); return; }
+  if (!taskSelectedEmoji) { err.textContent = 'חובה לבחור אייקון'; highlightField(document.getElementById('task-emoji-grid')); return; }
+  if (!pts || pts < 1) { err.textContent = 'חובה לבחור כוכבים'; highlightField(document.getElementById('task-stars-picker')); return; }
+  if (!taskSelectedFreq) { err.textContent = 'חובה לבחור תדירות'; highlightField(document.getElementById('task-freq-grid')); return; }
+  err.textContent = '';
+
+  // Map freq
+  let freq = taskSelectedFreq;
+  if (freq === 'specific') freq = 'specific';
+  if (freq === 'once') freq = 'once';
+
+  showLoading('שומר מטלה...');
+  try {
+    const taskRef = doc(collection(db, 'families', currentFamilyId, 'tasks'));
+    await setDoc(taskRef, {
+      task: name,
+      emoji: taskSelectedEmoji,
+      cat: cat,
+      catIcon: taskSelectedEmoji,
+      pts: pts,
+      freq: freq,
+      days: taskSelectedFreq === 'specific' ? taskSelectedDays : [],
+      desc: desc,
+      reminder: reminder || '',
+      hidden: false,
+      assignedChildren: taskAssignedChildren,
+      createdAt: serverTimestamp()
+    });
+    hideLoading();
+    showToast('מטלה נוספה! ✅');
+    showScreen('screen-dashboard');
+  } catch(e) {
+    hideLoading();
+    err.textContent = 'שגיאה בשמירה, נסה שוב';
+    console.error(e);
+  }
+};
+
+// =========== EDIT TASKS ===========
+const FREQ_LABELS = { daily:'📆 כל יום', weekly:'📋 פעם בשבוע', once:'☝️ חד פעמית', specific:'🗓️ ימים ספציפיים', '2week':'🔁 פעמיים בשבוע' };
+let allTasksFlat = []; // {childId, childName, taskId, ...taskData}
+let etFilter = 'all';
+let etSubFilter = '';
+let editingTask = null; // {childId, taskId, data}
+let etSelectedCat = '';
+let etSelectedEmoji = '';
+let etSelectedStars = 0;
+let etSelectedFreq = '';
+let etSelectedDays = [];
+
+// Load all tasks from all children
+async function loadAllTasks() {
+  allTasksFlat = [];
+  await loadChildren();
+  try {
+    const snap = await getDocs(collection(db, 'families', currentFamilyId, 'tasks'));
+    snap.forEach(d => {
+      const data = d.data();
+      const assigned = data.assignedChildren || [];
+      // Create an entry per assigned child for display purposes
+      if (assigned.length === 0) {
+        allTasksFlat.push({ taskId: d.id, childId: '', childName: 'לא משויך', ...data });
+      } else {
+        assigned.forEach(cid => {
+          const child = childrenCache.find(c => c.id === cid);
+          allTasksFlat.push({
+            taskId: d.id,
+            childId: cid,
+            childName: child?.name || 'לא ידוע',
+            ...data
+          });
+        });
+      }
+    });
+  } catch(e) { console.error(e); }
+}
+
+document.getElementById('btn-edit-tasks').onclick = async () => {
+  etFilter = 'all';
+  etSubFilter = '';
+  showScreen('screen-edit-tasks');
+  await loadAllTasks();
+  renderEditTasksFilters();
+  renderEditTasksList();
+};
+
+// Filters
+function renderEditTasksFilters() {
+  document.querySelectorAll('#edit-tasks-filter .filter-chip').forEach(f => {
+    f.classList.toggle('active', f.dataset.filter === etFilter);
+    f.onclick = () => {
+      etFilter = f.dataset.filter;
+      etSubFilter = '';
+      renderEditTasksFilters();
+      renderEditSubFilter();
+      renderEditTasksList();
+    };
+  });
+  renderEditSubFilter();
+}
+
+function renderEditSubFilter() {
+  const sub = document.getElementById('edit-tasks-sub-filter');
+  if (etFilter === 'all') { sub.style.display = 'none'; return; }
+
+  let options = [];
+  if (etFilter === 'child') {
+    const names = [...new Set(allTasksFlat.map(t => t.childName))];
+    options = names.map(n => {
+      const child = childrenCache.find(c => c.name === n);
+      const emoji = child?.emoji || (child?.gender === 'female' ? '👧' : '👦');
+      return { key: n, label: `${emoji} ${n}` };
+    });
+  } else if (etFilter === 'cat') {
+    const cats = [...new Set(allTasksFlat.map(t => t.cat || '📋 ללא קטגוריה'))];
+    options = cats.map(c => ({ key: c, label: c }));
+  } else if (etFilter === 'stars') {
+    options = [1,2,3,4,5].map(n => ({ key: String(n), label: '⭐'.repeat(n) }));
+  } else if (etFilter === 'freq') {
+    const freqs = [...new Set(allTasksFlat.map(t => t.freq))];
+    options = freqs.map(f => ({ key: f, label: FREQ_LABELS[f] || f }));
+  }
+
+  sub.style.display = 'flex';
+  sub.innerHTML = options.map(o => `<span class="sub-chip${etSubFilter===o.key?' active':''}" data-key="${o.key}">${o.label}</span>`).join('');
+  sub.querySelectorAll('.sub-chip').forEach(chip => {
+    chip.onclick = () => {
+      etSubFilter = etSubFilter === chip.dataset.key ? '' : chip.dataset.key;
+      renderEditSubFilter();
+      renderEditTasksList();
+    };
+  });
+}
+
+function renderEditTasksList() {
+  const list = document.getElementById('edit-tasks-list');
+  let tasks = [...allTasksFlat];
+
+  // Apply filter
+  if (etFilter === 'child' && etSubFilter) tasks = tasks.filter(t => t.childName === etSubFilter);
+  if (etFilter === 'cat' && etSubFilter) tasks = tasks.filter(t => (t.cat || 'כללי') === etSubFilter);
+  if (etFilter === 'stars' && etSubFilter) tasks = tasks.filter(t => t.pts === parseInt(etSubFilter));
+  if (etFilter === 'freq' && etSubFilter) tasks = tasks.filter(t => t.freq === etSubFilter);
+
+  // Sort
+  if (etFilter === 'stars') tasks.sort((a,b) => (b.pts||0) - (a.pts||0));
+  if (etFilter === 'cat') tasks.sort((a,b) => (a.cat||'').localeCompare(b.cat||''));
+
+  if (tasks.length === 0) {
+    list.innerHTML = '<div class="empty-state">אין מטלות להצגה</div>';
+    return;
+  }
+
+  list.innerHTML = tasks.map(t => `
+    <div class="etask-wrap" data-child-id="${t.childId}" data-task-id="${t.taskId}" data-hidden="${t.hidden?'1':'0'}">
+      <div class="etask-actions">
+        <div class="etask-action act-delete" data-act="delete"><span>🗑️</span>מחק</div>
+        <div class="etask-action ${t.hidden?'act-show':'act-hide'}" data-act="${t.hidden?'show':'hide'}"><span>${t.hidden?'👁️':'🙈'}</span>${t.hidden?'הצג':'הסתר'}</div>
+      </div>
+      <div class="etask-card${t.hidden?' hidden-task':''}">
+        <span class="etask-emoji">${t.emoji || '📋'}</span>
+        <div class="etask-info">
+          <strong>${t.task}</strong>
+          <div class="etask-meta">
+            <span class="etask-tag cat-tag">${t.cat || ''}</span>
+            <span class="etask-tag freq-tag">${FREQ_LABELS[t.freq] || t.freq}</span>
+            <span class="etask-tag child-tag">${t.childName}</span>
+            ${t.hidden ? '<span class="etask-tag hidden-tag">מוסתר</span>' : ''}
+          </div>
+        </div>
+        <span class="etask-stars">${'⭐'.repeat(Math.min(t.pts||0, 5))}</span>
+      </div>
+    </div>`).join('');
+
+  // Swipe + tap handlers
+  list.querySelectorAll('.etask-wrap').forEach(wrap => {
+    const card = wrap.querySelector('.etask-card');
+    const childId = wrap.dataset.childId;
+    const taskId = wrap.dataset.taskId;
+    let startX = 0, currentX = 0, swiping = false, swiped = false;
+
+    card.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      currentX = 0;
+      swiping = true;
+      swiped = false;
+      card.style.transition = 'none';
+    }, { passive: true });
+
+    card.addEventListener('touchmove', (e) => {
+      if (!swiping) return;
+      const diff = e.touches[0].clientX - startX;
+      // RTL: swipe right reveals actions (positive diff)
+      currentX = Math.max(0, Math.min(diff, 140));
+      card.style.transform = `translateX(${currentX}px)`;
+      if (currentX > 10) swiped = true;
+    }, { passive: true });
+
+    card.addEventListener('touchend', () => {
+      swiping = false;
+      card.style.transition = 'transform 0.2s ease';
+      if (currentX > 60) {
+        card.style.transform = 'translateX(140px)';
+      } else {
+        card.style.transform = 'translateX(0)';
+        swiped = false;
+      }
+    });
+
+    // Tap on card opens edit (only if not swiped)
+    card.addEventListener('click', () => {
+      if (swiped) {
+        card.style.transition = 'transform 0.2s ease';
+        card.style.transform = 'translateX(0)';
+        swiped = false;
+        return;
+      }
+      openEditTask(childId, taskId);
+    });
+
+    // Action buttons
+    wrap.querySelectorAll('.etask-action').forEach(btn => {
+      btn.onclick = async () => {
+        const act = btn.dataset.act;
+        if (act === 'delete') {
+          if (!confirm('למחוק את המטלה?')) return;
+          showLoading('מוחק...');
+          try {
+            await deleteDoc(doc(db, 'families', currentFamilyId, 'tasks', taskId));
+            await loadAllTasks();
+            hideLoading();
+            showToast('נמחק! 🗑️');
+            renderEditTasksList();
+          } catch(e) { hideLoading(); console.error(e); }
+        } else if (act === 'hide') {
+          showLoading('מסתיר...');
+          try {
+            await updateDoc(doc(db, 'families', currentFamilyId, 'tasks', taskId), { hidden: true });
+            await loadAllTasks();
+            hideLoading();
+            showToast('מוסתר! 🙈');
+            renderEditTasksList();
+          } catch(e) { hideLoading(); console.error(e); }
+        } else if (act === 'show') {
+          showLoading('מציג...');
+          try {
+            await updateDoc(doc(db, 'families', currentFamilyId, 'tasks', taskId), { hidden: false });
+            await loadAllTasks();
+            hideLoading();
+            showToast('מוצג! 👁️');
+            renderEditTasksList();
+          } catch(e) { hideLoading(); console.error(e); }
+        }
+      };
+    });
+  });
+
+  // Close open swipes when clicking outside
+  function closeAllSwipes() {
+    list.querySelectorAll('.etask-card').forEach(c => {
+      c.style.transition = 'transform 0.2s ease';
+      c.style.transform = 'translateX(0)';
+    });
+  }
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.etask-wrap')) {
+      closeAllSwipes();
+    }
+  });
+}
+
+// Open single task for editing
+function openEditTask(childId, taskId) {
+  const t = allTasksFlat.find(x => x.childId === childId && x.taskId === taskId);
+  if (!t) return;
+  editingTask = { childId, taskId, data: t };
+  let etAssignedChildren = [childId]; // start with current child selected
+
+  // Fill form
+  document.getElementById('et-name').value = t.task || '';
+  document.getElementById('et-desc').value = t.desc || '';
+  document.getElementById('et-reminder').value = t.reminder || '';
+  document.getElementById('et-error').textContent = '';
+
+  // Assign grid
+  const assignGrid = document.getElementById('et-assign-grid');
+  assignGrid.innerHTML = childrenCache.map(c => {
+    const genderEmoji = c.gender === 'male' ? '👦' : '👧';
+    const hasPhoto = c.photo && c.photo.length > 10;
+    const photoHTML = hasPhoto ? `<img src="${c.photo}" alt="${c.name}">` : `<span>${c.emoji || genderEmoji}</span>`;
+    const isSelected = c.id === childId;
+    return `<div class="assign-opt${isSelected?' selected':''}" data-child-id="${c.id}">
+      <div class="assign-photo">${photoHTML}</div>
+      <span class="assign-name">${c.name}</span>
+    </div>`;
+  }).join('');
+  assignGrid.querySelectorAll('.assign-opt').forEach(el => {
+    el.onclick = () => {
+      el.classList.toggle('selected');
+      const cid = el.dataset.childId;
+      if (etAssignedChildren.includes(cid)) etAssignedChildren = etAssignedChildren.filter(id => id !== cid);
+      else etAssignedChildren.push(cid);
+    };
+  });
+  // Store reference for save
+  editingTask.getAssigned = () => etAssignedChildren;
+
+  // Category
+  etSelectedCat = t.cat || 'כללי';
+  const cats = [...new Set([...DEFAULT_CATS, ...allTasksFlat.map(x => x.cat).filter(Boolean)])];
+  const catScroll = document.getElementById('et-cat-scroll');
+  catScroll.innerHTML = cats.map(c => `<span class="cat-chip${c===etSelectedCat?' selected':''}" data-cat="${c}">${c}</span>`).join('') +
+    '<span class="cat-chip new-cat" id="et-btn-new-cat">+ חדשה</span>';
+  catScroll.querySelectorAll('.cat-chip:not(.new-cat)').forEach(chip => {
+    chip.onclick = () => {
+      catScroll.querySelectorAll('.cat-chip').forEach(x => x.classList.remove('selected'));
+      chip.classList.add('selected');
+      etSelectedCat = chip.dataset.cat;
+      document.getElementById('et-new-cat-wrap').style.display = 'none';
+    };
+  });
+  document.getElementById('et-btn-new-cat').onclick = () => {
+    catScroll.querySelectorAll('.cat-chip').forEach(x => x.classList.remove('selected'));
+    document.getElementById('et-btn-new-cat').classList.add('selected');
+    etSelectedCat = '';
+    document.getElementById('et-new-cat-wrap').style.display = 'block';
+    document.getElementById('et-new-cat').focus();
+  };
+  document.getElementById('et-new-cat-wrap').style.display = 'none';
+
+  // Emoji
+  etSelectedEmoji = t.emoji || '';
+  const emojiGrid = document.getElementById('et-emoji-grid');
+  emojiGrid.innerHTML = TASK_EMOJIS.map(e => `<div class="task-emoji-opt${e===etSelectedEmoji?' selected':''}" data-emoji="${e}">${e}</div>`).join('');
+  emojiGrid.querySelectorAll('.task-emoji-opt').forEach(el => {
+    el.onclick = () => {
+      emojiGrid.querySelectorAll('.task-emoji-opt').forEach(x => x.classList.remove('selected'));
+      el.classList.add('selected');
+      etSelectedEmoji = el.dataset.emoji;
+    };
+  });
+
+  // Stars
+  etSelectedStars = t.pts || 0;
+  document.querySelectorAll('#et-stars-picker .star-btn').forEach(s => {
+    s.classList.toggle('filled', parseInt(s.dataset.val) <= etSelectedStars);
+    s.onclick = () => {
+      etSelectedStars = parseInt(s.dataset.val);
+      document.querySelectorAll('#et-stars-picker .star-btn').forEach(x => x.classList.toggle('filled', parseInt(x.dataset.val) <= etSelectedStars));
+    };
+  });
+
+  // Frequency
+  etSelectedFreq = t.freq || 'daily';
+  etSelectedDays = t.days || [];
+  document.querySelectorAll('#et-freq-grid .freq-opt').forEach(el => {
+    el.classList.toggle('selected', el.dataset.freq === etSelectedFreq);
+    el.onclick = () => {
+      document.querySelectorAll('#et-freq-grid .freq-opt').forEach(x => x.classList.remove('selected'));
+      el.classList.add('selected');
+      etSelectedFreq = el.dataset.freq;
+      document.getElementById('et-days-grid').style.display = etSelectedFreq === 'specific' ? 'flex' : 'none';
+    };
+  });
+  document.getElementById('et-days-grid').style.display = etSelectedFreq === 'specific' ? 'flex' : 'none';
+  document.querySelectorAll('#et-days-grid .day-opt').forEach(el => {
+    el.classList.toggle('selected', etSelectedDays.includes(parseInt(el.dataset.day)));
+    el.onclick = () => {
+      const day = parseInt(el.dataset.day);
+      el.classList.toggle('selected');
+      if (etSelectedDays.includes(day)) etSelectedDays = etSelectedDays.filter(d => d !== day);
+      else etSelectedDays.push(day);
+    };
+  });
+
+  // Hide/show button text
+  document.getElementById('btn-et-hide').textContent = t.hidden ? '👁️ הצג' : '👁️ הסתר';
+
+  showScreen('screen-edit-task');
+}
+
+// Back from edit task
+document.getElementById('btn-back-edit-task').onclick = () => {
+  showScreen('screen-edit-tasks');
+  renderEditTasksList();
+};
+
+// Save edited task
+document.getElementById('btn-et-save').onclick = async () => {
+  if (!editingTask) return;
+  const name = document.getElementById('et-name').value.trim();
+  const err = document.getElementById('et-error');
+  if (!name) { err.textContent = 'חובה להכניס שם'; highlightField(document.getElementById('et-name')); return; }
+  if (!etSelectedCat && !document.getElementById('et-new-cat')?.value?.trim()) { err.textContent = 'חובה לבחור קטגוריה'; highlightField(document.getElementById('et-cat-scroll')); return; }
+  const assigned = editingTask.getAssigned();
+  if (!assigned || assigned.length === 0) { err.textContent = 'חובה לשייך לפחות ילד אחד'; highlightField(document.getElementById('et-assign-grid')); return; }
+  if (!etSelectedEmoji) { err.textContent = 'חובה לבחור אייקון'; highlightField(document.getElementById('et-emoji-grid')); return; }
+  if (!etSelectedStars) { err.textContent = 'חובה לבחור כוכבים'; highlightField(document.getElementById('et-stars-picker')); return; }
+  err.textContent = '';
+
+  const cat = etSelectedCat || document.getElementById('et-new-cat')?.value?.trim() || '';
+  const taskData = {
+    task: name,
+    emoji: etSelectedEmoji,
+    cat,
+    catIcon: etSelectedEmoji,
+    pts: etSelectedStars,
+    freq: etSelectedFreq,
+    days: etSelectedFreq === 'specific' ? etSelectedDays : [],
+    desc: document.getElementById('et-desc').value.trim(),
+    reminder: document.getElementById('et-reminder').value || ''
+  };
+
+  showLoading('שומר...');
+  try {
+    await updateDoc(doc(db, 'families', currentFamilyId, 'tasks', editingTask.taskId), {
+      ...taskData,
+      assignedChildren: assigned
+    });
+
+    await loadAllTasks();
+    hideLoading();
+    showToast('נשמר! ✅');
+    showScreen('screen-edit-tasks');
+    renderEditTasksList();
+  } catch(e) {
+    hideLoading();
+    err.textContent = 'שגיאה בשמירה';
+    console.error(e);
+  }
+};
+
+// Hide/show task
+document.getElementById('btn-et-hide').onclick = async () => {
+  if (!editingTask) return;
+  const isHidden = editingTask.data.hidden;
+  showLoading(isHidden ? 'מציג...' : 'מסתיר...');
+  try {
+    await updateDoc(doc(db, 'families', currentFamilyId, 'tasks', editingTask.taskId), {
+      hidden: !isHidden
+    });
+    await loadAllTasks();
+    hideLoading();
+    showToast(isHidden ? 'המטלה מוצגת! 👁️' : 'המטלה מוסתרת! 🙈');
+    showScreen('screen-edit-tasks');
+    renderEditTasksList();
+  } catch(e) {
+    hideLoading();
+    console.error(e);
+  }
+};
+
+// Delete task
+document.getElementById('btn-et-delete').onclick = async () => {
+  if (!editingTask) return;
+  if (!confirm('למחוק את המטלה? לא ניתן לשחזר')) return;
+  showLoading('מוחק...');
+  try {
+    await deleteDoc(doc(db, 'families', currentFamilyId, 'tasks', editingTask.taskId));
+    await loadAllTasks();
+    hideLoading();
+    showToast('נמחק! 🗑️');
+    showScreen('screen-edit-tasks');
+    renderEditTasksList();
+  } catch(e) {
+    hideLoading();
+    console.error(e);
+  }
+};
+
+// =========== SIDE MENU ===========
+function openSideMenu() {
+  closeSideMenu();
+  const overlay = document.createElement('div');
+  overlay.className = 'side-overlay';
+  overlay.id = 'side-overlay';
+  overlay.onclick = closeSideMenu;
+
+  const menu = document.createElement('div');
+  menu.className = 'side-menu';
+  menu.id = 'side-menu';
+  const parentName = auth.currentUser?.displayName?.split(' ')[0] || 'הורה';
+  menu.innerHTML = `
+    <div class="side-header">
+      <div class="side-settings-icon" id="side-settings-close">⚙️</div>
+      <div class="side-header-text">
+        <h3>תפריט</h3>
+        <p>שלום ${parentName}</p>
+      </div>
+    </div>
+    <div class="side-item" data-action="manage-family">
+      <div class="side-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);">👨‍👩‍👧‍👦</div>
+      <span class="side-item-text">ניהול משפחה</span>
+    </div>
+    <div class="side-item" data-action="add-tasks">
+      <div class="side-icon" style="background:linear-gradient(135deg,#D1FAE5,#A7F3D0);">📋</div>
+      <span class="side-item-text">הוספת מטלות</span>
+    </div>
+    <div class="side-item" data-action="edit-tasks">
+      <div class="side-icon" style="background:linear-gradient(135deg,#E0E7FF,#C7D2FE);">✏️</div>
+      <span class="side-item-text">עריכת מטלות</span>
+    </div>
+    <div class="side-item" data-action="add-prizes">
+      <div class="side-icon" style="background:linear-gradient(135deg,#FCE7F3,#FBCFE8);">🎁</div>
+      <span class="side-item-text">הוספת פרסים</span>
+    </div>
+    <div class="side-item" data-action="manage-prizes">
+      <div class="side-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);">🏆</div>
+      <span class="side-item-text">ניהול פרסים</span>
+    </div>
+    <div class="side-item" data-action="manage-points">
+      <div class="side-icon" style="background:linear-gradient(135deg,#CCFBF1,#99F6E4);">⭐</div>
+      <span class="side-item-text">ניהול ניקוד ומטלות</span>
+    </div>
+    <div class="side-item danger" data-action="logout">
+      <div class="side-icon" style="background:linear-gradient(135deg,#FEE2E2,#FECACA);">🚪</div>
+      <span class="side-item-text">התנתק</span>
+    </div>
+  `;
+
+  menu.querySelectorAll('.side-item').forEach(item => {
+    item.onclick = () => {
+      closeSideMenu();
+      const action = item.dataset.action;
+      if (action === 'manage-family') document.getElementById('btn-manage-family').click();
+      else if (action === 'add-tasks') document.getElementById('btn-add-tasks').click();
+      else if (action === 'edit-tasks') document.getElementById('btn-edit-tasks').click();
+      else if (action === 'add-prizes') document.getElementById('btn-add-prizes').click();
+      else if (action === 'manage-prizes') document.getElementById('btn-manage-prizes').click();
+      else if (action === 'manage-points') document.getElementById('btn-manage-points').click();
+      else if (action === 'logout') document.getElementById('btn-logout').click();
+    };
+  });
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(menu);
+
+  // Settings icon inside menu closes it
+  document.getElementById('side-settings-close').onclick = closeSideMenu;
+
+  // Swipe to close (swipe right in RTL = close)
+  let swStartX = 0, swCurrentX = 0, swSwiping = false;
+  menu.addEventListener('touchstart', (e) => {
+    swStartX = e.touches[0].clientX;
+    swCurrentX = 0;
+    swSwiping = true;
+    menu.style.transition = 'none';
+  }, { passive: true });
+  menu.addEventListener('touchmove', (e) => {
+    if (!swSwiping) return;
+    const diff = e.touches[0].clientX - swStartX;
+    // RTL: menu is on right, swipe right (positive diff) to close
+    swCurrentX = Math.max(0, diff);
+    menu.style.transform = `translateX(${swCurrentX}px)`;
+  }, { passive: true });
+  menu.addEventListener('touchend', () => {
+    swSwiping = false;
+    if (swCurrentX > 80) {
+      menu.style.transition = 'transform 0.2s ease';
+      menu.style.transform = 'translateX(100%)';
+      setTimeout(closeSideMenu, 200);
+    } else {
+      menu.style.transition = 'transform 0.2s ease';
+      menu.style.transform = 'translateX(0)';
+    }
+  });
+
+  // Also swipe on overlay to close
+  overlay.addEventListener('touchstart', (e) => {
+    swStartX = e.touches[0].clientX;
+    swSwiping = true;
+  }, { passive: true });
+  overlay.addEventListener('touchmove', (e) => {
+    if (!swSwiping) return;
+    const diff = e.touches[0].clientX - swStartX;
+    swCurrentX = Math.max(0, diff);
+    menu.style.transition = 'none';
+    menu.style.transform = `translateX(${swCurrentX}px)`;
+  }, { passive: true });
+  overlay.addEventListener('touchend', () => {
+    swSwiping = false;
+    if (swCurrentX > 80) {
+      menu.style.transition = 'transform 0.2s ease';
+      menu.style.transform = 'translateX(100%)';
+      setTimeout(closeSideMenu, 200);
+    } else {
+      menu.style.transition = 'transform 0.2s ease';
+      menu.style.transform = 'translateX(0)';
+    }
+  });
+}
+
+function closeSideMenu() {
+  const overlay = document.getElementById('side-overlay');
+  const menu = document.getElementById('side-menu');
+  if (overlay) overlay.remove();
+  if (menu) menu.remove();
+}
+
+// Toggle: if menu is open, close it; if closed, open it
+document.getElementById('btn-open-menu').onclick = () => {
+  const existing = document.getElementById('side-menu');
+  if (existing) closeSideMenu();
+  else openSideMenu();
+};
+
+// =========== MANAGE POINTS ===========
+let allCompletedTasks = []; // {childId, childName, childEmoji, task, emoji, pts, cat, time, day, ts, histIdx}
+let mpFilter = 'all';
+let mpSubFilter = '';
+
+async function loadCompletedTasks() {
+  allCompletedTasks = [];
+  await loadChildren();
+  let taskMap = {};
+  try {
+    const tasksSnap = await getDocs(collection(db, 'families', currentFamilyId, 'tasks'));
+    tasksSnap.forEach(d => { taskMap[d.data().task] = d.data(); });
+  } catch(e) {}
+  for (const child of childrenCache) {
+    try {
+      const stateSnap = await getDoc(doc(db, 'families', currentFamilyId, 'children', child.id, 'state', 'current'));
+      if (!stateSnap.exists()) continue;
+      const st = stateSnap.data();
+      if (!st.hist || !st.hist.length) continue;
+      st.hist.forEach((h, idx) => {
+        const taskInfo = taskMap[h.task] || {};
+        allCompletedTasks.push({
+          childId: child.id,
+          childName: child.name,
+          childEmoji: child.emoji || (child.gender === 'female' ? '👧' : '👦'),
+          task: h.task,
+          emoji: h.emoji || taskInfo.emoji || '⭐',
+          pts: h.pts || 0,
+          cat: taskInfo.cat || '',
+          time: h.time || '',
+          day: h.day || '',
+          ts: h.ts || 0,
+          histIdx: idx
+        });
+      });
+    } catch(e) { console.error(e); }
+  }
+  allCompletedTasks.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+}
+
+document.getElementById('btn-manage-points').onclick = async () => {
+  mpFilter = 'all';
+  mpSubFilter = '';
+  showScreen('screen-manage-points');
+  await loadCompletedTasks();
+  renderMPFilters();
+  renderMPList();
+};
+
+function renderMPFilters() {
+  document.querySelectorAll('#mp-filter .filter-chip').forEach(f => {
+    f.classList.toggle('active', f.dataset.filter === mpFilter);
+    f.onclick = () => {
+      mpFilter = f.dataset.filter;
+      mpSubFilter = '';
+      renderMPFilters();
+      renderMPSubFilter();
+      renderMPList();
+    };
+  });
+  renderMPSubFilter();
+}
+
+function renderMPSubFilter() {
+  const sub = document.getElementById('mp-sub-filter');
+  if (mpFilter === 'all') { sub.style.display = 'none'; return; }
+
+  let options = [];
+  if (mpFilter === 'child') {
+    const names = [...new Set(allCompletedTasks.map(t => t.childName))];
+    options = names.map(n => {
+      const ct = allCompletedTasks.find(t => t.childName === n);
+      return { key: n, label: `${ct?.childEmoji || '👦'} ${n}` };
+    });
+  } else if (mpFilter === 'cat') {
+    const cats = [...new Set(allCompletedTasks.map(t => t.cat || '📋 ללא'))];
+    options = cats.map(c => ({ key: c, label: c }));
+  } else if (mpFilter === 'stars') {
+    options = [1,2,3,4,5].map(n => ({ key: String(n), label: '⭐'.repeat(n) }));
+  } else if (mpFilter === 'day') {
+    options = [
+      { key: 'ראשון', label: "א'" },
+      { key: 'שני', label: "ב'" },
+      { key: 'שלישי', label: "ג'" },
+      { key: 'רביעי', label: "ד'" },
+      { key: 'חמישי', label: "ה'" },
+      { key: 'שישי', label: "ו'" },
+      { key: 'שבת', label: "ש'" }
+    ];
+  }
+
+  sub.style.display = 'flex';
+  sub.innerHTML = options.map(o => `<span class="sub-chip${mpSubFilter===o.key?' active':''}" data-key="${o.key}">${o.label}</span>`).join('');
+  sub.querySelectorAll('.sub-chip').forEach(chip => {
+    chip.onclick = () => {
+      mpSubFilter = mpSubFilter === chip.dataset.key ? '' : chip.dataset.key;
+      renderMPSubFilter();
+      renderMPList();
+    };
+  });
+}
+
+function renderMPList() {
+  const list = document.getElementById('mp-list');
+  let tasks = [...allCompletedTasks];
+
+  if (mpFilter === 'child' && mpSubFilter) tasks = tasks.filter(t => t.childName === mpSubFilter);
+  if (mpFilter === 'cat' && mpSubFilter) tasks = tasks.filter(t => (t.cat || '📋 ללא') === mpSubFilter);
+  if (mpFilter === 'stars' && mpSubFilter) tasks = tasks.filter(t => t.pts === parseInt(mpSubFilter));
+  if (mpFilter === 'day' && mpSubFilter) tasks = tasks.filter(t => t.day === mpSubFilter);
+
+  if (tasks.length === 0) {
+    list.innerHTML = '<div class="empty-state">אין מטלות שבוצעו השבוע</div>';
+    return;
+  }
+
+  list.innerHTML = tasks.map((t, i) => `
+    <div class="etask-wrap" data-idx="${i}" data-child-id="${t.childId}" data-hist-idx="${t.histIdx}">
+      <div class="etask-actions">
+        <div class="etask-action act-delete" data-act="undo"><span>↩️</span>בטל</div>
+      </div>
+      <div class="etask-card">
+        <span class="etask-emoji">${t.emoji}</span>
+        <div class="etask-info">
+          <strong>${t.task}</strong>
+          <div class="etask-meta">
+            <span class="etask-tag child-tag">${t.childEmoji} ${t.childName}</span>
+            ${t.cat ? `<span class="etask-tag cat-tag">${t.cat}</span>` : ''}
+            <span class="etask-tag freq-tag">${t.day} ${t.time}</span>
+          </div>
+        </div>
+        <span class="etask-stars">${'⭐'.repeat(Math.min(t.pts||0, 5))}</span>
+      </div>
+    </div>`).join('');
+
+  // Swipe + undo handlers
+  list.querySelectorAll('.etask-wrap').forEach(wrap => {
+    const card = wrap.querySelector('.etask-card');
+    const childId = wrap.dataset.childId;
+    const histIdx = parseInt(wrap.dataset.histIdx);
+    let startX = 0, currentX = 0, swiping = false, swiped = false;
+
+    card.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      currentX = 0; swiping = true; swiped = false;
+      card.style.transition = 'none';
+    }, { passive: true });
+    card.addEventListener('touchmove', (e) => {
+      if (!swiping) return;
+      const diff = e.touches[0].clientX - startX;
+      currentX = Math.max(0, Math.min(diff, 70));
+      card.style.transform = `translateX(${currentX}px)`;
+      if (currentX > 10) swiped = true;
+    }, { passive: true });
+    card.addEventListener('touchend', () => {
+      swiping = false;
+      card.style.transition = 'transform 0.2s ease';
+      if (currentX > 40) {
+        card.style.transform = 'translateX(70px)';
+      } else {
+        card.style.transform = 'translateX(0)';
+        swiped = false;
+      }
+    });
+    card.addEventListener('click', () => {
+      if (swiped) {
+        card.style.transition = 'transform 0.2s ease';
+        card.style.transform = 'translateX(0)';
+        swiped = false;
+      }
+    });
+
+    // Undo button
+    wrap.querySelector('[data-act="undo"]').onclick = async () => {
+      if (!confirm('לבטל את ביצוע המטלה? הכוכבים יורדו מהילד')) return;
+      showLoading('מבטל...');
+      try {
+        const stateRef = doc(db, 'families', currentFamilyId, 'children', childId, 'state', 'current');
+        const stateSnap = await getDoc(stateRef);
+        if (stateSnap.exists()) {
+          const st = stateSnap.data();
+          const histItem = st.hist?.[histIdx];
+          if (histItem) {
+            // Remove pts
+            st.pts = Math.max(0, (st.pts || 0) - (histItem.pts || 0));
+            // Remove from history
+            st.hist.splice(histIdx, 1);
+            // Reset completion for the task if needed
+            const tasksSnap = await getDocs(collection(db, 'families', currentFamilyId, 'tasks'));
+            tasksSnap.forEach(d => {
+              const td = d.data();
+              if (td.task === histItem.task && st.comp?.[d.id]) {
+                const c = st.comp[d.id];
+                c.wc = Math.max(0, (c.wc || 0) - 1);
+                if (c.wc === 0) delete st.comp[d.id];
+                else { c.d = ''; c.lastTs = 0; }
+              }
+            });
+            await updateDoc(stateRef, st);
+          }
+        }
+        await loadCompletedTasks();
+        hideLoading();
+        showToast('ביצוע בוטל ↩️');
+        renderMPList();
+      } catch(e) {
+        hideLoading();
+        console.error(e);
+      }
+    };
+  });
+
+  // Close swipes on outside click
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.etask-wrap')) {
+      list.querySelectorAll('.etask-card').forEach(c => {
+        c.style.transition = 'transform 0.2s ease';
+        c.style.transform = 'translateX(0)';
+      });
+    }
+  });
+}
+
+// =========== GUIDED TOUR ===========
+function startTaskTour() {
+  const steps = [
+    { el: '#task-name-input', title: 'שם המטלה', text: 'תן שם למטלה — למשל: צחצוח שיניים, סידור חדר...' },
+    { el: '#btn-task-suggestions', title: 'הצעות מטלות', text: 'לחץ כאן לקבל רעיונות למטלות מוכנות' },
+    { el: '#task-cat-scroll', title: 'קטגוריה', text: 'בחר קטגוריה — היגיינה, לימודים, מטלות בית...' },
+    { el: '#task-assign-grid', title: 'שיוך לילד/ים', text: 'בחר לאיזה ילד/ים המטלה משויכת' },
+    { el: '#task-emoji-grid', title: 'אייקון', text: 'בחר אייקון שיופיע ליד שם המטלה' },
+    { el: '#task-stars-picker', title: 'כוכבים', text: 'כמה כוכבים שווה המטלה? לחץ על הכוכב הרצוי' },
+    { el: '#task-freq-grid', title: 'תדירות', text: 'כל יום, פעם בשבוע, ימים ספציפיים, או חד פעמית' },
+    { el: '#task-reminder-input', title: 'תזכורת', text: 'בחר שעה לתזכורת (לא חובה)' },
+    { el: '#task-desc-input', title: 'תיאור', text: 'הוסף הסבר קצר על המטלה (לא חובה)' },
+  ];
+
+  let currentStep = 0;
+  const PAD = 6;
+
+  // Lock scroll
+  document.body.style.overflow = 'hidden';
+
+  // Create elements
+  const overlay = document.createElement('div');
+  overlay.className = 'tour-overlay';
+  overlay.id = 'tour-overlay';
+  // Prevent touch scrolling on overlay
+  overlay.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+  const shutterTop = document.createElement('div');
+  shutterTop.className = 'tour-shutter-top';
+  shutterTop.style.height = '0px';
+
+  const shutterBottom = document.createElement('div');
+  shutterBottom.className = 'tour-shutter-bottom';
+  shutterBottom.style.height = '0px';
+
+  const card = document.createElement('div');
+  card.className = 'tour-card';
+
+  overlay.appendChild(shutterTop);
+  overlay.appendChild(shutterBottom);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  function getSection(el) {
+    // Try to get the parent .form-section to include label
+    const section = el.closest('.form-section');
+    return section || el;
+  }
+
+  function showStep(idx) {
+    const step = steps[idx];
+    const rawEl = document.querySelector(step.el);
+    if (!rawEl) { endTour(); return; }
+    const el = getSection(rawEl);
+
+    // Hide card during transition
+    card.classList.remove('visible');
+
+    // First open shutters (bright)
+    shutterTop.style.height = '0px';
+    shutterBottom.style.height = '0px';
+
+    // Scroll element into view
+    rawEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    setTimeout(() => {
+      const rect = el.getBoundingClientRect();
+      const slotTop = rect.top - PAD;
+      const slotBottom = rect.bottom + PAD;
+
+      // Close shutters to reveal only the slot
+      shutterTop.style.height = Math.max(0, slotTop) + 'px';
+      shutterBottom.style.height = Math.max(0, window.innerHeight - slotBottom) + 'px';
+
+      // Show card after shutters close
+      setTimeout(() => {
+        const dotsHTML = steps.map((_, i) => `<span class="tour-dot${i === idx ? ' active' : ''}"></span>`).join('');
+
+        card.innerHTML = `
+          <div class="tour-card-btns" style="margin-bottom:10px;">
+            <span style="font-size:0.78rem;color:var(--muted);">${idx + 1} / ${steps.length}</span>
+            <button class="tour-skip-btn" id="tour-skip">דלג ←</button>
+          </div>
+          <h4>${step.title}</h4>
+          <p>${step.text}</p>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;gap:5px;">${dotsHTML}</div>
+            <button class="tour-next-btn" id="tour-next">${idx === steps.length - 1 ? 'סיום ✅' : 'הבא →'}</button>
+          </div>`;
+
+        // Position card below or above the slot
+        const fitsBelow = slotBottom + 180 < window.innerHeight;
+        if (fitsBelow) {
+          card.style.top = (slotBottom + 8) + 'px';
+          card.style.bottom = 'auto';
+        } else {
+          card.style.top = 'auto';
+          card.style.bottom = (window.innerHeight - slotTop + 8) + 'px';
+        }
+
+        card.classList.add('visible');
+
+        document.getElementById('tour-next').onclick = nextStep;
+        document.getElementById('tour-skip').onclick = endTour;
+      }, 550);
+    }, 100);
+  }
+
+  function nextStep() {
+    currentStep++;
+    if (currentStep >= steps.length) {
+      endTour();
+    } else {
+      showStep(currentStep);
+    }
+  }
+
+  function endTour() {
+    card.classList.remove('visible');
+    shutterTop.style.height = '0px';
+    shutterBottom.style.height = '0px';
+    setTimeout(() => {
+      overlay.remove();
+      document.body.style.overflow = '';
+      updateDoc(doc(db, 'families', currentFamilyId), { taskTourDone: true }).catch(() => {});
+      setTimeout(() => document.getElementById('task-name-input').focus(), 200);
+    }, 500);
+  }
+
+  // Block interaction with background
+  overlay.onclick = (e) => { e.stopPropagation(); };
+
+  showStep(0);
+}
+
+</script>
+</body>
+</html>
