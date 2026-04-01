@@ -14,14 +14,14 @@ export const TASK_SUGGESTIONS = [
   {name:'צחצוח שיניים בוקר', emoji:'🪥', cat:'🧼 היגיינה', pts:1, freq:'daily'},
   {name:'צחצוח שיניים ערב', emoji:'🪥', cat:'🧼 היגיינה', pts:1, freq:'daily'},
   {name:'סידור המיטה', emoji:'🛏️', cat:'🏠 מטלות בית', pts:1, freq:'daily'},
-  {name:'להתקלח', emoji:'🚿', cat:'🧼 היגיינה', pts:2, freq:'daily'},
+  {name:'מקלחת', emoji:'🚿', cat:'🧼 היגיינה', pts:2, freq:'daily'},
   {name:'קריאה 15 דקות', emoji:'📖', cat:'📚 לימודים', pts:3, freq:'daily'},
   {name:'תרגול חשבון', emoji:'🧮', cat:'📚 לימודים', pts:3, freq:'daily'},
   {name:'סידור חדר', emoji:'🧹', cat:'🏠 מטלות בית', pts:2, freq:'weekly'},
   {name:'לקפל כביסה', emoji:'👕', cat:'🏠 מטלות בית', pts:3, freq:'weekly'},
   {name:'להכין תיק', emoji:'🎒', cat:'🎯 אחריות', pts:2, freq:'daily'},
   {name:'לערוך שולחן', emoji:'🍽️', cat:'🏠 מטלות בית', pts:1, freq:'daily'},
-  {name:'להוריד זבל', emoji:'🗑️', cat:'🏠 מטלות בית', pts:1, freq:'daily'},
+  {name:'לזרוק זבל', emoji:'🗑️', cat:'🏠 מטלות בית', pts:1, freq:'daily'},
   {name:'תרגול אנגלית', emoji:'📚', cat:'📚 לימודים', pts:3, freq:'daily'},
   {name:'יום בלי מסכים', emoji:'⭐', cat:'⭐ מיוחדות', pts:5, freq:'weekly'},
   {name:'לעזור לבשל', emoji:'🍳', cat:'⭐ מיוחדות', pts:4, freq:'weekly'},
@@ -578,11 +578,11 @@ export function renderAssignGrid(gridId, selectedIds, onChange) {
 
 // =========== QUICK AUTO-CREATE 5 TASKS ===========
 const AUTO_TASKS = [
-  { task:'צחצוח שיניים בוקר', emoji:'🪥', cat:'🧼 היגיינה',  pts:1, freq:'daily' },
-  { task:'סידור המיטה',        emoji:'🛏️', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
-  { task:'להתקלח',             emoji:'🚿', cat:'🧼 היגיינה',  pts:2, freq:'daily' },
-  { task:'קריאה 15 דקות',      emoji:'📖', cat:'📚 לימודים',  pts:3, freq:'daily' },
-  { task:'להכין תיק',          emoji:'🎒', cat:'🎯 אחריות',   pts:2, freq:'daily' },
+  { task:'צחצוח שיניים בוקר', emoji:'🪥', cat:'🧼 היגיינה',   pts:1, freq:'daily' },
+  { task:'צחצוח שיניים ערב',  emoji:'🪥', cat:'🧼 היגיינה',   pts:1, freq:'daily' },
+  { task:'מקלחת',              emoji:'🚿', cat:'🧼 היגיינה',   pts:2, freq:'daily' },
+  { task:'סידור מיטה',         emoji:'🛏️', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
+  { task:'לזרוק זבל',          emoji:'🗑️', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
 ];
 
 export async function createQuickTasks(familyId) {
