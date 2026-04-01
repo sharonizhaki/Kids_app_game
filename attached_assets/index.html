@@ -10,24 +10,113 @@
 <body>
 
 <!-- ==================== SCREEN: WHO ARE YOU ==================== -->
-<div id="screen-who" class="screen">
-  <div class="page-header">
-    <div style="font-size:3.2rem;margin-bottom:8px;">🏠</div>
-    <h1>שלום!</h1>
-    <p>מי אתה?</p>
-  </div>
-  <div class="who-cards">
-    <div class="who-card" data-role="parent" id="btn-who-parent">
-      <span class="wc-emoji">👨‍👩‍👧‍👦</span>
-      <span class="wc-label">הורה</span>
-      <span class="wc-sub">ניהול המשפחה</span>
+<div id="screen-who" class="screen" style="padding:0;background:linear-gradient(170deg,#EEF2FF 0%,#E0E7FF 45%,#C7D2FE 100%);justify-content:flex-start;min-height:100vh;">
+
+  <!-- ── Slides area ── -->
+  <div id="who-slider" dir="ltr" style="flex:1;width:100%;overflow:hidden;position:relative;min-height:0;touch-action:pan-y;">
+    <div id="who-track" style="display:flex;width:300%;height:100%;will-change:transform;transition:transform 0.38s cubic-bezier(0.4,0,0.2,1);">
+
+      <!-- SLIDE 1 – Tasks -->
+      <div dir="rtl" style="width:33.333%;flex-shrink:0;padding:52px 24px 16px;display:flex;flex-direction:column;align-items:center;overflow-y:auto;">
+        <h1 style="font-size:1.85rem;font-weight:900;color:#1E293B;text-align:center;margin-bottom:32px;line-height:1.3;">משימות קטנות,<br>הרגלים גדולים</h1>
+        <div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px;">
+          <div style="background:white;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 16px rgba(99,102,241,0.13);">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">🧸</div>
+            <span style="flex:1;font-weight:700;font-size:0.95rem;color:#1E293B;">לסדר את הצעצועים</span>
+            <span style="font-size:0.85rem;font-weight:800;color:#F59E0B;white-space:nowrap;">2 ⭐</span>
+          </div>
+          <div style="background:white;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 16px rgba(99,102,241,0.13);">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">👕</div>
+            <span style="flex:1;font-weight:700;font-size:0.95rem;color:#1E293B;">לקפל בגדים</span>
+            <span style="font-size:0.85rem;font-weight:800;color:#F59E0B;white-space:nowrap;">1 ⭐</span>
+          </div>
+          <div style="background:#D1FAE5;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 16px rgba(16,185,129,0.18);">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,#A7F3D0,#6EE7B7);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">🧴</div>
+            <span style="flex:1;font-weight:700;font-size:0.95rem;color:#064E3B;">לעשות כביסה</span>
+            <div style="width:30px;height:30px;background:#10B981;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:0.95rem;font-weight:900;flex-shrink:0;">✓</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 2 – Rewards -->
+      <div dir="rtl" style="width:33.333%;flex-shrink:0;padding:52px 24px 16px;display:flex;flex-direction:column;align-items:center;overflow-y:auto;">
+        <h1 style="font-size:1.85rem;font-weight:900;color:#1E293B;text-align:center;margin-bottom:28px;line-height:1.3;">מתגמלים<br>בפרסים 🎁</h1>
+        <div style="width:100%;max-width:340px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <div style="background:white;border-radius:16px;padding:14px 8px;text-align:center;box-shadow:0 3px 14px rgba(99,102,241,0.11);">
+            <div style="font-size:1.9rem;margin-bottom:6px;">🎬</div>
+            <div style="font-size:0.72rem;font-weight:700;color:#1E293B;margin-bottom:4px;">לצפות בסרט</div>
+            <div style="font-size:0.78rem;font-weight:800;color:#F59E0B;">2 ⭐</div>
+          </div>
+          <div style="background:white;border-radius:16px;padding:14px 8px;text-align:center;box-shadow:0 3px 14px rgba(99,102,241,0.11);">
+            <div style="font-size:1.9rem;margin-bottom:6px;">🧸</div>
+            <div style="font-size:0.72rem;font-weight:700;color:#1E293B;margin-bottom:4px;">לקנות צעצוע</div>
+            <div style="font-size:0.78rem;font-weight:800;color:#F59E0B;">10 ⭐</div>
+          </div>
+          <div style="background:white;border-radius:16px;padding:14px 8px;text-align:center;box-shadow:0 3px 14px rgba(99,102,241,0.11);">
+            <div style="font-size:1.9rem;margin-bottom:6px;">🛝</div>
+            <div style="font-size:0.72rem;font-weight:700;color:#1E293B;margin-bottom:4px;">לצאת לפארק</div>
+            <div style="font-size:0.78rem;font-weight:800;color:#F59E0B;">5 ⭐</div>
+          </div>
+        </div>
+        <div style="width:100%;max-width:340px;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+          <div style="background:white;border-radius:16px;padding:14px 8px;text-align:center;box-shadow:0 3px 14px rgba(99,102,241,0.11);">
+            <div style="font-size:1.9rem;margin-bottom:6px;">🍕</div>
+            <div style="font-size:0.72rem;font-weight:700;color:#1E293B;margin-bottom:4px;">ארוחה מיוחדת</div>
+            <div style="font-size:0.78rem;font-weight:800;color:#F59E0B;">2 ⭐</div>
+          </div>
+          <div style="background:white;border-radius:16px;padding:14px 8px;text-align:center;box-shadow:0 3px 14px rgba(99,102,241,0.11);">
+            <div style="font-size:1.9rem;margin-bottom:6px;">💰</div>
+            <div style="font-size:0.72rem;font-weight:700;color:#1E293B;margin-bottom:4px;">כסף</div>
+            <div style="font-size:0.78rem;font-weight:800;color:#F59E0B;">20 ⭐</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 3 – Family tracking -->
+      <div dir="rtl" style="width:33.333%;flex-shrink:0;padding:52px 24px 16px;display:flex;flex-direction:column;align-items:center;overflow-y:auto;">
+        <h1 style="font-size:1.85rem;font-weight:900;color:#1E293B;text-align:center;margin-bottom:24px;line-height:1.3;">מעקב אחרי<br>כל בן משפחה</h1>
+        <!-- Avatars cluster -->
+        <div style="position:relative;width:100px;height:80px;margin-bottom:24px;">
+          <div style="position:absolute;top:0;right:8px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#FEF3C7,#FDE68A);display:flex;align-items:center;justify-content:center;font-size:1.9rem;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.12);">👧</div>
+          <div style="position:absolute;top:0;left:8px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#DBEAFE,#BFDBFE);display:flex;align-items:center;justify-content:center;font-size:1.9rem;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.12);">👦</div>
+          <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#D1FAE5,#A7F3D0);display:flex;align-items:center;justify-content:center;font-size:1.9rem;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.12);">🧒</div>
+        </div>
+        <div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;">
+          <div style="background:white;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 16px rgba(99,102,241,0.13);">
+            <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#FEF3C7,#FDE68A);display:flex;align-items:center;justify-content:center;font-size:1.7rem;flex-shrink:0;">👧</div>
+            <div style="flex:1;">
+              <div style="font-weight:800;font-size:1rem;color:#1E293B;">אמה</div>
+              <div style="font-size:0.78rem;color:#94A3B8;font-weight:600;margin-top:2px;">2 משימות להיום</div>
+            </div>
+            <span style="font-size:0.9rem;font-weight:800;color:#F59E0B;white-space:nowrap;">3 ⭐</span>
+          </div>
+          <div style="background:white;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 16px rgba(99,102,241,0.13);">
+            <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#DBEAFE,#BFDBFE);display:flex;align-items:center;justify-content:center;font-size:1.7rem;flex-shrink:0;">👦</div>
+            <div style="flex:1;">
+              <div style="font-weight:800;font-size:1rem;color:#1E293B;">ריף</div>
+              <div style="font-size:0.78rem;color:#94A3B8;font-weight:600;margin-top:2px;">3 משימות להיום</div>
+            </div>
+            <span style="font-size:0.9rem;font-weight:800;color:#F59E0B;white-space:nowrap;">10 ⭐</span>
+          </div>
+        </div>
+      </div>
+
     </div>
-    <div class="who-card" data-role="child" id="btn-who-child">
-      <span class="wc-emoji">🧒</span>
-      <span class="wc-label">ילד/ה</span>
-      <span class="wc-sub">יש לי קוד!</span>
-    </div>
   </div>
+
+  <!-- ── Dots ── -->
+  <div style="display:flex;gap:8px;justify-content:center;padding:14px 0 10px;">
+    <div id="who-dot-0" style="width:22px;height:8px;border-radius:4px;background:var(--primary);transition:all 0.3s ease;"></div>
+    <div id="who-dot-1" style="width:8px;height:8px;border-radius:4px;background:rgba(99,102,241,0.28);transition:all 0.3s ease;"></div>
+    <div id="who-dot-2" style="width:8px;height:8px;border-radius:4px;background:rgba(99,102,241,0.28);transition:all 0.3s ease;"></div>
+  </div>
+
+  <!-- ── Bottom buttons ── -->
+  <div style="width:100%;padding:16px 20px 40px;background:white;border-radius:28px 28px 0 0;box-shadow:0 -4px 24px rgba(99,102,241,0.13);display:flex;gap:12px;">
+    <button id="btn-who-parent" style="flex:1;padding:17px;border:none;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;font-size:1.05rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(99,102,241,0.35);">הורה</button>
+    <button id="btn-who-child" style="flex:1;padding:17px;border:none;border-radius:16px;background:linear-gradient(135deg,#10B981,#059669);color:white;font-size:1.05rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(16,185,129,0.35);">ילד/ה</button>
+  </div>
+
 </div>
 
 <!-- ==================== SCREEN: PARENT LOGIN ==================== -->
