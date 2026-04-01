@@ -262,7 +262,7 @@ export function renderEditTasksList(familyId) {
   else if (etFilter === 'cat')   tasks.sort((a,b) => (a.cat||'').localeCompare(b.cat||''));
   else if (etFilter === 'child') tasks.sort((a,b) => (a.childName||'').localeCompare(b.childName||''));
   else if (etFilter === 'freq')  tasks.sort((a,b) => (a.freq||'').localeCompare(b.freq||''));
-  else tasks.sort((a,b) => a.taskId.localeCompare(b.taskId)); // creation order (by doc ID)
+  else tasks.sort((a,b) => b.taskId.localeCompare(a.taskId)); // newest first (by doc ID)
 
   if (tasks.length === 0) { list.innerHTML = '<div class="empty-state">אין מטלות להצגה</div>'; return; }
 
