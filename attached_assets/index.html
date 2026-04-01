@@ -121,24 +121,53 @@
 </div>
 
 <!-- ==================== SCREEN: PARENT LOGIN ==================== -->
-<div id="screen-parent-login" class="screen">
-  <div class="screen-header">
-    <button class="back-btn" onclick="showScreen('screen-who')">→</button>
-    <h2>כניסת הורה</h2>
+<div id="screen-parent-login" class="screen" style="padding:0;background:linear-gradient(170deg,#EEF2FF 0%,#E0E7FF 60%,#C7D2FE 100%);justify-content:flex-end;min-height:100vh;position:relative;">
+
+  <!-- Back button -->
+  <button onclick="showScreen('screen-who')" style="position:absolute;top:52px;right:20px;background:white;border:none;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 2px 10px rgba(99,102,241,0.18);cursor:pointer;color:var(--primary);font-weight:900;">→</button>
+
+  <!-- Illustration area -->
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:24px;">
+    <div style="font-size:5.5rem;line-height:1;margin-bottom:16px;filter:drop-shadow(0 8px 20px rgba(99,102,241,0.25));">👨‍👩‍👧‍👦</div>
+    <h2 style="font-size:1.6rem;font-weight:900;color:#1E293B;margin-bottom:6px;">ברוך הבא!</h2>
+    <p style="color:var(--muted);font-size:0.92rem;">התחבר כדי להמשיך</p>
   </div>
-  <div style="text-align:center;margin:40px 0 30px;">
-    <div class="emoji-big">🔐</div>
-    <p style="color:var(--muted);font-size:0.95rem;">התחבר כדי להמשיך</p>
+
+  <!-- Bottom card -->
+  <div style="width:100%;background:white;border-radius:32px 32px 0 0;padding:32px 24px 44px;box-shadow:0 -6px 32px rgba(99,102,241,0.14);">
+
+    <!-- Facebook button -->
+    <button id="btn-facebook-login" style="width:100%;max-width:420px;display:flex;align-items:center;justify-content:center;gap:14px;padding:16px 24px;border:none;border-radius:50px;background:linear-gradient(135deg,#6366F1,#4F46E5);color:white;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 6px 20px rgba(99,102,241,0.4);margin-bottom:14px;position:relative;">
+      <span style="position:absolute;right:18px;width:36px;height:36px;background:rgba(255,255,255,0.18);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+      </span>
+      התחבר עם Facebook
+    </button>
+
+    <!-- Google button -->
+    <button id="btn-google-login" style="width:100%;max-width:420px;display:flex;align-items:center;justify-content:center;gap:14px;padding:16px 24px;border:2px solid #E2E8F0;border-radius:50px;background:white;color:#1E293B;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,0.06);margin-bottom:14px;position:relative;">
+      <span style="position:absolute;right:18px;width:36px;height:36px;background:#F8FAFC;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:20px;height:20px;">
+      </span>
+      התחבר עם Google
+    </button>
+
+    <!-- Email button (placeholder style) -->
+    <button id="btn-email-login" style="width:100%;max-width:420px;display:flex;align-items:center;justify-content:center;gap:14px;padding:16px 24px;border:none;border-radius:50px;background:linear-gradient(135deg,#A5B4FC,#818CF8);color:white;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(129,140,248,0.35);margin-bottom:22px;position:relative;">
+      <span style="position:absolute;right:18px;width:36px;height:36px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">✉️</span>
+      התחבר עם אימייל
+    </button>
+
+    <!-- Error -->
+    <div class="error-msg" id="login-error" style="text-align:center;margin-bottom:10px;"></div>
+
+    <!-- Terms -->
+    <p style="text-align:center;font-size:0.73rem;color:#94A3B8;line-height:1.6;">
+      בהמשך אתה מסכים ל<a href="terms.html" style="color:var(--primary);font-weight:700;text-decoration:none;">תנאי השימוש</a>
+      ו<a href="#" style="color:var(--primary);font-weight:700;text-decoration:none;">מדיניות הפרטיות</a>
+    </p>
+
   </div>
-  <button class="btn btn-google" id="btn-google-login">
-    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-    התחבר עם Google
-  </button>
-  <button class="btn" id="btn-facebook-login" style="background:#1877F2;color:white;box-shadow:0 4px 16px rgba(24,119,242,0.35);">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-    התחבר עם Facebook
-  </button>
-  <div class="error-msg" id="login-error"></div>
 </div>
 
 <!-- ==================== SCREEN: JOIN FAMILY ==================== -->
