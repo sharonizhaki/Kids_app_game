@@ -7,7 +7,7 @@ import { showScreen, showToast, showLoading, hideLoading, highlightField } from 
 import { childrenCache, loadChildren } from './family.js';
 
 // =========== CONSTANTS ===========
-export const TASK_EMOJIS = ["🪥","🛏️","🚿","🧹","🧼","👕","🗑️","🍽️","🎒","📚","📖","✏️","🧮","🎨","🎵","💪","🌱","🐕","🍳","🚲","🧸","🎯","🎹","⭐"];
+export const TASK_EMOJIS = ["🪥","🛏️","🚿","🧹","🧼","👕","🗑️","🍽️","🎒","📚","📖","✏️","🧮","🎨","🎵","💪","🌱","🐕","🍳","🚲","🧸","🎯","🎹","⭐","🏃","🧃","🍎","🦷","🎮","🌙"];
 export const DEFAULT_CATS = ['🧼 היגיינה','🏠 מטלות בית','📚 לימודים','🎯 אחריות','⭐ מיוחדות'];
 export const FREQ_LABELS = { daily:'📆 כל יום', weekly:'📋 פעם בשבוע', once:'☝️ חד פעמית', specific:'🗓️ ימים ספציפיים', '2week':'🔁 פעמיים בשבוע' };
 export const TASK_SUGGESTIONS = [
@@ -496,7 +496,7 @@ function selectCatByName(name, scrollId, newWrapId, onSelect) {
 
 export function renderTaskEmojiGrid(gridId, current, onSelect) {
   const grid = document.getElementById(gridId);
-  const SHOW_INITIAL = 12;
+  const SHOW_INITIAL = 11;
 
   function buildGrid(showAll) {
     const visible = showAll ? TASK_EMOJIS : TASK_EMOJIS.slice(0, SHOW_INITIAL);
