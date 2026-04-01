@@ -560,15 +560,13 @@ export function renderAssignGrid(gridId, selectedIds, onChange) {
 // =========== GUIDED TOUR ===========
 export function startTaskTour(familyId) {
   const steps = [
-    { el: '#task-name-input', title: 'שם המטלה', text: 'תן שם למטלה — למשל: צחצוח שיניים, סידור חדר...' },
-    { el: '#btn-task-suggestions', title: 'הצעות מטלות', text: 'לחץ כאן לקבל רעיונות למטלות מוכנות' },
-    { el: '#task-cat-scroll', title: 'קטגוריה', text: 'בחר קטגוריה — היגיינה, לימודים, מטלות בית...' },
-    { el: '#task-assign-grid', title: 'שיוך לילד/ים', text: 'בחר לאיזה ילד/ים המטלה משויכת' },
-    { el: '#task-emoji-grid', title: 'אייקון', text: 'בחר אייקון שיופיע ליד שם המטלה' },
-    { el: '#task-stars-picker', title: 'כוכבים', text: 'כמה כוכבים שווה המטלה? לחץ על הכוכב הרצוי' },
-    { el: '#task-freq-grid', title: 'תדירות', text: 'כל יום, פעם בשבוע, ימים ספציפיים, או חד פעמית' },
-    { el: '#task-reminder-input', title: 'תזכורת', text: 'בחר שעה לתזכורת (לא חובה)' },
-    { el: '#task-desc-input', title: 'תיאור', text: 'הוסף הסבר קצר על המטלה (לא חובה)' },
+    { el: '#task-name-input',    title: 'שם המטלה',    text: 'הכנס שם למטלה — ולחץ על "לחץ למשימות לדוגמא" לרשימת רעיונות מוכנים' },
+    { el: '#task-cat-scroll',    title: 'קטגוריה',     text: 'בחר קטגוריה — היגיינה, לימודים, מטלות בית...' },
+    { el: '#task-assign-grid',   title: 'שיוך לילד/ים', text: 'כאן מופיעים הילדים שלך — בחר לאיזה ילד/ים המטלה משויכת' },
+    { el: '#task-emoji-grid',    title: 'אייקון',       text: 'בחר אייקון שיופיע ליד שם המטלה — גלול לראות עוד' },
+    { el: '#task-stars-picker',  title: 'כוכבים',      text: 'כמה כוכבים שווה המטלה? לחץ על הכוכב הרצוי' },
+    { el: '#task-freq-grid',     title: 'תדירות',      text: 'כל יום, פעם בשבוע, ימים ספציפיים, או חד פעמית' },
+    { el: '#task-reminder-input', title: 'תזכורת ותיאור', text: 'בחר שעה לתזכורת ומתחת הוסף הסבר קצר על המטלה — שניהם לא חובה' },
   ];
 
   let currentStep = 0;
@@ -607,6 +605,7 @@ export function startTaskTour(familyId) {
     shutterBottom.style.height = '0px';
     rawEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
+    // wait for smooth-scroll to finish before measuring position
     setTimeout(() => {
       const rect = el.getBoundingClientRect();
       shutterTop.style.height = Math.max(0, rect.top - PAD) + 'px';
@@ -617,13 +616,13 @@ export function startTaskTour(familyId) {
         card.innerHTML = `
           <div class="tour-card-btns" style="margin-bottom:10px;">
             <span style="font-size:0.78rem;color:var(--muted);">${idx + 1} / ${steps.length}</span>
-            <button class="tour-skip-btn" id="tour-skip">דלג ←</button>
+            <button class="tour-skip-btn" id="tour-skip">דלג</button>
           </div>
           <h4>${step.title}</h4>
           <p>${step.text}</p>
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <div style="display:flex;gap:5px;">${dotsHTML}</div>
-            <button class="tour-next-btn" id="tour-next">${idx === steps.length - 1 ? 'סיום ✅' : 'הבא →'}</button>
+            <button class="tour-next-btn" id="tour-next">${idx === steps.length - 1 ? 'סיום ✅' : '← הבא'}</button>
           </div>`;
 
         const fitsBelow = rect.bottom + 180 < window.innerHeight;
@@ -637,7 +636,7 @@ export function startTaskTour(familyId) {
         };
         document.getElementById('tour-skip').onclick = endTour;
       }, 550);
-    }, 100);
+    }, 380);
   }
 
   function endTour() {
