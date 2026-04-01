@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>משפחה - ניהול מטלות</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<!-- ==================== SCREEN: WHO ARE YOU ==================== -->
+<div id="screen-who" class="screen">
+  <div class="page-header">
+    <div style="font-size:3.2rem;margin-bottom:8px;">🏠</div>
+    <h1>שלום!</h1>
+    <p>מי אתה?</p>
+  </div>
+  <div class="who-cards">
+    <div class="who-card" data-role="parent" id="btn-who-parent">
+      <span class="wc-emoji">👨‍👩‍👧‍👦</span>
+      <span class="wc-label">הורה</span>
+      <span class="wc-sub">ניהול המשפחה</span>
+    </div>
+    <div class="who-card" data-role="child" id="btn-who-child">
+      <span class="wc-emoji">🧒</span>
+      <span class="wc-label">ילד/ה</span>
+      <span class="wc-sub">יש לי קוד!</span>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: PARENT LOGIN ==================== -->
+<div id="screen-parent-login" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-who')">→</button>
+    <h2>כניסת הורה</h2>
+  </div>
+  <div style="text-align:center;margin:40px 0 30px;">
+    <div class="emoji-big">🔐</div>
+    <p style="color:var(--muted);font-size:0.95rem;">התחבר כדי להמשיך</p>
+  </div>
+  <button class="btn btn-google" id="btn-google-login">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+    התחבר עם Google
+  </button>
+  <button class="btn" id="btn-facebook-login" style="background:#1877F2;color:white;box-shadow:0 4px 16px rgba(24,119,242,0.35);">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+    התחבר עם Facebook
+  </button>
+  <div class="error-msg" id="login-error"></div>
+</div>
+
+<!-- ==================== SCREEN: JOIN FAMILY ==================== -->
+<div id="screen-join-family" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" id="btn-join-back">→</button>
+    <h2>הצטרפות למשפחה 👨‍👩‍👧‍👦</h2>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div class="emoji-big">🏠</div>
+    <p style="font-weight:700;font-size:1.05rem;margin-bottom:4px;">ברוכים הבאים!</p>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:16px;">יש לך קוד הזמנה? הכנס אותו כאן. או צור משפחה חדשה.</p>
+    <div class="code-input-wrap" id="parent-code-input-wrap">
+      <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="0" inputmode="numeric">
+      <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="1" inputmode="numeric">
+      <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="2" inputmode="numeric">
+      <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="3" inputmode="numeric">
+      <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="4" inputmode="numeric">
+      <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="5" inputmode="numeric">
+    </div>
+    <div class="error-msg" id="join-family-error"></div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-success btn-sm" id="btn-join-family">הצטרף למשפחה</button>
+    </div>
+    <div style="margin:20px 0 8px;color:var(--muted);font-size:0.85rem;">— או —</div>
+    <button class="btn btn-primary btn-sm" id="btn-create-new-family">צור משפחה חדשה</button>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: PARENT DASHBOARD ==================== -->
+<div id="screen-dashboard" class="screen">
+  <button class="settings-btn" id="btn-open-menu">⚙️</button>
+  <div class="page-header">
+    <div style="font-size:2rem;margin-bottom:4px;">👋</div>
+    <h1 id="dash-greeting">שלום!</h1>
+    <p id="dash-sub">ניהול המשפחה</p>
+  </div>
+  <div class="dash-grid">
+    <button class="dash-btn manage-family" id="btn-manage-family">
+      <div class="dash-icon">👨‍👩‍👧‍👦</div>
+      <div class="dash-info"><strong>ניהול משפחה</strong><span>עריכת ילדים ופרטים</span></div>
+      <span class="dash-arrow">←</span>
+    </button>
+    <button class="dash-btn add-tasks" id="btn-add-tasks">
+      <div class="dash-icon">📋</div>
+      <div class="dash-info"><strong>הוספת מטלות</strong><span>הגדרת מטלות לילדים</span></div>
+      <span class="dash-arrow">←</span>
+    </button>
+    <button class="dash-btn edit-tasks" id="btn-edit-tasks">
+      <div class="dash-icon">✏️</div>
+      <div class="dash-info"><strong>עריכת מטלות</strong><span>ניהול מטלות קיימות</span></div>
+      <span class="dash-arrow">←</span>
+    </button>
+    <button class="dash-btn add-prizes" id="btn-add-prizes">
+      <div class="dash-icon">🎁</div>
+      <div class="dash-info"><strong>הוספת פרסים</strong><span>בקרוב</span></div>
+      <span class="dash-arrow">←</span>
+    </button>
+    <button class="dash-btn manage-prizes" id="btn-manage-prizes">
+      <div class="dash-icon">🏆</div>
+      <div class="dash-info"><strong>ניהול פרסים</strong><span>בקרוב</span></div>
+      <span class="dash-arrow">←</span>
+    </button>
+    <button class="dash-btn manage-points" id="btn-manage-points">
+      <div class="dash-icon">⭐</div>
+      <div class="dash-info"><strong>ניהול ניקוד ומטלות</strong><span>מטלות שבוצעו</span></div>
+      <span class="dash-arrow">←</span>
+    </button>
+    <button class="dash-btn logout" id="btn-logout">
+      <div class="dash-icon">🚪</div>
+      <div class="dash-info"><strong>התנתק</strong><span>יציאה מהחשבון</span></div>
+      <span class="dash-arrow">←</span>
+    </button>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: MANAGE FAMILY ==================== -->
+<div id="screen-manage-family" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-dashboard')">→</button>
+    <h2>ניהול משפחה 👨‍👩‍👧‍👦</h2>
+  </div>
+  <div class="section-label">ילדים</div>
+  <div class="family-grid" id="family-grid">
+    <div class="empty-state" style="grid-column:1/-1;">עדיין לא נוספו ילדים</div>
+  </div>
+  <button class="btn btn-primary btn-sm" id="btn-create-child" style="max-width:420px;margin-top:12px;">👶 הוספת ילד/ה</button>
+  <div class="section-label" style="margin-top:20px;">הורים</div>
+  <div id="parents-list" style="width:100%;max-width:420px;"></div>
+  <button class="btn btn-outline btn-sm" id="btn-invite-parent" style="max-width:420px;margin-top:12px;">👫 הזמנת הורה נוסף</button>
+</div>
+
+<!-- ==================== SCREEN: CREATE CHILD ==================== -->
+<div id="screen-create-child" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-manage-family')">→</button>
+    <h2>הוספת ילד/ה 👶</h2>
+  </div>
+  <div class="card">
+    <div class="input-group">
+      <label>שם הילד/ה</label>
+      <input type="text" id="child-name-input" placeholder="הכנס שם..." autocomplete="off">
+    </div>
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin-bottom:8px;">מין</label>
+    <div class="gender-picker" id="create-gender-picker">
+      <div class="gender-opt" data-gender="male" id="gender-male">👦</div>
+      <div class="gender-opt" data-gender="female" id="gender-female">👧</div>
+    </div>
+    <div class="error-msg" id="create-child-error"></div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-primary btn-sm" id="btn-do-create-child">צור ילד/ה</button>
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-manage-family')">חזרה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: INVITE CODE ==================== -->
+<div id="screen-invite-code" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="document.getElementById('btn-manage-family').click()">→</button>
+    <h2>קוד הזמנה 🎉</h2>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div class="emoji-big">🔑</div>
+    <p style="font-weight:700;font-size:1.1rem;margin-bottom:16px;">הילד/ה נוצר/ה בהצלחה!</p>
+    <div style="text-align:right;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">1</span>
+        <span style="font-size:0.92rem;font-weight:600;">פתח את האפליקציה במכשיר של הילד/ה</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">2</span>
+        <span style="font-size:0.92rem;font-weight:600;">בחר <strong>"אני ילד/ה"</strong></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">3</span>
+        <span style="font-size:0.92rem;font-weight:600;">הזן את קוד ההזמנה למטה</span>
+      </div>
+    </div>
+    <p style="color:var(--muted);font-size:0.82rem;margin-bottom:12px;">הקוד תקף ל-24 שעות ולבן משפחה אחד</p>
+    <div class="invite-code-display" id="invite-code-value">000000</div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-primary btn-sm" id="btn-share-code">📤 שתף קוד</button>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('btn-manage-family').click()">חזרה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: PARENT INVITE CODE ==================== -->
+<div id="screen-parent-invite" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-manage-family');renderFamily();">→</button>
+    <h2>הזמנת הורה 👫</h2>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div class="emoji-big">👨‍👩‍👧‍👦</div>
+    <p style="font-weight:700;font-size:1.1rem;margin-bottom:16px;">הזמנת הורה נוסף</p>
+    <div style="text-align:right;margin-bottom:18px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">1</span>
+        <span style="font-size:0.92rem;font-weight:600;">פתח את האפליקציה במכשיר של ההורה הנוסף</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">2</span>
+        <span style="font-size:0.92rem;font-weight:600;">בחר <strong>"הורה"</strong> והתחבר עם Google או Facebook</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">3</span>
+        <span style="font-size:0.92rem;font-weight:600;">הזן את קוד ההזמנה למטה</span>
+      </div>
+    </div>
+    <p style="color:var(--muted);font-size:0.82rem;margin-bottom:12px;">הקוד תקף ל-24 שעות</p>
+    <div class="invite-code-display" id="parent-invite-code-value">000000</div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-primary btn-sm" id="btn-share-parent-code">📤 שתף קוד</button>
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-manage-family');renderFamily();">חזרה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: EDIT CHILD ==================== -->
+<div id="screen-edit-child" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-manage-family');renderFamily();">→</button>
+    <h2>עריכת ילד/ה ✏️</h2>
+  </div>
+  <div class="card">
+    <div class="input-group">
+      <label>שם</label>
+      <input type="text" id="edit-child-name" placeholder="שם הילד/ה" autocomplete="off">
+    </div>
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin-bottom:8px;">מין</label>
+    <div class="gender-picker">
+      <div class="gender-opt" data-gender="male" id="edit-gender-male">👦</div>
+      <div class="gender-opt" data-gender="female" id="edit-gender-female">👧</div>
+    </div>
+
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">צבע 🎨</label>
+    <div id="edit-child-color-display" style="width:48px;height:48px;border-radius:50%;margin:0 auto 4px;border:3px solid var(--border);cursor:pointer;" title="לחץ לעריכה"></div>
+
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">אימוג'י</label>
+    <div id="edit-child-emoji-display" style="font-size:2.4rem;text-align:center;min-height:48px;cursor:pointer;" title="לחץ לעריכה"></div>
+
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">תמונה</label>
+    <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
+      <div class="photo-upload" id="edit-photo-upload" style="margin:0;">
+        <div class="ph-placeholder" id="edit-photo-placeholder">
+          <span>📷</span>
+          <small>בחר תמונה</small>
+        </div>
+        <img id="edit-photo-preview" style="display:none;" alt="">
+        <input type="file" accept="image/*" id="edit-photo-input">
+      </div>
+      <button class="btn btn-sm btn-secondary" id="btn-clear-photo" style="width:auto;padding:10px 14px;font-size:0.8rem;">🗑️ נקה</button>
+    </div>
+
+    <div id="edit-child-invite-section" style="display:none;margin-top:16px;padding:16px;background:#F8FAFC;border-radius:14px;">
+      <p style="font-weight:700;font-size:0.95rem;text-align:center;margin-bottom:14px;">⏳ ממתין לכניסה</p>
+      <div style="text-align:right;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span style="background:var(--primary);color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;flex-shrink:0;">1</span>
+          <span style="font-size:0.85rem;font-weight:600;">פתח את האפליקציה במכשיר של הילד/ה</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span style="background:var(--primary);color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;flex-shrink:0;">2</span>
+          <span style="font-size:0.85rem;font-weight:600;">בחר <strong>"אני ילד/ה"</strong></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="background:var(--primary);color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;flex-shrink:0;">3</span>
+          <span style="font-size:0.85rem;font-weight:600;">הזן את הקוד למטה</span>
+        </div>
+      </div>
+      <p style="color:var(--muted);font-size:0.78rem;text-align:center;margin-bottom:10px;">הקוד תקף ל-24 שעות ולבן משפחה אחד</p>
+      <div style="font-size:1.6rem;font-weight:900;letter-spacing:8px;color:var(--primary);direction:ltr;text-align:center;" id="edit-child-invite-code">000000</div>
+      <div style="text-align:center;margin-top:12px;">
+        <button class="btn btn-primary btn-sm" id="btn-share-child-code-edit" style="width:auto;padding:10px 24px;display:inline-flex;">📤 שתף קוד</button>
+      </div>
+    </div>
+
+    <div class="error-msg" id="edit-child-error"></div>
+    <div style="display:flex;gap:8px;margin-top:18px;">
+      <button class="btn btn-primary btn-sm" id="btn-save-child" style="flex:2;">שמור</button>
+      <button class="btn btn-danger btn-sm" id="btn-delete-child" style="flex:1;">מחק</button>
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-manage-family');renderFamily();" style="flex:1;">חזרה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: ADD TASK ==================== -->
+<div id="screen-add-task" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-dashboard')">→</button>
+    <h2>הוספת מטלה 📋</h2>
+  </div>
+  <div class="card">
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">✏️</span> שם המטלה</div>
+      <div class="input-group" style="margin-bottom:6px;">
+        <input type="text" id="task-name-input" placeholder="לדוגמה: צחצוח שיניים" autocomplete="off">
+      </div>
+      <button class="btn btn-sm" id="btn-task-suggestions" style="padding:8px 16px;font-size:0.82rem;background:#FCE7F3;color:#BE185D;border:none;border-radius:20px;width:auto;max-width:none;display:inline-flex;box-shadow:none;">💡 הצעות מטלות</button>
+      <div class="suggestions-wrap" id="suggestions-wrap" style="display:none;"></div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📂</span> קטגוריה</div>
+      <div class="cat-scroll" id="task-cat-scroll"></div>
+      <div id="new-cat-input-wrap" style="display:none;margin-top:8px;">
+        <div class="input-group" style="margin-bottom:0;">
+          <input type="text" id="task-new-cat-input" placeholder="שם קטגוריה חדשה..." autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">👧👦</span> שיוך לילד/ים</div>
+      <div class="assign-grid" id="task-assign-grid"></div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">🎨</span> אייקון</div>
+      <div class="task-emoji-grid" id="task-emoji-grid"></div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">⭐</span> מספר כוכבים</div>
+      <div class="stars-picker" id="task-stars-picker">
+        <span class="star-btn" data-val="1">⭐</span>
+        <span class="star-btn" data-val="2">⭐</span>
+        <span class="star-btn" data-val="3">⭐</span>
+        <span class="star-btn" data-val="4">⭐</span>
+        <span class="star-btn" data-val="5">⭐</span>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📅</span> תדירות</div>
+      <div class="freq-grid" id="task-freq-grid">
+        <div class="freq-opt" data-freq="daily"><span class="fo-icon">📆</span><span class="fo-label">כל יום</span></div>
+        <div class="freq-opt" data-freq="specific"><span class="fo-icon">🗓️</span><span class="fo-label">ימים<br>ספציפיים</span></div>
+        <div class="freq-opt" data-freq="weekly"><span class="fo-icon">📋</span><span class="fo-label">פעם<br>בשבוע</span></div>
+        <div class="freq-opt" data-freq="once"><span class="fo-icon">☝️</span><span class="fo-label">חד פעמית</span></div>
+      </div>
+      <div class="days-grid" id="task-days-grid" style="display:none;">
+        <div class="day-opt" data-day="0">א'</div>
+        <div class="day-opt" data-day="1">ב'</div>
+        <div class="day-opt" data-day="2">ג'</div>
+        <div class="day-opt" data-day="3">ד'</div>
+        <div class="day-opt" data-day="4">ה'</div>
+        <div class="day-opt" data-day="5">ו'</div>
+        <div class="day-opt" data-day="6">ש'</div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">🔔</span> תזכורת</div>
+      <input type="time" class="reminder-input" id="task-reminder-input">
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📝</span> תיאור (לא חובה)</div>
+      <div class="input-group" style="margin-bottom:0;">
+        <input type="text" id="task-desc-input" placeholder="הסבר קצר על המטלה" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="error-msg" id="add-task-error"></div>
+    <button class="btn btn-success" id="btn-save-task" style="margin-top:18px;">שמור מטלה ✅</button>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: EDIT TASKS LIST ==================== -->
+<div id="screen-edit-tasks" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-dashboard')">→</button>
+    <h2>עריכת מטלות ✏️</h2>
+  </div>
+  <div class="filter-scroll" id="edit-tasks-filter">
+    <span class="filter-chip active" data-filter="all">📋 הכל</span>
+    <span class="filter-chip" data-filter="child">👧👦 לפי ילד</span>
+    <span class="filter-chip" data-filter="cat">📂 לפי קטגוריה</span>
+    <span class="filter-chip" data-filter="stars">⭐ לפי כוכבים</span>
+    <span class="filter-chip" data-filter="freq">📅 לפי תדירות</span>
+  </div>
+  <div class="sub-filter-scroll" id="edit-tasks-sub-filter" style="display:none;"></div>
+  <div class="etask-list" id="edit-tasks-list">
+    <div class="empty-state">טוען...</div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: EDIT SINGLE TASK ==================== -->
+<div id="screen-edit-task" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" id="btn-back-edit-task">→</button>
+    <h2>עריכת מטלה ✏️</h2>
+  </div>
+  <div class="card">
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">✏️</span> שם המטלה</div>
+      <div class="input-group" style="margin-bottom:0;">
+        <input type="text" id="et-name" placeholder="שם המטלה" autocomplete="off">
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📂</span> קטגוריה</div>
+      <div class="cat-scroll" id="et-cat-scroll"></div>
+      <div id="et-new-cat-wrap" style="display:none;margin-top:8px;">
+        <div class="input-group" style="margin-bottom:0;">
+          <input type="text" id="et-new-cat" placeholder="קטגוריה חדשה..." autocomplete="off">
+        </div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">👧👦</span> שיוך לילד/ים</div>
+      <div class="assign-grid" id="et-assign-grid"></div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">🎨</span> אייקון</div>
+      <div class="task-emoji-grid" id="et-emoji-grid"></div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">⭐</span> מספר כוכבים</div>
+      <div class="stars-picker" id="et-stars-picker">
+        <span class="star-btn" data-val="1">⭐</span>
+        <span class="star-btn" data-val="2">⭐</span>
+        <span class="star-btn" data-val="3">⭐</span>
+        <span class="star-btn" data-val="4">⭐</span>
+        <span class="star-btn" data-val="5">⭐</span>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📅</span> תדירות</div>
+      <div class="freq-grid" id="et-freq-grid">
+        <div class="freq-opt" data-freq="daily"><span class="fo-icon">📆</span><span class="fo-label">כל יום</span></div>
+        <div class="freq-opt" data-freq="specific"><span class="fo-icon">🗓️</span><span class="fo-label">ימים<br>ספציפיים</span></div>
+        <div class="freq-opt" data-freq="weekly"><span class="fo-icon">📋</span><span class="fo-label">פעם<br>בשבוע</span></div>
+        <div class="freq-opt" data-freq="once"><span class="fo-icon">☝️</span><span class="fo-label">חד פעמית</span></div>
+      </div>
+      <div class="days-grid" id="et-days-grid" style="display:none;">
+        <div class="day-opt" data-day="0">א'</div>
+        <div class="day-opt" data-day="1">ב'</div>
+        <div class="day-opt" data-day="2">ג'</div>
+        <div class="day-opt" data-day="3">ד'</div>
+        <div class="day-opt" data-day="4">ה'</div>
+        <div class="day-opt" data-day="5">ו'</div>
+        <div class="day-opt" data-day="6">ש'</div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">🔔</span> תזכורת</div>
+      <input type="time" class="reminder-input" id="et-reminder">
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📝</span> תיאור</div>
+      <div class="input-group" style="margin-bottom:0;">
+        <input type="text" id="et-desc" placeholder="הסבר קצר" autocomplete="off">
+      </div>
+    </div>
+    <div class="error-msg" id="et-error"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-success btn-sm" id="btn-et-save" style="flex:2;">שמור ✅</button>
+      <button class="btn btn-sm" id="btn-et-hide" style="flex:1;background:#FEF3C7;color:#92400E;border:none;">👁️ הסתר</button>
+    </div>
+    <button class="btn btn-danger btn-sm" id="btn-et-delete" style="margin-top:8px;">🗑️ מחק מטלה</button>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: MANAGE POINTS ==================== -->
+<div id="screen-manage-points" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-dashboard')">→</button>
+    <h2>ניהול ניקוד ⭐</h2>
+  </div>
+  <p style="color:var(--muted);font-size:0.85rem;max-width:420px;width:100%;margin-bottom:10px;">מטלות שבוצעו השבוע. סוויפ לביטול ביצוע.</p>
+  <div class="filter-scroll" id="mp-filter">
+    <span class="filter-chip active" data-filter="all">📋 הכל</span>
+    <span class="filter-chip" data-filter="child">👧👦 לפי ילד</span>
+    <span class="filter-chip" data-filter="cat">📂 לפי קטגוריה</span>
+    <span class="filter-chip" data-filter="stars">⭐ לפי כוכבים</span>
+    <span class="filter-chip" data-filter="day">📅 לפי יום</span>
+  </div>
+  <div class="sub-filter-scroll" id="mp-sub-filter" style="display:none;"></div>
+  <div class="etask-list" id="mp-list">
+    <div class="empty-state">טוען...</div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: CHILD CODE ENTRY ==================== -->
+<div id="screen-child-code" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-who')">→</button>
+    <h2>כניסת ילד/ה 🎮</h2>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div class="emoji-big">🔢</div>
+    <p style="font-weight:700;font-size:1.05rem;margin-bottom:4px;">הכנס קוד הזמנה</p>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:16px;">קיבלת קוד מההורים? הכנס אותו כאן</p>
+    <div class="code-input-wrap" id="code-input-wrap">
+      <input class="code-digit" type="tel" maxlength="1" data-idx="0" inputmode="numeric">
+      <input class="code-digit" type="tel" maxlength="1" data-idx="1" inputmode="numeric">
+      <input class="code-digit" type="tel" maxlength="1" data-idx="2" inputmode="numeric">
+      <input class="code-digit" type="tel" maxlength="1" data-idx="3" inputmode="numeric">
+      <input class="code-digit" type="tel" maxlength="1" data-idx="4" inputmode="numeric">
+      <input class="code-digit" type="tel" maxlength="1" data-idx="5" inputmode="numeric">
+    </div>
+    <div class="error-msg" id="child-code-error"></div>
+    <div class="code-attempts" id="code-attempts"></div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-success btn-sm" id="btn-verify-code">המשך</button>
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-who')">חזרה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: CHILD SETUP ==================== -->
+<div id="screen-child-setup" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="showScreen('screen-child-code')">→</button>
+    <h2 id="child-setup-title">הגדרת פרופיל 🌟</h2>
+  </div>
+  <div class="card">
+    <p style="text-align:center;font-weight:700;font-size:1.1rem;margin-bottom:16px;" id="child-setup-name"></p>
+
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin-bottom:8px;">בחר/י אימוג'י 😊</label>
+    <div class="emoji-grid" id="emoji-picker"></div>
+    <div class="error-msg" id="emoji-error"></div>
+
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">בחר/י צבע 🎨</label>
+    <div class="color-grid" id="color-picker"></div>
+    <div class="error-msg" id="color-error"></div>
+
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">תמונה (לא חובה) 📸</label>
+    <div class="photo-upload" id="child-photo-upload">
+      <div class="ph-placeholder" id="child-photo-placeholder">
+        <span>📷</span>
+        <small>בחר תמונה</small>
+      </div>
+      <img id="child-photo-preview" style="display:none;" alt="">
+      <input type="file" accept="image/*" id="child-photo-input">
+    </div>
+
+    <div class="error-msg" id="setup-error"></div>
+    <div class="btn-row" style="margin-top:18px;">
+      <button class="btn btn-success btn-sm" id="btn-finish-setup">המשך</button>
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-child-code')">חזרה</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SPLASH ==================== -->
+<div id="screen-splash" class="screen active visible" style="justify-content:center;min-height:100vh;">
+  <div style="text-align:center;">
+    <div style="font-size:3.5rem;margin-bottom:16px;">🏠</div>
+    <div class="spinner-lg" style="width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px;"></div>
+    <p style="font-weight:700;color:var(--muted);">טוען...</p>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script type="module" src="./main.js"></script>
+</body>
+</html>
