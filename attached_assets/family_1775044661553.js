@@ -116,7 +116,7 @@ export async function createChild(familyId, name, gender) {
       used: false
     });
     hideLoading();
-    return { success: true, code };
+    return { success: true, code, childId: childRef.id };
   } catch(e) {
     hideLoading();
     console.error(e);

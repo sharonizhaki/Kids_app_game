@@ -167,6 +167,131 @@
   </div>
 </div>
 
+<!-- ==================== ONBOARDING 1 – הכנס שם ילד ==================== -->
+<div id="screen-onboard-1" class="screen" style="padding:0;background:var(--bg);justify-content:flex-start;min-height:100vh;">
+
+  <!-- Top nav -->
+  <div style="width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:52px 24px 0;">
+    <button id="ob1-back" style="background:none;border:none;color:var(--primary);font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;padding:8px 4px;">→ חזור</button>
+    <button id="ob1-next" style="background:none;border:none;color:var(--primary);font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;padding:8px 4px;">הבא ←</button>
+  </div>
+
+  <!-- Header -->
+  <div style="width:100%;max-width:480px;padding:28px 28px 8px;">
+    <div style="font-size:0.75rem;font-weight:700;color:var(--muted);margin-bottom:10px;letter-spacing:0.6px;">שלב 1 מתוך 3</div>
+    <h1 style="font-size:1.9rem;font-weight:900;color:var(--text);margin-bottom:10px;line-height:1.25;">הכנס שם הילד/ה</h1>
+    <p style="color:var(--muted);font-size:0.9rem;line-height:1.55;">הוסף את הילד הראשון שלך. תוכל להוסיף עוד ⚙️ בהגדרות.</p>
+  </div>
+
+  <!-- Content -->
+  <div style="width:100%;max-width:480px;padding:24px 28px;display:flex;flex-direction:column;align-items:center;gap:18px;">
+
+    <!-- Photo circle -->
+    <div style="position:relative;cursor:pointer;" onclick="document.getElementById('ob1-photo-input').click()">
+      <div id="ob1-photo-circle" style="width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);display:flex;align-items:center;justify-content:center;font-size:2.6rem;border:3px dashed var(--primary-light);overflow:hidden;">👶</div>
+      <div style="position:absolute;bottom:2px;right:2px;width:28px;height:28px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:1rem;border:2px solid white;font-weight:900;">+</div>
+    </div>
+    <input type="file" id="ob1-photo-input" accept="image/*" style="display:none;">
+
+    <!-- Name -->
+    <input id="ob1-name" type="text" placeholder="שם הילד/ה" maxlength="20"
+      style="width:100%;padding:16px 18px;border:2px solid var(--primary);border-radius:16px;font-size:1rem;font-family:'Heebo',sans-serif;background:white;color:var(--text);outline:none;text-align:right;box-shadow:0 2px 12px rgba(99,102,241,0.1);">
+    <div id="ob1-error" class="error-msg" style="margin-top:-10px;"></div>
+
+    <!-- Gender -->
+    <div style="width:100%;display:flex;gap:12px;">
+      <button class="ob1-gender" data-gender="male" style="flex:1;padding:14px;border:2px solid var(--border);border-radius:16px;background:white;font-size:0.95rem;font-weight:700;font-family:'Heebo',sans-serif;cursor:pointer;transition:all 0.2s;">👦 בן</button>
+      <button class="ob1-gender" data-gender="female" style="flex:1;padding:14px;border:2px solid var(--border);border-radius:16px;background:white;font-size:0.95rem;font-weight:700;font-family:'Heebo',sans-serif;cursor:pointer;transition:all 0.2s;">👧 בת</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== ONBOARDING 2 – הזמנת הורה ==================== -->
+<div id="screen-onboard-2" class="screen" style="padding:0;background:var(--bg);justify-content:flex-start;min-height:100vh;">
+
+  <!-- Top nav -->
+  <div style="width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:52px 24px 0;">
+    <button id="ob2-back" style="background:none;border:none;color:var(--primary);font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;padding:8px 4px;">→ חזור</button>
+    <button id="ob2-skip" style="background:none;border:none;color:var(--primary);font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;padding:8px 4px;">דלג ←</button>
+  </div>
+
+  <!-- Header -->
+  <div style="width:100%;max-width:480px;padding:28px 28px 8px;">
+    <div style="font-size:0.75rem;font-weight:700;color:var(--muted);margin-bottom:10px;letter-spacing:0.6px;">שלב 2 מתוך 3</div>
+    <h1 style="font-size:1.9rem;font-weight:900;color:var(--text);margin-bottom:10px;line-height:1.25;">הזמן הורה נוסף</h1>
+    <p style="color:var(--muted);font-size:0.9rem;line-height:1.55;">שתף את הקוד כדי שבן/בת זוגך יוכל להצטרף ולנהל משימות יחד.</p>
+  </div>
+
+  <!-- Content -->
+  <div style="width:100%;max-width:480px;padding:8px 28px 24px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+
+    <!-- Code card -->
+    <div style="width:100%;background:white;border-radius:22px;padding:26px 20px;text-align:center;box-shadow:var(--shadow);">
+      <div style="font-size:0.78rem;color:var(--muted);font-weight:600;margin-bottom:12px;">קוד ההזמנה שלך</div>
+      <div id="ob2-code" style="font-size:2.2rem;font-weight:900;color:var(--primary);letter-spacing:8px;">——————</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:10px;">⏰ תקף ל-24 שעות</div>
+    </div>
+
+    <button id="ob2-share" class="btn btn-primary" style="max-width:420px;">📤 שתף הזמנה</button>
+
+  </div>
+</div>
+
+<!-- ==================== ONBOARDING 3 – הרשאות ==================== -->
+<div id="screen-onboard-3" class="screen" style="padding:0;background:var(--bg);justify-content:flex-start;min-height:100vh;">
+
+  <!-- Top nav -->
+  <div style="width:100%;max-width:480px;display:flex;align-items:center;padding:52px 24px 0;">
+    <button id="ob3-back" style="background:none;border:none;color:var(--primary);font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;padding:8px 4px;">→ חזור</button>
+  </div>
+
+  <!-- Header -->
+  <div style="width:100%;max-width:480px;padding:28px 28px 8px;">
+    <div style="font-size:0.75rem;font-weight:700;color:var(--muted);margin-bottom:10px;letter-spacing:0.6px;">שלב 3 מתוך 3</div>
+    <h1 style="font-size:1.9rem;font-weight:900;color:var(--text);margin-bottom:10px;line-height:1.25;">קבל התראות<br>על הילדים שלך</h1>
+    <p style="color:var(--muted);font-size:0.9rem;line-height:1.55;">הישאר מעודכן על ביצוע משימות, השגת כוכבים ועוד — בזמן אמת.</p>
+  </div>
+
+  <!-- Content -->
+  <div style="width:100%;max-width:480px;padding:8px 28px 24px;display:flex;flex-direction:column;align-items:center;gap:20px;">
+
+    <!-- Phone mockup -->
+    <div style="width:100%;max-width:340px;background:linear-gradient(155deg,#EEF2FF,#C7D2FE);border-radius:28px;padding:22px 18px;box-shadow:var(--shadow-lg);">
+      <div style="background:white;border-radius:16px;padding:14px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+        <div style="width:42px;height:42px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;">⭐</div>
+        <div>
+          <div style="font-weight:800;font-size:0.85rem;color:var(--text);">התקדמות היומית</div>
+          <div style="font-size:0.78rem;color:var(--muted);margin-top:2px;">הילד השלים 3 משימות היום!</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px;opacity:0.3;">
+        <div style="height:44px;background:var(--primary);border-radius:12px;"></div>
+        <div style="height:44px;background:var(--primary);border-radius:12px;"></div>
+        <div style="height:44px;background:var(--primary);border-radius:12px;"></div>
+        <div style="height:44px;background:var(--primary);border-radius:12px;"></div>
+        <div style="height:44px;background:var(--primary);border-radius:12px;"></div>
+        <div style="height:44px;background:var(--primary);border-radius:12px;"></div>
+        <div style="height:44px;background:#10B981;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;opacity:2.5;">🏠</div>
+        <div style="height:44px;background:var(--primary);border-radius:12px;"></div>
+      </div>
+    </div>
+
+    <button id="ob3-allow" class="btn btn-primary" style="max-width:420px;">🔔 אפשר התראות</button>
+    <button id="ob3-later" style="background:none;border:none;color:var(--muted);font-size:0.95rem;font-weight:700;font-family:'Heebo',sans-serif;cursor:pointer;padding:6px;">אחר כך</button>
+
+  </div>
+</div>
+
+<!-- ==================== TUTORIAL OVERLAY ==================== -->
+<div id="tutorial-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.72);z-index:3000;align-items:flex-end;justify-content:center;">
+  <div style="background:white;border-radius:32px 32px 0 0;width:100%;max-width:480px;padding:36px 28px 52px;box-shadow:0 -8px 40px rgba(0,0,0,0.15);">
+    <div id="tutorial-content" style="text-align:center;padding-bottom:4px;min-height:150px;"></div>
+    <div id="tutorial-dots" style="display:flex;gap:8px;justify-content:center;margin:20px 0 20px;"></div>
+    <button id="tutorial-next" class="btn btn-primary">הבא</button>
+  </div>
+</div>
+
 <!-- ==================== SCREEN: PARENT DASHBOARD ==================== -->
 <div id="screen-dashboard" class="screen">
   <button class="settings-btn" id="btn-open-menu">⚙️</button>

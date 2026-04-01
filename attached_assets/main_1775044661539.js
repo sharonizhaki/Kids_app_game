@@ -406,7 +406,17 @@ document.getElementById('btn-join-family').onclick = async () => {
 document.getElementById('btn-create-new-family').onclick = async () => {
   const result = await createNewFamily(auth.currentUser);
   if (!result.success) { showToast('שגיאה, נסה שוב'); return; }
-  renderDashboard(auth.currentUser);
+  // Reset onboarding state and go to step 1
+  obGender = '';
+  obChildPhoto = null;
+  document.getElementById('ob1-name').value = '';
+  document.getElementById('ob1-error').textContent = '';
+  document.getElementById('ob1-photo-circle').innerHTML = '👶';
+  document.querySelectorAll('.ob1-gender').forEach(b => {
+    b.style.borderColor = 'var(--border)';
+    b.style.background = 'white';
+  });
+  showScreen('screen-onboard-1');
 };
 
 document.getElementById('btn-join-back').onclick = async () => {
@@ -541,6 +551,133 @@ document.getElementById('btn-finish-setup').onclick = async () => {
     hideLoading();
     err.textContent = 'שגיאה, נסה שוב';
     console.error(e);
+  }
+};
+
+// =========== ONBOARDING ===========
+let obGender = '';
+let obChildPhoto = null;
+
+// Step 1 — gender buttons
+document.querySelectorAll('.ob1-gender').forEach(btn => {
+  btn.onclick = () => {
+    obGender = btn.dataset.gender;
+    document.querySelectorAll('.ob1-gender').forEach(b => {
+      b.style.borderColor = b === btn ? 'var(--primary)' : 'var(--border)';
+      b.style.background  = b === btn ? '#EEF2FF' : 'white';
+    });
+  };
+});
+
+// Step 1 — photo upload
+document.getElementById('ob1-photo-input').onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    obChildPhoto = ev.target.result;
+    document.getElementById('ob1-photo-circle').innerHTML =
+      `<img src="${obChildPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  };
+  reader.readAsDataURL(file);
+};
+
+// Step 1 — back
+document.getElementById('ob1-back').onclick = () => showScreen('screen-join-family');
+
+// Step 1 — next (save child → screen 2)
+document.getElementById('ob1-next').onclick = async () => {
+  const name = document.getElementById('ob1-name').value.trim();
+  const err  = document.getElementById('ob1-error');
+  if (!name)     { err.textContent = 'חובה להזין שם ילד/ה'; return; }
+  if (!obGender) { err.textContent = 'חובה לבחור בן או בת'; return; }
+  err.textContent = '';
+
+  const result = await createChild(currentFamilyId, name, obGender);
+  if (result.error) { err.textContent = result.error; return; }
+
+  if (obChildPhoto && result.childId) {
+    await saveChild(currentFamilyId, result.childId, { photo: obChildPhoto });
+  }
+
+  // Step 2 — generate invite code
+  showScreen('screen-onboard-2');
+  document.getElementById('ob2-code').textContent = '——————';
+  const invResult = await createParentInviteCode(currentFamilyId);
+  if (invResult && invResult.code) {
+    document.getElementById('ob2-code').textContent = invResult.code;
+  }
+};
+
+// Step 2 — back
+document.getElementById('ob2-back').onclick = () => showScreen('screen-onboard-1');
+
+// Step 2 — skip
+document.getElementById('ob2-skip').onclick = () => showScreen('screen-onboard-3');
+
+// Step 2 — share
+document.getElementById('ob2-share').onclick = () => {
+  const code = document.getElementById('ob2-code').textContent.trim();
+  shareParentCode(code);
+};
+
+// Step 3 — back
+document.getElementById('ob3-back').onclick = () => showScreen('screen-onboard-2');
+
+// Step 3 — allow notifications
+document.getElementById('ob3-allow').onclick = async () => {
+  if ('Notification' in window) {
+    try { await Notification.requestPermission(); } catch(e) {}
+  }
+  finishOnboarding();
+};
+
+// Step 3 — later
+document.getElementById('ob3-later').onclick = () => finishOnboarding();
+
+function finishOnboarding() {
+  renderDashboard(auth.currentUser);
+  const uid = auth.currentUser?.uid;
+  if (uid && !localStorage.getItem('tutorialDone_' + uid)) {
+    setTimeout(showTutorial, 700);
+  }
+}
+
+// =========== TUTORIAL ===========
+const TUTORIAL_STEPS = [
+  { emoji: '⭐', title: 'ברוכים הבאים!', text: 'כאן תנהלו את משימות הבית עם הילדים בקלות וכיף.' },
+  { emoji: '⚙️', title: 'הגדרות המשפחה', text: 'לחץ ⚙️ בדשבורד כדי להוסיף ילדים, הורים ולנהל הכל.' },
+  { emoji: '✅', title: 'הוסף משימות', text: 'הגדר משימות לכל ילד — כל ביצוע מרוויח כוכבים!' },
+];
+let tutStep = 0;
+
+function showTutorial() {
+  tutStep = 0;
+  renderTutStep();
+  document.getElementById('tutorial-overlay').style.display = 'flex';
+}
+
+function renderTutStep() {
+  const s = TUTORIAL_STEPS[tutStep];
+  document.getElementById('tutorial-content').innerHTML = `
+    <div style="font-size:3.2rem;margin-bottom:16px;">${s.emoji}</div>
+    <div style="font-size:1.35rem;font-weight:900;color:var(--text);margin-bottom:10px;">${s.title}</div>
+    <div style="font-size:0.92rem;color:var(--muted);line-height:1.6;max-width:300px;margin:0 auto;">${s.text}</div>`;
+  document.getElementById('tutorial-dots').innerHTML = TUTORIAL_STEPS.map((_, i) =>
+    `<div style="width:${i===tutStep?'22px':'8px'};height:8px;border-radius:4px;background:${i===tutStep?'var(--primary)':'rgba(99,102,241,0.25)'};transition:all 0.3s;"></div>`
+  ).join('');
+  document.getElementById('tutorial-next').textContent =
+    tutStep < TUTORIAL_STEPS.length - 1 ? 'הבא' : '🚀 קדימה!';
+}
+
+document.getElementById('tutorial-next').onclick = () => {
+  if (tutStep < TUTORIAL_STEPS.length - 1) {
+    tutStep++;
+    renderTutStep();
+  } else {
+    document.getElementById('tutorial-overlay').style.display = 'none';
+    const uid = auth.currentUser?.uid;
+    if (uid) localStorage.setItem('tutorialDone_' + uid, '1');
   }
 };
 
