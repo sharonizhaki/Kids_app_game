@@ -128,6 +128,9 @@ document.getElementById('btn-open-menu').onclick = () => {
         else if (action === 'manage-prizes') document.getElementById('btn-manage-prizes').click();
         else if (action === 'manage-points') document.getElementById('btn-manage-points').click();
         else if (action === 'logout') document.getElementById('btn-logout').click();
+        else if (action === 'contact') window.open('mailto:support@example.com', '_blank');
+        else if (action === 'terms') window.open('terms.html', '_blank');
+        else if (action === 'delete-account') document.getElementById('btn-delete-account').click();
       }
     });
   }
