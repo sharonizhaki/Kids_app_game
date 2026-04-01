@@ -186,17 +186,17 @@
   <!-- Content -->
   <div style="width:100%;max-width:480px;padding:24px 28px;display:flex;flex-direction:column;align-items:center;gap:18px;">
 
+    <!-- Name -->
+    <input id="ob1-name" type="text" placeholder="שם הילד/ה" maxlength="20"
+      style="width:100%;padding:16px 18px;border:2px solid var(--primary);border-radius:16px;font-size:1rem;font-family:'Heebo',sans-serif;background:white;color:var(--text);outline:none;text-align:right;box-shadow:0 2px 12px rgba(99,102,241,0.1);">
+    <div id="ob1-error" class="error-msg" style="margin-top:-10px;"></div>
+
     <!-- Photo circle -->
     <div style="position:relative;cursor:pointer;" onclick="document.getElementById('ob1-photo-input').click()">
       <div id="ob1-photo-circle" style="width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);display:flex;align-items:center;justify-content:center;font-size:2.6rem;border:3px dashed var(--primary-light);overflow:hidden;">👶</div>
       <div style="position:absolute;bottom:2px;right:2px;width:28px;height:28px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:1rem;border:2px solid white;font-weight:900;">+</div>
     </div>
     <input type="file" id="ob1-photo-input" accept="image/*" style="display:none;">
-
-    <!-- Name -->
-    <input id="ob1-name" type="text" placeholder="שם הילד/ה" maxlength="20"
-      style="width:100%;padding:16px 18px;border:2px solid var(--primary);border-radius:16px;font-size:1rem;font-family:'Heebo',sans-serif;background:white;color:var(--text);outline:none;text-align:right;box-shadow:0 2px 12px rgba(99,102,241,0.1);">
-    <div id="ob1-error" class="error-msg" style="margin-top:-10px;"></div>
 
     <!-- Gender -->
     <div style="width:100%;display:flex;gap:12px;">
@@ -211,8 +211,7 @@
 <div id="screen-onboard-2" class="screen" style="padding:0;background:var(--bg);justify-content:flex-start;min-height:100vh;">
 
   <!-- Top nav -->
-  <div style="width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;padding:52px 24px 0;">
-    <button id="ob2-back" style="background:none;border:none;color:var(--primary);font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;padding:8px 4px;">→ חזור</button>
+  <div style="width:100%;max-width:480px;display:flex;align-items:center;justify-content:flex-start;padding:52px 24px 0;">
     <button id="ob2-skip" style="background:none;border:none;color:var(--primary);font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;padding:8px 4px;">דלג ←</button>
   </div>
 
