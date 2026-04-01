@@ -81,11 +81,10 @@ export function initAuth(onParentReady, onNoFamily) {
 // =========== GOOGLE LOGIN ===========
 export async function loginWithGoogle() {
   const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
   try {
-    showLoading('מתחבר...');
     await signInWithPopup(auth, provider);
   } catch(e) {
-    hideLoading();
     if (['auth/popup-blocked','auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(e.code)) {
       showLoading('מעביר ל-Google...');
       try {
@@ -94,7 +93,7 @@ export async function loginWithGoogle() {
         hideLoading();
         return `שגיאה: ${e2.code || e2.message}`;
       }
-    } else {
+    } else if (e.code !== 'auth/cancelled-popup-request') {
       return `שגיאה: ${e.code || e.message}`;
     }
   }
