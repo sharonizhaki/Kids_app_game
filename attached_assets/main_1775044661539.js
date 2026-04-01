@@ -7,7 +7,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { showScreen, showToast, showLoading, hideLoading, openSideMenu } from './ui.js';
-import { initAuth, loginWithGoogle, loginWithFacebook, logoutParent, createNewFamily, joinFamily, currentFamilyId, setCurrentFamilyId } from './auth.js';
+import { initAuth, loginWithGoogle, loginWithFacebook, logoutParent, createNewFamily, joinFamily, currentFamilyId, setCurrentFamilyId, confirmDeleteAccount, deleteAccount } from './auth.js';
 import {
   childrenCache, loadChildren, renderFamily,
   createChild, saveChild, deleteChild,
@@ -108,6 +108,14 @@ document.getElementById('btn-manage-prizes').onclick = () => showToast('בקרו
 document.getElementById('btn-logout').onclick = () => {
   logoutParent(() => {
     showScreen('screen-who');
+  });
+};
+
+document.getElementById('btn-delete-account').onclick = () => {
+  confirmDeleteAccount(() => {
+    deleteAccount(currentFamilyId, () => {
+      showScreen('screen-who');
+    });
   });
 };
 

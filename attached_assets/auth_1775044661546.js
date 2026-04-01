@@ -5,10 +5,11 @@ import {
   GoogleAuthProvider,
   FacebookAuthProvider,
   onAuthStateChanged,
-  signOut
+  signOut,
+  deleteUser
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  doc, getDoc, getDocs, setDoc, updateDoc,
+  doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
   collection, query, where, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { showScreen, showToast, showLoading, hideLoading } from './ui.js';
@@ -191,4 +192,93 @@ export function generateCode() {
   let code = '';
   for (let i = 0; i < 6; i++) code += Math.floor(Math.random() * 10);
   return code;
+}
+
+// =========== DELETE ACCOUNT ===========
+export function confirmDeleteAccount(onConfirmed) {
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay';
+
+  const sh = document.createElement('div');
+  sh.className = 'modal-sheet';
+  sh.innerHTML = `
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h2>⚠️ מחיקת חשבון</h2>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.95rem;font-weight:600;margin-bottom:8px;">האם אתה בטוח שברצונך למחוק את החשבון?</p>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:20px;">פעולה זו תמחק לצמיתות את חשבונך, את כל הילדים, המטלות וכל נתוני המשפחה. <strong>לא ניתן לשחזר.</strong></p>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-danger btn-sm" id="confirm-delete-btn" style="flex:1;">🗑️ כן, מחק הכל</button>
+        <button class="btn btn-secondary btn-sm" id="cancel-delete-btn" style="flex:1;">ביטול</button>
+      </div>
+    </div>`;
+
+  sh.querySelector('.modal-close').onclick = () => ov.remove();
+  sh.querySelector('#cancel-delete-btn').onclick = () => ov.remove();
+  sh.querySelector('#confirm-delete-btn').onclick = () => {
+    ov.remove();
+    onConfirmed();
+  };
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+
+  ov.appendChild(sh);
+  document.body.appendChild(ov);
+}
+
+export async function deleteAccount(familyId, onDone) {
+  showLoading('מוחק חשבון...');
+  try {
+    if (familyId) {
+      // מחיקת ילדים וקודי ההזמנה שלהם
+      const childrenSnap = await getDocs(collection(db, 'families', familyId, 'children'));
+      for (const childDoc of childrenSnap.docs) {
+        const childData = childDoc.data();
+        if (childData.inviteCode) {
+          try { await deleteDoc(doc(db, 'inviteCodes', childData.inviteCode)); } catch(e) {}
+        }
+        await deleteDoc(childDoc.ref);
+      }
+
+      // מחיקת מטלות
+      const tasksSnap = await getDocs(collection(db, 'families', familyId, 'tasks'));
+      for (const taskDoc of tasksSnap.docs) {
+        await deleteDoc(taskDoc.ref);
+      }
+
+      // מחיקת קודי הזמנה להורים
+      const parentCodesSnap = await getDocs(
+        query(collection(db, 'parentInviteCodes'), where('familyId', '==', familyId))
+      );
+      for (const codeDoc of parentCodesSnap.docs) {
+        await deleteDoc(codeDoc.ref);
+      }
+
+      // מחיקת מסמך המשפחה
+      await deleteDoc(doc(db, 'families', familyId));
+    }
+
+    // מחיקת משתמש מ-Firebase Auth
+    const user = auth.currentUser;
+    if (user) await deleteUser(user);
+
+    hideLoading();
+    currentParentUid = null;
+    currentFamilyId = null;
+    onDone();
+  } catch(e) {
+    hideLoading();
+    if (e.code === 'auth/requires-recent-login') {
+      showToast('יש להתחבר מחדש לפני מחיקת החשבון 🔒');
+      await signOut(auth);
+      currentParentUid = null;
+      currentFamilyId = null;
+      showScreen('screen-who');
+    } else {
+      console.error('deleteAccount error:', e);
+      showToast('שגיאה במחיקה, נסה שוב ⚠️');
+    }
+  }
 }
