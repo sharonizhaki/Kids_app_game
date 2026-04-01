@@ -543,3 +543,61 @@ document.getElementById('btn-finish-setup').onclick = async () => {
     console.error(e);
   }
 };
+
+// =========== WHO SCREEN SLIDER ===========
+(function initWhoSlider() {
+  const slider = document.getElementById('who-slider');
+  const track  = document.getElementById('who-track');
+  const dots   = [0, 1, 2].map(i => document.getElementById('who-dot-' + i));
+  if (!slider || !track) return;
+
+  let current = 0;
+  const total = 3;
+
+  function goTo(idx) {
+    current = Math.max(0, Math.min(idx, total - 1));
+    track.style.transform = `translateX(-${current * (100 / total)}%)`;
+    dots.forEach((d, i) => {
+      if (!d) return;
+      d.style.width      = i === current ? '22px' : '8px';
+      d.style.background = i === current ? 'var(--primary)' : 'rgba(99,102,241,0.28)';
+    });
+  }
+
+  dots.forEach((d, i) => { if (d) d.onclick = () => { clearAuto(); goTo(i); }; });
+
+  let startX = 0, startY = 0, dragging = false;
+
+  slider.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    dragging = true;
+    track.style.transition = 'none';
+    clearAuto();
+  }, { passive: true });
+
+  slider.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (Math.abs(dy) > Math.abs(dx)) return;
+    const base   = -(current * (100 / total));
+    const offset = (dx / slider.offsetWidth) * (100 / total);
+    track.style.transform = `translateX(${base + offset}%)`;
+  }, { passive: true });
+
+  slider.addEventListener('touchend', e => {
+    if (!dragging) return;
+    dragging = false;
+    track.style.transition = 'transform 0.38s cubic-bezier(0.4,0,0.2,1)';
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 48) {
+      goTo(dx < 0 ? current + 1 : current - 1);
+    } else {
+      goTo(current);
+    }
+  });
+
+  let autoTimer = setInterval(() => goTo((current + 1) % total), 3800);
+  function clearAuto() { clearInterval(autoTimer); }
+})();
