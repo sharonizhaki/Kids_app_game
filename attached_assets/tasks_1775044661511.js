@@ -224,90 +224,100 @@ function renderEditSubFilter(subId) {
   });
 }
 
+// =========== SVG ICONS ===========
+const SVG_EDIT  = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+const SVG_EYE   = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const SVG_EYEOFF= `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+const SVG_TRASH = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
+
+function buildMetaTags(t) {
+  const childTag  = `<span class="etask-tag child-tag">${t.childName}</span>`;
+  const catTag    = t.cat ? `<span class="etask-tag cat-tag">${t.cat}</span>` : '';
+  const freqTag   = `<span class="etask-tag freq-tag">${FREQ_LABELS[t.freq] || t.freq || ''}</span>`;
+  const starsTag  = t.pts > 0 ? `<span class="etask-tag stars-tag">${'⭐'.repeat(Math.min(t.pts,5))}</span>` : '';
+  const hiddenTag = t.hidden ? '<span class="etask-tag hidden-tag">מוסתר</span>' : '';
+  const tags = { child: childTag, cat: catTag, freq: freqTag, stars: starsTag };
+  let order;
+  if      (etFilter === 'child') order = ['child','cat','freq','stars'];
+  else if (etFilter === 'cat')   order = ['cat','child','freq','stars'];
+  else if (etFilter === 'stars') order = ['stars','child','cat','freq'];
+  else if (etFilter === 'freq')  order = ['freq','child','cat','stars'];
+  else                           order = ['child','cat','freq','stars'];
+  return order.map(k => tags[k]).filter(Boolean).join('') + hiddenTag;
+}
+
 // =========== RENDER EDIT TASKS LIST ===========
 export function renderEditTasksList(familyId) {
   const list = document.getElementById('edit-tasks-list');
   let tasks = [...allTasksFlat];
 
-  if (etFilter === 'child' && etSubFilter) tasks = tasks.filter(t => t.childName === etSubFilter);
-  if (etFilter === 'cat' && etSubFilter) tasks = tasks.filter(t => (t.cat || 'כללי') === etSubFilter);
-  if (etFilter === 'stars' && etSubFilter) tasks = tasks.filter(t => t.pts === parseInt(etSubFilter));
-  if (etFilter === 'freq' && etSubFilter) tasks = tasks.filter(t => t.freq === etSubFilter);
+  // filter
+  if (etFilter === 'child'  && etSubFilter) tasks = tasks.filter(t => t.childName === etSubFilter);
+  if (etFilter === 'cat'    && etSubFilter) tasks = tasks.filter(t => (t.cat || '') === etSubFilter);
+  if (etFilter === 'stars'  && etSubFilter) tasks = tasks.filter(t => t.pts === parseInt(etSubFilter));
+  if (etFilter === 'freq'   && etSubFilter) tasks = tasks.filter(t => t.freq === etSubFilter);
+
+  // sort
   if (etFilter === 'stars') tasks.sort((a,b) => (b.pts||0) - (a.pts||0));
-  if (etFilter === 'cat') tasks.sort((a,b) => (a.cat||'').localeCompare(b.cat||''));
+  else if (etFilter === 'cat')   tasks.sort((a,b) => (a.cat||'').localeCompare(b.cat||''));
+  else if (etFilter === 'child') tasks.sort((a,b) => (a.childName||'').localeCompare(b.childName||''));
+  else if (etFilter === 'freq')  tasks.sort((a,b) => (a.freq||'').localeCompare(b.freq||''));
+  else tasks.sort((a,b) => a.taskId.localeCompare(b.taskId)); // creation order (by doc ID)
 
   if (tasks.length === 0) { list.innerHTML = '<div class="empty-state">אין מטלות להצגה</div>'; return; }
 
   list.innerHTML = tasks.map(t => `
     <div class="etask-wrap" data-child-id="${t.childId}" data-task-id="${t.taskId}" data-hidden="${t.hidden?'1':'0'}">
-      <div class="etask-actions">
-        <div class="etask-action act-delete" data-act="delete"><span>🗑️</span>מחק</div>
-        <div class="etask-action ${t.hidden?'act-show':'act-hide'}" data-act="${t.hidden?'show':'hide'}"><span>${t.hidden?'👁️':'🙈'}</span>${t.hidden?'הצג':'הסתר'}</div>
-      </div>
       <div class="etask-card${t.hidden?' hidden-task':''}">
         <span class="etask-emoji">${t.emoji || '📋'}</span>
         <div class="etask-info">
           <strong>${t.task}</strong>
-          <div class="etask-meta">
-            <span class="etask-tag cat-tag">${t.cat || ''}</span>
-            <span class="etask-tag freq-tag">${FREQ_LABELS[t.freq] || t.freq}</span>
-            <span class="etask-tag child-tag">${t.childName}</span>
-            ${t.hidden ? '<span class="etask-tag hidden-tag">מוסתר</span>' : ''}
-          </div>
+          <div class="etask-meta">${buildMetaTags(t)}</div>
         </div>
-        <span class="etask-stars">${'⭐'.repeat(Math.min(t.pts||0,5))}</span>
+        <div class="etask-btns">
+          <button class="etask-btn btn-edit" title="ערוך">${SVG_EDIT}</button>
+          <button class="etask-btn ${t.hidden?'btn-vis-show':'btn-vis-hide'}" title="${t.hidden?'הצג':'הסתר'}">${t.hidden?SVG_EYE:SVG_EYEOFF}</button>
+          <button class="etask-btn btn-del" title="מחק">${SVG_TRASH}</button>
+        </div>
       </div>
     </div>`).join('');
 
-  attachSwipeHandlers(list, familyId);
-}
-
-function attachSwipeHandlers(list, familyId) {
+  // attach handlers
   list.querySelectorAll('.etask-wrap').forEach(wrap => {
-    const card = wrap.querySelector('.etask-card');
-    const taskId = wrap.dataset.taskId;
-    let startX = 0, currentX = 0, swiping = false, swiped = false;
+    const taskId  = wrap.dataset.taskId;
+    const childId = wrap.dataset.childId;
 
-    card.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; currentX = 0; swiping = true; swiped = false; card.style.transition = 'none'; }, { passive: true });
-    card.addEventListener('touchmove', (e) => {
-      if (!swiping) return;
-      currentX = Math.max(0, Math.min(e.touches[0].clientX - startX, 140));
-      card.style.transform = `translateX(${currentX}px)`;
-      if (currentX > 10) swiped = true;
-    }, { passive: true });
-    card.addEventListener('touchend', () => {
-      swiping = false;
-      card.style.transition = 'transform 0.2s ease';
-      card.style.transform = currentX > 60 ? 'translateX(140px)' : 'translateX(0)';
-      if (currentX <= 60) swiped = false;
-    });
-    card.addEventListener('click', () => {
-      if (swiped) { card.style.transition = 'transform 0.2s ease'; card.style.transform = 'translateX(0)'; swiped = false; return; }
-      openEditTask(wrap.dataset.childId, taskId, familyId);
+    wrap.querySelector('.btn-edit').onclick = (e) => {
+      e.stopPropagation();
+      openEditTask(childId, taskId, familyId);
+    };
+    wrap.querySelector('.etask-card').onclick = () => openEditTask(childId, taskId, familyId);
+
+    wrap.querySelector('.btn-vis-hide, .btn-vis-show')?.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const isHidden = wrap.dataset.hidden === '1';
+      showLoading(isHidden ? 'מציג...' : 'מסתיר...');
+      try {
+        await updateDoc(doc(db, 'families', familyId, 'tasks', taskId), { hidden: !isHidden });
+        await loadAllTasks(familyId);
+        hideLoading();
+        showToast(isHidden ? '👁️ מוצג' : '🙈 מוסתר');
+        renderEditTasksList(familyId);
+      } catch(e) { hideLoading(); }
     });
 
-    wrap.querySelectorAll('.etask-action').forEach(btn => {
-      btn.onclick = async () => {
-        const act = btn.dataset.act;
-        if (act === 'delete') {
-          if (!confirm('למחוק את המטלה?')) return;
-          showLoading('מוחק...');
-          try { await deleteDoc(doc(db, 'families', familyId, 'tasks', taskId)); await loadAllTasks(familyId); hideLoading(); showToast('נמחק! 🗑️'); renderEditTasksList(familyId); } catch(e) { hideLoading(); }
-        } else if (act === 'hide') {
-          showLoading('מסתיר...');
-          try { await updateDoc(doc(db, 'families', familyId, 'tasks', taskId), { hidden: true }); await loadAllTasks(familyId); hideLoading(); showToast('מוסתר! 🙈'); renderEditTasksList(familyId); } catch(e) { hideLoading(); }
-        } else if (act === 'show') {
-          showLoading('מציג...');
-          try { await updateDoc(doc(db, 'families', familyId, 'tasks', taskId), { hidden: false }); await loadAllTasks(familyId); hideLoading(); showToast('מוצג! 👁️'); renderEditTasksList(familyId); } catch(e) { hideLoading(); }
-        }
-      };
-    });
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.etask-wrap')) {
-      list.querySelectorAll('.etask-card').forEach(c => { c.style.transition = 'transform 0.2s ease'; c.style.transform = 'translateX(0)'; });
-    }
+    wrap.querySelector('.btn-del').onclick = async (e) => {
+      e.stopPropagation();
+      if (!confirm('למחוק את המטלה?')) return;
+      showLoading('מוחק...');
+      try {
+        await deleteDoc(doc(db, 'families', familyId, 'tasks', taskId));
+        await loadAllTasks(familyId);
+        hideLoading();
+        showToast('🗑️ נמחק');
+        renderEditTasksList(familyId);
+      } catch(e) { hideLoading(); }
+    };
   });
 }
 
