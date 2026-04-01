@@ -611,13 +611,13 @@ export async function createQuickTasks(familyId) {
 // =========== GUIDED TOUR ===========
 export function startTaskTour(familyId) {
   const steps = [
-    { el: '#task-name-input',    title: 'שם המטלה',    text: 'הכנס שם למטלה, לחץ "לחץ למשימות לדוגמא" לרעיונות — או "⚡ 5 משימות אוטומטיות" ליצור הכל בבת אחת' },
-    { el: '#task-cat-scroll',    title: 'קטגוריה',     text: 'בחר קטגוריה — היגיינה, לימודים, מטלות בית...' },
-    { el: '#task-assign-grid',   title: 'שיוך לילד/ים', text: 'כאן מופיעים הילדים שלך — בחר לאיזה ילד/ים המטלה משויכת' },
-    { el: '#task-emoji-grid',    title: 'אייקון',       text: 'בחר אייקון שיופיע ליד שם המטלה' },
-    { el: '#task-stars-picker',  title: 'כוכבים',      text: 'כמה כוכבים שווה המטלה? לחץ על הכוכב הרצוי' },
-    { el: '#task-freq-grid',     title: 'תדירות',      text: 'כל יום, פעם בשבוע, ימים ספציפיים, או חד פעמית' },
-    { el: '#task-reminder-input', title: 'תזכורת ותיאור', text: 'בחר שעה לתזכורת ומתחת הוסף הסבר קצר על המטלה — שניהם לא חובה' },
+    { el: '#task-name-input',         title: 'שם המטלה',      text: 'הכנס שם למטלה, לחץ "💡 משימות לדוגמא" לרעיונות מוכנים' },
+    { el: '#task-cat-scroll',         title: 'קטגוריה',       text: 'בחר קטגוריה — היגיינה, לימודים, מטלות בית... או צור קטגוריה חדשה' },
+    { el: '#task-assign-grid',        title: 'שיוך לילד/ים',  text: 'כאן מופיעים הילדים שלך — בחר לאיזה ילד/ים המטלה משויכת' },
+    { el: '#task-emoji-grid',         title: 'אייקון',         text: 'בחר אייקון שיופיע ליד שם המטלה' },
+    { el: '#task-stars-picker',       title: 'כוכבים',        text: 'כמה כוכבים שווה המטלה? לחץ על הכוכב הרצוי' },
+    { el: '#task-freq-grid',          title: 'תדירות',        text: 'מתי יוכל הילד לבצע את המשימה — כל יום, פעם בשבוע, ימים ספציפיים, או חד פעמית' },
+    { el: '#task-reminder-desc-wrap', title: 'תזכורת ותיאור', text: 'בחר שעה לתזכורת ומתחת הוסף הסבר קצר על המטלה — שניהם לא חובה' },
   ];
 
   let currentStep = 0;
@@ -673,7 +673,7 @@ export function startTaskTour(familyId) {
           <p>${step.text}</p>
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <div style="display:flex;gap:5px;">${dotsHTML}</div>
-            <button class="tour-next-btn" id="tour-next">${idx === steps.length - 1 ? 'סיום ✅' : '← הבא'}</button>
+            <button class="tour-next-btn" id="tour-next">${idx === steps.length - 1 ? 'סיום ✅' : 'הבא ←'}</button>
           </div>`;
 
         const fitsBelow = rect.bottom + 180 < window.innerHeight;

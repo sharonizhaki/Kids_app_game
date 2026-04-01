@@ -45,19 +45,19 @@ async function refreshQuickTasksBanner(familyId) {
   } catch(e) { banner.style.display = 'none'; }
 }
 
-async function handleQuickTasks(fromDash) {
+async function handleQuickTasks() {
   const fid = getFamilyId();
   if (!fid) return;
-  const btn = document.getElementById(fromDash ? 'btn-quick-tasks-dash' : 'btn-quick-tasks-form');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ יוצר משימות...'; }
+  const inner = document.getElementById('quick-tasks-inner');
+  if (inner) { inner.style.opacity = '0.5'; inner.style.pointerEvents = 'none'; }
   try {
     const ok = await createQuickTasks(fid);
     if (ok) {
-      showToast('✅ 5 משימות נוצרו בהצלחה!');
       document.getElementById('quick-tasks-banner').style.display = 'none';
+      document.getElementById('btn-edit-tasks').click();
     }
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = fromDash ? '✨ צור 5 משימות בסיסיות' : '⚡ 5 משימות אוטומטיות'; }
+    if (inner) { inner.style.opacity = ''; inner.style.pointerEvents = ''; }
   }
 }
 
@@ -132,8 +132,7 @@ document.getElementById('modal-no-child-create').onclick = () => {
   showScreen('screen-manage-family');
 };
 
-document.getElementById('btn-quick-tasks-dash').onclick = () => handleQuickTasks(true);
-document.getElementById('btn-quick-tasks-form').onclick = () => handleQuickTasks(false);
+document.getElementById('quick-tasks-inner').onclick = () => handleQuickTasks();
 
 document.getElementById('btn-edit-tasks').onclick = async () => {
   showScreen('screen-edit-tasks');
@@ -761,7 +760,7 @@ document.getElementById('tutorial-next').onclick = () => {
     });
   }
 
-  dots.forEach((d, i) => { if (d) d.onclick = () => { clearAuto(); goTo(i); startAuto(5000); }; });
+  dots.forEach((d, i) => { if (d) d.onclick = () => { clearAuto(); goTo(i); startAuto(3000); }; });
 
   let startX = 0, startY = 0, dragging = false;
   let autoTimeout, autoInterval;
@@ -803,7 +802,7 @@ document.getElementById('tutorial-next').onclick = () => {
     } else {
       goTo(current);
     }
-    startAuto(5000); // resume after 5s pause
+    startAuto(3000); // resume after 3s pause
   });
 
   startAuto();
