@@ -14,7 +14,7 @@ import {
   createParentInviteCode, verifyChildCode,
   showChildInviteModal, shareCode, shareParentCode,
   CHILD_EMOJIS, CHILD_COLORS,
-  renderDashboardChildren
+  renderDashboardChildren, renderDashTaskRows
 } from './family.js';
 import {
   openAddTask, saveTask, loadAllTasks,
@@ -32,6 +32,7 @@ window.showScreen = (id) => {
   if (id === 'screen-dashboard' && currentFamilyId) {
     renderDashboardChildren(currentFamilyId);
     refreshQuickTasksBanner(currentFamilyId);
+    renderDashTaskRows(currentFamilyId);
   }
 };
 
@@ -90,6 +91,11 @@ function renderDashboard(user) {
   showScreen('screen-dashboard');
   renderDashboardChildren(currentFamilyId);
   refreshQuickTasksBanner(currentFamilyId);
+  renderDashTaskRows(currentFamilyId);
+  const uid = user?.uid;
+  if (uid && !localStorage.getItem('dashTourDone_' + uid)) {
+    setTimeout(() => startDashTour(currentFamilyId, uid), 1000);
+  }
 }
 
 // =========== WHO ARE YOU ===========
@@ -701,49 +707,132 @@ document.getElementById('ob3-later').onclick = () => finishOnboarding();
 
 function finishOnboarding() {
   renderDashboard(auth.currentUser);
-  const uid = auth.currentUser?.uid;
-  if (uid && !localStorage.getItem('tutorialDone_' + uid)) {
-    setTimeout(showTutorial, 700);
+}
+
+// =========== DASH TOUR (spotlight-based, one-time) ===========
+document.getElementById('tutorial-next').onclick = () => {}; // legacy no-op
+
+async function startDashTour(familyId, uid) {
+  const DONE_KEY = 'dashTourDone_' + uid;
+  if (localStorage.getItem(DONE_KEY)) return;
+
+  // Wait for child cards to render
+  await new Promise(r => setTimeout(r, 600));
+  const childCards = Array.from(document.querySelectorAll('#dash-children-grid > div'));
+  const settingsBtn = document.getElementById('btn-open-menu');
+  if (!settingsBtn) return;
+
+  // Build overlay + spotlight + card
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;z-index:8500;pointer-events:all;';
+
+  const spot = document.createElement('div');
+  spot.style.cssText = 'position:fixed;border-radius:50%;pointer-events:none;z-index:8501;box-shadow:0 0 0 9999px rgba(15,23,42,0);transition:width .55s ease,height .55s ease,left .55s ease,top .55s ease,box-shadow .6s;';
+
+  const infoCard = document.createElement('div');
+  infoCard.style.cssText = 'position:fixed;background:white;border-radius:20px;padding:20px 22px;box-shadow:0 8px 40px rgba(0,0,0,0.22);width:min(300px,88vw);z-index:8503;opacity:0;transition:opacity .4s;left:50%;transform:translateX(-50%);pointer-events:auto;text-align:right;direction:rtl;font-family:Heebo,sans-serif;';
+
+  document.body.appendChild(ov);
+  document.body.appendChild(spot);
+  document.body.appendChild(infoCard);
+
+  function setSpot(el, pad = 14) {
+    const r = el.getBoundingClientRect();
+    const diag = Math.ceil(Math.hypot(r.width + pad*2, r.height + pad*2));
+    spot.style.width = diag + 'px'; spot.style.height = diag + 'px';
+    spot.style.left = (r.left + r.width/2 - diag/2) + 'px';
+    spot.style.top  = (r.top  + r.height/2 - diag/2) + 'px';
   }
-}
-
-// =========== TUTORIAL ===========
-const TUTORIAL_STEPS = [
-  { emoji: '⭐', title: 'ברוכים הבאים!', text: 'כאן תנהלו את משימות הבית עם הילדים בקלות וכיף.' },
-  { emoji: '⚙️', title: 'הגדרות המשפחה', text: 'לחץ ⚙️ בדשבורד כדי להוסיף ילדים, הורים ולנהל הכל.' },
-  { emoji: '✅', title: 'הוסף משימות', text: 'הגדר משימות לכל ילד — כל ביצוע מרוויח כוכבים!' },
-];
-let tutStep = 0;
-
-function showTutorial() {
-  tutStep = 0;
-  renderTutStep();
-  document.getElementById('tutorial-overlay').style.display = 'flex';
-}
-
-function renderTutStep() {
-  const s = TUTORIAL_STEPS[tutStep];
-  document.getElementById('tutorial-content').innerHTML = `
-    <div style="font-size:3.2rem;margin-bottom:16px;">${s.emoji}</div>
-    <div style="font-size:1.35rem;font-weight:900;color:var(--text);margin-bottom:10px;">${s.title}</div>
-    <div style="font-size:0.92rem;color:var(--muted);line-height:1.6;max-width:300px;margin:0 auto;">${s.text}</div>`;
-  document.getElementById('tutorial-dots').innerHTML = TUTORIAL_STEPS.map((_, i) =>
-    `<div style="width:${i===tutStep?'22px':'8px'};height:8px;border-radius:4px;background:${i===tutStep?'var(--primary)':'rgba(99,102,241,0.25)'};transition:all 0.3s;"></div>`
-  ).join('');
-  document.getElementById('tutorial-next').textContent =
-    tutStep < TUTORIAL_STEPS.length - 1 ? 'הבא' : '🚀 קדימה!';
-}
-
-document.getElementById('tutorial-next').onclick = () => {
-  if (tutStep < TUTORIAL_STEPS.length - 1) {
-    tutStep++;
-    renderTutStep();
-  } else {
-    document.getElementById('tutorial-overlay').style.display = 'none';
-    const uid = auth.currentUser?.uid;
-    if (uid) localStorage.setItem('tutorialDone_' + uid, '1');
+  function fadeDark() { spot.style.boxShadow = '0 0 0 9999px rgba(15,23,42,0.80)'; }
+  function fadeLight() { spot.style.boxShadow = '0 0 0 9999px rgba(15,23,42,0)'; }
+  function showCard(html, topY) {
+    infoCard.innerHTML = html;
+    infoCard.style.top = Math.min(topY, window.innerHeight - 270) + 'px';
+    infoCard.style.opacity = '1';
   }
-};
+  function hideCard() { infoCard.style.opacity = '0'; }
+
+  function endTour() {
+    hideCard(); fadeLight();
+    const st = document.createElement('div');
+    st.style.cssText = 'position:fixed;top:0;left:0;right:0;height:0;background:#0F172A;z-index:9100;transition:height .45s ease-in;pointer-events:none;';
+    const sb = document.createElement('div');
+    sb.style.cssText = 'position:fixed;bottom:0;left:0;right:0;height:0;background:#0F172A;z-index:9100;transition:height .45s ease-in;pointer-events:none;';
+    document.body.appendChild(st); document.body.appendChild(sb);
+    setTimeout(() => { st.style.height = '52vh'; sb.style.height = '52vh'; }, 80);
+    setTimeout(() => {
+      ov.remove(); spot.remove(); infoCard.remove(); st.remove(); sb.remove();
+      localStorage.setItem(DONE_KEY, '1');
+      renderDashTaskRows(familyId);
+    }, 580);
+  }
+
+  // ── Phase 1: Settings button ──
+  setSpot(settingsBtn, 14);
+  await new Promise(r => setTimeout(r, 150));
+  fadeDark();
+  await new Promise(r => setTimeout(r, 650));
+
+  const r1 = settingsBtn.getBoundingClientRect();
+  showCard(`
+    <div style="font-size:1.7rem;margin-bottom:10px;">⚙️</div>
+    <div style="font-weight:900;font-size:1.05rem;color:#1E293B;margin-bottom:8px;">הגדרות המשפחה</div>
+    <div style="font-size:0.84rem;color:#64748B;line-height:1.7;margin-bottom:14px;">
+      <b>הוסף ילדים</b> וערוך את המשפחה<br>
+      <b>צור משימות</b> ונהל אותן<br>
+      הגדר <b>פרסים</b> שיחכו לילדים 🏆
+    </div>
+    <button id="dt-btn-1" style="background:linear-gradient(135deg,#6366F1,#4F46E5);color:white;border:none;border-radius:12px;padding:11px 24px;font-size:0.92rem;font-weight:800;font-family:Heebo,sans-serif;cursor:pointer;width:100%;">הבא ←</button>
+  `, r1.bottom + 24);
+
+  await new Promise(resolve => {
+    document.getElementById('dt-btn-1').onclick = async () => {
+      hideCard();
+      // Expand spot to cover screen
+      const diag = Math.hypot(window.innerWidth, window.innerHeight) * 2.4;
+      spot.style.width = diag + 'px'; spot.style.height = diag + 'px';
+      spot.style.left = (window.innerWidth/2 - diag/2) + 'px';
+      spot.style.top  = (window.innerHeight/2 - diag/2) + 'px';
+      await new Promise(r => setTimeout(r, 580));
+      fadeLight();
+      await new Promise(r => setTimeout(r, 220));
+
+      if (!childCards.length) { endTour(); resolve(); return; }
+
+      // Reset spot (no transition) to child card position
+      spot.style.transition = 'none';
+      setSpot(childCards[0], 18);
+      await new Promise(r => setTimeout(r, 30));
+      spot.style.transition = 'width .55s ease,height .55s ease,left .55s ease,top .55s ease,box-shadow .6s';
+
+      // ── Phase 2: Child card ──
+      fadeDark();
+      await new Promise(r => setTimeout(r, 650));
+
+      const r2 = childCards[0].getBoundingClientRect();
+      showCard(`
+        <div style="font-size:1.7rem;margin-bottom:10px;">📊</div>
+        <div style="font-weight:900;font-size:1.05rem;color:#1E293B;margin-bottom:10px;">המדדים של הילד</div>
+        <div style="font-size:0.84rem;color:#64748B;line-height:1.85;margin-bottom:12px;">
+          <span style="display:inline-block;background:#FEF9C3;color:#713F12;border-radius:8px;padding:2px 9px;font-weight:700;">⭐ כוכבים השבוע</span><br>
+          <span style="display:inline-block;background:#DCFCE7;color:#14532D;border-radius:8px;padding:2px 9px;font-weight:700;margin-top:4px;">🗓️ כוכבים החודש</span><br>
+          <span style="display:inline-block;background:#FEE2E2;color:#991B1B;border-radius:8px;padding:2px 9px;font-weight:700;margin-top:4px;">✅ נותרו מטלות לביצוע</span>
+        </div>
+        <div style="font-size:0.8rem;color:#94A3B8;text-align:center;font-weight:700;border-top:1px solid #F1F5F9;padding-top:10px;">גע בריבוע הילד כדי להמשיך ↑</div>
+      `, r2.bottom + 18);
+
+      // Tap on overlay (anywhere) = advance
+      const tapOnce = () => {
+        ov.onclick = null;
+        hideCard();
+        fadeLight();
+        setTimeout(endTour, 380);
+        resolve();
+      };
+      ov.onclick = tapOnce;
+    };
+  });
+}
 
 // =========== WHO SCREEN SLIDER ===========
 (function initWhoSlider() {

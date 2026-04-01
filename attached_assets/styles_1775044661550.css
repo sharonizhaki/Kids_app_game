@@ -271,6 +271,13 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
 .etask-btn.btn-vis-show{background:#10B981;}
 .etask-btn.btn-del{background:#EF4444;}
 
+/* === DASH TASK ROWS === */
+.dash-task-row{display:flex;align-items:center;gap:10px;background:white;border-radius:14px;padding:10px 14px;margin-bottom:7px;box-shadow:0 2px 8px rgba(0,0,0,0.06);overflow:hidden;direction:rtl;}
+.dtr-name{display:flex;align-items:center;gap:5px;flex-shrink:0;min-width:68px;}
+.dtr-divider{width:1px;height:22px;background:#E2E8F0;flex-shrink:0;}
+.dtr-tasks{flex:1;min-width:0;overflow:hidden;}
+.dtr-task-text{font-size:0.82rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;transition:opacity 0.3s;font-weight:600;}
+
 /* === VALIDATION SHAKE === */
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 .field-error{animation:shake 0.4s ease;outline:2px solid var(--danger)!important;border-color:var(--danger)!important;border-radius:14px;}

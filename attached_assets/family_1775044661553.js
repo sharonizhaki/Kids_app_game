@@ -262,6 +262,13 @@ export function shareCode(code, childName = '') {
 }
 
 // =========== DASHBOARD CHILDREN CARDS ===========
+function isDueTodayFn(task, dayOfWeek) {
+  if (!task.freq || task.freq === 'daily') return true;
+  if (task.freq === 'weekly' || task.freq === '2week' || task.freq === 'once') return true;
+  if (task.freq === 'specific' && Array.isArray(task.days)) return task.days.map(Number).includes(dayOfWeek);
+  return true;
+}
+
 export async function renderDashboardChildren(familyId) {
   const grid = document.getElementById('dash-children-grid');
   if (!grid) return;
@@ -271,48 +278,44 @@ export async function renderDashboardChildren(familyId) {
 
   if (children.length === 0) {
     grid.innerHTML = `
-      <div style="
-        width:min(200px,80vw);
-        background:#F8FAFC;
-        border:2.5px dashed var(--border);
-        border-radius:20px;
-        padding:24px 16px;
-        text-align:center;
-        color:var(--muted);
-      ">
+      <div style="width:min(200px,80vw);background:#F8FAFC;border:2.5px dashed var(--border);border-radius:20px;padding:24px 16px;text-align:center;color:var(--muted);">
         <div style="font-size:2.2rem;margin-bottom:8px;">👶</div>
         <div style="font-size:0.85rem;font-weight:600;">עדיין אין ילדים</div>
       </div>`;
     return;
   }
 
-  // Calculate card width based on count
   let cardWidth;
   if (children.length === 1) cardWidth = 'min(200px,80vw)';
   else if (children.length === 2) cardWidth = 'min(160px,44vw)';
   else cardWidth = 'min(120px,30vw)';
 
-  // Get weekly/monthly stars for each child
-  const now = Date.now();
-  const startOfWeek = (() => {
-    const d = new Date(); d.setHours(0,0,0,0);
-    d.setDate(d.getDate() - d.getDay()); // Sunday
-    return d.getTime();
-  })();
-  const startOfMonth = (() => {
-    const d = new Date(); d.setDate(1); d.setHours(0,0,0,0);
-    return d.getTime();
-  })();
+  const startOfWeek = (() => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - d.getDay()); return d.getTime(); })();
+  const startOfMonth = (() => { const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); return d.getTime(); })();
+  const todayStart = (() => { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); })();
+  const dayOfWeek = new Date().getDay();
+
+  // Load all tasks once
+  let allFamilyTasks = [];
+  try {
+    const tSnap = await getDocs(collection(db, 'families', familyId, 'tasks'));
+    allFamilyTasks = tSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(t => !t.hidden);
+  } catch(e) {}
 
   const statsPromises = children.map(async (child) => {
+    const childTasks = allFamilyTasks.filter(t =>
+      (t.assignedChildren || []).includes(child.id) && isDueTodayFn(t, dayOfWeek)
+    );
     try {
       const stateSnap = await getDoc(doc(db, 'families', familyId, 'children', child.id, 'state', 'current'));
-      if (!stateSnap.exists()) return { weekly: 0, monthly: 0 };
+      if (!stateSnap.exists()) return { weekly: 0, monthly: 0, remaining: childTasks.length };
       const hist = stateSnap.data().hist || [];
-      const weekly = hist.filter(h => (h.ts || 0) >= startOfWeek).reduce((s, h) => s + (h.pts || 0), 0);
-      const monthly = hist.filter(h => (h.ts || 0) >= startOfMonth).reduce((s, h) => s + (h.pts || 0), 0);
-      return { weekly, monthly };
-    } catch(e) { return { weekly: 0, monthly: 0 }; }
+      const weekly  = hist.filter(h => (h.ts||0) >= startOfWeek).reduce((s,h) => s+(h.pts||0), 0);
+      const monthly = hist.filter(h => (h.ts||0) >= startOfMonth).reduce((s,h) => s+(h.pts||0), 0);
+      const completedTodayIds = new Set(hist.filter(h => (h.ts||0) >= todayStart).map(h => h.taskId));
+      const remaining = Math.max(0, childTasks.filter(t => !completedTodayIds.has(t.id)).length);
+      return { weekly, monthly, remaining };
+    } catch(e) { return { weekly: 0, monthly: 0, remaining: childTasks.length }; }
   });
 
   const stats = await Promise.all(statsPromises);
@@ -321,39 +324,103 @@ export async function renderDashboardChildren(familyId) {
     const genderEmoji = child.gender === 'female' ? '👧' : '👦';
     const displayEmoji = child.emoji || genderEmoji;
     const hasPhoto = child.photo && child.photo.length > 10;
-    const { weekly, monthly } = stats[i];
+    const { weekly, monthly, remaining } = stats[i];
 
     const photoHTML = hasPhoto
       ? `<img src="${child.photo}" alt="${child.name}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">`
       : `<div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#E0E7FF,#C7D2FE);display:flex;align-items:center;justify-content:center;font-size:1.8rem;">${displayEmoji}</div>`;
 
+    const remainingHTML = remaining > 0
+      ? `<div style="background:#FEE2E2;border-radius:8px;padding:4px 6px;font-size:0.72rem;font-weight:700;color:#991B1B;">✅ נותרו ${remaining} מטלות</div>`
+      : `<div style="background:#DCFCE7;border-radius:8px;padding:4px 6px;font-size:0.72rem;font-weight:700;color:#14532D;">✅ הכל בוצע!</div>`;
+
     return `
-      <div style="
-        width:${cardWidth};
-        background:white;
-        border-radius:20px;
-        box-shadow:0 2px 12px rgba(0,0,0,0.08);
-        padding:16px 10px 14px;
-        text-align:center;
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        gap:6px;
-        flex-shrink:0;
-      ">
+      <div style="width:${cardWidth};background:white;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.08);padding:16px 10px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;">
         ${photoHTML}
         <div style="font-weight:800;font-size:0.9rem;color:var(--text);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;">${child.name}</div>
         <div style="font-size:1.3rem;">${displayEmoji}</div>
         <div style="display:flex;flex-direction:column;gap:3px;width:100%;margin-top:2px;">
-          <div style="background:#FEF9C3;border-radius:8px;padding:4px 6px;font-size:0.75rem;font-weight:700;color:#713F12;">
-            ⭐ שבוע: ${weekly}
-          </div>
-          <div style="background:#DCFCE7;border-radius:8px;padding:4px 6px;font-size:0.75rem;font-weight:700;color:#14532D;">
-            📅 חודש: ${monthly}
-          </div>
+          <div style="background:#FEF9C3;border-radius:8px;padding:4px 6px;font-size:0.72rem;font-weight:700;color:#713F12;">⭐ כוכבים השבוע: ${weekly}</div>
+          <div style="background:#DCFCE7;border-radius:8px;padding:4px 6px;font-size:0.72rem;font-weight:700;color:#14532D;">🗓️ כוכבים החודש: ${monthly}</div>
+          ${remainingHTML}
         </div>
       </div>`;
   }).join('');
+}
+
+// =========== DASH TASK ROWS ===========
+const _dtrIntervals = [];
+
+export async function renderDashTaskRows(familyId) {
+  _dtrIntervals.forEach(clearInterval);
+  _dtrIntervals.length = 0;
+  const container = document.getElementById('dash-task-rows');
+  if (!container) return;
+
+  await loadChildren(familyId);
+  const children = childrenCache;
+  if (!children.length) { container.innerHTML = ''; return; }
+
+  const todayStart = (() => { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); })();
+  const dayOfWeek = new Date().getDay();
+
+  let allFamilyTasks = [];
+  try {
+    const tSnap = await getDocs(collection(db, 'families', familyId, 'tasks'));
+    allFamilyTasks = tSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(t => !t.hidden);
+  } catch(e) { return; }
+
+  if (!allFamilyTasks.length) { container.innerHTML = ''; return; }
+
+  const childRows = await Promise.all(children.map(async (child) => {
+    const childTasks = allFamilyTasks.filter(t =>
+      (t.assignedChildren || []).includes(child.id) && isDueTodayFn(t, dayOfWeek)
+    );
+    try {
+      const stSnap = await getDoc(doc(db, 'families', familyId, 'children', child.id, 'state', 'current'));
+      const hist = stSnap.exists() ? (stSnap.data().hist || []) : [];
+      const completedIds = new Set(hist.filter(h => (h.ts||0) >= todayStart).map(h => h.taskId));
+      const remaining = childTasks.filter(t => !completedIds.has(t.id));
+      return { child, remaining };
+    } catch(e) { return { child, remaining: childTasks }; }
+  }));
+
+  container.innerHTML = '';
+
+  childRows.forEach(({ child, remaining }, ci) => {
+    if (!remaining.length) return;
+    const genderEmoji = child.gender === 'female' ? '👧' : '👦';
+    const displayEmoji = child.emoji || genderEmoji;
+    const color = child.color || CHILD_COLORS[ci % CHILD_COLORS.length];
+
+    const row = document.createElement('div');
+    row.className = 'dash-task-row';
+    row.style.borderRight = `3px solid ${color}`;
+
+    row.innerHTML = `
+      <div class="dtr-name">
+        <span style="font-size:1.1rem;">${displayEmoji}</span>
+        <span style="font-weight:800;font-size:0.8rem;color:var(--text);white-space:nowrap;">${child.name}</span>
+      </div>
+      <div class="dtr-divider"></div>
+      <div class="dtr-tasks">
+        <span class="dtr-task-text">${remaining[0].emoji || '📋'} ${remaining[0].task}</span>
+      </div>`;
+    container.appendChild(row);
+
+    if (remaining.length > 1) {
+      let idx = 0;
+      const taskEl = row.querySelector('.dtr-task-text');
+      _dtrIntervals.push(setInterval(() => {
+        idx = (idx + 1) % remaining.length;
+        taskEl.style.opacity = '0';
+        setTimeout(() => {
+          taskEl.textContent = `${remaining[idx].emoji || '📋'} ${remaining[idx].task}`;
+          taskEl.style.opacity = '1';
+        }, 300);
+      }, 3000));
+    }
+  });
 }
 
 export function shareParentCode(code) {
