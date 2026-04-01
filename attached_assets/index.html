@@ -329,6 +329,24 @@
     <h1 id="dash-greeting">שלום!</h1>
   </div>
   <div id="dash-children-grid" style="width:100%;max-width:480px;display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin-top:8px;padding:0 4px;"></div>
+
+  <!-- Quick tasks banner — shown only when no tasks exist yet -->
+  <div id="quick-tasks-banner" style="display:none;width:100%;max-width:480px;margin-top:20px;padding:0 4px;">
+    <div style="background:linear-gradient(135deg,#EEF2FF,#E0E7FF);border:2px dashed #A5B4FC;border-radius:20px;padding:20px 20px;text-align:center;position:relative;">
+      <div style="font-size:2rem;margin-bottom:8px;">⚡</div>
+      <div style="font-weight:900;font-size:1rem;color:#1E293B;margin-bottom:4px;">מתחילים מהר!</div>
+      <div style="font-size:0.82rem;color:#64748B;margin-bottom:16px;line-height:1.5;">אין עדיין משימות. צור 5 משימות יומיות פופולריות בלחיצה אחת.</div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:16px;">
+        <span style="background:white;border-radius:20px;padding:4px 10px;font-size:0.75rem;font-weight:700;color:#6366F1;">🪥 שיניים</span>
+        <span style="background:white;border-radius:20px;padding:4px 10px;font-size:0.75rem;font-weight:700;color:#6366F1;">🛏️ מיטה</span>
+        <span style="background:white;border-radius:20px;padding:4px 10px;font-size:0.75rem;font-weight:700;color:#6366F1;">🚿 מקלחת</span>
+        <span style="background:white;border-radius:20px;padding:4px 10px;font-size:0.75rem;font-weight:700;color:#6366F1;">📖 קריאה</span>
+        <span style="background:white;border-radius:20px;padding:4px 10px;font-size:0.75rem;font-weight:700;color:#6366F1;">🎒 תיק</span>
+      </div>
+      <button id="btn-quick-tasks-dash" style="background:linear-gradient(135deg,#6366F1,#4F46E5);color:white;border:none;border-radius:14px;padding:13px 28px;font-size:0.95rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(99,102,241,0.35);width:100%;">✨ צור 5 משימות בסיסיות</button>
+    </div>
+  </div>
+
   <button style="display:none;" id="btn-manage-family"></button>
   <button style="display:none;" id="btn-add-tasks"></button>
   <button style="display:none;" id="btn-edit-tasks"></button>
@@ -523,7 +541,10 @@
       <div class="input-group" style="margin-bottom:6px;">
         <input type="text" id="task-name-input" placeholder="לדוגמה: צחצוח שיניים" autocomplete="off">
       </div>
-      <button class="btn btn-sm" id="btn-task-suggestions" style="padding:8px 16px;font-size:0.82rem;background:#FCE7F3;color:#BE185D;border:none;border-radius:20px;width:auto;max-width:none;display:inline-flex;box-shadow:none;">💡 לחץ למשימות לדוגמא</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-sm" id="btn-task-suggestions" style="padding:8px 14px;font-size:0.82rem;background:#FCE7F3;color:#BE185D;border:none;border-radius:20px;width:auto;max-width:none;display:inline-flex;box-shadow:none;flex:1;justify-content:center;">💡 לחץ למשימות לדוגמא</button>
+        <button class="btn btn-sm" id="btn-quick-tasks-form" style="padding:8px 14px;font-size:0.82rem;background:#EEF2FF;color:#6366F1;border:none;border-radius:20px;width:auto;max-width:none;display:inline-flex;box-shadow:none;flex:1;justify-content:center;font-weight:800;">⚡ 5 משימות אוטומטיות</button>
+      </div>
       <div class="suggestions-wrap" id="suggestions-wrap" style="display:none;"></div>
     </div>
 

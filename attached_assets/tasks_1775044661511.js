@@ -576,10 +576,34 @@ export function renderAssignGrid(gridId, selectedIds, onChange) {
   });
 }
 
+// =========== QUICK AUTO-CREATE 5 TASKS ===========
+const AUTO_TASKS = [
+  { task:'צחצוח שיניים בוקר', emoji:'🪥', cat:'🧼 היגיינה',  pts:1, freq:'daily' },
+  { task:'סידור המיטה',        emoji:'🛏️', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
+  { task:'להתקלח',             emoji:'🚿', cat:'🧼 היגיינה',  pts:2, freq:'daily' },
+  { task:'קריאה 15 דקות',      emoji:'📖', cat:'📚 לימודים',  pts:3, freq:'daily' },
+  { task:'להכין תיק',          emoji:'🎒', cat:'🎯 אחריות',   pts:2, freq:'daily' },
+];
+
+export async function createQuickTasks(familyId) {
+  await loadChildren(familyId);
+  const childIds = childrenCache.map(c => c.id);
+  if (!childIds.length) { showToast('יש להוסיף ילד תחילה'); return false; }
+
+  await Promise.all(AUTO_TASKS.map(t =>
+    setDoc(doc(collection(db, 'families', familyId, 'tasks')), {
+      task: t.task, emoji: t.emoji, cat: t.cat, catIcon: t.emoji,
+      pts: t.pts, freq: t.freq, days: [], desc: '', reminder: '',
+      hidden: false, assignedChildren: childIds, createdAt: serverTimestamp()
+    })
+  ));
+  return true;
+}
+
 // =========== GUIDED TOUR ===========
 export function startTaskTour(familyId) {
   const steps = [
-    { el: '#task-name-input',    title: 'שם המטלה',    text: 'הכנס שם למטלה — ולחץ על "לחץ למשימות לדוגמא" לרשימת רעיונות מוכנים' },
+    { el: '#task-name-input',    title: 'שם המטלה',    text: 'הכנס שם למטלה, לחץ "לחץ למשימות לדוגמא" לרעיונות — או "⚡ 5 משימות אוטומטיות" ליצור הכל בבת אחת' },
     { el: '#task-cat-scroll',    title: 'קטגוריה',     text: 'בחר קטגוריה — היגיינה, לימודים, מטלות בית...' },
     { el: '#task-assign-grid',   title: 'שיוך לילד/ים', text: 'כאן מופיעים הילדים שלך — בחר לאיזה ילד/ים המטלה משויכת' },
     { el: '#task-emoji-grid',    title: 'אייקון',       text: 'בחר אייקון שיופיע ליד שם המטלה' },

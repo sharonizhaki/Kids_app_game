@@ -20,7 +20,7 @@ import {
   openAddTask, saveTask, loadAllTasks,
   renderEditTasksFilters, renderEditTasksList,
   openEditTask, saveEditedTask, toggleHideTask, deleteTask,
-  initSuggestions, startTaskTour
+  initSuggestions, startTaskTour, createQuickTasks
 } from './tasks.js';
 import {
   loadCompletedTasks, renderMPFilters, renderMPList, resetMPState
@@ -31,8 +31,36 @@ window.showScreen = (id) => {
   showScreen(id);
   if (id === 'screen-dashboard' && currentFamilyId) {
     renderDashboardChildren(currentFamilyId);
+    refreshQuickTasksBanner(currentFamilyId);
   }
 };
+
+async function refreshQuickTasksBanner(familyId) {
+  const banner = document.getElementById('quick-tasks-banner');
+  if (!banner) return;
+  try {
+    const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const snap = await getDocs(collection(db, 'families', familyId, 'tasks'));
+    banner.style.display = snap.empty ? 'block' : 'none';
+  } catch(e) { banner.style.display = 'none'; }
+}
+
+async function handleQuickTasks(fromDash) {
+  const fid = getFamilyId();
+  if (!fid) return;
+  const btn = document.getElementById(fromDash ? 'btn-quick-tasks-dash' : 'btn-quick-tasks-form');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ יוצר משימות...'; }
+  try {
+    const ok = await createQuickTasks(fid);
+    if (ok) {
+      showToast('✅ 5 משימות נוצרו בהצלחה!');
+      document.getElementById('quick-tasks-banner').style.display = 'none';
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = fromDash ? '✨ צור 5 משימות בסיסיות' : '⚡ 5 משימות אוטומטיות'; }
+  }
+}
+
 window.showChildInviteModal = (childId) => showChildInviteModal(childId, getFamilyId());
 window.openEditChild = openEditChild;
 window.renderFamily = () => renderFamily(getFamilyId());
@@ -57,6 +85,7 @@ function renderDashboard(user) {
   document.getElementById('dash-greeting').textContent = `שלום ${name}! 👋`;
   showScreen('screen-dashboard');
   renderDashboardChildren(currentFamilyId);
+  refreshQuickTasksBanner(currentFamilyId);
 }
 
 // =========== WHO ARE YOU ===========
@@ -93,6 +122,9 @@ document.getElementById('btn-manage-family').onclick = async () => {
 
 document.getElementById('btn-add-tasks').onclick = () => openAddTask(getFamilyId());
 document.getElementById('btn-save-task').onclick = () => saveTask(getFamilyId());
+
+document.getElementById('btn-quick-tasks-dash').onclick = () => handleQuickTasks(true);
+document.getElementById('btn-quick-tasks-form').onclick = () => handleQuickTasks(false);
 
 document.getElementById('btn-edit-tasks').onclick = async () => {
   showScreen('screen-edit-tasks');
