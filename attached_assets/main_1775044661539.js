@@ -123,6 +123,15 @@ document.getElementById('btn-manage-family').onclick = async () => {
 document.getElementById('btn-add-tasks').onclick = () => openAddTask(getFamilyId());
 document.getElementById('btn-save-task').onclick = () => saveTask(getFamilyId());
 
+// Modal: no child warning
+document.getElementById('modal-no-child-back').onclick = () => {
+  document.getElementById('modal-no-child').style.display = 'none';
+};
+document.getElementById('modal-no-child-create').onclick = () => {
+  document.getElementById('modal-no-child').style.display = 'none';
+  showScreen('screen-manage-family');
+};
+
 document.getElementById('btn-quick-tasks-dash').onclick = () => handleQuickTasks(true);
 document.getElementById('btn-quick-tasks-form').onclick = () => handleQuickTasks(false);
 

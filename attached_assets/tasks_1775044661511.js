@@ -84,16 +84,16 @@ export async function openAddTask(familyId) {
   // Frequency
   initFreqGrid('task-freq-grid', 'task-days-grid', '', [], (freq) => { taskSelectedFreq = freq; }, (days) => { taskSelectedDays = days; });
 
-  // Assign grid + no-child warning
-  const noChildWarn = document.getElementById('task-no-child-warning');
+  // If no children — show warning modal and abort navigation
   if (childrenCache.length === 0) {
-    noChildWarn.style.display = 'block';
-    document.getElementById('task-assign-grid').style.display = 'none';
-  } else {
-    noChildWarn.style.display = 'none';
-    document.getElementById('task-assign-grid').style.display = '';
-    renderAssignGrid('task-assign-grid', [], (children) => { taskAssignedChildren = children; });
+    const modal = document.getElementById('modal-no-child');
+    modal.style.display = 'flex';
+    hideLoading();
+    return;
   }
+
+  // Assign grid
+  renderAssignGrid('task-assign-grid', [], (children) => { taskAssignedChildren = children; });
 
   showScreen('screen-add-task');
 
