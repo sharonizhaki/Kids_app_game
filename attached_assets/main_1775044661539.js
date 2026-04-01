@@ -452,12 +452,15 @@ document.getElementById('btn-create-new-family').onclick = async () => {
   obChildPhoto = null;
   document.getElementById('ob1-name').value = '';
   document.getElementById('ob1-error').textContent = '';
-  document.getElementById('ob1-photo-circle').innerHTML = '👶';
+  document.getElementById('ob1-photo-circle').innerHTML =
+    `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  document.getElementById('ob1-gender-wrap').style.outline = '';
   document.querySelectorAll('.ob1-gender').forEach(b => {
     b.style.borderColor = 'var(--border)';
     b.style.background = 'white';
   });
   showScreen('screen-onboard-1');
+  setTimeout(() => document.getElementById('ob1-name').focus(), 200);
 };
 
 document.getElementById('btn-join-back').onclick = async () => {
@@ -630,8 +633,24 @@ document.getElementById('ob1-back').onclick = () => showScreen('screen-join-fami
 document.getElementById('ob1-next').onclick = async () => {
   const name = document.getElementById('ob1-name').value.trim();
   const err  = document.getElementById('ob1-error');
-  if (!name)     { err.textContent = 'חובה להזין שם ילד/ה'; return; }
-  if (!obGender) { err.textContent = 'חובה לבחור בן או בת'; return; }
+  if (!name) {
+    err.textContent = 'חובה להזין שם ילד/ה';
+    const nameInput = document.getElementById('ob1-name');
+    nameInput.style.borderColor = '#EF4444';
+    nameInput.focus();
+    navigator.vibrate && navigator.vibrate([80, 40, 80]);
+    setTimeout(() => { nameInput.style.borderColor = 'var(--primary)'; }, 1800);
+    return;
+  }
+  if (!obGender) {
+    err.textContent = 'חובה לבחור בן או בת';
+    const gWrap = document.getElementById('ob1-gender-wrap');
+    gWrap.style.outline = '2.5px solid #EF4444';
+    gWrap.style.borderRadius = '18px';
+    navigator.vibrate && navigator.vibrate([80, 40, 80]);
+    setTimeout(() => { gWrap.style.outline = ''; }, 1800);
+    return;
+  }
   err.textContent = '';
 
   const result = await createChild(currentFamilyId, name, obGender);
@@ -649,6 +668,9 @@ document.getElementById('ob1-next').onclick = async () => {
     document.getElementById('ob2-code').textContent = invResult.code;
   }
 };
+
+// Step 2 — back
+document.getElementById('ob2-back').onclick = () => showScreen('screen-onboard-1');
 
 // Step 2 — skip
 document.getElementById('ob2-skip').onclick = () => showScreen('screen-onboard-3');
@@ -739,9 +761,17 @@ document.getElementById('tutorial-next').onclick = () => {
     });
   }
 
-  dots.forEach((d, i) => { if (d) d.onclick = () => { clearAuto(); goTo(i); }; });
+  dots.forEach((d, i) => { if (d) d.onclick = () => { clearAuto(); goTo(i); startAuto(5000); }; });
 
   let startX = 0, startY = 0, dragging = false;
+  let autoTimeout, autoInterval;
+  function startAuto(delay = 0) {
+    clearAuto();
+    autoTimeout = setTimeout(() => {
+      autoInterval = setInterval(() => goTo((current + 1) % total), 3800);
+    }, delay);
+  }
+  function clearAuto() { clearTimeout(autoTimeout); clearInterval(autoInterval); }
 
   slider.addEventListener('touchstart', e => {
     startX = e.touches[0].clientX;
@@ -757,8 +787,8 @@ document.getElementById('tutorial-next').onclick = () => {
     const dy = e.touches[0].clientY - startY;
     if (Math.abs(dy) > Math.abs(dx)) return;
     const base   = -(current * (100 / total));
-    // invert offset: finger right → track left (reveals next slide to the right)
-    const offset = -(dx / slider.offsetWidth) * (100 / total);
+    // LTR: finger right → previous slide, finger left → next slide
+    const offset = (dx / slider.offsetWidth) * (100 / total);
     track.style.transform = `translateX(${base + offset}%)`;
   }, { passive: true });
 
@@ -768,13 +798,13 @@ document.getElementById('tutorial-next').onclick = () => {
     track.style.transition = 'transform 0.38s cubic-bezier(0.4,0,0.2,1)';
     const dx = e.changedTouches[0].clientX - startX;
     if (Math.abs(dx) > 48) {
-      // RTL: swipe right = next slide, swipe left = previous
-      goTo(dx > 0 ? current + 1 : current - 1);
+      // LTR: swipe left = next, swipe right = previous
+      goTo(dx > 0 ? current - 1 : current + 1);
     } else {
       goTo(current);
     }
+    startAuto(5000); // resume after 5s pause
   });
 
-  let autoTimer = setInterval(() => goTo((current + 1) % total), 3800);
-  function clearAuto() { clearInterval(autoTimer); }
+  startAuto();
 })();
