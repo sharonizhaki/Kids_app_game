@@ -6,7 +6,7 @@ import {
   doc, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-import { showScreen, showToast, showLoading, hideLoading, openSideMenu } from './ui.js';
+import { showScreen, showToast, showLoading, hideLoading, openSideMenu, closeSideMenu } from './ui.js';
 import { initAuth, loginWithGoogle, loginWithFacebook, logoutParent, createNewFamily, joinFamily, currentFamilyId, setCurrentFamilyId, confirmDeleteAccount, deleteAccount } from './auth.js';
 import {
   childrenCache, loadChildren, renderFamily,
@@ -719,18 +719,16 @@ async function startDashTour(familyId, uid) {
   const DONE_KEY = 'dashTourDone_' + uid;
   if (localStorage.getItem(DONE_KEY)) return;
 
-  // Wait for child cards to render
   await new Promise(r => setTimeout(r, 600));
   const childCards = Array.from(document.querySelectorAll('#dash-children-grid > div'));
   const settingsBtn = document.getElementById('btn-open-menu');
   if (!settingsBtn) return;
 
-  // Build overlay + spotlight + card
   const ov = document.createElement('div');
   ov.style.cssText = 'position:fixed;inset:0;z-index:8500;pointer-events:all;';
 
   const spot = document.createElement('div');
-  spot.style.cssText = 'position:fixed;border-radius:50%;pointer-events:none;z-index:8501;box-shadow:0 0 0 9999px rgba(15,23,42,0);transition:width .55s ease,height .55s ease,left .55s ease,top .55s ease,box-shadow .6s;';
+  spot.style.cssText = 'position:fixed;border-radius:50%;pointer-events:none;z-index:8501;box-shadow:0 0 0 9999px rgba(15,23,42,0);transition:width .55s ease,height .55s ease,left .55s ease,top .55s ease,box-shadow .6s,border-radius .35s;';
 
   const infoCard = document.createElement('div');
   infoCard.style.cssText = 'position:fixed;background:white;border-radius:20px;padding:20px 22px;box-shadow:0 8px 40px rgba(0,0,0,0.22);width:min(300px,88vw);z-index:8503;opacity:0;transition:opacity .4s;left:50%;transform:translateX(-50%);pointer-events:auto;text-align:right;direction:rtl;font-family:Heebo,sans-serif;';
@@ -739,21 +737,58 @@ async function startDashTour(familyId, uid) {
   document.body.appendChild(spot);
   document.body.appendChild(infoCard);
 
+  // ── Helpers ──
   function setSpot(el, pad = 14) {
+    spot.style.borderRadius = '50%';
     const r = el.getBoundingClientRect();
     const diag = Math.ceil(Math.hypot(r.width + pad*2, r.height + pad*2));
     spot.style.width = diag + 'px'; spot.style.height = diag + 'px';
     spot.style.left = (r.left + r.width/2 - diag/2) + 'px';
     spot.style.top  = (r.top  + r.height/2 - diag/2) + 'px';
   }
-  function fadeDark() { spot.style.boxShadow = '0 0 0 9999px rgba(15,23,42,0.80)'; }
+  function setSpotRect(el, pad = 0) {
+    spot.style.borderRadius = '12px';
+    const r = el.getBoundingClientRect();
+    spot.style.width  = (r.width  + pad*2) + 'px';
+    spot.style.height = (r.height + pad*2) + 'px';
+    spot.style.left   = (r.left - pad) + 'px';
+    spot.style.top    = (r.top  - pad) + 'px';
+  }
+  function fadeDark()  { spot.style.boxShadow = '0 0 0 9999px rgba(15,23,42,0.82)'; }
   function fadeLight() { spot.style.boxShadow = '0 0 0 9999px rgba(15,23,42,0)'; }
   function showCard(html, topY) {
     infoCard.innerHTML = html;
-    infoCard.style.top = Math.min(topY, window.innerHeight - 270) + 'px';
+    infoCard.style.top = Math.min(topY, window.innerHeight - 280) + 'px';
     infoCard.style.opacity = '1';
   }
   function hideCard() { infoCard.style.opacity = '0'; }
+  async function expandSpotToScreen() {
+    spot.style.borderRadius = '50%';
+    const diag = Math.hypot(window.innerWidth, window.innerHeight) * 2.4;
+    spot.style.width  = diag + 'px'; spot.style.height = diag + 'px';
+    spot.style.left   = (window.innerWidth/2  - diag/2) + 'px';
+    spot.style.top    = (window.innerHeight/2 - diag/2) + 'px';
+    await new Promise(r => setTimeout(r, 520));
+  }
+  function makeShutters() {
+    const CSS = (pos) => `position:fixed;${pos}:0;left:0;right:0;height:0;background:#0F172A;z-index:9200;transition:height .38s ease-in;pointer-events:none;`;
+    const t = document.createElement('div'); t.style.cssText = CSS('top');
+    const b = document.createElement('div'); b.style.cssText = CSS('bottom');
+    document.body.appendChild(t); document.body.appendChild(b);
+    return [t, b];
+  }
+  async function shuttersClose([t, b]) {
+    await new Promise(r => setTimeout(r, 40));
+    t.style.height = '52vh'; b.style.height = '52vh';
+    await new Promise(r => setTimeout(r, 440));
+  }
+  async function shuttersOpen([t, b]) {
+    t.style.transition = 'height .38s ease-out';
+    b.style.transition = 'height .38s ease-out';
+    t.style.height = '0'; b.style.height = '0';
+    await new Promise(r => setTimeout(r, 420));
+    t.remove(); b.remove();
+  }
 
   function endTour() {
     hideCard(); fadeLight();
@@ -767,7 +802,6 @@ async function startDashTour(familyId, uid) {
       ov.remove(); spot.remove(); infoCard.remove(); st.remove(); sb.remove();
       localStorage.setItem(DONE_KEY, '1');
       renderDashTaskRows(familyId);
-      // Highlight quick-tasks banner if visible (no tasks yet)
       const banner = document.getElementById('quick-tasks-banner');
       if (banner && banner.style.display !== 'none') {
         setTimeout(() => {
@@ -783,7 +817,7 @@ async function startDashTour(familyId, uid) {
     }, 580);
   }
 
-  // ── Phase 1: Settings button ──
+  // ── Phase 1: Settings button spotlight ──
   setSpot(settingsBtn, 14);
   await new Promise(r => setTimeout(r, 150));
   fadeDark();
@@ -792,78 +826,118 @@ async function startDashTour(familyId, uid) {
   const r1 = settingsBtn.getBoundingClientRect();
   showCard(`
     <div style="font-size:1.7rem;margin-bottom:10px;">⚙️</div>
-    <div style="font-weight:900;font-size:1.05rem;color:#1E293B;margin-bottom:8px;">הגדרות המשפחה</div>
-    <div style="font-size:0.84rem;color:#64748B;line-height:1.7;margin-bottom:14px;">
-      <b>הוסף ילדים</b> וערוך את המשפחה<br>
-      <b>צור משימות</b> ונהל אותן<br>
-      הגדר <b>פרסים</b> שיחכו לילדים 🏆
+    <div style="font-weight:900;font-size:1.05rem;color:#1E293B;margin-bottom:8px;">תפריט הניהול</div>
+    <div style="font-size:0.84rem;color:#64748B;line-height:1.65;margin-bottom:14px;">
+      כאן תמצא את <b>כל הפעולות</b> של האפליקציה.<br>בוא נראה מה יש שם 👀
     </div>
-    <button id="dt-btn-1" style="background:linear-gradient(135deg,#6366F1,#4F46E5);color:white;border:none;border-radius:12px;padding:11px 24px;font-size:0.92rem;font-weight:800;font-family:Heebo,sans-serif;cursor:pointer;width:100%;">הבא ←</button>
+    <button id="dt-btn-1" style="background:linear-gradient(135deg,#6366F1,#4F46E5);color:white;border:none;border-radius:12px;padding:11px 24px;font-size:0.92rem;font-weight:800;font-family:Heebo,sans-serif;cursor:pointer;width:100%;">פתח תפריט ←</button>
   `, r1.bottom + 24);
 
   await new Promise(resolve => {
     document.getElementById('dt-btn-1').onclick = async () => {
       hideCard();
-      // Expand spot to cover screen
-      const diag = Math.hypot(window.innerWidth, window.innerHeight) * 2.4;
-      spot.style.width = diag + 'px'; spot.style.height = diag + 'px';
-      spot.style.left = (window.innerWidth/2 - diag/2) + 'px';
-      spot.style.top  = (window.innerHeight/2 - diag/2) + 'px';
-      await new Promise(r => setTimeout(r, 520));
+      await expandSpotToScreen();
       fadeLight();
       await new Promise(r => setTimeout(r, 160));
 
-      // ── Inter-phase shutter (like task tour) ──
-      const ish_t = document.createElement('div');
-      ish_t.style.cssText = 'position:fixed;top:0;left:0;right:0;height:0;background:#0F172A;z-index:9200;transition:height .38s ease-in;pointer-events:none;';
-      const ish_b = document.createElement('div');
-      ish_b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;height:0;background:#0F172A;z-index:9200;transition:height .38s ease-in;pointer-events:none;';
-      document.body.appendChild(ish_t); document.body.appendChild(ish_b);
-      await new Promise(r => setTimeout(r, 40));
-      ish_t.style.height = '52vh'; ish_b.style.height = '52vh';
-      await new Promise(r => setTimeout(r, 440));
+      // Shutter close
+      const sh1 = makeShutters();
+      await shuttersClose(sh1);
 
-      if (!childCards.length) { ish_t.remove(); ish_b.remove(); endTour(); resolve(); return; }
+      // Open side menu while screen is covered
+      openSideMenu({ auth, onAction: () => {} });
+      await new Promise(r => setTimeout(r, 120));
+      const menuEl = document.getElementById('side-menu');
 
-      // While screen is covered: reposition spot silently
+      // Silently move spot to cover the menu (rectangular)
       spot.style.transition = 'none';
-      setSpot(childCards[0], 18);
+      if (menuEl) setSpotRect(menuEl, 0);
       await new Promise(r => setTimeout(r, 30));
 
-      // Open shutters
-      ish_t.style.transition = 'height .38s ease-out';
-      ish_b.style.transition = 'height .38s ease-out';
-      ish_t.style.height = '0'; ish_b.style.height = '0';
-      await new Promise(r => setTimeout(r, 420));
-      ish_t.remove(); ish_b.remove();
+      // Open shutters revealing menu inside spotlight
+      await shuttersOpen(sh1);
 
-      spot.style.transition = 'width .55s ease,height .55s ease,left .55s ease,top .55s ease,box-shadow .6s';
-
-      // ── Phase 2: Child card ──
+      spot.style.transition = 'width .55s ease,height .55s ease,left .55s ease,top .55s ease,box-shadow .6s,border-radius .35s';
       fadeDark();
-      await new Promise(r => setTimeout(r, 650));
+      await new Promise(r => setTimeout(r, 700));
 
-      const r2 = childCards[0].getBoundingClientRect();
+      // ── Phase 1.5: Side menu card (left side, menu is on right) ──
+      infoCard.style.left = '12px';
+      infoCard.style.transform = 'none';
+      infoCard.style.width = 'min(205px,46vw)';
       showCard(`
-        <div style="font-size:1.7rem;margin-bottom:10px;">📊</div>
-        <div style="font-weight:900;font-size:1.05rem;color:#1E293B;margin-bottom:10px;">המדדים של הילד</div>
-        <div style="font-size:0.84rem;color:#64748B;line-height:1.85;margin-bottom:12px;">
-          <span style="display:inline-block;background:#FEF9C3;color:#713F12;border-radius:8px;padding:2px 9px;font-weight:700;">⭐ כוכבים השבוע</span><br>
-          <span style="display:inline-block;background:#DCFCE7;color:#14532D;border-radius:8px;padding:2px 9px;font-weight:700;margin-top:4px;">🗓️ כוכבים החודש</span><br>
-          <span style="display:inline-block;background:#FEE2E2;color:#991B1B;border-radius:8px;padding:2px 9px;font-weight:700;margin-top:4px;">✅ נותרו מטלות לביצוע</span>
+        <div style="font-size:1.4rem;margin-bottom:8px;">🗂️</div>
+        <div style="font-weight:900;font-size:0.92rem;color:#1E293B;margin-bottom:8px;">מה בתפריט?</div>
+        <div style="font-size:0.77rem;color:#475569;line-height:2.1;margin-bottom:12px;">
+          👨‍👩‍👧‍👦 <b>ניהול משפחה</b><br>
+          📋 <b>הוספת מטלות</b><br>
+          🎁 <b>הוספת פרסים</b><br>
+          ⭐ <b>ניהול ניקוד</b>
         </div>
-        <div style="font-size:0.8rem;color:#94A3B8;text-align:center;font-weight:700;border-top:1px solid #F1F5F9;padding-top:10px;">גע בריבוע הילד כדי להמשיך ↑</div>
-      `, r2.bottom + 18);
+        <button id="dt-btn-15" style="background:linear-gradient(135deg,#6366F1,#4F46E5);color:white;border:none;border-radius:12px;padding:10px 16px;font-size:0.86rem;font-weight:800;font-family:Heebo,sans-serif;cursor:pointer;width:100%;">הבא ←</button>
+      `, Math.round(window.innerHeight * 0.28));
 
-      // Tap on overlay (anywhere) = advance
-      const tapOnce = () => {
-        ov.onclick = null;
-        hideCard();
-        fadeLight();
-        setTimeout(endTour, 380);
-        resolve();
-      };
-      ov.onclick = tapOnce;
+      await new Promise(resolve2 => {
+        document.getElementById('dt-btn-15').onclick = async () => {
+          hideCard();
+          // Reset card to center for next phase
+          infoCard.style.left = '50%';
+          infoCard.style.transform = 'translateX(-50%)';
+          infoCard.style.width = 'min(300px,88vw)';
+
+          // Close side menu
+          closeSideMenu();
+          await new Promise(r => setTimeout(r, 200));
+
+          if (!childCards.length) { endTour(); resolve2(); return; }
+
+          // Expand spot to full screen
+          await expandSpotToScreen();
+          fadeLight();
+          await new Promise(r => setTimeout(r, 160));
+
+          // Shutter close
+          const sh2 = makeShutters();
+          await shuttersClose(sh2);
+
+          // Reset spot to child card (circular)
+          spot.style.transition = 'none';
+          setSpot(childCards[0], 18);
+          await new Promise(r => setTimeout(r, 30));
+
+          // Open shutters
+          await shuttersOpen(sh2);
+
+          spot.style.transition = 'width .55s ease,height .55s ease,left .55s ease,top .55s ease,box-shadow .6s,border-radius .35s';
+
+          // ── Phase 2: Child card spotlight ──
+          fadeDark();
+          await new Promise(r => setTimeout(r, 650));
+
+          const r2 = childCards[0].getBoundingClientRect();
+          showCard(`
+            <div style="font-size:1.7rem;margin-bottom:10px;">📊</div>
+            <div style="font-weight:900;font-size:1.05rem;color:#1E293B;margin-bottom:10px;">המדדים של הילד</div>
+            <div style="font-size:0.84rem;color:#64748B;line-height:1.85;margin-bottom:12px;">
+              <span style="display:inline-block;background:#FEF9C3;color:#713F12;border-radius:8px;padding:2px 9px;font-weight:700;">⭐ כוכבים השבוע</span><br>
+              <span style="display:inline-block;background:#DCFCE7;color:#14532D;border-radius:8px;padding:2px 9px;font-weight:700;margin-top:4px;">🗓️ כוכבים החודש</span><br>
+              <span style="display:inline-block;background:#FEE2E2;color:#991B1B;border-radius:8px;padding:2px 9px;font-weight:700;margin-top:4px;">✅ נותרו מטלות לביצוע</span>
+            </div>
+            <div style="font-size:0.8rem;color:#94A3B8;text-align:center;font-weight:700;border-top:1px solid #F1F5F9;padding-top:10px;">גע בכרטיס הילד כדי להמשיך ↑</div>
+          `, r2.bottom + 18);
+
+          const tapOnce = () => {
+            ov.onclick = null;
+            hideCard();
+            fadeLight();
+            setTimeout(endTour, 380);
+            resolve2();
+          };
+          ov.onclick = tapOnce;
+        };
+      });
+
+      resolve();
     };
   });
 }
