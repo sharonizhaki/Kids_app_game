@@ -30,7 +30,7 @@ export const TASK_SUGGESTIONS = [
 
 // =========== ADD TASK STATE ===========
 let taskSelectedEmoji = '';
-let taskSelectedStars = 0;
+let taskSelectedStars = 1;
 let taskSelectedFreq = '';
 let taskSelectedDays = [];
 let taskAssignedChildren = [];
@@ -51,7 +51,7 @@ let etSubFilter = '';
 export async function openAddTask(familyId) {
   // Reset
   document.getElementById('task-name-input').value = '';
-  taskSelectedStars = 0;
+  taskSelectedStars = 1;
   document.querySelectorAll('#task-stars-picker .star-btn').forEach(s => s.classList.remove('filled'));
   taskSelectedCat = '';
   document.getElementById('task-new-cat-input') && (document.getElementById('task-new-cat-input').value = '');
@@ -79,7 +79,7 @@ export async function openAddTask(familyId) {
   renderTaskEmojiGrid('task-emoji-grid', '', (emoji) => { taskSelectedEmoji = emoji; });
 
   // Stars picker
-  initStarsPicker('task-stars-picker', 0, (val) => { taskSelectedStars = val; });
+  initStarsPicker('task-stars-picker', 1, (val) => { taskSelectedStars = val; });
 
   // Frequency
   initFreqGrid('task-freq-grid', 'task-days-grid', '', [], (freq) => { taskSelectedFreq = freq; }, (days) => { taskSelectedDays = days; });
@@ -680,7 +680,7 @@ export function startTaskTour(familyId) {
       card.innerHTML = `
         <div class="tour-card-btns" style="margin-bottom:10px;">
           <span dir="ltr" style="font-size:0.78rem;color:var(--muted);">${idx + 1} / ${steps.length}</span>
-          <button class="tour-skip-btn" id="tour-skip">דלג</button>
+          ${idx < steps.length - 1 ? '<button class="tour-skip-btn" id="tour-skip">דלג</button>' : ''}
         </div>
         <h4>${step.title}</h4>
         <p>${step.text}</p>
@@ -697,7 +697,7 @@ export function startTaskTour(familyId) {
         currentStep++;
         if (currentStep >= steps.length) endTour(); else showStep(currentStep);
       };
-      document.getElementById('tour-skip').onclick = endTour;
+      document.getElementById('tour-skip')?.addEventListener('click', endTour);
 
       // Iris-open animation — starts ~130ms after spotlight begins (synced)
       setTimeout(() => card.classList.add('visible'), 130);
