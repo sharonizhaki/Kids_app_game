@@ -92,6 +92,10 @@ export function openSideMenu({ auth, onAction }) {
       <div class="side-icon" style="background:linear-gradient(135deg,#CCFBF1,#99F6E4);">⭐</div>
       <span class="side-item-text">ניהול ניקוד ומטלות</span>
     </div>
+    <div class="side-item" data-action="replay-tour">
+      <div class="side-icon" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);">🧭</div>
+      <span class="side-item-text">סיור מודרך</span>
+    </div>
     <div class="side-item" data-action="contact">
       <div class="side-icon" style="background:linear-gradient(135deg,#E0F2FE,#BAE6FD);">✉️</div>
       <span class="side-item-text">צור קשר</span>

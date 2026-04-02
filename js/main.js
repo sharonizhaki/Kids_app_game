@@ -200,6 +200,11 @@ document.getElementById('btn-open-menu').onclick = () => {
         else if (action === 'contact') window.open('mailto:support@example.com', '_blank');
         else if (action === 'terms') window.open('terms.html', '_blank');
         else if (action === 'delete-account') document.getElementById('btn-delete-account').click();
+        else if (action === 'replay-tour') {
+          const uid = auth.currentUser?.uid;
+          if (uid) localStorage.removeItem('dashTourDone_' + uid);
+          setTimeout(() => startDashTour(currentFamilyId, uid), 300);
+        }
       }
     });
   }
