@@ -642,7 +642,65 @@ document.getElementById('ob1-photo-input').onchange = (e) => {
 // Step 1 — back
 document.getElementById('ob1-back').onclick = () => showScreen('screen-join-family');
 
-// Step 1 — next (save child → screen 2)
+// Reset onboarding step-1 form for adding another child
+function resetOb1Form() {
+  document.getElementById('ob1-name').value = '';
+  obGender = '';
+  obChildPhoto = null;
+  document.getElementById('ob1-error').textContent = '';
+  document.querySelectorAll('.ob1-gender').forEach(b => {
+    b.style.borderColor = 'var(--border)';
+    b.style.background  = 'white';
+  });
+  document.getElementById('ob1-photo-circle').innerHTML =
+    `<span style="font-size:2rem;color:var(--muted);">📷</span>`;
+  document.getElementById('ob1-photo-input').value = '';
+}
+
+// Go to onboarding step 2 and generate invite code
+async function goToOnboard2() {
+  showScreen('screen-onboard-2');
+  document.getElementById('ob2-code').textContent = '——————';
+  const invResult = await createParentInviteCode(currentFamilyId);
+  if (invResult && invResult.code) {
+    document.getElementById('ob2-code').textContent = invResult.code;
+  }
+}
+
+// Success popup after child added in onboarding
+function showChildAddedPopup(name, gender, onAddMore, onContinue) {
+  const isBoy = gender === 'male';
+  const added = isBoy ? 'נוסף' : 'נוספה';
+  const anotherLabel = isBoy ? 'הוסף ילד/ה נוספ/ת' : 'הוסף ילד/ה נוספ/ת';
+
+  const backdrop = document.createElement('div');
+  backdrop.style.cssText = 'position:fixed;inset:0;z-index:7000;background:rgba(15,23,42,0.55);display:flex;align-items:center;justify-content:center;padding:24px;';
+
+  const card = document.createElement('div');
+  card.style.cssText = 'background:white;border-radius:28px;padding:30px 24px 24px;width:100%;max-width:340px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.28);animation:popIn .38s cubic-bezier(0.34,1.4,0.64,1);direction:rtl;font-family:Heebo,sans-serif;';
+
+  card.innerHTML = `
+    <div style="font-size:3.2rem;margin-bottom:10px;">🎉</div>
+    <div style="font-size:1.25rem;font-weight:900;color:#1E293B;margin-bottom:6px;">${name} ${added} בהצלחה!</div>
+    <div style="font-size:0.86rem;color:#64748B;margin-bottom:24px;line-height:1.5;">${isBoy ? 'הוא' : 'היא'} כבר חלק מהמשפחה שלך ✨</div>
+    <button id="pop-add-more" style="width:100%;padding:13px;background:#F1F5F9;border:2px dashed #CBD5E1;border-radius:16px;font-size:0.95rem;font-weight:800;font-family:Heebo,sans-serif;cursor:pointer;color:#475569;margin-bottom:10px;">➕ ${anotherLabel}</button>
+    <button id="pop-continue" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366F1,#4F46E5);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;box-shadow:0 6px 20px rgba(99,102,241,0.4);">המשך ←</button>
+  `;
+
+  backdrop.appendChild(card);
+  document.body.appendChild(backdrop);
+
+  card.querySelector('#pop-add-more').onclick = () => {
+    backdrop.remove();
+    onAddMore();
+  };
+  card.querySelector('#pop-continue').onclick = () => {
+    backdrop.remove();
+    onContinue();
+  };
+}
+
+// Step 1 — next (save child → popup → screen 2)
 document.getElementById('ob1-next').onclick = async () => {
   const name = document.getElementById('ob1-name').value.trim();
   const err  = document.getElementById('ob1-error');
@@ -673,13 +731,16 @@ document.getElementById('ob1-next').onclick = async () => {
     await saveChild(currentFamilyId, result.childId, { photo: obChildPhoto });
   }
 
-  // Step 2 — generate invite code
-  showScreen('screen-onboard-2');
-  document.getElementById('ob2-code').textContent = '——————';
-  const invResult = await createParentInviteCode(currentFamilyId);
-  if (invResult && invResult.code) {
-    document.getElementById('ob2-code').textContent = invResult.code;
-  }
+  const savedName   = name;
+  const savedGender = obGender;
+  resetOb1Form();
+
+  showChildAddedPopup(
+    savedName,
+    savedGender,
+    () => { /* onAddMore — form already reset, just stay on ob1 */ },
+    () => goToOnboard2()
+  );
 };
 
 // Step 2 — back
