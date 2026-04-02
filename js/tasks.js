@@ -122,7 +122,18 @@ export async function saveTask(familyId) {
 
   if (!name) { err.textContent = 'חובה להכניס שם מטלה'; highlightField(document.getElementById('task-name-input')); return; }
   if (!cat) { err.textContent = 'חובה לבחור קטגוריה'; highlightField(document.getElementById('task-cat-scroll')); return; }
-  if (taskAssignedChildren.length === 0) { err.textContent = 'חובה לשייך לפחות ילד אחד'; highlightField(document.getElementById('task-assign-grid')); return; }
+  if (taskAssignedChildren.length === 0) {
+    err.textContent = 'חובה לשייך לפחות ילד אחד';
+    const grid = document.getElementById('task-assign-grid');
+    grid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    navigator.vibrate && navigator.vibrate([80, 40, 80]);
+    grid.querySelectorAll('.assign-opt').forEach(el => {
+      el.classList.add('assign-error');
+      el.addEventListener('click', () => el.classList.remove('assign-error'), { once: true });
+      setTimeout(() => el.classList.remove('assign-error'), 1600);
+    });
+    return;
+  }
   if (!taskSelectedEmoji) { err.textContent = 'חובה לבחור אייקון'; highlightField(document.getElementById('task-emoji-grid')); return; }
   if (!taskSelectedStars || taskSelectedStars < 1) { err.textContent = 'חובה לבחור כוכבים'; highlightField(document.getElementById('task-stars-picker')); return; }
   if (!taskSelectedFreq) { err.textContent = 'חובה לבחור תדירות'; highlightField(document.getElementById('task-freq-grid')); return; }
@@ -387,7 +398,18 @@ export async function saveEditedTask(familyId) {
   const cat = etSelectedCat || document.getElementById('et-new-cat')?.value?.trim() || '';
   if (!cat) { err.textContent = 'חובה לבחור קטגוריה'; highlightField(document.getElementById('et-cat-scroll')); return; }
   const assigned = editingTask.getAssigned();
-  if (!assigned || assigned.length === 0) { err.textContent = 'חובה לשייך לפחות ילד אחד'; highlightField(document.getElementById('et-assign-grid')); return; }
+  if (!assigned || assigned.length === 0) {
+    err.textContent = 'חובה לשייך לפחות ילד אחד';
+    const grid = document.getElementById('et-assign-grid');
+    grid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    navigator.vibrate && navigator.vibrate([80, 40, 80]);
+    grid.querySelectorAll('.assign-opt').forEach(el => {
+      el.classList.add('assign-error');
+      el.addEventListener('click', () => el.classList.remove('assign-error'), { once: true });
+      setTimeout(() => el.classList.remove('assign-error'), 1600);
+    });
+    return;
+  }
   if (!etSelectedEmoji) { err.textContent = 'חובה לבחור אייקון'; highlightField(document.getElementById('et-emoji-grid')); return; }
   if (!etSelectedStars) { err.textContent = 'חובה לבחור כוכבים'; highlightField(document.getElementById('et-stars-picker')); return; }
   err.textContent = '';
