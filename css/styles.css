@@ -9,7 +9,7 @@
   --radius:18px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;}
+html,body{height:100%;overscroll-behavior:none;}
 body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
 
 /* === SCREENS === */

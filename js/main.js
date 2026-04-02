@@ -888,7 +888,7 @@ async function startDashTour(familyId, uid) {
     });
   }
 
-  dots.forEach((d, i) => { if (d) d.onclick = () => { clearAuto(); goTo(i); startAuto(3000); }; });
+  dots.forEach((d, i) => { if (d) d.onclick = () => { clearAuto(); goTo(i); startAuto(2000); }; });
 
   let startX = 0, startY = 0, dragging = false;
   let autoTimeout, autoInterval;
@@ -912,12 +912,13 @@ async function startDashTour(familyId, uid) {
     if (!dragging) return;
     const dx = e.touches[0].clientX - startX;
     const dy = e.touches[0].clientY - startY;
-    if (Math.abs(dy) > Math.abs(dx)) return;
+    if (Math.abs(dy) > Math.abs(dx) + 4) return;
+    e.preventDefault();
+    e.stopPropagation();
     const base   = -(current * (100 / total));
-    // LTR: finger right → previous slide, finger left → next slide
     const offset = (dx / slider.offsetWidth) * (100 / total);
     track.style.transform = `translateX(${base + offset}%)`;
-  }, { passive: true });
+  }, { passive: false });
 
   slider.addEventListener('touchend', e => {
     if (!dragging) return;
@@ -930,7 +931,7 @@ async function startDashTour(familyId, uid) {
     } else {
       goTo(current);
     }
-    startAuto(3000); // resume after 3s pause
+    startAuto(2000); // resume after 2s pause
   });
 
   startAuto();
