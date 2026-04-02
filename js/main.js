@@ -210,6 +210,12 @@ document.getElementById('btn-open-menu').onclick = () => {
   }
 };
 
+document.getElementById('btn-replay-tour').onclick = () => {
+  const uid = auth.currentUser?.uid;
+  if (uid) localStorage.removeItem('dashTourDone_' + uid);
+  startDashTour(currentFamilyId, uid);
+};
+
 // =========== CREATE CHILD ===========
 let selectedGender = '';
 
