@@ -662,41 +662,45 @@ export function startTaskTour(familyId) {
     const el = rawEl.closest('.form-section') || rawEl;
 
     card.classList.remove('visible');
+    void card.offsetWidth; // force reflow so animation resets cleanly
     shutterTop.style.height = '0px';
     shutterBottom.style.height = '0px';
     rawEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    // wait for shutters to fully close (0.5s transition) + scroll to settle
+    // wait for shutters to fully close + scroll to settle
     setTimeout(() => {
       const rect = el.getBoundingClientRect();
+
+      // Open spotlight shutters
       shutterTop.style.height = Math.max(0, rect.top - PAD) + 'px';
       shutterBottom.style.height = Math.max(0, window.innerHeight - rect.bottom - PAD) + 'px';
 
-      setTimeout(() => {
-        const dotsHTML = steps.map((_, i) => `<span class="tour-dot${i === idx ? ' active' : ''}"></span>`).join('');
-        card.innerHTML = `
-          <div class="tour-card-btns" style="margin-bottom:10px;">
-            <span dir="ltr" style="font-size:0.78rem;color:var(--muted);">${idx + 1} / ${steps.length}</span>
-            <button class="tour-skip-btn" id="tour-skip">דלג</button>
-          </div>
-          <h4>${step.title}</h4>
-          <p>${step.text}</p>
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <div style="display:flex;gap:5px;">${dotsHTML}</div>
-            <button class="tour-next-btn" id="tour-next">${idx === steps.length - 1 ? 'סיום ✅' : 'הבא ←'}</button>
-          </div>`;
+      // Populate card while spotlight is opening (no delay — just hidden via clip-path)
+      const dotsHTML = steps.map((_, i) => `<span class="tour-dot${i === idx ? ' active' : ''}"></span>`).join('');
+      card.innerHTML = `
+        <div class="tour-card-btns" style="margin-bottom:10px;">
+          <span dir="ltr" style="font-size:0.78rem;color:var(--muted);">${idx + 1} / ${steps.length}</span>
+          <button class="tour-skip-btn" id="tour-skip">דלג</button>
+        </div>
+        <h4>${step.title}</h4>
+        <p>${step.text}</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;gap:5px;">${dotsHTML}</div>
+          <button class="tour-next-btn" id="tour-next">${idx === steps.length - 1 ? 'סיום ✅' : 'הבא ←'}</button>
+        </div>`;
 
-        const fitsBelow = rect.bottom + 180 < window.innerHeight;
-        card.style.top = fitsBelow ? (rect.bottom + 8) + 'px' : 'auto';
-        card.style.bottom = fitsBelow ? 'auto' : (window.innerHeight - rect.top + 8) + 'px';
-        card.classList.add('visible');
+      const fitsBelow = rect.bottom + 180 < window.innerHeight;
+      card.style.top    = fitsBelow ? (rect.bottom + 8) + 'px' : 'auto';
+      card.style.bottom = fitsBelow ? 'auto' : (window.innerHeight - rect.top + 8) + 'px';
 
-        document.getElementById('tour-next').onclick = () => {
-          currentStep++;
-          if (currentStep >= steps.length) endTour(); else showStep(currentStep);
-        };
-        document.getElementById('tour-skip').onclick = endTour;
-      }, 480);
+      document.getElementById('tour-next').onclick = () => {
+        currentStep++;
+        if (currentStep >= steps.length) endTour(); else showStep(currentStep);
+      };
+      document.getElementById('tour-skip').onclick = endTour;
+
+      // Iris-open animation — starts ~130ms after spotlight begins (synced)
+      setTimeout(() => card.classList.add('visible'), 130);
     }, 520);
   }
 
