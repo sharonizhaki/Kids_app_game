@@ -724,8 +724,28 @@ document.getElementById('ob1-next').onclick = async () => {
   }
   err.textContent = '';
 
+  // בדיקה: שם כפול
+  const nameLC = name.toLowerCase();
+  const duplicate = childrenCache.find(c => c.name && c.name.toLowerCase() === nameLC);
+  if (duplicate) {
+    const isMale = duplicate.gender === 'male';
+    err.textContent = `${isMale ? 'ילד' : 'ילדה'} בשם "${name}" כבר ${isMale ? 'קיים' : 'קיימת'} במשפחה`;
+    const nameInput = document.getElementById('ob1-name');
+    nameInput.style.borderColor = '#F59E0B';
+    nameInput.style.background  = '#FFFBEB';
+    navigator.vibrate && navigator.vibrate([60, 30, 60]);
+    setTimeout(() => {
+      nameInput.style.borderColor = '#E2E8F0';
+      nameInput.style.background  = '#F8FAFC';
+    }, 2200);
+    return;
+  }
+
   const result = await createChild(currentFamilyId, name, obGender);
   if (result.error) { err.textContent = result.error; return; }
+
+  // עדכן cache מיד — למניעת כפילות באותה סשן
+  childrenCache.push({ id: result.childId, name, gender: obGender, photo: obChildPhoto || '' });
 
   if (obChildPhoto && result.childId) {
     await saveChild(currentFamilyId, result.childId, { photo: obChildPhoto });
