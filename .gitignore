@@ -1,6 +1,11 @@
+.replit
+replit.nix
 venv/
 .upm/
 __pycache__/
 node_modules/
-.replit
-replit.nix
+.artifacts/
+lib/
+scripts/
+package.json
+package-lock.json
