@@ -495,64 +495,80 @@
     <button class="back-btn" onclick="showScreen('screen-manage-family');renderFamily();">→</button>
     <h2>עריכת ילד/ה ✏️</h2>
   </div>
-  <div class="card">
-    <div class="input-group">
-      <label>שם</label>
-      <input type="text" id="edit-child-name" placeholder="שם הילד/ה" autocomplete="off">
-    </div>
-    <label style="font-weight:700;font-size:0.9rem;display:block;margin-bottom:8px;">מין</label>
-    <div class="gender-picker">
-      <div class="gender-opt" data-gender="male" id="edit-gender-male">👦</div>
-      <div class="gender-opt" data-gender="female" id="edit-gender-female">👧</div>
-    </div>
+  <div class="card" style="padding:16px 18px;">
 
-    <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">צבע 🎨</label>
-    <div id="edit-child-color-display" style="width:48px;height:48px;border-radius:50%;margin:0 auto 4px;border:3px solid var(--border);cursor:pointer;" title="לחץ לעריכה"></div>
-
-    <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">אימוג'י</label>
-    <div id="edit-child-emoji-display" style="font-size:2.4rem;text-align:center;min-height:48px;cursor:pointer;" title="לחץ לעריכה"></div>
-
-    <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">תמונה</label>
-    <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
-      <div class="photo-upload" id="edit-photo-upload" style="margin:0;">
-        <div class="ph-placeholder" id="edit-photo-placeholder">
-          <span>📷</span>
-          <small>בחר תמונה</small>
-        </div>
-        <img id="edit-photo-preview" style="display:none;" alt="">
-        <input type="file" accept="image/*" id="edit-photo-input">
+    <!-- שורה 1: שם + מין -->
+    <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:12px;">
+      <div style="flex:1;">
+        <label style="display:block;font-weight:700;font-size:0.85rem;margin-bottom:5px;color:var(--text);">שם</label>
+        <input type="text" id="edit-child-name" placeholder="שם הילד/ה" autocomplete="off"
+          style="width:100%;padding:11px 14px;border:2px solid var(--border);border-radius:12px;font-size:0.97rem;font-family:'Heebo',sans-serif;background:var(--card);color:var(--text);box-sizing:border-box;transition:border-color 0.2s;">
       </div>
-      <button class="btn btn-sm btn-secondary" id="btn-clear-photo" style="width:auto;padding:10px 14px;font-size:0.8rem;">🗑️ נקה</button>
+      <div style="display:flex;gap:7px;padding-bottom:3px;">
+        <div class="gender-opt" data-gender="male" id="edit-gender-male"
+          style="width:46px;height:46px;font-size:1.6rem;border-radius:12px;">👦</div>
+        <div class="gender-opt" data-gender="female" id="edit-gender-female"
+          style="width:46px;height:46px;font-size:1.6rem;border-radius:12px;">👧</div>
+      </div>
     </div>
 
-    <div id="edit-child-invite-section" style="display:none;margin-top:16px;padding:16px;background:#F8FAFC;border-radius:14px;">
-      <p style="font-weight:700;font-size:0.95rem;text-align:center;margin-bottom:14px;">⏳ ממתין לכניסה</p>
-      <div style="text-align:right;margin-bottom:14px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-          <span style="background:var(--primary);color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;flex-shrink:0;">1</span>
-          <span style="font-size:0.85rem;font-weight:600;">פתח את האפליקציה במכשיר של הילד/ה</span>
+    <!-- שורה 2: צבע + אימוג'י + תמונה -->
+    <div style="display:flex;justify-content:space-around;align-items:flex-start;margin-bottom:12px;background:#F8FAFC;border-radius:14px;padding:10px 6px;">
+      <div style="text-align:center;">
+        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">צבע 🎨</div>
+        <div id="edit-child-color-display"
+          style="width:44px;height:44px;border-radius:50%;margin:0 auto;border:3px solid var(--border);cursor:pointer;" title="לחץ לעריכה"></div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:2px;">אימוג'י</div>
+        <div id="edit-child-emoji-display"
+          style="font-size:2.1rem;min-height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="לחץ לעריכה"></div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">תמונה 📷</div>
+        <div style="display:flex;align-items:center;gap:5px;justify-content:center;">
+          <div class="photo-upload" id="edit-photo-upload" style="width:60px;height:60px;margin:0;">
+            <div class="ph-placeholder" id="edit-photo-placeholder">
+              <span style="font-size:1.2rem;">📷</span>
+              <small>בחר</small>
+            </div>
+            <img id="edit-photo-preview" style="display:none;" alt="">
+            <input type="file" accept="image/*" id="edit-photo-input">
+          </div>
+          <button class="btn btn-sm btn-secondary" id="btn-clear-photo"
+            style="width:auto;padding:7px 9px;font-size:0.78rem;min-width:unset;">🗑️</button>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-          <span style="background:var(--primary);color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;flex-shrink:0;">2</span>
-          <span style="font-size:0.85rem;font-weight:600;">בחר <strong>"אני ילד/ה"</strong></span>
+      </div>
+    </div>
+
+    <!-- סעיף הזמנה (מוסתר כברירת מחדל) -->
+    <div id="edit-child-invite-section" style="display:none;margin-bottom:12px;padding:12px;background:#F8FAFC;border-radius:14px;">
+      <p style="font-weight:700;font-size:0.88rem;text-align:center;margin-bottom:10px;">⏳ ממתין לכניסה</p>
+      <div style="text-align:right;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+          <span style="background:var(--primary);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:800;flex-shrink:0;">1</span>
+          <span style="font-size:0.81rem;font-weight:600;">פתח את האפליקציה במכשיר של הילד/ה</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+          <span style="background:var(--primary);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:800;flex-shrink:0;">2</span>
+          <span style="font-size:0.81rem;font-weight:600;">בחר <strong>"אני ילד/ה"</strong></span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
-          <span style="background:var(--primary);color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;flex-shrink:0;">3</span>
-          <span style="font-size:0.85rem;font-weight:600;">הזן את הקוד למטה</span>
+          <span style="background:var(--primary);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:800;flex-shrink:0;">3</span>
+          <span style="font-size:0.81rem;font-weight:600;">הזן את הקוד למטה</span>
         </div>
       </div>
-      <p style="color:var(--muted);font-size:0.78rem;text-align:center;margin-bottom:10px;">הקוד תקף ל-24 שעות ולבן משפחה אחד</p>
-      <div style="font-size:1.6rem;font-weight:900;letter-spacing:8px;color:var(--primary);direction:ltr;text-align:center;" id="edit-child-invite-code">000000</div>
-      <div style="text-align:center;margin-top:12px;">
-        <button class="btn btn-primary btn-sm" id="btn-share-child-code-edit" style="width:auto;padding:10px 24px;display:inline-flex;">📤 שתף קוד</button>
+      <p style="color:var(--muted);font-size:0.74rem;text-align:center;margin-bottom:8px;">הקוד תקף ל-24 שעות ולבן משפחה אחד</p>
+      <div style="font-size:1.5rem;font-weight:900;letter-spacing:8px;color:var(--primary);direction:ltr;text-align:center;" id="edit-child-invite-code">000000</div>
+      <div style="text-align:center;margin-top:10px;">
+        <button class="btn btn-primary btn-sm" id="btn-share-child-code-edit" style="width:auto;padding:9px 22px;display:inline-flex;">📤 שתף קוד</button>
       </div>
     </div>
 
     <div class="error-msg" id="edit-child-error"></div>
-    <div style="display:flex;gap:8px;margin-top:18px;">
+    <div style="display:flex;gap:8px;margin-top:6px;">
       <button class="btn btn-primary btn-sm" id="btn-save-child" style="flex:2;">שמור</button>
       <button class="btn btn-danger btn-sm" id="btn-delete-child" style="flex:1;">מחק</button>
-      <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-manage-family');renderFamily();" style="flex:1;">חזרה</button>
     </div>
   </div>
 </div>
