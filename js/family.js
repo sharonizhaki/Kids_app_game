@@ -27,7 +27,11 @@ export async function loadChildren(familyId) {
 // =========== RENDER FAMILY GRID ===========
 export function renderFamily(familyId) {
   const grid = document.getElementById('family-grid');
-  grid.style.justifyContent = childrenCache.length <= 2 ? 'center' : 'flex-start';
+  const count = childrenCache.length;
+  // ≤3 ילדים: מותאמים לרוחב שורה אחת. 4+ ילדים: גלילה אופקית
+  grid.classList.toggle('fit-row', count === 3);
+  grid.classList.toggle('scrollable', count > 3);
+  grid.style.justifyContent = count <= 2 ? 'center' : 'flex-start';
   if (childrenCache.length === 0) {
     grid.innerHTML = '<div class="empty-state">עדיין לא נוספו ילדים</div>';
   } else {
@@ -288,10 +292,20 @@ export async function renderDashboardChildren(familyId) {
     return;
   }
 
-  let cardWidth;
-  if (children.length === 1) cardWidth = 'min(200px,80vw)';
-  else if (children.length === 2) cardWidth = 'min(160px,44vw)';
-  else cardWidth = 'min(120px,30vw)';
+  const count = children.length;
+  // כיוון ורוחב של גריד הדשבורד
+  const gap = count <= 2 ? 14 : 10;
+  grid.style.gap = `${gap}px`;
+  grid.style.justifyContent = count <= 2 ? 'center' : 'flex-start';
+  grid.style.overflowX = count > 3 ? 'auto' : 'hidden';
+  grid.style.paddingBottom = count > 3 ? '10px' : '0';
+  if (count > 3) grid.style.scrollSnapType = 'x mandatory';
+
+  // סגנון כרטיס: 1 ילד — רחב, 2-3 ילדים — גמיש (ממלא שורה), 4+ — קבוע לגלילה
+  let cardFlexStyle;
+  if (count === 1) cardFlexStyle = 'width:min(200px,80vw);flex-shrink:0;';
+  else if (count <= 3) cardFlexStyle = 'flex:1;min-width:0;';
+  else cardFlexStyle = 'width:110px;flex-shrink:0;';
 
   const startOfWeek = (() => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - d.getDay()); return d.getTime(); })();
   const startOfMonth = (() => { const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); return d.getTime(); })();
@@ -339,7 +353,7 @@ export async function renderDashboardChildren(familyId) {
       : `<div style="background:#DCFCE7;border-radius:8px;padding:4px 6px;font-size:0.72rem;font-weight:700;color:#14532D;">✅ הכל בוצע!</div>`;
 
     return `
-      <div style="width:${cardWidth};background:white;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.08),inset -4px 0 0 ${color},inset 0 -3px 0 ${color}70;padding:16px 10px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;">
+      <div style="${cardFlexStyle}background:white;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.08),inset -4px 0 0 ${color},inset 0 -3px 0 ${color}70;padding:16px 10px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px;">
         ${photoHTML}
         <div style="font-weight:800;font-size:0.9rem;color:var(--text);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;">${child.name}</div>
         <div style="font-size:1.3rem;">${displayEmoji}</div>

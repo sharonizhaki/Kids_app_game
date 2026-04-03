@@ -101,9 +101,11 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
 .invite-timer{text-align:center;color:var(--muted);font-size:0.85rem;margin-bottom:12px;}
 
 /* === CHILD CARDS IN FAMILY === */
-.family-grid{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:12px;width:100%;max-width:420px;padding-bottom:10px;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;}
+.family-grid{display:flex;flex-wrap:nowrap;overflow-x:hidden;overflow-y:hidden;gap:12px;width:100%;max-width:420px;padding-bottom:4px;-webkit-overflow-scrolling:touch;}
+.family-grid.scrollable{overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:10px;}
 .family-grid::-webkit-scrollbar{display:none;}
 .child-card{background:var(--card);border-radius:var(--radius);padding:16px 12px;text-align:center;cursor:pointer;box-shadow:var(--shadow);transition:transform 0.15s;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:130px;max-width:130px;flex-shrink:0;min-height:130px;justify-content:center;scroll-snap-align:start;}
+.family-grid.fit-row .child-card{flex:1;min-width:0;max-width:none;flex-shrink:1;}
 .child-card:active{transform:scale(0.96);}
 .child-card .cc-photo{width:56px;height:56px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1.8rem;overflow:hidden;object-fit:cover;}
 .child-card .cc-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
