@@ -10,6 +10,7 @@ import { childrenCache, loadChildren } from './family.js';
 export const TASK_EMOJIS = ["🪥","🛏️","🚿","🧹","🧼","👕","🗑️","🍽️","🎒","📚","📖","✏️","🧮","🎨","🎵","💪","🌱","🐕","🍳","🚲","🧸","🎯","🎹","⭐","🏃","🧃","🍎","🦷","🎮","🌙"];
 export const DEFAULT_CATS = ['🧼 היגיינה','🏠 מטלות בית','📚 לימודים','🎯 אחריות','⭐ מיוחדות'];
 export const FREQ_LABELS = { daily:'📆 כל יום', weekly:'📋 פעם בשבוע', once:'☝️ חד פעמית', specific:'🗓️ ימים ספציפיים', '2week':'🔁 פעמיים בשבוע' };
+const FREQ_ORDER = { daily:0, '2week':1, weekly:2, specific:3, once:4 };
 export const TASK_SUGGESTIONS = [
   {name:'צחצוח שיניים בוקר', emoji:'🪥', cat:'🧼 היגיינה', pts:1, freq:'daily'},
   {name:'צחצוח שיניים ערב', emoji:'🪥', cat:'🧼 היגיינה', pts:1, freq:'daily'},
@@ -288,11 +289,12 @@ export function renderEditTasksList(familyId) {
     return;
   }
 
-  // sort
-  if (etFilter === 'stars') tasks.sort((a,b) => (b.pts||0) - (a.pts||0));
-  else if (etFilter === 'cat')   tasks.sort((a,b) => (a.cat||'').localeCompare(b.cat||''));
-  else if (etFilter === 'child') tasks.sort((a,b) => (a.childName||'').localeCompare(b.childName||''));
-  else if (etFilter === 'freq')  tasks.sort((a,b) => (a.freq||'').localeCompare(b.freq||''));
+  // sort — מיון ראשי + מיון משני לפי שם מטלה
+  const byName = (a,b) => (a.task||'').localeCompare(b.task||'', 'he');
+  if (etFilter === 'stars') tasks.sort((a,b) => (b.pts||0) - (a.pts||0) || byName(a,b));
+  else if (etFilter === 'cat')   tasks.sort((a,b) => (a.cat||'').localeCompare(b.cat||'','he') || byName(a,b));
+  else if (etFilter === 'child') tasks.sort((a,b) => (a.childName||'').localeCompare(b.childName||'','he') || byName(a,b));
+  else if (etFilter === 'freq')  tasks.sort((a,b) => (FREQ_ORDER[a.freq]??99) - (FREQ_ORDER[b.freq]??99) || byName(a,b));
   else tasks.sort((a,b) => b.taskId.localeCompare(a.taskId)); // newest first (by doc ID)
 
   if (tasks.length === 0) { list.innerHTML = '<div class="empty-state">אין מטלות להצגה</div>'; return; }
