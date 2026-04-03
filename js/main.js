@@ -76,10 +76,10 @@ async function refreshQuickTasksBanner(familyId) {
   } catch(e) { banner.style.display = 'none'; }
 }
 
-function dismissQuickBanner() {
-  localStorage.setItem(quickBannerKey(), '1');
+function animateBannerAway() {
   const inner = document.getElementById('quick-tasks-inner');
   const banner = document.getElementById('quick-tasks-banner');
+  if (!inner || !banner) return;
   // Phase 1 — quick puff up
   inner.style.transition = 'transform 0.1s ease-out, opacity 0.1s ease';
   inner.style.transform = 'scale(1.05)';
@@ -95,7 +95,7 @@ function dismissQuickBanner() {
       const h = banner.offsetHeight;
       banner.style.overflow = 'hidden';
       banner.style.maxHeight = h + 'px';
-      banner.style.transition = 'max-height 0.36s cubic-bezier(.4,0,.2,1), margin-top 0.36s ease, padding-bottom 0.36s ease';
+      banner.style.transition = 'max-height 0.36s cubic-bezier(.4,0,.2,1), margin-top 0.36s ease';
       requestAnimationFrame(() => {
         banner.style.maxHeight = '0';
         banner.style.marginTop = '0';
@@ -103,6 +103,11 @@ function dismissQuickBanner() {
       setTimeout(() => { banner.style.display = 'none'; }, 380);
     }, 440);
   }, 90);
+}
+
+function dismissQuickBanner() {
+  localStorage.setItem(quickBannerKey(), '1');
+  animateBannerAway();
 }
 
 async function handleQuickTasks(triggerEl, category) {
@@ -127,6 +132,13 @@ async function handleQuickTasks(triggerEl, category) {
       triggerEl.style.cursor = 'default';
       triggerEl.classList.add('quick-cat-done');
       triggerEl.addEventListener('animationend', () => triggerEl.classList.remove('quick-cat-done'), { once: true });
+
+      // אם כל 3 ריבועי הדשבורד הושלמו — יעלם אחרי השהיה
+      if (!isFormBtn) {
+        const allBtns = document.querySelectorAll('#quick-tasks-inner .quick-cat-btn');
+        const allDone = [...allBtns].every(b => b.innerHTML.includes('✅'));
+        if (allDone) setTimeout(animateBannerAway, 950);
+      }
     }
   } finally {
     if (triggerEl && !triggerEl.innerHTML.includes('✅')) {
