@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>המשימות שלי</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --child-color:#6366F1;
+      --bg:#F0F4FF; --card:#FFFFFF;
+      --text:#1E293B; --muted:#94A3B8; --border:#E2E8F0;
+      --shadow:0 4px 24px rgba(0,0,0,0.08);
+      --radius:18px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    html,body{height:100%;}
+    body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+    .screen{display:none;min-height:100vh;padding:20px 16px 100px;opacity:0;transition:opacity 0.3s ease;}
+    .screen.active{display:block;}
+    .screen.visible{opacity:1;}
+
+    /* === LOADING === */
+    .splash{display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}
+    .spinner-lg{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--child-color);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* === HEADER === */
+    .user-header{display:flex;align-items:center;gap:12px;max-width:480px;margin:0 auto 18px;}
+    .header-photo{width:44px;height:44px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;border:3px solid var(--child-color);cursor:pointer;}
+    .header-photo img{width:100%;height:100%;object-fit:cover;}
+    .user-header h2{font-size:1.5rem;font-weight:900;flex:1;}
+    .logout-btn{background:var(--card);border:2px solid var(--border);border-radius:50%;width:40px;height:40px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--muted);transition:transform 0.15s;}
+    .logout-btn:active{transform:scale(0.93);}
+
+    /* === GREETING CARD === */
+    .greeting-card{border-radius:var(--radius);padding:18px 20px;max-width:480px;margin:0 auto 16px;color:white;}
+    .greeting-text{font-size:1.1rem;font-weight:700;}
+    .greeting-sub{font-size:0.85rem;opacity:0.85;margin-top:3px;}
+
+    /* === STATS === */
+    .stats-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:480px;margin:0 auto 16px;}
+    .stat-card{background:var(--card);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);text-align:center;}
+    .stat-val{font-size:1.7rem;font-weight:900;}
+    .stat-label{font-size:0.78rem;color:var(--muted);margin-top:2px;}
+
+    /* === PROGRESS === */
+    .progress-card{background:var(--card);border-radius:var(--radius);padding:14px 18px;max-width:480px;margin:0 auto 16px;box-shadow:var(--shadow);}
+    .progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:0.88rem;font-weight:600;}
+    .progress-bar{height:22px;background:#F1F5F9;border-radius:11px;overflow:hidden;position:relative;}
+    .progress-fill{height:100%;border-radius:11px;transition:width 0.6s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden;}
+    .progress-fill::after{content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);animation:shimmer 2s infinite;}
+    @keyframes shimmer{0%{left:-100%}100%{left:100%}}
+    .progress-pts-label{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:0.75rem;font-weight:700;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.3);}
+
+    /* === CATEGORIES === */
+    .categories-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:480px;margin:0 auto 20px;}
+    .cat-btn{background:var(--card);border:none;border-radius:var(--radius);padding:20px 10px;text-align:center;cursor:pointer;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;gap:8px;min-height:110px;transition:transform 0.15s;width:100%;}
+    .cat-btn:active{transform:scale(0.95);}
+    .cat-icon{font-size:2.2rem;}
+    .cat-name{font-size:0.92rem;font-weight:700;line-height:1.2;}
+    .cat-count{font-size:0.75rem;color:var(--muted);}
+    .cat-done{font-size:0.72rem;background:#DCFCE7;color:#15803D;border-radius:6px;padding:2px 7px;font-weight:600;}
+
+    /* === HISTORY === */
+    .history-section{max-width:480px;margin:0 auto;}
+    .history-section h3{font-size:0.95rem;font-weight:700;margin-bottom:10px;}
+    .history-list{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+    .hi-item{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #F1F5F9;}
+    .hi-item:last-child{border-bottom:none;}
+    .hi-emoji{font-size:1.3rem;}
+    .hi-info{flex:1;}
+    .hi-info strong{display:block;font-weight:600;font-size:0.9rem;}
+    .hi-info span{color:var(--muted);font-size:0.78rem;}
+    .hi-pts{font-weight:700;color:#10B981;}
+
+    /* === TASK MODAL === */
+    .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.65);display:flex;align-items:center;justify-content:center;z-index:1000;animation:fadeIn 0.2s ease;}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .modal-sheet{background:var(--card);border-radius:24px;width:90%;max-width:420px;max-height:80vh;overflow-y:auto;animation:modalPop 0.25s cubic-bezier(.4,0,.2,1);}
+    @keyframes modalPop{from{transform:scale(0.9);opacity:0}to{transform:scale(1);opacity:1}}
+    .modal-handle{width:44px;height:5px;background:#E2E8F0;border-radius:3px;margin:14px auto 0;}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;}
+    .modal-header h2{font-size:1.15rem;font-weight:800;}
+    .modal-close{background:#F1F5F9;border:none;border-radius:50%;width:36px;height:36px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .modal-body{padding:8px 16px 40px;}
+
+    .task-card{background:#F8FAFC;border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;border:2px solid transparent;transition:border-color 0.15s,background 0.15s;display:flex;align-items:center;gap:12px;}
+    .task-card:active{border-color:#CBD5E1;background:#F0F4FF;}
+    .task-card.done{opacity:0.38;pointer-events:none;}
+    .tc-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0;}
+    .tc-emoji{font-size:1.9rem;flex-shrink:0;}
+    .tc-info{flex:1;min-width:0;}
+    .tc-info strong{display:block;font-weight:700;font-size:0.93rem;}
+    .freq-tag{font-size:0.7rem;padding:2px 7px;border-radius:6px;font-weight:600;margin-top:3px;display:inline-block;}
+    .freq-daily{background:#DBEAFE;color:#1D4ED8;}
+    .freq-2week{background:#EDE9FE;color:#6D28D9;}
+    .freq-weekly{background:#FEF3C7;color:#92400E;}
+    .tc-pts{font-weight:800;font-size:1rem;color:#10B981;flex-shrink:0;}
+
+    .task-emoji-display{font-size:5rem;text-align:center;display:block;margin:8px 0 16px;line-height:1.2;letter-spacing:4px;}
+    .td-desc{color:#475569;line-height:1.65;margin-bottom:14px;font-size:0.95rem;}
+    .td-meta{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+    .td-meta span{background:#F1F5F9;border-radius:8px;padding:5px 12px;font-size:0.82rem;font-weight:600;color:#475569;}
+    .done-btn{width:100%;padding:18px;background:linear-gradient(135deg,#10B981,#059669);color:white;border:none;border-radius:16px;font-size:1.15rem;font-weight:800;cursor:pointer;font-family:'Heebo',sans-serif;box-shadow:0 4px 16px rgba(16,185,129,0.35);transition:transform 0.1s;}
+    .done-btn:active{transform:scale(0.97);}
+
+    .success-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);background:linear-gradient(135deg,#10B981,#059669);color:white;padding:22px 44px;border-radius:22px;font-size:1.5rem;font-weight:800;z-index:3000;opacity:0;transition:opacity 0.25s,transform 0.25s;pointer-events:none;text-align:center;box-shadow:0 8px 40px rgba(16,185,129,0.4);}
+    .success-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+
+    .empty-state{text-align:center;padding:28px;color:var(--muted);font-size:0.92rem;}
+
+    .emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px 0;}
+    .emoji-opt{width:100%;aspect-ratio:1;border-radius:12px;border:3px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:1.5rem;cursor:pointer;transition:transform 0.12s,border-color 0.2s;}
+    .emoji-opt:active{transform:scale(0.9);}
+    .emoji-opt.selected{border-color:var(--child-color);background:#F0F0FF;box-shadow:0 0 0 3px rgba(99,102,241,0.2);}
+    .color-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:12px 0;}
+    .color-opt{width:100%;aspect-ratio:1;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:transform 0.12s,box-shadow 0.2s;}
+    .color-opt:active{transform:scale(0.88);}
+    .color-opt.selected{border-color:var(--text);box-shadow:0 0 0 4px rgba(30,41,59,0.15);}
+  </style>
+</head>
+<body>
+
+<!-- ==================== SPLASH ==================== -->
+<div id="screen-splash" class="screen active visible">
+  <div class="splash">
+    <div>
+      <div style="font-size:3rem;margin-bottom:16px;">⭐</div>
+      <div class="spinner-lg"></div>
+      <p style="font-weight:700;color:var(--muted);">טוען...</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MAIN CHILD SCREEN ==================== -->
+<div id="screen-child" class="screen">
+  <div class="user-header">
+    <div class="header-photo" id="child-header-photo">
+      <span id="child-header-emoji">⭐</span>
+    </div>
+    <h2 id="child-title">שלום!</h2>
+    <button class="logout-btn" id="btn-child-logout" title="יציאה">🚪</button>
+  </div>
+
+  <div class="greeting-card" id="greeting-card">
+    <div class="greeting-text" id="greeting-text"></div>
+    <div class="greeting-sub" id="greeting-sub"></div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="pb-val" style="color:var(--child-color);">0</div>
+      <div class="stat-label">כוכבים השבוע ⭐</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="monthly-val" style="color:var(--child-color);">0</div>
+      <div class="stat-label">כוכבים החודש 🌙</div>
+    </div>
+  </div>
+
+  <div class="progress-card">
+    <div class="progress-header">
+      <span>התקדמות שבועית 🎯</span>
+      <span id="progress-text">0 / 100 כוכבים</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width:0%">
+        <span class="progress-pts-label" id="progress-pts-label"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="categories-grid" id="cats-grid"></div>
+
+  <div class="history-section">
+    <h3>פעולות אחרונות 📋</h3>
+    <div class="history-list" id="user-hist">
+      <div class="empty-state">עדיין לא ביצעת משימות</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: CHILD PROFILE EDIT ==================== -->
+<div id="screen-child-profile" class="screen" style="padding-top:20px;">
+  <div class="user-header">
+    <button class="back-btn" id="btn-profile-back" style="border:2px solid var(--border);">→</button>
+    <h2>הפרופיל שלי ✏️</h2>
+  </div>
+  <div style="background:var(--card);border-radius:var(--radius);padding:22px 20px;box-shadow:var(--shadow);max-width:480px;margin:0 auto;width:100%;">
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="font-weight:700;font-size:1.2rem;" id="profile-child-name"></div>
+      <div style="font-size:0.85rem;color:var(--muted);margin-top:4px;" id="profile-child-gender"></div>
+    </div>
+
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">צבע 🎨</label>
+    <div id="profile-color-display" style="width:48px;height:48px;border-radius:50%;margin:0 auto 4px;border:3px solid var(--border);cursor:pointer;" title="לחץ לעריכה"></div>
+
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">אימוג'י</label>
+    <div id="profile-emoji-display" style="font-size:2.4rem;text-align:center;min-height:48px;cursor:pointer;" title="לחץ לעריכה"></div>
+
+    <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">תמונה</label>
+    <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
+      <div style="width:100px;height:100px;border-radius:50%;border:3px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;background:var(--card);" id="profile-photo-upload">
+        <div id="profile-photo-placeholder" style="text-align:center;color:var(--muted);"><span style="font-size:1.6rem;display:block;">📷</span><small style="font-size:0.7rem;">בחר תמונה</small></div>
+        <img id="profile-photo-preview" style="display:none;width:100%;height:100%;object-fit:cover;" alt="">
+        <input type="file" accept="image/*" id="profile-photo-input" style="position:absolute;inset:0;opacity:0;cursor:pointer;">
+      </div>
+      <button id="btn-profile-clear-photo" style="padding:10px 14px;font-size:0.8rem;background:var(--card);border:2px solid var(--border);border-radius:12px;font-family:'Heebo',sans-serif;font-weight:700;cursor:pointer;">🗑️ נקה</button>
+    </div>
+
+    <div style="color:var(--danger);font-size:0.85rem;font-weight:600;text-align:center;min-height:20px;margin:8px 0;" id="profile-error"></div>
+    <button id="btn-profile-save" style="width:100%;padding:16px;background:linear-gradient(135deg,#10B981,#059669);color:white;border:none;border-radius:16px;font-size:1.05rem;font-weight:800;cursor:pointer;font-family:'Heebo',sans-serif;box-shadow:0 4px 16px rgba(16,185,129,0.35);margin-top:8px;">שמור ✅</button>
+  </div>
+</div>
+
+<div class="success-toast" id="toast"></div>
+
+<!-- ==================== SCRIPT ==================== -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, getDocs, collection, query, where, updateDoc, onSnapshot, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag",
+  authDomain: "kidssapp-izhaki.firebaseapp.com",
+  databaseURL: "https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kidssapp-izhaki",
+  storageBucket: "kidssapp-izhaki.firebasestorage.app",
+  messagingSenderId: "663906163746",
+  appId: "1:663906163746:web:a4f66772a2ae0dedc47e7b"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// =========== STATE ===========
+let childId = localStorage.getItem('childId');
+let familyId = localStorage.getItem('childFamilyId');
+let childData = null;
+let tasksData = []; // will come from Firestore when parent creates them
+let childState = null; // points, completions, history
+
+const FREQ_LABEL = { daily: "כל יום", "2week": "פעמיים בשבוע", weekly: "פעם בשבוע", once: "חד פעמית", specific: "ימים ספציפיים" };
+const FREQ_CLS = { daily: "freq-daily", "2week": "freq-2week", weekly: "freq-weekly" };
+const DAYS = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+
+const GREETINGS_M = ["יאללה נתחיל! 💪","בוא נעשה את זה! 🚀","היום תהיה מדהים! ✨","מוכן לאסוף כוכבים? 🔥","הגיבור שלנו הגיע! 🦸‍♂️"];
+const GREETINGS_F = ["יאללה נתחילי! 💪","בואי נעשה את זה! 🚀","היום תהיי מדהימה! ✨","מוכנה לאסוף כוכבים? 🔥","הגיבורה שלנו הגיעה! 🦸‍♀️"];
+
+// =========== HELPERS ===========
+function starsHTML(n) {
+  const filled = Math.min(Math.max(n || 0, 0), 5);
+  return '⭐'.repeat(filled) + '<span style="opacity:0.25;">⭐</span>'.repeat(5 - filled);
+}
+function starsText(n) {
+  return '⭐'.repeat(Math.min(Math.max(n || 0, 0), 5));
+}
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active','visible'); });
+  const next = document.getElementById(id);
+  next.classList.add('active');
+  requestAnimationFrame(() => requestAnimationFrame(() => next.classList.add('visible')));
+}
+
+function showToast(pts) {
+  const el = document.getElementById('toast');
+  el.innerHTML = `כל הכבוד! 🎉<br><span style="font-size:1.2rem">+${starsText(pts)}</span>`;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1800);
+  const c = childData?.color || '#6366F1';
+  const colors = [c, '#FCD34D', '#10B981', '#EC4899', '#3B82F6'];
+  confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 }, colors });
+  setTimeout(() => confetti({ particleCount: 50, angle: 60, spread: 55, origin: { x: 0, y: 0.65 }, colors }), 200);
+  setTimeout(() => confetti({ particleCount: 50, angle: 120, spread: 55, origin: { x: 1, y: 0.65 }, colors }), 400);
+}
+
+function weekKey() {
+  // Week starts Sunday (after Saturday night)
+  const d = new Date(), day = d.getDay();
+  const sun = new Date(d); sun.setDate(d.getDate() - day);
+  return `w-${sun.getFullYear()}-${sun.getMonth()}-${sun.getDate()}`;
+}
+function monthKey() {
+  const d = new Date();
+  return `m-${d.getFullYear()}-${d.getMonth()}`;
+}
+function todayKey() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
+
+function defaultState() {
+  return { pts: 0, monthlyPts: 0, comp: {}, hist: [], lastActive: "", wk: weekKey(), mk: monthKey() };
+}
+
+// =========== CHECK AUTH & LOAD ===========
+if (!childId || !familyId) {
+  window.location.href = 'index.html';
+} else {
+  loadChild();
+}
+
+async function loadChild() {
+  try {
+    // Load child profile
+    const childSnap = await getDoc(doc(db, 'families', familyId, 'children', childId));
+    if (!childSnap.exists()) {
+      // Child was deleted
+      localStorage.removeItem('childId');
+      localStorage.removeItem('childFamilyId');
+      localStorage.removeItem('childAnonUid');
+      window.location.href = 'index.html';
+      return;
+    }
+    childData = childSnap.data();
+
+    // Set child color
+    if (childData.color) {
+      document.documentElement.style.setProperty('--child-color', childData.color);
+    }
+
+    // Load child state (points, history etc)
+    const stateSnap = await getDoc(doc(db, 'families', familyId, 'children', childId, 'state', 'current'));
+    if (stateSnap.exists()) {
+      childState = stateSnap.data();
+      // Ensure fields exist
+      if (childState.monthlyPts === undefined) childState.monthlyPts = 0;
+      if (!childState.mk) childState.mk = monthKey();
+
+      let changed = false;
+
+      // Check month reset (1st of month) — only reset monthly accumulator
+      if (childState.mk !== monthKey()) {
+        childState.monthlyPts = 0;
+        childState.mk = monthKey();
+        changed = true;
+      }
+      // Check week reset (Sunday after Saturday night) — add weekly to monthly, reset weekly
+      if (childState.wk !== weekKey()) {
+        childState.monthlyPts = (childState.monthlyPts || 0) + (childState.pts || 0);
+        childState.pts = 0;
+        childState.comp = {};
+        childState.wk = weekKey();
+        changed = true;
+      }
+
+      if (changed) await saveState();
+    } else {
+      childState = defaultState();
+      await saveState();
+    }
+
+    // Load tasks assigned to this child from central collection
+    try {
+      const tasksSnap = await getDocs(collection(db, 'families', familyId, 'tasks'));
+      tasksData = [];
+      tasksSnap.forEach(d => {
+        const data = d.data();
+        if (data.assignedChildren && data.assignedChildren.includes(childId)) {
+          tasksData.push({ id: d.id, ...data });
+        }
+      });
+    } catch(e) {
+      tasksData = [];
+    }
+
+    // Render
+    renderChild();
+    show('screen-child');
+
+    // Listen for real-time updates on tasks
+    onSnapshot(collection(db, 'families', familyId, 'tasks'), (snap) => {
+      tasksData = [];
+      snap.forEach(d => {
+        const data = d.data();
+        if (data.assignedChildren && data.assignedChildren.includes(childId)) {
+          tasksData.push({ id: d.id, ...data });
+        }
+      });
+      renderCategories();
+    });
+
+  } catch(e) {
+    console.error('Error loading child:', e);
+    show('screen-child');
+  }
+}
+
+async function saveState() {
+  try {
+    const stateRef = doc(db, 'families', familyId, 'children', childId, 'state', 'current');
+    await updateDoc(stateRef, childState).catch(async () => {
+      // Doc doesn't exist yet, create it
+      const { setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+      await setDoc(stateRef, childState);
+    });
+  } catch(e) {
+    console.error('Error saving state:', e);
+  }
+}
+
+// =========== RENDER ===========
+function renderChild() {
+  if (!childData || !childState) return;
+
+  // Header
+  const photoEl = document.getElementById('child-header-photo');
+  const emojiEl = document.getElementById('child-header-emoji');
+  if (childData.photo && childData.photo.length > 10) {
+    photoEl.innerHTML = `<img src="${childData.photo}" alt="${childData.name}">`;
+  } else {
+    emojiEl.textContent = childData.emoji || '⭐';
+  }
+  document.getElementById('child-title').textContent = childData.name;
+
+  // Greeting
+  const gc = document.getElementById('greeting-card');
+  gc.style.background = `linear-gradient(135deg, ${childData.color || '#6366F1'}, ${darkenColor(childData.color || '#6366F1')})`;
+  gc.style.boxShadow = `0 6px 24px ${childData.color || '#6366F1'}55`;
+
+  const greetings = childData.gender === 'female' ? GREETINGS_F : GREETINGS_M;
+  document.getElementById('greeting-text').textContent = `שלום ${childData.name}! ${greetings[Math.floor(Math.random() * greetings.length)]}`;
+
+  const todayDone = tasksData.filter(t => isDone(t)).length;
+  const subText = todayDone > 0
+    ? `ביצעת ${todayDone} משימות היום - כל הכבוד! 🎉`
+    : (childData.gender === 'female' ? 'בחרי קטגוריה והתחילי!' : 'בחר קטגוריה והתחל!');
+  document.getElementById('greeting-sub').textContent = subText;
+
+  // Stats
+  document.getElementById('pb-val').textContent = childState.pts || 0;
+  document.getElementById('monthly-val').textContent = (childState.monthlyPts || 0) + (childState.pts || 0);
+
+  // Progress
+  const pts = childState.pts || 0;
+  const pct = Math.min(100, Math.round(pts / 100 * 100));
+  document.getElementById('progress-text').textContent = `${pts} / 100 כוכבים`;
+  const pf = document.getElementById('progress-fill');
+  pf.style.background = `linear-gradient(90deg, ${childData.color || '#6366F1'}, ${lightenColor(childData.color || '#6366F1')})`;
+  pf.style.width = '0%';
+  const pl = document.getElementById('progress-pts-label');
+  if (pl) pl.textContent = pts > 2 ? `${pts} ⭐` : '';
+  setTimeout(() => pf.style.width = pct + '%', 100);
+
+  // Categories
+  renderCategories();
+
+  // History
+  renderHistory();
+}
+
+function renderCategories() {
+  const grid = document.getElementById('cats-grid');
+  const visibleTasks = tasksData.filter(t => !t.hidden);
+  if (visibleTasks.length === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">עדיין לא הוגדרו מטלות 📋<br><small style="color:var(--muted);">ההורים צריכים להוסיף מטלות</small></div>';
+    return;
+  }
+
+  // Group by category
+  const cats = {};
+  visibleTasks.forEach(t => {
+    const cat = t.cat || 'כללי';
+    if (!cats[cat]) cats[cat] = [];
+    cats[cat].push(t);
+  });
+
+  grid.innerHTML = Object.entries(cats).map(([cat, tasks]) => {
+    const dn = tasks.filter(t => isDone(t)).length;
+    const icon = tasks[0]?.catIcon || '📋';
+    return `<button class="cat-btn" data-cat="${cat}">
+      <span class="cat-icon">${icon}</span>
+      <span class="cat-name">${cat}</span>
+      ${dn === tasks.length ? '<span class="cat-done">✅ הושלם!</span>' : `<span class="cat-count">${dn}/${tasks.length} בוצעו</span>`}
+    </button>`;
+  }).join('');
+
+  grid.querySelectorAll('.cat-btn').forEach(b => {
+    b.onclick = () => showCatModal(b.dataset.cat);
+  });
+}
+
+function renderHistory() {
+  const hl = document.getElementById('user-hist');
+  const items = (childState.hist || []).slice(0, 10);
+  hl.innerHTML = items.length ? items.map(h => `
+    <div class="hi-item">
+      <span class="hi-emoji">${h.emoji || '⭐'}</span>
+      <div class="hi-info"><strong>${h.task}</strong><span>${h.day} ${h.time}</span></div>
+      <span class="hi-pts">${starsText(h.pts)}</span>
+    </div>`).join('') : '<div class="empty-state">עדיין לא ביצעת משימות</div>';
+}
+
+// =========== TASK LOGIC ===========
+function isDone(t) {
+  const c = childState.comp?.[t.id];
+  if (!c) return false;
+  if (t.freq === 'daily') return c.d === todayKey();
+  if (t.freq === '2week') {
+    if (c.wc >= (t.limit || 2)) return true;
+    if (!c.d) return false;
+    const last = new Date(c.lastTs || 0);
+    const diffDays = Math.floor((new Date() - last) / (1000 * 60 * 60 * 24));
+    return diffDays < 2;
+  }
+  if (t.freq === 'weekly') return c.wc >= 1;
+  return false;
+}
+
+function completeTask(t) {
+  const d = new Date();
+  const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  const day = DAYS[d.getDay()];
+
+  childState.pts = (childState.pts || 0) + t.pts;
+  const c = childState.comp?.[t.id] || { wc: 0, d: '', count: 0, lastTs: 0 };
+  c.wc++; c.d = todayKey(); c.count++; c.lastTs = Date.now();
+  if (!childState.comp) childState.comp = {};
+  childState.comp[t.id] = c;
+
+  childState.lastActive = todayKey();
+
+  // History
+  if (!childState.hist) childState.hist = [];
+  childState.hist.unshift({ task: t.task, emoji: t.emojis?.split?.(' ')?.[0] || t.emoji || '⭐', pts: t.pts, time, day, ts: Date.now() });
+  if (childState.hist.length > 50) childState.hist.pop();
+
+  saveState();
+}
+
+// =========== MODALS ===========
+function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.remove()); }
+
+function makeModal(title) {
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  const sh = document.createElement('div'); sh.className = 'modal-sheet';
+  sh.innerHTML = `<div class="modal-handle"></div>
+    <div class="modal-header"><h2>${title}</h2><button class="modal-close">✕</button></div>
+    <div class="modal-body"></div>`;
+  sh.querySelector('.modal-close').onclick = () => ov.remove();
+  ov.appendChild(sh);
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  document.body.appendChild(ov);
+  return sh.querySelector('.modal-body');
+}
+
+function showCatModal(cat) {
+  const tasks = tasksData.filter(t => (t.cat || 'כללי') === cat && !t.hidden);
+  const body = makeModal(`${tasks[0]?.catIcon || '📋'} ${cat}`);
+  tasks.forEach(t => {
+    const done = isDone(t);
+    const d = document.createElement('div');
+    d.className = `task-card${done ? ' done' : ''}`;
+    d.innerHTML = `<div class="tc-left">
+      <span class="tc-emoji">${t.emoji || '⭐'}</span>
+      <div class="tc-info"><strong>${t.task}</strong><span class="freq-tag ${FREQ_CLS[t.freq] || ''}">${FREQ_LABEL[t.freq] || ''}</span></div>
+    </div>
+    <span class="tc-pts">${done ? '✅' : starsText(t.pts)}</span>`;
+    if (!done) d.onclick = () => showTaskDetail(t);
+    body.appendChild(d);
+  });
+}
+
+function showTaskDetail(t) {
+  closeModals();
+  const body = makeModal(t.task);
+  if (t.emojis || t.emoji) {
+    const emojiDisplay = document.createElement('span');
+    emojiDisplay.className = 'task-emoji-display';
+    emojiDisplay.textContent = t.emojis || t.emoji;
+    body.appendChild(emojiDisplay);
+  }
+  const desc = document.createElement('p'); desc.className = 'td-desc'; desc.textContent = t.desc || '';
+  const meta = document.createElement('div'); meta.className = 'td-meta';
+  meta.innerHTML = `<span>${starsText(t.pts)}</span><span>🔁 ${FREQ_LABEL[t.freq] || ''}</span>`;
+  const btn = document.createElement('button'); btn.className = 'done-btn'; btn.textContent = '✅ בוצע!';
+  btn.onclick = () => {
+    completeTask(t);
+    closeModals();
+    showToast(t.pts);
+    renderChild();
+  };
+  body.append(desc, meta, btn);
+}
+
+// =========== LOGOUT ===========
+document.getElementById('btn-child-logout').onclick = () => {
+  if (confirm('לצאת מהחשבון?')) {
+    localStorage.removeItem('childId');
+    localStorage.removeItem('childFamilyId');
+    localStorage.removeItem('childAnonUid');
+    signOut(auth).then(() => {
+      window.location.href = 'index.html';
+    });
+  }
+};
+
+// =========== COLOR UTILS ===========
+function darkenColor(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgb(${Math.max(0, r - 40)},${Math.max(0, g - 40)},${Math.max(0, b - 40)})`;
+}
+function lightenColor(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgb(${Math.min(255, r + 60)},${Math.min(255, g + 60)},${Math.min(255, b + 60)})`;
+}
+
+// =========== CHILD PROFILE EDIT ===========
+const PROFILE_EMOJIS = ["🦁","🐱","🦄","🐶","🐸","🦊","🐼","🦋","🌟","🎈","🐯","🐰","🦜","🐻","🎀","🚀","⚽","🎸","🌈","🧸","🐬","🦕","🐝","🍀"];
+const PROFILE_COLORS = ["#EF4444","#F59E0B","#10B981","#3B82F6","#8B5CF6","#EC4899","#06B6D4","#F97316","#84CC16","#6366F1"];
+let profileEmoji = '';
+let profileColor = '';
+let profilePhotoData = null;
+let profilePhotoCleared = false;
+
+// Click on header photo to open profile
+document.getElementById('child-header-photo').onclick = () => {
+  if (!childData) return;
+  openChildProfile();
+};
+
+function openChildProfile() {
+  profileEmoji = childData.emoji || '';
+  profileColor = childData.color || '';
+  profilePhotoData = null;
+  profilePhotoCleared = false;
+
+  document.getElementById('profile-child-name').textContent = childData.name;
+  document.getElementById('profile-child-gender').textContent = childData.gender === 'female' ? '👧 נקבה' : '👦 זכר';
+
+  // Color
+  const colorEl = document.getElementById('profile-color-display');
+  colorEl.style.background = childData.color || 'var(--border)';
+  colorEl.onclick = () => showProfileColorModal();
+
+  // Emoji
+  const emojiEl = document.getElementById('profile-emoji-display');
+  emojiEl.textContent = childData.emoji || '—';
+  emojiEl.onclick = () => showProfileEmojiModal();
+
+  // Photo
+  const preview = document.getElementById('profile-photo-preview');
+  const placeholder = document.getElementById('profile-photo-placeholder');
+  if (childData.photo && childData.photo.length > 10) {
+    preview.src = childData.photo;
+    preview.style.display = 'block';
+    placeholder.style.display = 'none';
+  } else {
+    preview.style.display = 'none';
+    placeholder.style.display = '';
+  }
+
+  document.getElementById('profile-error').textContent = '';
+  show('screen-child-profile');
+}
+
+function showProfileEmojiModal() {
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  const sh = document.createElement('div'); sh.className = 'modal-sheet';
+  sh.innerHTML = `<div class="modal-handle"></div>
+    <div class="modal-header"><h2>בחר אימוג'י</h2><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="emoji-grid">${PROFILE_EMOJIS.map(e => `<div class="emoji-opt${e===profileEmoji?' selected':''}" data-emoji="${e}">${e}</div>`).join('')}</div>
+    </div>`;
+  sh.querySelector('.modal-close').onclick = () => ov.remove();
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  sh.querySelectorAll('.emoji-opt').forEach(el => {
+    el.onclick = () => {
+      profileEmoji = el.dataset.emoji;
+      document.getElementById('profile-emoji-display').textContent = profileEmoji;
+      ov.remove();
+    };
+  });
+  ov.appendChild(sh);
+  document.body.appendChild(ov);
+}
+
+function showProfileColorModal() {
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  const sh = document.createElement('div'); sh.className = 'modal-sheet';
+  sh.innerHTML = `<div class="modal-handle"></div>
+    <div class="modal-header"><h2>בחר צבע</h2><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="color-grid">${PROFILE_COLORS.map(c => `<div class="color-opt${c===profileColor?' selected':''}" data-color="${c}" style="background:${c}"></div>`).join('')}</div>
+    </div>`;
+  sh.querySelector('.modal-close').onclick = () => ov.remove();
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  sh.querySelectorAll('.color-opt').forEach(el => {
+    el.onclick = () => {
+      profileColor = el.dataset.color;
+      document.getElementById('profile-color-display').style.background = profileColor;
+      ov.remove();
+    };
+  });
+  ov.appendChild(sh);
+  document.body.appendChild(ov);
+}
+
+document.getElementById('profile-photo-input').onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  profilePhotoCleared = false;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    profilePhotoData = ev.target.result;
+    document.getElementById('profile-photo-preview').src = profilePhotoData;
+    document.getElementById('profile-photo-preview').style.display = 'block';
+    document.getElementById('profile-photo-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+};
+
+document.getElementById('btn-profile-clear-photo').onclick = () => {
+  profilePhotoData = null;
+  profilePhotoCleared = true;
+  document.getElementById('profile-photo-preview').style.display = 'none';
+  document.getElementById('profile-photo-placeholder').style.display = '';
+  document.getElementById('profile-photo-input').value = '';
+};
+
+document.getElementById('btn-profile-back').onclick = () => {
+  show('screen-child');
+};
+
+document.getElementById('btn-profile-save').onclick = async () => {
+  const err = document.getElementById('profile-error');
+  try {
+    const updates = {};
+    if (profileEmoji && profileEmoji !== childData.emoji) updates.emoji = profileEmoji;
+    if (profileColor && profileColor !== childData.color) updates.color = profileColor;
+    if (profilePhotoData) updates.photo = profilePhotoData;
+    if (profilePhotoCleared) updates.photo = '';
+
+    if (Object.keys(updates).length === 0) {
+      show('screen-child');
+      return;
+    }
+
+    await updateDoc(doc(db, 'families', familyId, 'children', childId), updates);
+
+    // Update local data
+    Object.assign(childData, updates);
+    if (updates.color) {
+      document.documentElement.style.setProperty('--child-color', updates.color);
+    }
+
+    renderChild();
+    show('screen-child');
+  } catch(e) {
+    err.textContent = 'שגיאה בשמירה, נסה שוב';
+    console.error(e);
+  }
+};
+
+</script>
+</body>
+</html>
