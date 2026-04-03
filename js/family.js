@@ -22,6 +22,7 @@ export async function loadChildren(familyId) {
   const snap = await getDocs(collection(db, 'families', familyId, 'children'));
   childrenCache = [];
   snap.forEach(d => childrenCache.push({ id: d.id, ...d.data() }));
+  childrenCache.sort((a, b) => (a.createdAt?.toMillis?.() ?? 0) - (b.createdAt?.toMillis?.() ?? 0));
 }
 
 // =========== RENDER FAMILY GRID ===========
