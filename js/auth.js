@@ -247,6 +247,12 @@ export async function deleteAccount(familyId, onDone) {
         await deleteDoc(taskDoc.ref);
       }
 
+      // מחיקת היסטוריית שבועות
+      const histSnap = await getDocs(collection(db, 'families', familyId, 'weeklyHistory'));
+      for (const histDoc of histSnap.docs) {
+        await deleteDoc(histDoc.ref);
+      }
+
       // מחיקת קודי הזמנה להורים
       const parentCodesSnap = await getDocs(
         query(collection(db, 'parentInviteCodes'), where('familyId', '==', familyId))
