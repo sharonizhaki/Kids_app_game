@@ -31,15 +31,16 @@ export function renderFamily(familyId) {
   if (childrenCache.length === 0) {
     grid.innerHTML = '<div class="empty-state">עדיין לא נוספו ילדים</div>';
   } else {
-    grid.innerHTML = childrenCache.map(c => {
+    grid.innerHTML = childrenCache.map((c, ci) => {
       const genderEmoji = c.gender === 'male' ? '👦' : '👧';
       const hasPhoto = c.photo && c.photo.length > 10;
       const photoHTML = hasPhoto
         ? `<img src="${c.photo}" alt="${c.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
         : `<span style="font-size:1.8rem;">${c.emoji || genderEmoji}</span>`;
       const isWaiting = c.status === 'waiting';
+      const color = c.color || CHILD_COLORS[ci % CHILD_COLORS.length];
       return `
-        <div class="child-card" onclick="${isWaiting ? `showChildInviteModal('${c.id}')` : `openEditChild('${c.id}')`}">
+        <div class="child-card" onclick="${isWaiting ? `showChildInviteModal('${c.id}')` : `openEditChild('${c.id}')`}" style="box-shadow:0 2px 10px rgba(0,0,0,0.07),inset -4px 0 0 ${color},inset 0 -3px 0 ${color}70;">
           <div class="cc-photo">${photoHTML}</div>
           <div class="cc-name">${c.name}</div>
           <div class="cc-gender">${genderEmoji} ${c.gender === 'male' ? 'זכר' : 'נקבה'}</div>
@@ -327,6 +328,7 @@ export async function renderDashboardChildren(familyId) {
     const displayEmoji = child.emoji || genderEmoji;
     const hasPhoto = child.photo && child.photo.length > 10;
     const { weekly, monthly, remaining } = stats[i];
+    const color = child.color || CHILD_COLORS[i % CHILD_COLORS.length];
 
     const photoHTML = hasPhoto
       ? `<img src="${child.photo}" alt="${child.name}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">`
@@ -337,7 +339,7 @@ export async function renderDashboardChildren(familyId) {
       : `<div style="background:#DCFCE7;border-radius:8px;padding:4px 6px;font-size:0.72rem;font-weight:700;color:#14532D;">✅ הכל בוצע!</div>`;
 
     return `
-      <div style="width:${cardWidth};background:white;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.08);padding:16px 10px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;">
+      <div style="width:${cardWidth};background:white;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.08),inset -4px 0 0 ${color},inset 0 -3px 0 ${color}70;padding:16px 10px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;">
         ${photoHTML}
         <div style="font-weight:800;font-size:0.9rem;color:var(--text);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;">${child.name}</div>
         <div style="font-size:1.3rem;">${displayEmoji}</div>
@@ -440,7 +442,7 @@ export async function renderDashTaskRows(familyId) {
 
     const row = document.createElement('div');
     row.className = 'dash-task-row';
-    row.style.borderRight = `3px solid ${color}`;
+    row.style.boxShadow = `0 2px 8px rgba(0,0,0,0.06),inset -4px 0 0 ${color},inset 0 -3px 0 ${color}70`;
 
     row.innerHTML = `
       <div class="dtr-name">
