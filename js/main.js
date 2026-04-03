@@ -95,10 +95,6 @@ function renderDashboard(user) {
   renderDashTaskRows(currentFamilyId);
   // Fire-and-forget: save last week's stats if new week began
   saveWeeklySnapshot(currentFamilyId).catch(() => {});
-  const uid = user?.uid;
-  if (uid && !localStorage.getItem('dashTourDone_' + uid)) {
-    setTimeout(() => startDashTour(currentFamilyId, uid), 1000);
-  }
 }
 
 // =========== WHO ARE YOU ===========
