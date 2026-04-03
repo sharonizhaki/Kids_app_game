@@ -1125,7 +1125,7 @@ document.getElementById('ob1-next').onclick = async () => {
 };
 
 // Step 2 — back
-document.getElementById('ob2-back').onclick = () => showScreen('screen-onboard-1');
+document.getElementById('ob2-back').onclick = () => { updateOb1Title(); showScreen('screen-onboard-1'); };
 
 // Step 2 — skip
 document.getElementById('ob2-skip').onclick = () => showScreen('screen-onboard-3');
