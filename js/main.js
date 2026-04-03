@@ -232,11 +232,29 @@ document.getElementById('gender-female').onclick = () => {
 
 document.getElementById('btn-do-create-child').onclick = async () => {
   const name = document.getElementById('child-name-input').value.trim();
-  const result = await createChild(getFamilyId(), name, selectedGender);
-  if (result.error) {
-    document.getElementById('create-child-error').textContent = result.error;
+  const errEl = document.getElementById('create-child-error');
+
+  // בדיקת שם כפול
+  const nameLC = name.toLowerCase();
+  const duplicate = childrenCache.find(c => c.name && c.name.toLowerCase() === nameLC);
+  if (duplicate) {
+    const isMale = duplicate.gender === 'male';
+    errEl.textContent = `${isMale ? 'ילד' : 'ילדה'} בשם "${name}" כבר ${isMale ? 'קיים' : 'קיימת'} במשפחה`;
+    const input = document.getElementById('child-name-input');
+    input.style.borderColor = '#F59E0B';
+    input.style.background  = '#FFFBEB';
+    navigator.vibrate && navigator.vibrate([60, 30, 60]);
+    setTimeout(() => { input.style.borderColor = ''; input.style.background = ''; }, 2200);
     return;
   }
+
+  const result = await createChild(getFamilyId(), name, selectedGender);
+  if (result.error) {
+    errEl.textContent = result.error;
+    return;
+  }
+  // עדכן cache
+  childrenCache.push({ id: result.childId, name, gender: selectedGender });
   document.getElementById('invite-code-value').textContent = result.code;
   showScreen('screen-invite-code');
 };
