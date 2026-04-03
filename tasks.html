@@ -594,14 +594,30 @@ function showTaskDetail(t) {
 
 // =========== LOGOUT ===========
 document.getElementById('btn-child-logout').onclick = () => {
-  if (confirm('לצאת מהחשבון?')) {
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay';
+  ov.innerHTML = `
+    <div class="modal-sheet" style="text-align:center;">
+      <div class="modal-handle"></div>
+      <div style="padding:28px 24px 32px;">
+        <div style="font-size:2.8rem;margin-bottom:12px;">🚪</div>
+        <div style="font-size:1.1rem;font-weight:800;margin-bottom:6px;">לצאת מהחשבון?</div>
+        <div style="font-size:0.88rem;color:var(--muted);margin-bottom:24px;">תצטרך להזין קוד כדי להיכנס שוב</div>
+        <div style="display:flex;gap:10px;">
+          <button id="logout-cancel" style="flex:1;padding:14px;background:#F1F5F9;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;color:var(--text);">ביטול</button>
+          <button id="logout-confirm" style="flex:1;padding:14px;background:linear-gradient(135deg,#EF4444,#DC2626);color:white;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;">יציאה</button>
+        </div>
+      </div>
+    </div>`;
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  ov.querySelector('#logout-cancel').onclick = () => ov.remove();
+  ov.querySelector('#logout-confirm').onclick = () => {
     localStorage.removeItem('childId');
     localStorage.removeItem('childFamilyId');
     localStorage.removeItem('childAnonUid');
-    signOut(auth).then(() => {
-      window.location.href = 'index.html';
-    });
-  }
+    signOut(auth).then(() => { window.location.href = 'index.html'; });
+  };
+  document.body.appendChild(ov);
 };
 
 // =========== COLOR UTILS ===========
