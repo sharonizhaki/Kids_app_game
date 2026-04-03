@@ -119,6 +119,7 @@ async function renderDashboard(user) {
   // אם אין ילדים — שולחים לאונבורדינג במקום לדשבורד
   await loadChildren(currentFamilyId);
   if (childrenCache.length === 0) {
+    resetOb1Form();
     showScreen('screen-onboard-1');
     setTimeout(() => document.getElementById('ob1-name')?.focus(), 300);
     return;
@@ -272,22 +273,9 @@ document.getElementById('gender-female').onclick = () => {
 document.getElementById('btn-do-create-child').onclick = async () => {
   const name = document.getElementById('child-name-input').value.trim();
   const errEl = document.getElementById('create-child-error');
+  errEl.textContent = '';
 
-  // בדיקת שם כפול
-  const nameLC = name.toLowerCase();
-  const duplicate = childrenCache.find(c => c.name && c.name.toLowerCase() === nameLC);
-  if (duplicate) {
-    const isMale = duplicate.gender === 'male';
-    errEl.textContent = `${isMale ? 'ילד' : 'ילדה'} בשם "${name}" כבר ${isMale ? 'קיים' : 'קיימת'} במשפחה`;
-    const input = document.getElementById('child-name-input');
-    input.style.borderColor = '#F59E0B';
-    input.style.background  = '#FFFBEB';
-    navigator.vibrate && navigator.vibrate([60, 30, 60]);
-    setTimeout(() => { input.style.borderColor = ''; input.style.background = ''; }, 2200);
-    return;
-  }
-
-  // ולידציה מקומית לפני קריאה לשרת
+  // ולידציה — שם ומין קודם כל
   if (!name) {
     errEl.textContent = 'חובה להכניס שם ילד/ה';
     const inp = document.getElementById('child-name-input');
@@ -303,6 +291,20 @@ document.getElementById('btn-do-create-child').onclick = async () => {
     opts.forEach(o => { o.style.outline = '2.5px solid #EF4444'; o.style.background = '#FEF2F2'; });
     navigator.vibrate && navigator.vibrate([80, 40, 80]);
     setTimeout(() => opts.forEach(o => { o.style.outline = ''; o.style.background = ''; }), 1800);
+    return;
+  }
+
+  // בדיקת שם כפול
+  const nameLC = name.toLowerCase();
+  const duplicate = childrenCache.find(c => c.name && c.name.toLowerCase() === nameLC);
+  if (duplicate) {
+    const isMale = duplicate.gender === 'male';
+    errEl.textContent = `${isMale ? 'ילד' : 'ילדה'} בשם "${name}" כבר ${isMale ? 'קיים' : 'קיימת'} במשפחה`;
+    const input = document.getElementById('child-name-input');
+    input.style.borderColor = '#F59E0B';
+    input.style.background  = '#FFFBEB';
+    navigator.vibrate && navigator.vibrate([60, 30, 60]);
+    setTimeout(() => { input.style.borderColor = ''; input.style.background = ''; }, 2200);
     return;
   }
 
