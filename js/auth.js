@@ -7,6 +7,7 @@ import {
   onAuthStateChanged,
   signOut,
   deleteUser,
+  reauthenticateWithPopup,
   sendSignInLinkToEmail,
   isSignInWithEmailLink,
   signInWithEmailLink
@@ -332,6 +333,28 @@ export async function deleteAccount(familyId, onDone) {
   } catch(e) {
     hideLoading();
     if (e.code === 'auth/requires-recent-login') {
+      // נסה לאמת מחדש ולמחוק את ה-Auth user
+      const user = auth.currentUser;
+      const providerId = user?.providerData?.[0]?.providerId;
+      if (user && providerId === 'google.com') {
+        try {
+          showToast('מאמת זהות לפני מחיקה... 🔒');
+          await reauthenticateWithPopup(user, new GoogleAuthProvider());
+          await deleteUser(user);
+          currentParentUid = null;
+          currentFamilyId = null;
+          onDone();
+          return;
+        } catch(reAuthErr) {
+          console.warn('re-auth failed:', reAuthErr.code);
+          showToast('אימות נכשל — פרטי המשפחה נמחקו, החשבון ייסגר בכניסה הבאה ⚠️');
+          await signOut(auth);
+          currentParentUid = null;
+          currentFamilyId = null;
+          showScreen('screen-who');
+          return;
+        }
+      }
       showToast('יש להתחבר מחדש לפני מחיקת החשבון 🔒');
       await signOut(auth);
       currentParentUid = null;
