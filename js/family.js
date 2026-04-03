@@ -27,7 +27,7 @@ export async function loadChildren(familyId) {
 export function renderFamily(familyId) {
   const grid = document.getElementById('family-grid');
   if (childrenCache.length === 0) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">עדיין לא נוספו ילדים</div>';
+    grid.innerHTML = '<div class="empty-state">עדיין לא נוספו ילדים</div>';
   } else {
     grid.innerHTML = childrenCache.map(c => {
       const genderEmoji = c.gender === 'male' ? '👦' : '👧';
