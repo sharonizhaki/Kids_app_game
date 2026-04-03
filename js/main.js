@@ -730,7 +730,11 @@ function showOb1EmojiModal() {
   sh.querySelectorAll('.emoji-opt').forEach(el => {
     el.onclick = () => {
       obEmoji = el.dataset.emoji;
-      document.getElementById('ob1-emoji-display').textContent = obEmoji;
+      const ed = document.getElementById('ob1-emoji-display');
+      ed.textContent = obEmoji;
+      ed.style.background = 'transparent';
+      ed.style.borderStyle = 'solid';
+      ed.style.borderColor = '#818CF8';
       ov.remove();
     };
   });
@@ -752,8 +756,10 @@ function showOb1ColorModal() {
   sh.querySelectorAll('.color-opt').forEach(el => {
     el.onclick = () => {
       obColor = el.dataset.color;
-      document.getElementById('ob1-color-display').style.background = obColor;
-      document.getElementById('ob1-color-display').style.borderColor = obColor;
+      const cd = document.getElementById('ob1-color-display');
+      cd.style.background = obColor;
+      cd.style.borderColor = obColor;
+      cd.style.borderStyle = 'solid';
       ov.remove();
     };
   });
@@ -791,10 +797,15 @@ function resetOb1Form() {
   document.getElementById('ob1-photo-circle').innerHTML =
     `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
   document.getElementById('ob1-photo-input').value = '';
-  document.getElementById('ob1-emoji-display').textContent = '🙂';
+  const emojiEl = document.getElementById('ob1-emoji-display');
+  emojiEl.textContent = '🙂';
+  emojiEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
+  emojiEl.style.borderStyle = 'dashed';
+  emojiEl.style.borderColor = '#818CF8';
   const colorEl = document.getElementById('ob1-color-display');
-  colorEl.style.background = 'var(--border)';
-  colorEl.style.borderColor = 'var(--border)';
+  colorEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
+  colorEl.style.borderStyle = 'dashed';
+  colorEl.style.borderColor = '#818CF8';
 }
 
 // Go to onboarding step 2 and generate invite code
