@@ -972,8 +972,18 @@ document.getElementById('ob1-photo-input').onchange = async (e) => {
 // Step 1 — back
 document.getElementById('ob1-back').onclick = () => showScreen('screen-join-family');
 
+// =========== OB1 TITLE (ordinal based on existing children count) ===========
+const OB1_ORDINALS = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שביעי','שמיני','תשיעי','עשירי'];
+function updateOb1Title() {
+  const idx = childrenCache.length; // 0 = first child, 1 = second, etc.
+  const ord = OB1_ORDINALS[idx] || `${idx + 1}`;
+  const el = document.getElementById('ob1-title');
+  if (el) el.textContent = `הוסף ילד/ה ${ord}`;
+}
+
 // Reset onboarding step-1 form for adding another child
 function resetOb1Form() {
+  updateOb1Title();
   document.getElementById('ob1-name').value = '';
   obGender = '';
   obChildPhoto = null;
