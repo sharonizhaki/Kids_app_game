@@ -1099,6 +1099,8 @@ function updateOb1Title() {
   const ord = OB1_ORDINALS[idx] || `${idx + 1}`;
   const el = document.getElementById('ob1-title');
   if (el) el.textContent = `הוסף ילד/ה ${ord}`;
+  const topNext = document.getElementById('ob1-top-next');
+  if (topNext) topNext.style.visibility = idx === 0 ? 'hidden' : 'visible';
 }
 
 // Reset onboarding step-1 form for adding another child
