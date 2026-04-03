@@ -18,9 +18,9 @@
     html,body{height:100%;}
     body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
 
-    .screen{display:none;min-height:100vh;padding:20px 16px 100px;opacity:0;transition:opacity 0.3s ease;}
+    .screen{display:none;min-height:100vh;padding:20px 16px 100px;opacity:0;transform:translateY(14px);transition:opacity 0.28s ease-out,transform 0.28s cubic-bezier(.25,.8,.25,1);}
     .screen.active{display:block;}
-    .screen.visible{opacity:1;}
+    .screen.visible{opacity:1;transform:translateY(0);}
 
     /* === LOADING === */
     .splash{display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}
@@ -79,13 +79,14 @@
     /* === TASK MODAL === */
     .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.65);display:flex;align-items:center;justify-content:center;z-index:1000;animation:fadeIn 0.2s ease;}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    .modal-sheet{background:var(--card);border-radius:24px;width:90%;max-width:420px;max-height:80vh;overflow-y:auto;animation:modalPop 0.25s cubic-bezier(.4,0,.2,1);}
-    @keyframes modalPop{from{transform:scale(0.9);opacity:0}to{transform:scale(1);opacity:1}}
+    .modal-sheet{background:var(--card);border-radius:28px;width:90%;max-width:420px;max-height:82vh;overflow-y:auto;animation:modalPop 0.32s cubic-bezier(.34,1.28,.64,1);}
+    @keyframes modalPop{from{transform:scale(0.88) translateY(12px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
     .modal-handle{width:44px;height:5px;background:#E2E8F0;border-radius:3px;margin:14px auto 0;}
-    .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 8px;}
     .modal-header h2{font-size:1.15rem;font-weight:800;}
-    .modal-close{background:#F1F5F9;border:none;border-radius:50%;width:36px;height:36px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-    .modal-body{padding:8px 16px 40px;}
+    .modal-close{background:#F1F5F9;border:none;border-radius:50%;width:36px;height:36px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;}
+    .modal-close:hover{background:#E2E8F0;}
+    .modal-body{padding:4px 18px 36px;}
 
     .task-card{background:#F8FAFC;border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;border:2px solid transparent;transition:border-color 0.15s,background 0.15s;display:flex;align-items:center;gap:12px;}
     .task-card:active{border-color:#CBD5E1;background:#F0F4FF;}
@@ -112,14 +113,16 @@
 
     .empty-state{text-align:center;padding:28px;color:var(--muted);font-size:0.92rem;}
 
-    .emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px 0;}
-    .emoji-opt{width:100%;aspect-ratio:1;border-radius:12px;border:3px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:1.5rem;cursor:pointer;transition:transform 0.12s,border-color 0.2s;}
+    .emoji-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0;}
+    .emoji-opt{width:100%;aspect-ratio:1;border-radius:14px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;font-size:1.65rem;cursor:pointer;transition:transform 0.15s,background 0.15s;}
+    .emoji-opt:hover{transform:scale(1.15);background:rgba(99,102,241,0.08);}
     .emoji-opt:active{transform:scale(0.9);}
-    .emoji-opt.selected{border-color:var(--child-color);background:#F0F0FF;box-shadow:0 0 0 3px rgba(99,102,241,0.2);}
+    .emoji-opt.selected{transform:scale(1.12);background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.15));box-shadow:0 0 0 2.5px rgba(99,102,241,0.5);}
     .color-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:12px 0;}
-    .color-opt{width:100%;aspect-ratio:1;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:transform 0.12s,box-shadow 0.2s;}
+    .color-opt{width:100%;aspect-ratio:1;border-radius:50%;border:none;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;box-shadow:0 2px 8px rgba(0,0,0,0.12);}
+    .color-opt:hover{transform:scale(1.12);}
     .color-opt:active{transform:scale(0.88);}
-    .color-opt.selected{border-color:var(--text);box-shadow:0 0 0 4px rgba(30,41,59,0.15);}
+    .color-opt.selected{transform:scale(1.08);box-shadow:0 0 0 3px white,0 0 0 6px #1E293B;}
   </style>
 </head>
 <body>
