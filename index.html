@@ -657,11 +657,16 @@
       <div class="input-group" style="margin-bottom:6px;">
         <input type="text" id="task-name-input" placeholder="לדוגמה: צחצוח שיניים" autocomplete="off">
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;">
         <button class="btn btn-sm" id="btn-task-suggestions" style="padding:8px 14px;font-size:0.82rem;background:#FCE7F3;color:#BE185D;border:none;border-radius:20px;width:auto;max-width:none;display:inline-flex;box-shadow:none;flex:1;justify-content:center;">💡 לחץ למשימות לדוגמא</button>
-        <button class="btn btn-sm quick-cat-btn-form" data-cat="hygiene" style="padding:7px 10px;font-size:0.8rem;background:#EEF2FF;color:#4338CA;border:none;border-radius:20px;width:auto;max-width:none;display:inline-flex;box-shadow:none;flex:1;justify-content:center;font-weight:800;gap:4px;">🧼 היגיינה</button>
-        <button class="btn btn-sm quick-cat-btn-form" data-cat="chores" style="padding:7px 10px;font-size:0.8rem;background:#EEF2FF;color:#4338CA;border:none;border-radius:20px;width:auto;max-width:none;display:inline-flex;box-shadow:none;flex:1;justify-content:center;font-weight:800;gap:4px;">🏠 בית</button>
-        <button class="btn btn-sm quick-cat-btn-form" data-cat="study" style="padding:7px 10px;font-size:0.8rem;background:#EEF2FF;color:#4338CA;border:none;border-radius:20px;width:auto;max-width:none;display:inline-flex;box-shadow:none;flex:1;justify-content:center;font-weight:800;gap:4px;">📚 לימודים</button>
+      </div>
+      <div style="margin-top:8px;">
+        <div style="font-size:0.71rem;font-weight:700;color:#94A3B8;margin-bottom:5px;text-align:right;">⚡ הוספת 5 משימות לפי קטגוריה:</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+          <button class="quick-cat-btn-form" data-cat="hygiene" style="background:#EEF2FF;color:#4338CA;border:1.5px solid #C7D2FE;border-radius:10px;padding:6px 4px;font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🧼 היגיינה</button>
+          <button class="quick-cat-btn-form" data-cat="chores" style="background:#EEF2FF;color:#4338CA;border:1.5px solid #C7D2FE;border-radius:10px;padding:6px 4px;font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🏠 בית</button>
+          <button class="quick-cat-btn-form" data-cat="study" style="background:#EEF2FF;color:#4338CA;border:1.5px solid #C7D2FE;border-radius:10px;padding:6px 4px;font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📚 לימודים</button>
+        </div>
       </div>
       <div class="suggestions-wrap" id="suggestions-wrap" style="display:none;"></div>
     </div>

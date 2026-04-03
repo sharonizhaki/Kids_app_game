@@ -117,7 +117,13 @@ async function handleQuickTasks(triggerEl, category) {
       triggerEl.style.background = 'rgba(22,163,74,0.10)';
       triggerEl.style.borderColor = '#16A34A';
       triggerEl.style.borderWidth = '2.5px';
-      triggerEl.innerHTML = `<div class="quick-check-pop" style="font-size:1.5rem;margin-bottom:4px;">✅</div><div style="font-size:0.78rem;font-weight:800;color:#15803D;">${labels[category]||''}</div><div style="font-size:0.65rem;color:#15803D;margin-top:2px;">נוסף!</div>`;
+      const isFormBtn = triggerEl.classList.contains('quick-cat-btn-form');
+      if (isFormBtn) {
+        triggerEl.textContent = `✅ ${labels[category]||''}`;
+        triggerEl.style.color = '#15803D';
+      } else {
+        triggerEl.innerHTML = `<div class="quick-check-pop" style="font-size:1.5rem;margin-bottom:4px;">✅</div><div style="font-size:0.78rem;font-weight:800;color:#15803D;">${labels[category]||''}</div><div style="font-size:0.65rem;color:#15803D;margin-top:2px;">נוסף!</div>`;
+      }
       triggerEl.style.cursor = 'default';
       triggerEl.classList.add('quick-cat-done');
       triggerEl.addEventListener('animationend', () => triggerEl.classList.remove('quick-cat-done'), { once: true });
