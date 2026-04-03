@@ -112,9 +112,18 @@ initAuth(
 );
 
 // =========== DASHBOARD ===========
-function renderDashboard(user) {
+async function renderDashboard(user) {
   const name = user.displayName ? user.displayName.split(' ')[0] : 'הורה';
   document.getElementById('dash-greeting').textContent = `שלום ${name}! 👋`;
+
+  // אם אין ילדים — שולחים לאונבורדינג במקום לדשבורד
+  await loadChildren(currentFamilyId);
+  if (childrenCache.length === 0) {
+    showScreen('screen-onboard-1');
+    setTimeout(() => document.getElementById('ob1-name')?.focus(), 300);
+    return;
+  }
+
   showScreen('screen-dashboard');
   renderDashboardChildren(currentFamilyId);
   refreshQuickTasksBanner(currentFamilyId);
