@@ -66,6 +66,7 @@ window.showScreen = (id) => {
 async function refreshQuickTasksBanner(familyId) {
   const banner = document.getElementById('quick-tasks-banner');
   if (!banner) return;
+  if (localStorage.getItem('quickBannerDismissed') === '1') { banner.style.display = 'none'; return; }
   try {
     const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
     const snap = await getDocs(collection(db, 'families', familyId, 'tasks'));
@@ -73,18 +74,45 @@ async function refreshQuickTasksBanner(familyId) {
   } catch(e) { banner.style.display = 'none'; }
 }
 
+function dismissQuickBanner() {
+  localStorage.setItem('quickBannerDismissed', '1');
+  const inner = document.getElementById('quick-tasks-inner');
+  const banner = document.getElementById('quick-tasks-banner');
+  inner.style.transition = 'transform 0.38s cubic-bezier(.4,1.3,.6,1), opacity 0.3s ease';
+  inner.style.transformOrigin = 'top left';
+  inner.style.transform = 'scale(0.82) translateY(-12px) rotate(-2deg)';
+  inner.style.opacity = '0';
+  setTimeout(() => {
+    banner.style.transition = 'max-height 0.32s ease, margin-top 0.32s ease, opacity 0.15s ease';
+    banner.style.overflow = 'hidden';
+    banner.style.maxHeight = banner.offsetHeight + 'px';
+    banner.style.opacity = '0';
+    requestAnimationFrame(() => {
+      banner.style.maxHeight = '0';
+      banner.style.marginTop = '0';
+    });
+    setTimeout(() => { banner.style.display = 'none'; }, 340);
+  }, 340);
+}
+
 async function handleQuickTasks(triggerEl, category) {
   const fid = getFamilyId();
   if (!fid) return;
-  if (triggerEl) { triggerEl.disabled = true; triggerEl.style.opacity = '0.5'; }
+  if (triggerEl) { triggerEl.disabled = true; triggerEl.style.opacity = '0.6'; }
   try {
     const ok = await createQuickTasks(fid, category);
-    if (ok) {
-      document.getElementById('quick-tasks-banner').style.display = 'none';
-      document.getElementById('btn-edit-tasks').click();
+    if (ok && triggerEl) {
+      const labels = { hygiene:'היגיינה', chores:'מטלות בית', study:'לימודים' };
+      triggerEl.style.opacity = '1';
+      triggerEl.style.background = '#DCFCE7';
+      triggerEl.style.borderColor = '#16A34A';
+      triggerEl.innerHTML = `<div style="font-size:1.4rem;margin-bottom:4px;">✅</div><div style="font-size:0.78rem;font-weight:800;color:#15803D;">${labels[category]||''}</div><div style="font-size:0.65rem;color:#15803D;margin-top:2px;">נוסף!</div>`;
+      triggerEl.style.cursor = 'default';
     }
   } finally {
-    if (triggerEl) { triggerEl.disabled = false; triggerEl.style.opacity = ''; }
+    if (triggerEl && !triggerEl.innerHTML.includes('✅')) {
+      triggerEl.disabled = false; triggerEl.style.opacity = '';
+    }
   }
 }
 
@@ -171,6 +199,8 @@ document.getElementById('modal-no-child-create').onclick = () => {
   document.getElementById('modal-no-child').style.display = 'none';
   showScreen('screen-manage-family');
 };
+
+document.getElementById('btn-quick-banner-close').addEventListener('click', dismissQuickBanner);
 
 document.querySelectorAll('.quick-cat-btn').forEach(btn => {
   btn.addEventListener('click', function() { handleQuickTasks(this, this.dataset.cat); });
