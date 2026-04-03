@@ -511,8 +511,10 @@ document.getElementById('btn-create-child').onclick = () => {
   document.querySelectorAll('#create-gender-picker .gender-opt').forEach(g => g.classList.remove('selected'));
 
   // reset photo circle
-  document.getElementById('new-child-photo-circle').innerHTML =
-    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  const ncpc2 = document.getElementById('new-child-photo-circle');
+  ncpc2.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  ncpc2.style.borderStyle = 'dashed';
+  ncpc2.style.borderColor = '#818CF8';
   document.getElementById('new-child-photo-input').value = '';
 
   // reset emoji circle
@@ -570,7 +572,7 @@ function openEditChild(childId) {
   const colorEl = document.getElementById('edit-child-color-display');
   if (child.color) {
     colorEl.style.background = child.color;
-    colorEl.style.borderColor = child.color;
+    colorEl.style.borderColor = '#818CF8';
     colorEl.style.borderStyle = 'solid';
   } else {
     colorEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
@@ -636,6 +638,8 @@ document.getElementById('edit-photo-input').onchange = async (e) => {
     document.getElementById('edit-photo-preview').src = editPhotoData;
     document.getElementById('edit-photo-preview').style.display = 'block';
     document.getElementById('edit-photo-placeholder').style.display = 'none';
+    document.getElementById('edit-photo-upload').style.borderStyle = 'solid';
+    document.getElementById('edit-photo-upload').style.borderColor = '#818CF8';
   } catch(err) {
     showToast('שגיאה בטעינת התמונה ⚠️');
   }
@@ -647,6 +651,8 @@ document.getElementById('btn-clear-photo').onclick = () => {
   document.getElementById('edit-photo-preview').style.display = 'none';
   document.getElementById('edit-photo-placeholder').style.display = '';
   document.getElementById('edit-photo-input').value = '';
+  document.getElementById('edit-photo-upload').style.borderStyle = 'dashed';
+  document.getElementById('edit-photo-upload').style.borderColor = '';
 };
 
 document.getElementById('btn-save-child').onclick = async () => {
@@ -734,7 +740,7 @@ function showEditColorModal(current) {
       editColor = el.dataset.color;
       const cd = document.getElementById('edit-child-color-display');
       cd.style.background = editColor;
-      cd.style.borderColor = editColor;
+      cd.style.borderColor = '#818CF8';
       cd.style.borderStyle = 'solid';
       ov.remove();
     };
@@ -987,7 +993,7 @@ function showOb1ColorModal() {
       obColor = el.dataset.color;
       const cd = document.getElementById('ob1-color-display');
       cd.style.background = obColor;
-      cd.style.borderColor = obColor;
+      cd.style.borderColor = '#818CF8';
       cd.style.borderStyle = 'solid';
       ov.remove();
     };
@@ -1043,7 +1049,7 @@ function showNewChildColorModal() {
       newChildColor = el.dataset.color;
       const cd = document.getElementById('new-child-color-display');
       cd.style.background = newChildColor;
-      cd.style.borderColor = newChildColor;
+      cd.style.borderColor = '#818CF8';
       cd.style.borderStyle = 'solid';
       ov.remove();
     };
@@ -1059,8 +1065,10 @@ document.getElementById('new-child-photo-input').onchange = async (e) => {
   if (!file) return;
   try {
     newChildPhotoData = await cropAndCompressPhoto(file);
-    document.getElementById('new-child-photo-circle').innerHTML =
-      `<img src="${newChildPhotoData}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    const ncpc = document.getElementById('new-child-photo-circle');
+    ncpc.innerHTML = `<img src="${newChildPhotoData}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    ncpc.style.borderStyle = 'solid';
+    ncpc.style.borderColor = '#818CF8';
   } catch(err) {
     showToast('שגיאה בטעינת התמונה ⚠️');
   }
@@ -1072,8 +1080,10 @@ document.getElementById('ob1-photo-input').onchange = async (e) => {
   if (!file) return;
   try {
     obChildPhoto = await cropAndCompressPhoto(file);
-    document.getElementById('ob1-photo-circle').innerHTML =
-      `<img src="${obChildPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    const ob1pc = document.getElementById('ob1-photo-circle');
+    ob1pc.innerHTML = `<img src="${obChildPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    ob1pc.style.borderStyle = 'solid';
+    ob1pc.style.borderColor = '#818CF8';
   } catch(err) {
     showToast('שגיאה בטעינת התמונה ⚠️');
   }
@@ -1101,8 +1111,10 @@ function resetOb1Form() {
   obColor = '';
   document.getElementById('ob1-error').textContent = '';
   document.querySelectorAll('.ob1-gender').forEach(b => b.classList.remove('selected'));
-  document.getElementById('ob1-photo-circle').innerHTML =
-    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  const ob1pc = document.getElementById('ob1-photo-circle');
+  ob1pc.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  ob1pc.style.borderStyle = 'dashed';
+  ob1pc.style.borderColor = '#818CF8';
   document.getElementById('ob1-photo-input').value = '';
   const emojiEl = document.getElementById('ob1-emoji-display');
   emojiEl.textContent = '?';
