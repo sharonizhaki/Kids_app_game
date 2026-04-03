@@ -283,23 +283,45 @@ function showToast(pts) {
 function weekKey() {
   const d = new Date(), day = d.getDay();
   const sun = new Date(d); sun.setDate(d.getDate() - day);
-  return `w-${sun.getFullYear()}-${sun.getMonth()}-${sun.getDate()}`;
+  const mm = String(sun.getMonth() + 1).padStart(2, '0');
+  const dd = String(sun.getDate()).padStart(2, '0');
+  return `w-${sun.getFullYear()}-${mm}-${dd}`;
 }
 function monthKey() {
   const d = new Date();
-  return `m-${d.getFullYear()}-${d.getMonth()}`;
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `m-${d.getFullYear()}-${mm}`;
 }
-function todayKey() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
+function todayKey() {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
 
 function defaultState() {
   return { pts: 0, monthlyPts: 0, comp: {}, hist: [], lastActive: "", wk: weekKey(), mk: monthKey() };
 }
 
 // =========== CHECK AUTH & LOAD ===========
+// [תיקון צהוב] מאמת שיש session פעיל ב-Firebase, לא רק localStorage
 if (!childId || !familyId) {
   window.location.href = 'index.html';
 } else {
-  loadChild();
+  let authResolved = false;
+  const unsubAuth = onAuthStateChanged(auth, (user) => {
+    if (authResolved) return;
+    authResolved = true;
+    unsubAuth();
+    if (!user) {
+      localStorage.removeItem('childId');
+      localStorage.removeItem('childFamilyId');
+      localStorage.removeItem('childAnonUid');
+      window.location.href = 'index.html';
+    } else {
+      loadChild();
+    }
+  });
 }
 
 async function loadChild() {
