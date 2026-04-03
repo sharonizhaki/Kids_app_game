@@ -63,10 +63,12 @@ window.showScreen = (id) => {
   }
 };
 
+function quickBannerKey() { return `quickBannerDismissed_${currentFamilyId || 'none'}`; }
+
 async function refreshQuickTasksBanner(familyId) {
   const banner = document.getElementById('quick-tasks-banner');
   if (!banner) return;
-  if (localStorage.getItem('quickBannerDismissed') === '1') { banner.style.display = 'none'; return; }
+  if (localStorage.getItem(quickBannerKey()) === '1') { banner.style.display = 'none'; return; }
   try {
     const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
     const snap = await getDocs(collection(db, 'families', familyId, 'tasks'));
@@ -75,39 +77,50 @@ async function refreshQuickTasksBanner(familyId) {
 }
 
 function dismissQuickBanner() {
-  localStorage.setItem('quickBannerDismissed', '1');
+  localStorage.setItem(quickBannerKey(), '1');
   const inner = document.getElementById('quick-tasks-inner');
   const banner = document.getElementById('quick-tasks-banner');
-  inner.style.transition = 'transform 0.38s cubic-bezier(.4,1.3,.6,1), opacity 0.3s ease';
-  inner.style.transformOrigin = 'top left';
-  inner.style.transform = 'scale(0.82) translateY(-12px) rotate(-2deg)';
-  inner.style.opacity = '0';
+  // Phase 1 — quick puff up
+  inner.style.transition = 'transform 0.1s ease-out, opacity 0.1s ease';
+  inner.style.transform = 'scale(1.05)';
+  inner.style.opacity = '1';
   setTimeout(() => {
-    banner.style.transition = 'max-height 0.32s ease, margin-top 0.32s ease, opacity 0.15s ease';
-    banner.style.overflow = 'hidden';
-    banner.style.maxHeight = banner.offsetHeight + 'px';
-    banner.style.opacity = '0';
-    requestAnimationFrame(() => {
-      banner.style.maxHeight = '0';
-      banner.style.marginTop = '0';
-    });
-    setTimeout(() => { banner.style.display = 'none'; }, 340);
-  }, 340);
+    // Phase 2 — shrink hard + spin off
+    inner.style.transition = 'transform 0.5s cubic-bezier(.55,1.8,.65,.8), opacity 0.38s ease';
+    inner.style.transformOrigin = 'top left';
+    inner.style.transform = 'scale(0) rotate(-20deg)';
+    inner.style.opacity = '0';
+    setTimeout(() => {
+      // Phase 3 — banner height collapses
+      const h = banner.offsetHeight;
+      banner.style.overflow = 'hidden';
+      banner.style.maxHeight = h + 'px';
+      banner.style.transition = 'max-height 0.36s cubic-bezier(.4,0,.2,1), margin-top 0.36s ease, padding-bottom 0.36s ease';
+      requestAnimationFrame(() => {
+        banner.style.maxHeight = '0';
+        banner.style.marginTop = '0';
+      });
+      setTimeout(() => { banner.style.display = 'none'; }, 380);
+    }, 440);
+  }, 90);
 }
 
 async function handleQuickTasks(triggerEl, category) {
   const fid = getFamilyId();
   if (!fid) return;
-  if (triggerEl) { triggerEl.disabled = true; triggerEl.style.opacity = '0.6'; }
+  if (triggerEl) { triggerEl.disabled = true; triggerEl.style.opacity = '0.55'; }
   try {
     const ok = await createQuickTasks(fid, category);
     if (ok && triggerEl) {
       const labels = { hygiene:'היגיינה', chores:'מטלות בית', study:'לימודים' };
       triggerEl.style.opacity = '1';
-      triggerEl.style.background = '#DCFCE7';
+      triggerEl.style.background = 'rgba(22,163,74,0.10)';
       triggerEl.style.borderColor = '#16A34A';
-      triggerEl.innerHTML = `<div style="font-size:1.4rem;margin-bottom:4px;">✅</div><div style="font-size:0.78rem;font-weight:800;color:#15803D;">${labels[category]||''}</div><div style="font-size:0.65rem;color:#15803D;margin-top:2px;">נוסף!</div>`;
+      triggerEl.style.borderWidth = '2.5px';
+      triggerEl.innerHTML = `<div class="quick-check-pop" style="font-size:1.5rem;margin-bottom:4px;">✅</div><div style="font-size:0.78rem;font-weight:800;color:#15803D;">${labels[category]||''}</div><div style="font-size:0.65rem;color:#15803D;margin-top:2px;">נוסף!</div>`;
       triggerEl.style.cursor = 'default';
+      triggerEl.classList.add('quick-cat-done');
+      triggerEl.addEventListener('animationend', () => triggerEl.classList.remove('quick-cat-done'), { once: true });
     }
   } finally {
     if (triggerEl && !triggerEl.innerHTML.includes('✅')) {
