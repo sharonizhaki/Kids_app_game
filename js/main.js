@@ -1089,6 +1089,15 @@ document.getElementById('ob1-photo-input').onchange = async (e) => {
   }
 };
 
+// Step 1 — top button (הבא for first child / דלג for subsequent)
+document.getElementById('ob1-top-next').addEventListener('click', () => {
+  if (childrenCache.length > 0) {
+    renderDashboard(auth.currentUser);
+  } else {
+    document.getElementById('ob1-next').click();
+  }
+});
+
 // Step 1 — back
 document.getElementById('ob1-back').onclick = () => showScreen('screen-join-family');
 
@@ -1101,15 +1110,8 @@ function updateOb1Title() {
   if (el) el.textContent = `הוסף ילד/ה ${ord}`;
   const topNext = document.getElementById('ob1-top-next');
   if (topNext) {
-    if (idx === 0) {
-      topNext.style.visibility = 'hidden';
-      topNext.textContent = 'הבא ←';
-      topNext.onclick = () => document.getElementById('ob1-next').click();
-    } else {
-      topNext.style.visibility = 'visible';
-      topNext.textContent = 'דלג ←';
-      topNext.onclick = () => showScreen('screen-dashboard');
-    }
+    topNext.style.visibility = idx === 0 ? 'hidden' : 'visible';
+    topNext.textContent = idx === 0 ? 'הבא ←' : 'דלג ←';
   }
   const backBtn = document.getElementById('ob1-back');
   if (backBtn) backBtn.style.visibility = idx === 0 ? 'visible' : 'hidden';
