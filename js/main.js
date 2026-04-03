@@ -7,7 +7,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { showScreen, showToast, showLoading, hideLoading, openSideMenu, closeSideMenu, showConfirm } from './ui.js';
-import { initAuth, loginWithGoogle, loginWithFacebook, logoutParent, createNewFamily, joinFamily, currentFamilyId, setCurrentFamilyId, confirmDeleteAccount, deleteAccount } from './auth.js';
+import { initAuth, loginWithGoogle, loginWithFacebook, logoutParent, createNewFamily, joinFamily, currentFamilyId, setCurrentFamilyId, confirmDeleteAccount, deleteAccount, sendMagicLink, completeMagicLinkSignIn } from './auth.js';
 import {
   childrenCache, clearChildrenCache, loadChildren, renderFamily,
   createChild, saveChild, deleteChild,
@@ -185,6 +185,9 @@ window.renderFamily = () => renderFamily(getFamilyId());
 
 function getFamilyId() { return currentFamilyId; }
 
+// =========== MAGIC LINK — check on load ===========
+completeMagicLinkSignIn(); // אם ה-URL מכיל magic link — יסיים התחברות אוטומטית
+
 // =========== AUTH INIT ===========
 initAuth(
   (user) => {
@@ -237,6 +240,74 @@ document.getElementById('btn-who-child').onclick = () => {
 document.getElementById('btn-google-login').onclick = async () => {
   const err = await loginWithGoogle();
   if (err) document.getElementById('login-error').textContent = err;
+};
+
+document.getElementById('btn-email-login').onclick = () => {
+  document.getElementById('login-error').textContent = '';
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  const sh = document.createElement('div'); sh.className = 'modal-sheet';
+  sh.innerHTML = `
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h2>✉️ קישור קסם</h2><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:0.88rem;color:var(--muted);line-height:1.55;margin-bottom:16px;">
+        הכנס את כתובת המייל שלך — נשלח לך קישור להתחברות ישירה, ללא סיסמה.
+      </p>
+      <div class="input-group" style="margin-bottom:8px;">
+        <input type="email" id="magic-email-input" placeholder="your@email.com"
+               style="direction:ltr;text-align:left;font-size:1rem;" autocomplete="email">
+      </div>
+      <div class="error-msg" id="magic-email-error" style="margin-bottom:8px;"></div>
+      <button class="btn btn-primary btn-sm" id="btn-send-magic-link" style="margin-top:4px;">שלח קישור ✉️</button>
+    </div>`;
+  sh.querySelector('.modal-close').onclick = () => ov.remove();
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+
+  sh.querySelector('#btn-send-magic-link').onclick = async () => {
+    const email = document.getElementById('magic-email-input').value.trim();
+    const errEl = document.getElementById('magic-email-error');
+    errEl.textContent = '';
+    if (!email || !email.includes('@')) {
+      errEl.textContent = 'כתובת מייל לא תקינה';
+      return;
+    }
+    const sendBtn = sh.querySelector('#btn-send-magic-link');
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'שולח...';
+    const result = await sendMagicLink(email);
+    if (result.success) {
+      ov.remove();
+      // הצג מסך אישור
+      sh.innerHTML = '';
+      const conf = document.createElement('div');
+      conf.className = 'modal-sheet';
+      conf.style.textAlign = 'center';
+      conf.innerHTML = `
+        <div class="modal-handle"></div>
+        <div style="padding:32px 24px 28px;">
+          <div style="font-size:3.5rem;margin-bottom:12px;">📬</div>
+          <h3 style="font-size:1.2rem;font-weight:900;margin-bottom:8px;">הקישור נשלח!</h3>
+          <p style="font-size:0.88rem;color:var(--muted);line-height:1.6;margin-bottom:20px;">
+            בדוק את תיבת הדואר של<br><strong style="color:var(--text);direction:ltr;">${email}</strong><br>
+            ולחץ על הקישור להתחברות.
+          </p>
+          <button class="btn btn-secondary btn-sm" id="btn-magic-close">סגור</button>
+        </div>`;
+      const confOv = document.createElement('div'); confOv.className = 'modal-overlay';
+      confOv.appendChild(conf);
+      document.body.appendChild(confOv);
+      conf.querySelector('#btn-magic-close').onclick = () => confOv.remove();
+      confOv.onclick = e => { if (e.target === confOv) confOv.remove(); };
+    } else {
+      errEl.textContent = result.error || 'שגיאה בשליחה, נסה שוב';
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'שלח קישור ✉️';
+    }
+  };
+
+  ov.appendChild(sh);
+  document.body.appendChild(ov);
+  setTimeout(() => document.getElementById('magic-email-input')?.focus(), 320);
 };
 
 document.getElementById('btn-facebook-login').onclick = async () => {

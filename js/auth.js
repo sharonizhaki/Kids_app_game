@@ -6,7 +6,10 @@ import {
   FacebookAuthProvider,
   onAuthStateChanged,
   signOut,
-  deleteUser
+  deleteUser,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
@@ -123,6 +126,44 @@ export async function loginWithFacebook() {
     }
   }
   return null;
+}
+
+// =========== MAGIC LINK (EMAIL PASSWORDLESS) ===========
+export async function sendMagicLink(email) {
+  const actionCodeSettings = {
+    url: window.location.origin + window.location.pathname,
+    handleCodeInApp: true,
+  };
+  try {
+    await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+    localStorage.setItem('emailForSignIn', email);
+    return { success: true };
+  } catch(e) {
+    console.error('sendMagicLink error:', e);
+    const msgs = {
+      'auth/invalid-email': 'כתובת מייל לא תקינה',
+      'auth/missing-email': 'חסרה כתובת מייל',
+    };
+    return { error: msgs[e.code] || `שגיאה: ${e.code}` };
+  }
+}
+
+export async function completeMagicLinkSignIn() {
+  if (!isSignInWithEmailLink(auth, window.location.href)) return false;
+  let email = localStorage.getItem('emailForSignIn');
+  if (!email) {
+    email = window.prompt('הכנס את כתובת המייל שהזנת בהתחברות');
+    if (!email) return false;
+  }
+  try {
+    await signInWithEmailLink(auth, email, window.location.href);
+    localStorage.removeItem('emailForSignIn');
+    window.history.replaceState(null, '', window.location.pathname);
+    return true;
+  } catch(e) {
+    console.error('completeMagicLinkSignIn error:', e);
+    return false;
+  }
 }
 
 // =========== LOGOUT ===========
