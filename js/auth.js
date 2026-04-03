@@ -275,55 +275,75 @@ async function safeDeleteCollection(snap) {
   }
 }
 
+async function deleteFamilyData(familyId) {
+  console.log('[deleteAccount] מוחק משפחה:', familyId);
+
+  // מחיקת ילדים + state/current של כל ילד + קודי הזמנה
+  try {
+    const childrenSnap = await getDocs(collection(db, 'families', familyId, 'children'));
+    console.log('[deleteAccount] ילדים למחיקה:', childrenSnap.size);
+    for (const childDoc of childrenSnap.docs) {
+      const childData = childDoc.data();
+      if (childData.inviteCode) {
+        try { await deleteDoc(doc(db, 'inviteCodes', childData.inviteCode)); } catch(e) { console.warn('inviteCode delete failed', e); }
+      }
+      try {
+        const stateSnap = await getDocs(collection(db, 'families', familyId, 'children', childDoc.id, 'state'));
+        await safeDeleteCollection(stateSnap);
+      } catch(e) { console.warn('state delete failed', childDoc.id, e); }
+      try {
+        await deleteDoc(childDoc.ref);
+        console.log('[deleteAccount] ילד נמחק:', childDoc.id);
+      } catch(e) { console.error('child delete failed:', childDoc.id, e.code, e.message); }
+    }
+  } catch(e) { console.error('children fetch failed:', e.code, e.message); }
+
+  // מחיקת מטלות
+  try {
+    const tasksSnap = await getDocs(collection(db, 'families', familyId, 'tasks'));
+    await safeDeleteCollection(tasksSnap);
+    console.log('[deleteAccount] מטלות נמחקו:', tasksSnap.size);
+  } catch(e) { console.warn('tasks fetch failed', e); }
+
+  // מחיקת היסטוריית שבועות
+  try {
+    const histSnap = await getDocs(collection(db, 'families', familyId, 'weeklyHistory'));
+    await safeDeleteCollection(histSnap);
+  } catch(e) { console.warn('weeklyHistory fetch failed', e); }
+
+  // מחיקת קודי הזמנה להורים
+  try {
+    const parentCodesSnap = await getDocs(
+      query(collection(db, 'parentInviteCodes'), where('familyId', '==', familyId))
+    );
+    await safeDeleteCollection(parentCodesSnap);
+  } catch(e) { console.warn('parentCodes fetch failed', e); }
+
+  // מחיקת מסמך המשפחה
+  try { await deleteDoc(doc(db, 'families', familyId)); console.log('[deleteAccount] משפחה נמחקה'); }
+  catch(e) { console.warn('family doc delete failed', e); }
+}
+
 export async function deleteAccount(familyId, onDone) {
   showLoading('מוחק חשבון...');
+  const user = auth.currentUser;
   try {
-    if (familyId) {
-      // מחיקת ילדים + state/current של כל ילד + קודי הזמנה
+    // אם familyId לא הועבר — נחפש לפי UID (מקרה של ניסיון מחיקה שני)
+    let fid = familyId;
+    if (!fid && user) {
       try {
-        const childrenSnap = await getDocs(collection(db, 'families', familyId, 'children'));
-        for (const childDoc of childrenSnap.docs) {
-          const childData = childDoc.data();
-          // מחיקת קוד הזמנה
-          if (childData.inviteCode) {
-            try { await deleteDoc(doc(db, 'inviteCodes', childData.inviteCode)); } catch(e) {}
-          }
-          // מחיקת state subcollection (היסטוריית ביצוע)
-          try {
-            const stateSnap = await getDocs(collection(db, 'families', familyId, 'children', childDoc.id, 'state'));
-            await safeDeleteCollection(stateSnap);
-          } catch(e) {}
-          // מחיקת הילד עצמו
-          try { await deleteDoc(childDoc.ref); } catch(e) { console.warn('child delete failed', e); }
-        }
-      } catch(e) { console.warn('children fetch failed', e); }
+        const famSnap = await getDocs(query(collection(db, 'families'), where('parentIds', 'array-contains', user.uid)));
+        if (!famSnap.empty) { fid = famSnap.docs[0].id; console.log('[deleteAccount] נמצאה משפחה לפי UID:', fid); }
+      } catch(e) { console.warn('family lookup by UID failed', e); }
+    }
 
-      // מחיקת מטלות
-      try {
-        const tasksSnap = await getDocs(collection(db, 'families', familyId, 'tasks'));
-        await safeDeleteCollection(tasksSnap);
-      } catch(e) { console.warn('tasks fetch failed', e); }
-
-      // מחיקת היסטוריית שבועות
-      try {
-        const histSnap = await getDocs(collection(db, 'families', familyId, 'weeklyHistory'));
-        await safeDeleteCollection(histSnap);
-      } catch(e) { console.warn('weeklyHistory fetch failed', e); }
-
-      // מחיקת קודי הזמנה להורים
-      try {
-        const parentCodesSnap = await getDocs(
-          query(collection(db, 'parentInviteCodes'), where('familyId', '==', familyId))
-        );
-        await safeDeleteCollection(parentCodesSnap);
-      } catch(e) { console.warn('parentCodes fetch failed', e); }
-
-      // מחיקת מסמך המשפחה
-      try { await deleteDoc(doc(db, 'families', familyId)); } catch(e) { console.warn('family doc delete failed', e); }
+    if (fid) {
+      await deleteFamilyData(fid);
+    } else {
+      console.log('[deleteAccount] לא נמצאה משפחה — מוחק רק Auth user');
     }
 
     // מחיקת משתמש מ-Firebase Auth
-    const user = auth.currentUser;
     if (user) await deleteUser(user);
 
     hideLoading();
