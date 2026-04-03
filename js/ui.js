@@ -45,6 +45,30 @@ export function hideLoading() {
   document.querySelectorAll('.loading-overlay').forEach(el => el.remove());
 }
 
+// =========== CONFIRM MODAL ===========
+export function showConfirm({ icon = '⚠️', title, message, confirmText = 'אישור', confirmColor = 'linear-gradient(135deg,#EF4444,#DC2626)', onConfirm }) {
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.65);display:flex;align-items:center;justify-content:center;z-index:2000;animation:fadeIn 0.2s ease;';
+  ov.innerHTML = `
+    <div style="background:#fff;border-radius:24px;width:88%;max-width:380px;text-align:center;animation:modalPop 0.25s cubic-bezier(.4,0,.2,1);">
+      <div style="width:44px;height:5px;background:#E2E8F0;border-radius:3px;margin:14px auto 0;"></div>
+      <div style="padding:24px 24px 28px;">
+        <div style="font-size:2.6rem;margin-bottom:10px;">${icon}</div>
+        <div style="font-size:1.05rem;font-weight:800;margin-bottom:6px;color:#1E293B;">${title}</div>
+        ${message ? `<div style="font-size:0.88rem;color:#94A3B8;margin-bottom:22px;line-height:1.5;">${message}</div>` : '<div style="margin-bottom:22px;"></div>'}
+        <div style="display:flex;gap:10px;">
+          <button data-act="cancel" style="flex:1;padding:14px;background:#F1F5F9;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;color:#1E293B;">ביטול</button>
+          <button data-act="confirm" style="flex:1;padding:14px;background:${confirmColor};color:white;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;">${confirmText}</button>
+        </div>
+      </div>
+    </div>`;
+  ov.querySelector('[data-act="cancel"]').onclick = () => ov.remove();
+  ov.querySelector('[data-act="confirm"]').onclick = () => { ov.remove(); onConfirm(); };
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  document.body.appendChild(ov);
+}
+
 // =========== SIDE MENU ===========
 export function openSideMenu({ auth, onAction }) {
   closeSideMenu();

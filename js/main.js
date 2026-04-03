@@ -6,7 +6,7 @@ import {
   doc, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-import { showScreen, showToast, showLoading, hideLoading, openSideMenu, closeSideMenu } from './ui.js';
+import { showScreen, showToast, showLoading, hideLoading, openSideMenu, closeSideMenu, showConfirm } from './ui.js';
 import { initAuth, loginWithGoogle, loginWithFacebook, logoutParent, createNewFamily, joinFamily, currentFamilyId, setCurrentFamilyId, confirmDeleteAccount, deleteAccount } from './auth.js';
 import {
   childrenCache, clearChildrenCache, loadChildren, renderFamily,
@@ -434,14 +434,22 @@ document.getElementById('btn-save-child').onclick = async () => {
   showScreen('screen-manage-family');
 };
 
-document.getElementById('btn-delete-child').onclick = async () => {
-  if (!confirm('למחוק את הילד/ה? פעולה זו לא ניתנת לביטול')) return;
-  const result = await deleteChild(getFamilyId(), editingChildId);
-  if (result.error) return;
-  await loadChildren(getFamilyId());
-  renderFamily(getFamilyId());
-  showToast('נמחק! 🗑️');
-  showScreen('screen-manage-family');
+document.getElementById('btn-delete-child').onclick = () => {
+  const child = childrenCache.find(c => c.id === editingChildId);
+  showConfirm({
+    icon: child?.emoji || '👦',
+    title: `למחוק את ${child?.name || 'הילד/ה'}?`,
+    message: 'כל המטלות, הנקודות וההיסטוריה יימחקו לצמיתות',
+    confirmText: '🗑️ מחק',
+    onConfirm: async () => {
+      const result = await deleteChild(getFamilyId(), editingChildId);
+      if (result.error) return;
+      await loadChildren(getFamilyId());
+      renderFamily(getFamilyId());
+      showToast('נמחק! 🗑️');
+      showScreen('screen-manage-family');
+    }
+  });
 };
 
 document.getElementById('btn-share-child-code-edit').onclick = () => {

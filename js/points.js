@@ -2,7 +2,7 @@ import { db } from './firebase.js';
 import {
   doc, getDoc, getDocs, updateDoc, collection
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { showToast, showLoading, hideLoading } from './ui.js';
+import { showToast, showLoading, hideLoading, showConfirm } from './ui.js';
 import { childrenCache, loadChildren } from './family.js';
 import { FREQ_LABELS } from './tasks.js';
 
@@ -178,9 +178,15 @@ function attachMPSwipeHandlers(list, familyId) {
       }
     });
 
-    wrap.querySelector('[data-act="undo"]').onclick = async () => {
-      if (!confirm('לבטל את ביצוע המטלה? הכוכבים יורדו מהילד')) return;
-      await undoTask(familyId, childId, histIdx);
+    wrap.querySelector('[data-act="undo"]').onclick = () => {
+      showConfirm({
+        icon: '↩️',
+        title: 'לבטל את ביצוע המטלה?',
+        message: 'הכוכבים יורדו מהילד',
+        confirmText: 'בטל ביצוע',
+        confirmColor: 'linear-gradient(135deg,#F59E0B,#D97706)',
+        onConfirm: () => undoTask(familyId, childId, histIdx)
+      });
     };
   });
 

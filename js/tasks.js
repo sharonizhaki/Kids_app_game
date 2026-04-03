@@ -3,7 +3,7 @@ import {
   doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
   collection, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { showScreen, showToast, showLoading, hideLoading, highlightField } from './ui.js';
+import { showScreen, showToast, showLoading, hideLoading, highlightField, showConfirm } from './ui.js';
 import { childrenCache, loadChildren } from './family.js';
 
 // =========== CONSTANTS ===========
@@ -317,17 +317,24 @@ export function renderEditTasksList(familyId) {
       } catch(e) { hideLoading(); }
     });
 
-    wrap.querySelector('.btn-del').onclick = async (e) => {
+    wrap.querySelector('.btn-del').onclick = (e) => {
       e.stopPropagation();
-      if (!confirm('למחוק את המטלה?')) return;
-      showLoading('מוחק...');
-      try {
-        await deleteDoc(doc(db, 'families', familyId, 'tasks', taskId));
-        await loadAllTasks(familyId);
-        hideLoading();
-        showToast('🗑️ נמחק');
-        renderEditTasksList(familyId);
-      } catch(e) { hideLoading(); }
+      showConfirm({
+        icon: '🗑️',
+        title: 'למחוק את המטלה?',
+        message: 'לא ניתן לשחזר לאחר המחיקה',
+        confirmText: 'מחק',
+        onConfirm: async () => {
+          showLoading('מוחק...');
+          try {
+            await deleteDoc(doc(db, 'families', familyId, 'tasks', taskId));
+            await loadAllTasks(familyId);
+            hideLoading();
+            showToast('🗑️ נמחק');
+            renderEditTasksList(familyId);
+          } catch(e) { hideLoading(); }
+        }
+      });
     };
   });
 }
@@ -448,18 +455,25 @@ export async function toggleHideTask(familyId) {
 }
 
 // =========== DELETE TASK ===========
-export async function deleteTask(familyId) {
+export function deleteTask(familyId) {
   if (!editingTask) return;
-  if (!confirm('למחוק את המטלה? לא ניתן לשחזר')) return;
-  showLoading('מוחק...');
-  try {
-    await deleteDoc(doc(db, 'families', familyId, 'tasks', editingTask.taskId));
-    await loadAllTasks(familyId);
-    hideLoading();
-    showToast('נמחק! 🗑️');
-    showScreen('screen-edit-tasks');
-    renderEditTasksList(familyId);
-  } catch(e) { hideLoading(); console.error(e); }
+  showConfirm({
+    icon: '🗑️',
+    title: 'למחוק את המטלה?',
+    message: 'לא ניתן לשחזר לאחר המחיקה',
+    confirmText: 'מחק',
+    onConfirm: async () => {
+      showLoading('מוחק...');
+      try {
+        await deleteDoc(doc(db, 'families', familyId, 'tasks', editingTask.taskId));
+        await loadAllTasks(familyId);
+        hideLoading();
+        showToast('נמחק! 🗑️');
+        showScreen('screen-edit-tasks');
+        renderEditTasksList(familyId);
+      } catch(e) { hideLoading(); console.error(e); }
+    }
+  });
 }
 
 // =========== SUGGESTIONS ===========
