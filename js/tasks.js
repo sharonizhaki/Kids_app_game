@@ -702,7 +702,7 @@ export async function createQuickTasks(familyId, category) {
 // =========== GUIDED TOUR ===========
 export function startTaskTour(familyId) {
   const steps = [
-    { el: '#form-quick-cats-section',  title: 'שם המטלה',      text: 'הכנס שם למטלה, לחץ "💡 משימות לדוגמא" לרעיונות מוכנים — או צרו 5 משימות אוטומטיות בלחיצה על הקטגוריה' },
+    { el: '#form-quick-cats-section', exact: true, title: 'שם המטלה', text: 'הכנס שם למטלה, לחץ "💡 משימות לדוגמא" לרעיונות מוכנים — או צרו 5 משימות אוטומטיות בלחיצה על הקטגוריה' },
     { el: '#task-cat-scroll',         title: 'קטגוריה',       text: 'בחר קטגוריה — היגיינה, לימודים, מטלות בית... או צור קטגוריה חדשה' },
     { el: '#task-assign-grid',        title: 'שיוך לילד/ים',  text: 'כאן מופיעים הילדים שלך — בחר לאיזה ילד/ים המטלה משויכת' },
     { el: '#task-emoji-grid',         title: 'אייקון',         text: 'בחר אייקון שיופיע ליד שם המטלה' },
@@ -740,7 +740,7 @@ export function startTaskTour(familyId) {
     const step = steps[idx];
     const rawEl = document.querySelector(step.el);
     if (!rawEl) { endTour(); return; }
-    const el = rawEl.closest('.form-section') || rawEl;
+    const el = step.exact ? rawEl : (rawEl.closest('.form-section') || rawEl);
 
     card.classList.remove('visible');
     void card.offsetWidth; // force reflow so animation resets cleanly
