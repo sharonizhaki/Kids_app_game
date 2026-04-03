@@ -128,10 +128,6 @@ export function openSideMenu({ auth, onAction }) {
       <div class="side-icon" style="background:linear-gradient(135deg,#F0FDF4,#DCFCE7);">📄</div>
       <span class="side-item-text">תנאי שימוש</span>
     </div>
-    <div class="side-item danger" data-action="delete-account">
-      <div class="side-icon" style="background:linear-gradient(135deg,#FEE2E2,#FECACA);">🗑️</div>
-      <span class="side-item-text">מחק חשבון</span>
-    </div>
     <div class="side-item danger" data-action="logout">
       <div class="side-icon" style="background:linear-gradient(135deg,#FEE2E2,#FECACA);">🚪</div>
       <span class="side-item-text">התנתק</span>

@@ -206,6 +206,10 @@ document.getElementById('btn-delete-account').onclick = () => {
   });
 };
 
+document.getElementById('btn-delete-account-dev').onclick = () => {
+  document.getElementById('btn-delete-account').click();
+};
+
 // =========== SIDE MENU ===========
 document.getElementById('btn-open-menu').onclick = () => {
   const existing = document.getElementById('side-menu');
