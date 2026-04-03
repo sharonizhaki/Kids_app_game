@@ -733,6 +733,12 @@ function showChildAddedPopup(name, gender, onAddMore, onContinue) {
 document.getElementById('ob1-next').onclick = async () => {
   const name = document.getElementById('ob1-name').value.trim();
   const err  = document.getElementById('ob1-error');
+
+  // אם השדה ריק וכבר יש ילד אחד לפחות — פשוט עובר למסך 2
+  if (!name && childrenCache.length > 0) {
+    goToOnboard2();
+    return;
+  }
   if (!name) {
     err.textContent = 'חובה להזין שם ילד/ה';
     const nameInput = document.getElementById('ob1-name');
