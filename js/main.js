@@ -467,7 +467,8 @@ function showEditEmojiModal(current) {
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
   sh.innerHTML = `<div class="modal-handle"></div>
-    <div class="modal-header"><h2>בחר אימוג'י</h2><button class="modal-close">✕</button></div>
+    <div class="modal-header"><h2>🙂 בחר אימוג'י</h2><button class="modal-close">✕</button></div>
+    <div style="padding:0 20px 4px;font-size:0.82rem;color:var(--muted);">הדמות שתייצג את הילד/ה בכרטיס</div>
     <div class="modal-body">
       <div class="emoji-grid">${CHILD_EMOJIS.map(e => `<div class="emoji-opt${e===current?' selected':''}" data-emoji="${e}">${e}</div>`).join('')}</div>
     </div>`;
@@ -487,7 +488,8 @@ function showEditColorModal(current) {
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
   sh.innerHTML = `<div class="modal-handle"></div>
-    <div class="modal-header"><h2>בחר צבע</h2><button class="modal-close">✕</button></div>
+    <div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div>
+    <div style="padding:0 20px 4px;font-size:0.82rem;color:var(--muted);">הצבע שמזהה את הילד/ה בדשבורד</div>
     <div class="modal-body">
       <div class="color-grid">${CHILD_COLORS.map(c => `<div class="color-opt${c===current?' selected':''}" data-color="${c}" style="background:${c}"></div>`).join('')}</div>
     </div>`;
@@ -707,7 +709,8 @@ function showOb1EmojiModal() {
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
   sh.innerHTML = `<div class="modal-handle"></div>
-    <div class="modal-header"><h2>בחר אימוג'י</h2><button class="modal-close">✕</button></div>
+    <div class="modal-header"><h2>🙂 בחר אימוג'י</h2><button class="modal-close">✕</button></div>
+    <div style="padding:0 20px 4px;font-size:0.82rem;color:var(--muted);">הדמות שתייצג את הילד/ה בכרטיס</div>
     <div class="modal-body">
       <div class="emoji-grid">${CHILD_EMOJIS.map(e => `<div class="emoji-opt${e===obEmoji?' selected':''}" data-emoji="${e}">${e}</div>`).join('')}</div>
     </div>`;
@@ -728,7 +731,8 @@ function showOb1ColorModal() {
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
   sh.innerHTML = `<div class="modal-handle"></div>
-    <div class="modal-header"><h2>בחר צבע</h2><button class="modal-close">✕</button></div>
+    <div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div>
+    <div style="padding:0 20px 4px;font-size:0.82rem;color:var(--muted);">הצבע שמזהה את הילד/ה בדשבורד</div>
     <div class="modal-body">
       <div class="color-grid">${CHILD_COLORS.map(c => `<div class="color-opt${c===obColor?' selected':''}" data-color="${c}" style="background:${c}"></div>`).join('')}</div>
     </div>`;
