@@ -248,6 +248,25 @@ document.getElementById('btn-do-create-child').onclick = async () => {
     return;
   }
 
+  // ולידציה מקומית לפני קריאה לשרת
+  if (!name) {
+    errEl.textContent = 'חובה להכניס שם ילד/ה';
+    const inp = document.getElementById('child-name-input');
+    inp.style.borderColor = '#EF4444'; inp.style.background = '#FEF2F2';
+    inp.focus();
+    navigator.vibrate && navigator.vibrate([80, 40, 80]);
+    setTimeout(() => { inp.style.borderColor = ''; inp.style.background = ''; }, 1800);
+    return;
+  }
+  if (!selectedGender) {
+    errEl.textContent = 'חובה לבחור בן או בת';
+    const opts = document.querySelectorAll('#create-gender-picker .gender-opt');
+    opts.forEach(o => { o.style.outline = '2.5px solid #EF4444'; o.style.background = '#FEF2F2'; });
+    navigator.vibrate && navigator.vibrate([80, 40, 80]);
+    setTimeout(() => opts.forEach(o => { o.style.outline = ''; o.style.background = ''; }), 1800);
+    return;
+  }
+
   const result = await createChild(getFamilyId(), name, selectedGender);
   if (result.error) {
     errEl.textContent = result.error;
@@ -649,8 +668,8 @@ document.querySelectorAll('.ob1-gender').forEach(btn => {
   btn.onclick = () => {
     obGender = btn.dataset.gender;
     document.querySelectorAll('.ob1-gender').forEach(b => {
-      b.style.borderColor = b === btn ? 'var(--primary)' : 'var(--border)';
-      b.style.background  = b === btn ? '#EEF2FF' : 'white';
+      b.style.borderColor = b === btn ? '#6366F1' : '#E2E8F0';
+      b.style.background  = b === btn ? '#EEF2FF' : '#F8FAFC';
     });
   };
 });
@@ -678,8 +697,8 @@ function resetOb1Form() {
   obChildPhoto = null;
   document.getElementById('ob1-error').textContent = '';
   document.querySelectorAll('.ob1-gender').forEach(b => {
-    b.style.borderColor = 'var(--border)';
-    b.style.background  = 'white';
+    b.style.borderColor = '#E2E8F0';
+    b.style.background  = '#F8FAFC';
   });
   document.getElementById('ob1-photo-circle').innerHTML =
     `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
