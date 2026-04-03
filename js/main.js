@@ -366,12 +366,29 @@ function openEditChild(childId) {
 
   editColor = child.color || '';
   const colorEl = document.getElementById('edit-child-color-display');
-  colorEl.style.background = child.color || 'var(--border)';
+  if (child.color) {
+    colorEl.style.background = child.color;
+    colorEl.style.borderColor = child.color;
+    colorEl.style.borderStyle = 'solid';
+  } else {
+    colorEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
+    colorEl.style.borderColor = '#818CF8';
+    colorEl.style.borderStyle = 'dashed';
+  }
   colorEl.onclick = () => showEditColorModal(child.color);
 
   editEmoji = child.emoji || '';
   const emojiEl = document.getElementById('edit-child-emoji-display');
-  emojiEl.textContent = child.emoji || '🙂';
+  emojiEl.textContent = child.emoji || '';
+  if (child.emoji) {
+    emojiEl.style.background = 'transparent';
+    emojiEl.style.borderColor = '#818CF8';
+    emojiEl.style.borderStyle = 'solid';
+  } else {
+    emojiEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
+    emojiEl.style.borderColor = '#818CF8';
+    emojiEl.style.borderStyle = 'dashed';
+  }
   emojiEl.onclick = () => showEditEmojiModal(child.emoji);
 
   const preview = document.getElementById('edit-photo-preview');
@@ -488,7 +505,11 @@ function showEditEmojiModal(current) {
   sh.querySelectorAll('.emoji-opt').forEach(el => {
     el.onclick = () => {
       editEmoji = el.dataset.emoji;
-      document.getElementById('edit-child-emoji-display').textContent = editEmoji;
+      const ed = document.getElementById('edit-child-emoji-display');
+      ed.textContent = editEmoji;
+      ed.style.background = 'transparent';
+      ed.style.borderStyle = 'solid';
+      ed.style.borderColor = '#818CF8';
       ov.remove();
     };
   });
@@ -509,7 +530,10 @@ function showEditColorModal(current) {
   sh.querySelectorAll('.color-opt').forEach(el => {
     el.onclick = () => {
       editColor = el.dataset.color;
-      document.getElementById('edit-child-color-display').style.background = editColor;
+      const cd = document.getElementById('edit-child-color-display');
+      cd.style.background = editColor;
+      cd.style.borderColor = editColor;
+      cd.style.borderStyle = 'solid';
       ov.remove();
     };
   });

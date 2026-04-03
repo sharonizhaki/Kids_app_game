@@ -577,25 +577,27 @@
       <div style="text-align:center;">
         <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">צבע 🎨</div>
         <div id="edit-child-color-display"
-          style="width:60px;height:60px;border-radius:50%;margin:0 auto;border:3px solid var(--border);cursor:pointer;" title="לחץ לעריכה"></div>
+          style="width:60px;height:60px;border-radius:50%;margin:0 auto;border:3px dashed #818CF8;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);cursor:pointer;" title="לחץ לעריכה"></div>
       </div>
       <div style="text-align:center;">
-        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:2px;">אימוג'י</div>
+        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">אימוג'י</div>
         <div id="edit-child-emoji-display"
-          style="font-size:2.1rem;min-height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="לחץ לעריכה"></div>
+          style="width:60px;height:60px;border-radius:50%;margin:0 auto;border:3px dashed #818CF8;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);font-size:2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="לחץ לעריכה"></div>
       </div>
       <div style="text-align:center;">
         <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">תמונה 📷</div>
-        <div class="photo-upload" id="edit-photo-upload" style="width:60px;height:60px;margin:0 auto 6px;">
-          <div class="ph-placeholder" id="edit-photo-placeholder">
-            <span style="font-size:1.2rem;">📷</span>
-            <small>בחר</small>
+        <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
+          <div class="photo-upload" id="edit-photo-upload" style="width:60px;height:60px;">
+            <div class="ph-placeholder" id="edit-photo-placeholder">
+              <span style="font-size:1.2rem;">📷</span>
+              <small>בחר</small>
+            </div>
+            <img id="edit-photo-preview" style="display:none;" alt="">
+            <input type="file" accept="image/*" id="edit-photo-input">
           </div>
-          <img id="edit-photo-preview" style="display:none;" alt="">
-          <input type="file" accept="image/*" id="edit-photo-input">
+          <button class="btn btn-sm btn-secondary" id="btn-clear-photo"
+            style="width:30px;height:30px;padding:0;font-size:0.85rem;min-width:unset;border-radius:50%;display:flex;align-items:center;justify-content:center;align-self:center;">🗑️</button>
         </div>
-        <button class="btn btn-sm btn-secondary" id="btn-clear-photo"
-          style="width:auto;padding:5px 10px;font-size:0.78rem;min-width:unset;">🗑️</button>
       </div>
     </div>
 
