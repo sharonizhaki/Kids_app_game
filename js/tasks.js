@@ -282,6 +282,12 @@ export function renderEditTasksList(familyId) {
     tasks = Array.from(seen.values());
   }
 
+  // כשפילטר ילד פעיל אבל עוד לא נבחר ילד — מציגים הנחייה
+  if (etFilter === 'child' && !etSubFilter) {
+    list.innerHTML = '<div class="empty-state">👆 בחר ילד מהרשימה למעלה</div>';
+    return;
+  }
+
   // sort
   if (etFilter === 'stars') tasks.sort((a,b) => (b.pts||0) - (a.pts||0));
   else if (etFilter === 'cat')   tasks.sort((a,b) => (a.cat||'').localeCompare(b.cat||''));
