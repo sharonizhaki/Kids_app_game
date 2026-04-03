@@ -575,7 +575,7 @@
       <div style="text-align:center;">
         <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">צבע 🎨</div>
         <div id="edit-child-color-display"
-          style="width:44px;height:44px;border-radius:50%;margin:0 auto;border:3px solid var(--border);cursor:pointer;" title="לחץ לעריכה"></div>
+          style="width:60px;height:60px;border-radius:50%;margin:0 auto;border:3px solid var(--border);cursor:pointer;" title="לחץ לעריכה"></div>
       </div>
       <div style="text-align:center;">
         <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:2px;">אימוג'י</div>
@@ -584,18 +584,16 @@
       </div>
       <div style="text-align:center;">
         <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">תמונה 📷</div>
-        <div style="display:flex;align-items:center;gap:5px;justify-content:center;">
-          <div class="photo-upload" id="edit-photo-upload" style="width:60px;height:60px;margin:0;">
-            <div class="ph-placeholder" id="edit-photo-placeholder">
-              <span style="font-size:1.2rem;">📷</span>
-              <small>בחר</small>
-            </div>
-            <img id="edit-photo-preview" style="display:none;" alt="">
-            <input type="file" accept="image/*" id="edit-photo-input">
+        <div class="photo-upload" id="edit-photo-upload" style="width:60px;height:60px;margin:0 auto 6px;">
+          <div class="ph-placeholder" id="edit-photo-placeholder">
+            <span style="font-size:1.2rem;">📷</span>
+            <small>בחר</small>
           </div>
-          <button class="btn btn-sm btn-secondary" id="btn-clear-photo"
-            style="width:auto;padding:7px 9px;font-size:0.78rem;min-width:unset;">🗑️</button>
+          <img id="edit-photo-preview" style="display:none;" alt="">
+          <input type="file" accept="image/*" id="edit-photo-input">
         </div>
+        <button class="btn btn-sm btn-secondary" id="btn-clear-photo"
+          style="width:auto;padding:5px 10px;font-size:0.78rem;min-width:unset;">🗑️</button>
       </div>
     </div>
 

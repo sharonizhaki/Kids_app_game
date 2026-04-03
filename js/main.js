@@ -360,7 +360,7 @@ function openEditChild(childId) {
 
   editEmoji = child.emoji || '';
   const emojiEl = document.getElementById('edit-child-emoji-display');
-  emojiEl.textContent = child.emoji || '—';
+  emojiEl.textContent = child.emoji || '🙂';
   emojiEl.onclick = () => showEditEmojiModal(child.emoji);
 
   const preview = document.getElementById('edit-photo-preview');

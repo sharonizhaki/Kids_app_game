@@ -16,3 +16,5 @@ pnpm-workspace.yaml
 replit.md
 tsconfig.base.json
 tsconfig.json
+package.json
+attached_assets/
