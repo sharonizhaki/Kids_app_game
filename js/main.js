@@ -318,6 +318,9 @@ document.getElementById('btn-replay-tour').onclick = () => {
 
 // =========== CREATE CHILD ===========
 let selectedGender = '';
+let newChildEmoji = '';
+let newChildColor = '';
+let newChildPhotoData = null;
 
 document.getElementById('gender-male').onclick = () => {
   selectedGender = 'male';
@@ -368,7 +371,11 @@ document.getElementById('btn-do-create-child').onclick = async () => {
     return;
   }
 
-  const result = await createChild(getFamilyId(), name, selectedGender);
+  const result = await createChild(getFamilyId(), name, selectedGender, {
+    emoji: newChildEmoji,
+    color: newChildColor,
+    photo: newChildPhotoData || '',
+  });
   if (result.error) {
     errEl.textContent = result.error;
     return;
@@ -388,7 +395,32 @@ document.getElementById('btn-create-child').onclick = () => {
   document.getElementById('child-name-input').value = '';
   document.getElementById('create-child-error').textContent = '';
   selectedGender = '';
+  newChildEmoji = '';
+  newChildColor = '';
+  newChildPhotoData = null;
   document.querySelectorAll('#create-gender-picker .gender-opt').forEach(g => g.classList.remove('selected'));
+
+  // reset photo circle
+  document.getElementById('new-child-photo-circle').innerHTML =
+    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  document.getElementById('new-child-photo-input').value = '';
+
+  // reset emoji circle
+  const emojiEl = document.getElementById('new-child-emoji-display');
+  emojiEl.textContent = '?';
+  emojiEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
+  emojiEl.style.borderStyle = 'dashed';
+  emojiEl.style.borderColor = '#818CF8';
+  emojiEl.style.color = '#818CF8';
+  emojiEl.style.fontSize = '1.6rem';
+  emojiEl.style.fontWeight = '900';
+
+  // reset color circle
+  const colorEl = document.getElementById('new-child-color-display');
+  colorEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
+  colorEl.style.borderStyle = 'dashed';
+  colorEl.style.borderColor = '#818CF8';
+
   showScreen('screen-create-child');
   setTimeout(() => document.getElementById('child-name-input').focus(), 350);
 };
@@ -819,6 +851,9 @@ function showOb1EmojiModal() {
       ed.style.background = 'transparent';
       ed.style.borderStyle = 'solid';
       ed.style.borderColor = '#818CF8';
+      ed.style.color = '';
+      ed.style.fontSize = '2rem';
+      ed.style.fontWeight = '';
       ov.remove();
     };
   });
@@ -853,6 +888,74 @@ function showOb1ColorModal() {
 window.showOb1EmojiModal = showOb1EmojiModal;
 window.showOb1ColorModal = showOb1ColorModal;
 
+// =========== NEW CHILD (manage-family) — emoji / color / photo ===========
+function showNewChildEmojiModal() {
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  const sh = document.createElement('div'); sh.className = 'modal-sheet';
+  sh.innerHTML = `<div class="modal-handle"></div>
+    <div class="modal-header"><h2>🙂 בחר אימוג'י</h2><button class="modal-close">✕</button></div>
+    <div style="padding:0 20px 4px;font-size:0.82rem;color:var(--muted);">הדמות שתייצג את הילד/ה בכרטיס</div>
+    <div class="modal-body">
+      <div class="emoji-grid">${CHILD_EMOJIS.map(e => `<div class="emoji-opt${e===newChildEmoji?' selected':''}" data-emoji="${e}">${e}</div>`).join('')}</div>
+    </div>`;
+  sh.querySelector('.modal-close').onclick = () => ov.remove();
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  sh.querySelectorAll('.emoji-opt').forEach(el => {
+    el.onclick = () => {
+      newChildEmoji = el.dataset.emoji;
+      const ed = document.getElementById('new-child-emoji-display');
+      ed.textContent = newChildEmoji;
+      ed.style.background = 'transparent';
+      ed.style.borderStyle = 'solid';
+      ed.style.borderColor = '#818CF8';
+      ed.style.color = '';
+      ed.style.fontSize = '2rem';
+      ed.style.fontWeight = '';
+      ov.remove();
+    };
+  });
+  ov.appendChild(sh); document.body.appendChild(ov);
+}
+
+function showNewChildColorModal() {
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  const sh = document.createElement('div'); sh.className = 'modal-sheet';
+  sh.innerHTML = `<div class="modal-handle"></div>
+    <div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div>
+    <div style="padding:0 20px 4px;font-size:0.82rem;color:var(--muted);">הצבע שמזהה את הילד/ה בדשבורד</div>
+    <div class="modal-body">
+      <div class="color-grid">${CHILD_COLORS.map(c => `<div class="color-opt${c===newChildColor?' selected':''}" data-color="${c}" style="background:${c}"></div>`).join('')}</div>
+    </div>`;
+  sh.querySelector('.modal-close').onclick = () => ov.remove();
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  sh.querySelectorAll('.color-opt').forEach(el => {
+    el.onclick = () => {
+      newChildColor = el.dataset.color;
+      const cd = document.getElementById('new-child-color-display');
+      cd.style.background = newChildColor;
+      cd.style.borderColor = newChildColor;
+      cd.style.borderStyle = 'solid';
+      ov.remove();
+    };
+  });
+  ov.appendChild(sh); document.body.appendChild(ov);
+}
+
+window.showNewChildEmojiModal = showNewChildEmojiModal;
+window.showNewChildColorModal = showNewChildColorModal;
+
+document.getElementById('new-child-photo-input').onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    newChildPhotoData = await cropAndCompressPhoto(file);
+    document.getElementById('new-child-photo-circle').innerHTML =
+      `<img src="${newChildPhotoData}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  } catch(err) {
+    showToast('שגיאה בטעינת התמונה ⚠️');
+  }
+};
+
 // Step 1 — photo upload
 document.getElementById('ob1-photo-input').onchange = async (e) => {
   const file = e.target.files[0];
@@ -882,10 +985,13 @@ function resetOb1Form() {
     `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
   document.getElementById('ob1-photo-input').value = '';
   const emojiEl = document.getElementById('ob1-emoji-display');
-  emojiEl.textContent = '🙂';
+  emojiEl.textContent = '?';
   emojiEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
   emojiEl.style.borderStyle = 'dashed';
   emojiEl.style.borderColor = '#818CF8';
+  emojiEl.style.color = '#818CF8';
+  emojiEl.style.fontSize = '1.6rem';
+  emojiEl.style.fontWeight = '900';
   const colorEl = document.getElementById('ob1-color-display');
   colorEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
   colorEl.style.borderStyle = 'dashed';

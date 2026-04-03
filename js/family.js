@@ -96,7 +96,7 @@ async function renderParentsList(familyId) {
 }
 
 // =========== CREATE CHILD ===========
-export async function createChild(familyId, name, gender) {
+export async function createChild(familyId, name, gender, opts = {}) {
   if (!name) return { error: 'חובה להכניס שם' };
   if (!gender) return { error: 'חובה לבחור מין' };
 
@@ -107,9 +107,9 @@ export async function createChild(familyId, name, gender) {
     await setDoc(childRef, {
       name,
       gender,
-      emoji: '',
-      color: '',
-      photo: '',
+      emoji: opts.emoji || '',
+      color: opts.color || '',
+      photo: opts.photo || '',
       inviteCode: code,
       codeCreatedAt: Timestamp.now(),
       codeAttempts: 0,

@@ -270,7 +270,7 @@
       </div>
       <div style="text-align:center;cursor:pointer;" onclick="showOb1EmojiModal()">
         <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">אימוג'י</div>
-        <div id="ob1-emoji-display" style="width:60px;height:60px;border-radius:50%;border:3px dashed #818CF8;margin:0 auto;font-size:2rem;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);">🙂</div>
+        <div id="ob1-emoji-display" style="width:60px;height:60px;border-radius:50%;border:3px dashed #818CF8;margin:0 auto;font-size:1.6rem;font-weight:900;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);color:#818CF8;">?</div>
       </div>
       <div style="text-align:center;cursor:pointer;" onclick="showOb1ColorModal()">
         <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">צבע 🎨</div>
@@ -490,6 +490,29 @@
       <div class="gender-opt" data-gender="male" id="gender-male">👦</div>
       <div class="gender-opt" data-gender="female" id="gender-female">👧</div>
     </div>
+
+    <!-- Photo + Emoji + Color strip -->
+    <div style="display:flex;justify-content:space-around;align-items:flex-start;background:#F8FAFC;border-radius:14px;padding:10px 6px;margin-top:12px;">
+      <div style="text-align:center;cursor:pointer;" onclick="document.getElementById('new-child-photo-input').click()">
+        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">תמונה 📷</div>
+        <div id="new-child-photo-circle" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);display:flex;align-items:center;justify-content:center;border:3px dashed #818CF8;overflow:hidden;margin:0 auto;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </div>
+        <input type="file" id="new-child-photo-input" accept="image/*" style="display:none;">
+      </div>
+      <div style="text-align:center;cursor:pointer;" onclick="showNewChildEmojiModal()">
+        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">אימוג'י</div>
+        <div id="new-child-emoji-display" style="width:60px;height:60px;border-radius:50%;border:3px dashed #818CF8;margin:0 auto;font-size:1.6rem;font-weight:900;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);color:#818CF8;">?</div>
+      </div>
+      <div style="text-align:center;cursor:pointer;" onclick="showNewChildColorModal()">
+        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">צבע 🎨</div>
+        <div id="new-child-color-display" style="width:60px;height:60px;border-radius:50%;margin:0 auto;border:3px dashed #818CF8;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);"></div>
+      </div>
+    </div>
+
     <div class="error-msg" id="create-child-error"></div>
     <div class="btn-row" style="margin-top:16px;">
       <button class="btn btn-primary btn-sm" id="btn-do-create-child">צור ילד/ה</button>
