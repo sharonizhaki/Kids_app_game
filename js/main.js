@@ -1090,13 +1090,7 @@ document.getElementById('ob1-photo-input').onchange = async (e) => {
 };
 
 // Step 1 — back
-document.getElementById('ob1-back').onclick = () => {
-  if (childrenCache.length > 0) {
-    showScreen('screen-dashboard');
-  } else {
-    showScreen('screen-join-family');
-  }
-};
+document.getElementById('ob1-back').onclick = () => showScreen('screen-join-family');
 
 // =========== OB1 TITLE (ordinal based on existing children count) ===========
 const OB1_ORDINALS = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שביעי','שמיני','תשיעי','עשירי'];
@@ -1107,6 +1101,8 @@ function updateOb1Title() {
   if (el) el.textContent = `הוסף ילד/ה ${ord}`;
   const topNext = document.getElementById('ob1-top-next');
   if (topNext) topNext.style.visibility = idx === 0 ? 'hidden' : 'visible';
+  const backBtn = document.getElementById('ob1-back');
+  if (backBtn) backBtn.style.visibility = idx === 0 ? 'visible' : 'hidden';
 }
 
 // Reset onboarding step-1 form for adding another child
