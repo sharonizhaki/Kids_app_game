@@ -98,6 +98,13 @@ export async function openAddTask(familyId) {
 
   showScreen('screen-add-task');
 
+  // אם כל 3 כפתורי הדשבורד כבר בוצעו — הסתר מיידית את סקציית 5 המהירות בטופס
+  const allDashDone = [...document.querySelectorAll('#quick-tasks-inner .quick-cat-btn')].every(b => b.innerHTML.includes('✅'));
+  if (allDashDone) {
+    const qs = document.getElementById('form-quick-cats-section');
+    if (qs) qs.style.display = 'none';
+  }
+
   setTimeout(async () => {
     try {
       const famDoc = await getDoc(doc(db, 'families', familyId));
@@ -740,6 +747,12 @@ export function startTaskTour(familyId) {
     const step = steps[idx];
     const rawEl = document.querySelector(step.el);
     if (!rawEl) { endTour(); return; }
+    // אם האלמנט מוסתר — דלג לשלב הבא
+    if (getComputedStyle(rawEl).display === 'none') {
+      currentStep++;
+      if (currentStep >= steps.length) endTour(); else showStep(currentStep);
+      return;
+    }
     const el = step.exact ? rawEl : (rawEl.closest('.form-section') || rawEl);
 
     card.classList.remove('visible');
