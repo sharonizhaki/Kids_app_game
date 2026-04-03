@@ -227,41 +227,49 @@ export function confirmDeleteAccount(onConfirmed) {
   document.body.appendChild(ov);
 }
 
+async function safeDeleteCollection(snap) {
+  for (const d of snap.docs) {
+    try { await deleteDoc(d.ref); } catch(e) { console.warn('safeDelete failed:', d.ref.path, e); }
+  }
+}
+
 export async function deleteAccount(familyId, onDone) {
   showLoading('מוחק חשבון...');
   try {
     if (familyId) {
       // מחיקת ילדים וקודי ההזמנה שלהם
-      const childrenSnap = await getDocs(collection(db, 'families', familyId, 'children'));
-      for (const childDoc of childrenSnap.docs) {
-        const childData = childDoc.data();
-        if (childData.inviteCode) {
-          try { await deleteDoc(doc(db, 'inviteCodes', childData.inviteCode)); } catch(e) {}
+      try {
+        const childrenSnap = await getDocs(collection(db, 'families', familyId, 'children'));
+        for (const childDoc of childrenSnap.docs) {
+          const childData = childDoc.data();
+          if (childData.inviteCode) {
+            try { await deleteDoc(doc(db, 'inviteCodes', childData.inviteCode)); } catch(e) {}
+          }
+          try { await deleteDoc(childDoc.ref); } catch(e) { console.warn('child delete failed', e); }
         }
-        await deleteDoc(childDoc.ref);
-      }
+      } catch(e) { console.warn('children fetch failed', e); }
 
       // מחיקת מטלות
-      const tasksSnap = await getDocs(collection(db, 'families', familyId, 'tasks'));
-      for (const taskDoc of tasksSnap.docs) {
-        await deleteDoc(taskDoc.ref);
-      }
+      try {
+        const tasksSnap = await getDocs(collection(db, 'families', familyId, 'tasks'));
+        await safeDeleteCollection(tasksSnap);
+      } catch(e) { console.warn('tasks fetch failed', e); }
 
       // מחיקת היסטוריית שבועות
-      const histSnap = await getDocs(collection(db, 'families', familyId, 'weeklyHistory'));
-      for (const histDoc of histSnap.docs) {
-        await deleteDoc(histDoc.ref);
-      }
+      try {
+        const histSnap = await getDocs(collection(db, 'families', familyId, 'weeklyHistory'));
+        await safeDeleteCollection(histSnap);
+      } catch(e) { console.warn('weeklyHistory fetch failed', e); }
 
       // מחיקת קודי הזמנה להורים
-      const parentCodesSnap = await getDocs(
-        query(collection(db, 'parentInviteCodes'), where('familyId', '==', familyId))
-      );
-      for (const codeDoc of parentCodesSnap.docs) {
-        await deleteDoc(codeDoc.ref);
-      }
+      try {
+        const parentCodesSnap = await getDocs(
+          query(collection(db, 'parentInviteCodes'), where('familyId', '==', familyId))
+        );
+        await safeDeleteCollection(parentCodesSnap);
+      } catch(e) { console.warn('parentCodes fetch failed', e); }
 
-      // מחיקת מסמך המשפחה
+      // מחיקת מסמך המשפחה — חובה שיצליח
       await deleteDoc(doc(db, 'families', familyId));
     }
 
@@ -282,7 +290,7 @@ export async function deleteAccount(familyId, onDone) {
       currentFamilyId = null;
       showScreen('screen-who');
     } else {
-      console.error('deleteAccount error:', e);
+      console.error('deleteAccount error:', e.code, e.message);
       showToast('שגיאה במחיקה, נסה שוב ⚠️');
     }
   }

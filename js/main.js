@@ -197,7 +197,9 @@ document.getElementById('btn-logout').onclick = () => {
 
 document.getElementById('btn-delete-account').onclick = () => {
   confirmDeleteAccount(() => {
-    deleteAccount(currentFamilyId, () => {
+    const fid = getFamilyId();
+    console.log('[deleteAccount] familyId =', fid);
+    deleteAccount(fid, () => {
       clearChildrenCache();
       showScreen('screen-who');
     });
