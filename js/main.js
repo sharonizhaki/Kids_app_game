@@ -1090,7 +1090,13 @@ document.getElementById('ob1-photo-input').onchange = async (e) => {
 };
 
 // Step 1 — back
-document.getElementById('ob1-back').onclick = () => showScreen('screen-join-family');
+document.getElementById('ob1-back').onclick = () => {
+  if (childrenCache.length > 0) {
+    showScreen('screen-dashboard');
+  } else {
+    showScreen('screen-join-family');
+  }
+};
 
 // =========== OB1 TITLE (ordinal based on existing children count) ===========
 const OB1_ORDINALS = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שביעי','שמיני','תשיעי','עשירי'];
