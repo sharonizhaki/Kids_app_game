@@ -1100,7 +1100,17 @@ function updateOb1Title() {
   const el = document.getElementById('ob1-title');
   if (el) el.textContent = `הוסף ילד/ה ${ord}`;
   const topNext = document.getElementById('ob1-top-next');
-  if (topNext) topNext.style.visibility = idx === 0 ? 'hidden' : 'visible';
+  if (topNext) {
+    if (idx === 0) {
+      topNext.style.visibility = 'hidden';
+      topNext.textContent = 'הבא ←';
+      topNext.onclick = () => document.getElementById('ob1-next').click();
+    } else {
+      topNext.style.visibility = 'visible';
+      topNext.textContent = 'דלג ←';
+      topNext.onclick = () => showScreen('screen-dashboard');
+    }
+  }
   const backBtn = document.getElementById('ob1-back');
   if (backBtn) backBtn.style.visibility = idx === 0 ? 'visible' : 'hidden';
 }
