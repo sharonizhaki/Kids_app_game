@@ -708,8 +708,12 @@ export async function createQuickTasks(familyId, category) {
 
 // =========== GUIDED TOUR ===========
 export function startTaskTour(familyId) {
+  const quickCatsVisible = getComputedStyle(document.getElementById('form-quick-cats-section') || document.createElement('div')).display !== 'none';
+  const step1Text = quickCatsVisible
+    ? 'הכנס שם למטלה, לחץ "💡 משימות לדוגמא" לרעיונות מוכנים — או צרו 5 משימות אוטומטיות בלחיצה על הקטגוריה'
+    : 'הכנס שם למטלה, לחץ "💡 משימות לדוגמא" לרעיונות מוכנים';
   const steps = [
-    { el: '#form-quick-cats-section', exact: true, title: 'שם המטלה', text: 'הכנס שם למטלה, לחץ "💡 משימות לדוגמא" לרעיונות מוכנים — או צרו 5 משימות אוטומטיות בלחיצה על הקטגוריה' },
+    { el: '#task-name-input', title: 'שם המטלה', text: step1Text },
     { el: '#task-cat-scroll',         title: 'קטגוריה',       text: 'בחר קטגוריה — היגיינה, לימודים, מטלות בית... או צור קטגוריה חדשה' },
     { el: '#task-assign-grid',        title: 'שיוך לילד/ים',  text: 'כאן מופיעים הילדים שלך — בחר לאיזה ילד/ים המטלה משויכת' },
     { el: '#task-emoji-grid',         title: 'אייקון',         text: 'בחר אייקון שיופיע ליד שם המטלה' },
