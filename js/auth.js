@@ -237,14 +237,21 @@ export async function deleteAccount(familyId, onDone) {
   showLoading('מוחק חשבון...');
   try {
     if (familyId) {
-      // מחיקת ילדים וקודי ההזמנה שלהם
+      // מחיקת ילדים + state/current של כל ילד + קודי הזמנה
       try {
         const childrenSnap = await getDocs(collection(db, 'families', familyId, 'children'));
         for (const childDoc of childrenSnap.docs) {
           const childData = childDoc.data();
+          // מחיקת קוד הזמנה
           if (childData.inviteCode) {
             try { await deleteDoc(doc(db, 'inviteCodes', childData.inviteCode)); } catch(e) {}
           }
+          // מחיקת state subcollection (היסטוריית ביצוע)
+          try {
+            const stateSnap = await getDocs(collection(db, 'families', familyId, 'children', childDoc.id, 'state'));
+            await safeDeleteCollection(stateSnap);
+          } catch(e) {}
+          // מחיקת הילד עצמו
           try { await deleteDoc(childDoc.ref); } catch(e) { console.warn('child delete failed', e); }
         }
       } catch(e) { console.warn('children fetch failed', e); }
@@ -269,8 +276,8 @@ export async function deleteAccount(familyId, onDone) {
         await safeDeleteCollection(parentCodesSnap);
       } catch(e) { console.warn('parentCodes fetch failed', e); }
 
-      // מחיקת מסמך המשפחה — חובה שיצליח
-      await deleteDoc(doc(db, 'families', familyId));
+      // מחיקת מסמך המשפחה
+      try { await deleteDoc(doc(db, 'families', familyId)); } catch(e) { console.warn('family doc delete failed', e); }
     }
 
     // מחיקת משתמש מ-Firebase Auth
