@@ -683,9 +683,12 @@
       <div style="display:flex;gap:8px;">
         <button class="btn btn-sm" id="btn-task-suggestions" style="padding:8px 14px;font-size:0.82rem;background:#FCE7F3;color:#BE185D;border:none;border-radius:20px;width:auto;max-width:none;display:inline-flex;box-shadow:none;flex:1;justify-content:center;">💡 לחץ למשימות לדוגמא</button>
       </div>
-      <div style="margin-top:8px;">
-        <div style="font-size:0.71rem;font-weight:700;color:#94A3B8;margin-bottom:5px;text-align:right;">⚡ הוספת 5 משימות לפי קטגוריה:</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+      <div id="form-quick-cats-section" style="margin-top:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+          <div style="font-size:0.71rem;font-weight:700;color:#94A3B8;flex:1;text-align:right;">⚡ הוספת 5 משימות לפי קטגוריה - ערוך ומחק במסך עריכת מטלות</div>
+          <button id="btn-form-quick-close" style="background:none;border:none;color:#94A3B8;font-size:0.95rem;font-weight:900;cursor:pointer;padding:0 0 0 6px;line-height:1;flex-shrink:0;">✕</button>
+        </div>
+        <div id="form-quick-cats-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
           <button class="quick-cat-btn-form" data-cat="hygiene" style="background:#EEF2FF;color:#4338CA;border:1.5px solid #C7D2FE;border-radius:10px;padding:6px 4px;font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🧼 היגיינה</button>
           <button class="quick-cat-btn-form" data-cat="chores" style="background:#EEF2FF;color:#4338CA;border:1.5px solid #C7D2FE;border-radius:10px;padding:6px 4px;font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🏠 בית</button>
           <button class="quick-cat-btn-form" data-cat="study" style="background:#EEF2FF;color:#4338CA;border:1.5px solid #C7D2FE;border-radius:10px;padding:6px 4px;font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📚 לימודים</button>

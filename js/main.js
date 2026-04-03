@@ -110,6 +110,23 @@ function dismissQuickBanner() {
   animateBannerAway();
 }
 
+function animateFormQuickAway() {
+  const section = document.getElementById('form-quick-cats-section');
+  if (!section || section.style.display === 'none') return;
+  const h = section.offsetHeight;
+  section.style.overflow = 'hidden';
+  section.style.maxHeight = h + 'px';
+  section.style.transition = 'transform 0.12s ease-out';
+  section.style.transform = 'scale(1.03)';
+  setTimeout(() => {
+    section.style.transition = 'max-height 0.38s cubic-bezier(.4,0,.2,1), opacity 0.28s ease, transform 0.28s ease';
+    section.style.maxHeight = '0';
+    section.style.opacity = '0';
+    section.style.transform = 'scale(0.88)';
+    setTimeout(() => { section.style.display = 'none'; }, 400);
+  }, 120);
+}
+
 async function handleQuickTasks(triggerEl, category) {
   const fid = getFamilyId();
   if (!fid) return;
@@ -133,11 +150,26 @@ async function handleQuickTasks(triggerEl, category) {
       triggerEl.classList.add('quick-cat-done');
       triggerEl.addEventListener('animationend', () => triggerEl.classList.remove('quick-cat-done'), { once: true });
 
-      // אם כל 3 ריבועי הדשבורד הושלמו — יעלם אחרי השהיה
+      // סנכרון לכפתור הטופס — כשנלחץ מהדשבורד
       if (!isFormBtn) {
+        const labels = { hygiene:'היגיינה', chores:'מטלות בית', study:'לימודים' };
+        const formBtn = document.querySelector(`.quick-cat-btn-form[data-cat="${category}"]`);
+        if (formBtn && !formBtn.textContent.includes('✅')) {
+          formBtn.style.background = 'rgba(22,163,74,0.10)';
+          formBtn.style.borderColor = '#16A34A';
+          formBtn.style.borderWidth = '2.5px';
+          formBtn.style.color = '#15803D';
+          formBtn.textContent = `✅ ${labels[category] || ''}`;
+          formBtn.style.cursor = 'default';
+          formBtn.disabled = true;
+        }
+        // אם כל 3 ריבועי הדשבורד הושלמו — יעלמו הבאנר וגם סקציית הטופס
         const allBtns = document.querySelectorAll('#quick-tasks-inner .quick-cat-btn');
         const allDone = [...allBtns].every(b => b.innerHTML.includes('✅'));
-        if (allDone) setTimeout(animateBannerAway, 950);
+        if (allDone) {
+          setTimeout(animateBannerAway, 950);
+          setTimeout(animateFormQuickAway, 950);
+        }
       }
     }
   } finally {
@@ -232,6 +264,7 @@ document.getElementById('modal-no-child-create').onclick = () => {
 };
 
 document.getElementById('btn-quick-banner-close').addEventListener('click', dismissQuickBanner);
+document.getElementById('btn-form-quick-close').addEventListener('click', animateFormQuickAway);
 
 document.querySelectorAll('.quick-cat-btn').forEach(btn => {
   btn.addEventListener('click', function() { handleQuickTasks(this, this.dataset.cat); });
