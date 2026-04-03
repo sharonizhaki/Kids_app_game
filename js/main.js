@@ -547,17 +547,7 @@ document.getElementById('btn-create-new-family').onclick = async () => {
   const result = await createNewFamily(auth.currentUser);
   if (!result.success) { showToast('שגיאה, נסה שוב'); return; }
   // Reset onboarding state and go to step 1
-  obGender = '';
-  obChildPhoto = null;
-  document.getElementById('ob1-name').value = '';
-  document.getElementById('ob1-error').textContent = '';
-  document.getElementById('ob1-photo-circle').innerHTML =
-    `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
-  document.getElementById('ob1-gender-wrap').style.outline = '';
-  document.querySelectorAll('.ob1-gender').forEach(b => {
-    b.style.borderColor = 'var(--border)';
-    b.style.background = 'white';
-  });
+  resetOb1Form();
   showScreen('screen-onboard-1');
   setTimeout(() => document.getElementById('ob1-name').focus(), 200);
 };
@@ -700,17 +690,63 @@ document.getElementById('btn-finish-setup').onclick = async () => {
 // =========== ONBOARDING ===========
 let obGender = '';
 let obChildPhoto = null;
+let obEmoji = '';
+let obColor = '';
 
 // Step 1 — gender buttons
 document.querySelectorAll('.ob1-gender').forEach(btn => {
   btn.onclick = () => {
     obGender = btn.dataset.gender;
-    document.querySelectorAll('.ob1-gender').forEach(b => {
-      b.style.borderColor = b === btn ? '#6366F1' : '#E2E8F0';
-      b.style.background  = b === btn ? '#EEF2FF' : '#F8FAFC';
-    });
+    document.querySelectorAll('.ob1-gender').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
   };
 });
+
+// Step 1 — emoji modal
+function showOb1EmojiModal() {
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  const sh = document.createElement('div'); sh.className = 'modal-sheet';
+  sh.innerHTML = `<div class="modal-handle"></div>
+    <div class="modal-header"><h2>בחר אימוג'י</h2><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="emoji-grid">${CHILD_EMOJIS.map(e => `<div class="emoji-opt${e===obEmoji?' selected':''}" data-emoji="${e}">${e}</div>`).join('')}</div>
+    </div>`;
+  sh.querySelector('.modal-close').onclick = () => ov.remove();
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  sh.querySelectorAll('.emoji-opt').forEach(el => {
+    el.onclick = () => {
+      obEmoji = el.dataset.emoji;
+      document.getElementById('ob1-emoji-display').textContent = obEmoji;
+      ov.remove();
+    };
+  });
+  ov.appendChild(sh); document.body.appendChild(ov);
+}
+
+// Step 1 — color modal
+function showOb1ColorModal() {
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  const sh = document.createElement('div'); sh.className = 'modal-sheet';
+  sh.innerHTML = `<div class="modal-handle"></div>
+    <div class="modal-header"><h2>בחר צבע</h2><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="color-grid">${CHILD_COLORS.map(c => `<div class="color-opt${c===obColor?' selected':''}" data-color="${c}" style="background:${c}"></div>`).join('')}</div>
+    </div>`;
+  sh.querySelector('.modal-close').onclick = () => ov.remove();
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  sh.querySelectorAll('.color-opt').forEach(el => {
+    el.onclick = () => {
+      obColor = el.dataset.color;
+      document.getElementById('ob1-color-display').style.background = obColor;
+      document.getElementById('ob1-color-display').style.borderColor = obColor;
+      ov.remove();
+    };
+  });
+  ov.appendChild(sh); document.body.appendChild(ov);
+}
+
+window.showOb1EmojiModal = showOb1EmojiModal;
+window.showOb1ColorModal = showOb1ColorModal;
 
 // Step 1 — photo upload
 document.getElementById('ob1-photo-input').onchange = async (e) => {
@@ -733,14 +769,17 @@ function resetOb1Form() {
   document.getElementById('ob1-name').value = '';
   obGender = '';
   obChildPhoto = null;
+  obEmoji = '';
+  obColor = '';
   document.getElementById('ob1-error').textContent = '';
-  document.querySelectorAll('.ob1-gender').forEach(b => {
-    b.style.borderColor = '#E2E8F0';
-    b.style.background  = '#F8FAFC';
-  });
+  document.querySelectorAll('.ob1-gender').forEach(b => b.classList.remove('selected'));
   document.getElementById('ob1-photo-circle').innerHTML =
-    `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
   document.getElementById('ob1-photo-input').value = '';
+  document.getElementById('ob1-emoji-display').textContent = '🙂';
+  const colorEl = document.getElementById('ob1-color-display');
+  colorEl.style.background = 'var(--border)';
+  colorEl.style.borderColor = 'var(--border)';
 }
 
 // Go to onboarding step 2 and generate invite code
@@ -837,10 +876,14 @@ document.getElementById('ob1-next').onclick = async () => {
   if (result.error) { err.textContent = result.error; return; }
 
   // עדכן cache מיד — למניעת כפילות באותה סשן
-  childrenCache.push({ id: result.childId, name, gender: obGender, photo: obChildPhoto || '' });
+  childrenCache.push({ id: result.childId, name, gender: obGender, photo: obChildPhoto || '', emoji: obEmoji, color: obColor });
 
-  if (obChildPhoto && result.childId) {
-    await saveChild(currentFamilyId, result.childId, { photo: obChildPhoto });
+  const extraUpdates = {};
+  if (obChildPhoto) extraUpdates.photo  = obChildPhoto;
+  if (obEmoji)      extraUpdates.emoji  = obEmoji;
+  if (obColor)      extraUpdates.color  = obColor;
+  if (Object.keys(extraUpdates).length > 0 && result.childId) {
+    await saveChild(currentFamilyId, result.childId, extraUpdates);
   }
 
   const savedName   = name;

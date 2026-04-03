@@ -243,36 +243,38 @@
 
     <div id="ob1-error" class="error-msg"></div>
 
-    <!-- Name input -->
-    <div>
-      <label style="display:block;font-weight:700;font-size:0.84rem;color:#64748B;margin-bottom:6px;">שם הילד/ה</label>
-      <input id="ob1-name" type="text" placeholder="למשל: יובל, נועה..." maxlength="20"
-        style="width:100%;padding:13px 16px;border:2px solid #E2E8F0;border-radius:14px;font-size:1rem;font-family:'Heebo',sans-serif;background:#F8FAFC;color:var(--text);outline:none;text-align:right;box-sizing:border-box;transition:border-color 0.2s;">
+    <!-- Name + Gender -->
+    <div style="display:flex;align-items:flex-end;gap:10px;">
+      <div style="flex:1;">
+        <label style="display:block;font-weight:700;font-size:0.84rem;color:#64748B;margin-bottom:6px;">שם הילד/ה</label>
+        <input id="ob1-name" type="text" placeholder="למשל: יובל, נועה..." maxlength="20"
+          style="width:100%;padding:13px 16px;border:2px solid #E2E8F0;border-radius:14px;font-size:1rem;font-family:'Heebo',sans-serif;background:#F8FAFC;color:var(--text);outline:none;text-align:right;box-sizing:border-box;transition:border-color 0.2s;">
+      </div>
+      <div id="ob1-gender-wrap" style="display:flex;gap:7px;padding-bottom:3px;">
+        <button class="ob1-gender gender-opt" data-gender="male" style="width:46px;height:46px;font-size:1.6rem;border-radius:12px;">👦</button>
+        <button class="ob1-gender gender-opt" data-gender="female" style="width:46px;height:46px;font-size:1.6rem;border-radius:12px;">👧</button>
+      </div>
     </div>
 
-    <!-- Photo + Gender row -->
-    <div style="display:flex;align-items:center;gap:14px;">
-      <!-- Photo circle -->
-      <div style="flex-shrink:0;cursor:pointer;text-align:center;" onclick="document.getElementById('ob1-photo-input').click()">
-        <div style="position:relative;display:inline-block;">
-          <div id="ob1-photo-circle" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);display:flex;align-items:center;justify-content:center;border:3px dashed #818CF8;overflow:hidden;">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
-          </div>
-          <div style="position:absolute;bottom:1px;right:1px;width:22px;height:22px;background:#6366F1;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:0.78rem;border:2px solid white;font-weight:900;">+</div>
+    <!-- Photo + Emoji + Color strip -->
+    <div style="display:flex;justify-content:space-around;align-items:flex-start;background:#F8FAFC;border-radius:14px;padding:10px 6px;">
+      <div style="text-align:center;cursor:pointer;" onclick="document.getElementById('ob1-photo-input').click()">
+        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">תמונה 📷</div>
+        <div id="ob1-photo-circle" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);display:flex;align-items:center;justify-content:center;border:3px dashed #818CF8;overflow:hidden;margin:0 auto;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
         </div>
-        <div style="font-size:0.7rem;font-weight:700;color:#6366F1;margin-top:4px;">תמונה</div>
+        <input type="file" id="ob1-photo-input" accept="image/*" style="display:none;">
       </div>
-      <input type="file" id="ob1-photo-input" accept="image/*" style="display:none;">
-
-      <!-- Gender buttons -->
-      <div id="ob1-gender-wrap" style="flex:1;display:flex;gap:10px;transition:all 0.2s;">
-        <button class="ob1-gender" data-gender="male"
-          style="flex:1;padding:12px 4px;border:2px solid #E2E8F0;border-radius:14px;background:#F8FAFC;font-size:0.95rem;font-weight:700;font-family:'Heebo',sans-serif;cursor:pointer;transition:all 0.2s;">👦 בן</button>
-        <button class="ob1-gender" data-gender="female"
-          style="flex:1;padding:12px 4px;border:2px solid #E2E8F0;border-radius:14px;background:#F8FAFC;font-size:0.95rem;font-weight:700;font-family:'Heebo',sans-serif;cursor:pointer;transition:all 0.2s;">👧 בת</button>
+      <div style="text-align:center;cursor:pointer;" onclick="showOb1EmojiModal()">
+        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:2px;">אימוג'י</div>
+        <div id="ob1-emoji-display" style="font-size:2.1rem;min-height:60px;display:flex;align-items:center;justify-content:center;">🙂</div>
+      </div>
+      <div style="text-align:center;cursor:pointer;" onclick="showOb1ColorModal()">
+        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">צבע 🎨</div>
+        <div id="ob1-color-display" style="width:60px;height:60px;border-radius:50%;margin:0 auto;border:3px solid var(--border);background:var(--border);"></div>
       </div>
     </div>
 
