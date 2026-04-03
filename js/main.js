@@ -150,6 +150,12 @@ async function handleQuickTasks(triggerEl, category) {
       triggerEl.classList.add('quick-cat-done');
       triggerEl.addEventListener('animationend', () => triggerEl.classList.remove('quick-cat-done'), { once: true });
 
+      // אם כל 3 כפתורי הטופס הושלמו — הסתר סקציה
+      if (isFormBtn) {
+        const allFormDone = [...document.querySelectorAll('.quick-cat-btn-form')].every(b => b.textContent.includes('✅'));
+        if (allFormDone) setTimeout(animateFormQuickAway, 950);
+      }
+
       // סנכרון לכפתור הטופס — כשנלחץ מהדשבורד
       if (!isFormBtn) {
         const labels = { hygiene:'היגיינה', chores:'מטלות בית', study:'לימודים' };
