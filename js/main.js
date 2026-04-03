@@ -9,7 +9,7 @@ import {
 import { showScreen, showToast, showLoading, hideLoading, openSideMenu, closeSideMenu } from './ui.js';
 import { initAuth, loginWithGoogle, loginWithFacebook, logoutParent, createNewFamily, joinFamily, currentFamilyId, setCurrentFamilyId, confirmDeleteAccount, deleteAccount } from './auth.js';
 import {
-  childrenCache, loadChildren, renderFamily,
+  childrenCache, clearChildrenCache, loadChildren, renderFamily,
   createChild, saveChild, deleteChild,
   createParentInviteCode, verifyChildCode,
   showChildInviteModal, shareCode, shareParentCode,
@@ -164,6 +164,7 @@ document.getElementById('btn-manage-prizes').onclick = () => showToast('בקרו
 
 document.getElementById('btn-logout').onclick = () => {
   logoutParent(() => {
+    clearChildrenCache();
     showScreen('screen-who');
   });
 };
@@ -171,6 +172,7 @@ document.getElementById('btn-logout').onclick = () => {
 document.getElementById('btn-delete-account').onclick = () => {
   confirmDeleteAccount(() => {
     deleteAccount(currentFamilyId, () => {
+      clearChildrenCache();
       showScreen('screen-who');
     });
   });

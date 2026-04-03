@@ -14,6 +14,7 @@ const CODE_EXPIRY_MS = 24 * 60 * 60 * 1000;
 // =========== STATE ===========
 export let childrenCache = [];
 export let editingChildId = null;
+export function clearChildrenCache() { childrenCache = []; }
 
 // =========== LOAD CHILDREN ===========
 export async function loadChildren(familyId) {
