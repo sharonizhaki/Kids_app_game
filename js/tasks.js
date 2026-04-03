@@ -242,7 +242,8 @@ const SVG_EYEOFF= `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14
 const SVG_TRASH = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
 
 function buildMetaTags(t) {
-  const childTag  = `<span class="etask-tag child-tag">${t.childName}</span>`;
+  const childLabel = t.childNames ? t.childNames.join(' · ') : t.childName;
+  const childTag  = `<span class="etask-tag child-tag">${childLabel}</span>`;
   const catTag    = t.cat ? `<span class="etask-tag cat-tag">${t.cat}</span>` : '';
   const freqTag   = `<span class="etask-tag freq-tag">${FREQ_LABELS[t.freq] || t.freq || ''}</span>`;
   const starsTag  = t.pts > 0 ? `<span class="etask-tag stars-tag">${'⭐'.repeat(Math.min(t.pts,5))}</span>` : '';
@@ -267,6 +268,19 @@ export function renderEditTasksList(familyId) {
   if (etFilter === 'cat'    && etSubFilter) tasks = tasks.filter(t => (t.cat || '') === etSubFilter);
   if (etFilter === 'stars'  && etSubFilter) tasks = tasks.filter(t => t.pts === parseInt(etSubFilter));
   if (etFilter === 'freq'   && etSubFilter) tasks = tasks.filter(t => t.freq === etSubFilter);
+
+  // כשאין פילטר ילד — מציגים כל מטלה פעם אחת עם כל הילדים המשויכים
+  if (etFilter !== 'child') {
+    const seen = new Map();
+    tasks.forEach(t => {
+      if (!seen.has(t.taskId)) {
+        seen.set(t.taskId, { ...t, childNames: [t.childName] });
+      } else {
+        seen.get(t.taskId).childNames.push(t.childName);
+      }
+    });
+    tasks = Array.from(seen.values());
+  }
 
   // sort
   if (etFilter === 'stars') tasks.sort((a,b) => (b.pts||0) - (a.pts||0));
