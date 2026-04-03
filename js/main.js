@@ -26,6 +26,32 @@ import {
   loadCompletedTasks, renderMPFilters, renderMPList, resetMPState
 } from './points.js';
 
+// =========== PHOTO CROP + COMPRESS ===========
+function cropAndCompressPhoto(file, size = 300, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type.startsWith('image/')) return reject(new Error('לא קובץ תמונה'));
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('שגיאה בקריאת הקובץ'));
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('שגיאה בטעינת התמונה'));
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const side = Math.min(img.width, img.height);
+        const sx = (img.width - side) / 2;
+        const sy = Math.max(0, (img.height - side) / 2 - img.height * 0.05);
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 // =========== GLOBALS (needed by inline onclick in HTML) ===========
 window.showScreen = (id) => {
   showScreen(id);
@@ -365,18 +391,18 @@ document.getElementById('edit-gender-female').onclick = () => {
   document.getElementById('edit-gender-male').classList.remove('selected');
 };
 
-document.getElementById('edit-photo-input').onchange = (e) => {
+document.getElementById('edit-photo-input').onchange = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
   editPhotoCleared = false;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    editPhotoData = ev.target.result;
+  try {
+    editPhotoData = await cropAndCompressPhoto(file);
     document.getElementById('edit-photo-preview').src = editPhotoData;
     document.getElementById('edit-photo-preview').style.display = 'block';
     document.getElementById('edit-photo-placeholder').style.display = 'none';
-  };
-  reader.readAsDataURL(file);
+  } catch(err) {
+    showToast('שגיאה בטעינת התמונה ⚠️');
+  }
 };
 
 document.getElementById('btn-clear-photo').onclick = () => {
@@ -611,17 +637,17 @@ function resetChildPhoto() {
   document.getElementById('child-photo-input').value = '';
 }
 
-document.getElementById('child-photo-input').onchange = (e) => {
+document.getElementById('child-photo-input').onchange = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    childPhotoData = ev.target.result;
+  try {
+    childPhotoData = await cropAndCompressPhoto(file);
     document.getElementById('child-photo-preview').src = childPhotoData;
     document.getElementById('child-photo-preview').style.display = 'block';
     document.getElementById('child-photo-placeholder').style.display = 'none';
-  };
-  reader.readAsDataURL(file);
+  } catch(err) {
+    showToast('שגיאה בטעינת התמונה ⚠️');
+  }
 };
 
 document.getElementById('btn-finish-setup').onclick = async () => {
@@ -673,16 +699,16 @@ document.querySelectorAll('.ob1-gender').forEach(btn => {
 });
 
 // Step 1 — photo upload
-document.getElementById('ob1-photo-input').onchange = (e) => {
+document.getElementById('ob1-photo-input').onchange = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    obChildPhoto = ev.target.result;
+  try {
+    obChildPhoto = await cropAndCompressPhoto(file);
     document.getElementById('ob1-photo-circle').innerHTML =
       `<img src="${obChildPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-  };
-  reader.readAsDataURL(file);
+  } catch(err) {
+    showToast('שגיאה בטעינת התמונה ⚠️');
+  }
 };
 
 // Step 1 — back
