@@ -27,6 +27,7 @@ export async function loadChildren(familyId) {
 // =========== RENDER FAMILY GRID ===========
 export function renderFamily(familyId) {
   const grid = document.getElementById('family-grid');
+  grid.style.justifyContent = childrenCache.length <= 2 ? 'center' : 'flex-start';
   if (childrenCache.length === 0) {
     grid.innerHTML = '<div class="empty-state">עדיין לא נוספו ילדים</div>';
   } else {
