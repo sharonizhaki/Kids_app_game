@@ -653,20 +653,43 @@ export function renderAssignGrid(gridId, selectedIds, onChange) {
 }
 
 // =========== QUICK AUTO-CREATE 5 TASKS ===========
-const AUTO_TASKS = [
-  { task:'צחצוח שיניים בוקר', emoji:'🪥', cat:'🧼 היגיינה',   pts:1, freq:'daily' },
-  { task:'צחצוח שיניים ערב',  emoji:'🪥', cat:'🧼 היגיינה',   pts:1, freq:'daily' },
-  { task:'מקלחת',              emoji:'🚿', cat:'🧼 היגיינה',   pts:2, freq:'daily' },
-  { task:'סידור מיטה',         emoji:'🛏️', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
-  { task:'לזרוק זבל',          emoji:'🗑️', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
+const QUICK_TASKS_HYGIENE = [
+  { task:'צחצוח שיניים בוקר', emoji:'🪥', cat:'🧼 היגיינה', pts:1, freq:'daily' },
+  { task:'צחצוח שיניים ערב',  emoji:'🪥', cat:'🧼 היגיינה', pts:1, freq:'daily' },
+  { task:'מקלחת',              emoji:'🚿', cat:'🧼 היגיינה', pts:2, freq:'daily' },
+  { task:'סידור שיער',         emoji:'💇', cat:'🧼 היגיינה', pts:1, freq:'daily' },
+  { task:'שטיפת ידיים',        emoji:'🧼', cat:'🧼 היגיינה', pts:1, freq:'daily' },
 ];
 
-export async function createQuickTasks(familyId) {
+const QUICK_TASKS_CHORES = [
+  { task:'סידור מיטה',      emoji:'🛏️', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
+  { task:'לזרוק זבל',       emoji:'🗑️', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
+  { task:'ניקוי שולחן',     emoji:'🧹', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
+  { task:'שטיפת כלים',      emoji:'🍽️', cat:'🏠 מטלות בית', pts:2, freq:'daily' },
+  { task:'סידור צעצועים',   emoji:'🧸', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
+];
+
+const QUICK_TASKS_STUDY = [
+  { task:'שיעורי בית',      emoji:'✏️', cat:'📚 לימודים', pts:3, freq:'daily' },
+  { task:'קריאה',           emoji:'📚', cat:'📚 לימודים', pts:2, freq:'daily' },
+  { task:'חזרה על חומר',    emoji:'📖', cat:'📚 לימודים', pts:2, freq:'daily' },
+  { task:'סדר בתיק',        emoji:'🎒', cat:'📚 לימודים', pts:1, freq:'daily' },
+  { task:'הכנת ציוד ליום המחר', emoji:'📐', cat:'📚 לימודים', pts:1, freq:'daily' },
+];
+
+const QUICK_TASK_SETS = {
+  hygiene: QUICK_TASKS_HYGIENE,
+  chores:  QUICK_TASKS_CHORES,
+  study:   QUICK_TASKS_STUDY,
+};
+
+export async function createQuickTasks(familyId, category) {
   await loadChildren(familyId);
   const childIds = childrenCache.map(c => c.id);
   if (!childIds.length) { showToast('יש להוסיף ילד תחילה'); return false; }
 
-  await Promise.all(AUTO_TASKS.map(t =>
+  const tasks = QUICK_TASK_SETS[category] || QUICK_TASKS_HYGIENE;
+  await Promise.all(tasks.map(t =>
     setDoc(doc(collection(db, 'families', familyId, 'tasks')), {
       task: t.task, emoji: t.emoji, cat: t.cat, catIcon: t.emoji,
       pts: t.pts, freq: t.freq, days: [], desc: '', reminder: '',

@@ -73,19 +73,14 @@ async function refreshQuickTasksBanner(familyId) {
   } catch(e) { banner.style.display = 'none'; }
 }
 
-async function handleQuickTasks(triggerEl) {
+async function handleQuickTasks(triggerEl, category) {
   const fid = getFamilyId();
   if (!fid) return;
   if (triggerEl) { triggerEl.disabled = true; triggerEl.style.opacity = '0.5'; }
   try {
-    const ok = await createQuickTasks(fid);
+    const ok = await createQuickTasks(fid, category);
     if (ok) {
-      // hide dashboard banner
       document.getElementById('quick-tasks-banner').style.display = 'none';
-      // hide the form button
-      const formBtn = document.getElementById('btn-quick-tasks-form');
-      if (formBtn) formBtn.style.display = 'none';
-      // navigate to edit tasks
       document.getElementById('btn-edit-tasks').click();
     }
   } finally {
@@ -177,8 +172,12 @@ document.getElementById('modal-no-child-create').onclick = () => {
   showScreen('screen-manage-family');
 };
 
-document.getElementById('quick-tasks-inner').onclick = function() { handleQuickTasks(null); };
-document.getElementById('btn-quick-tasks-form').onclick = function() { handleQuickTasks(this); };
+document.querySelectorAll('.quick-cat-btn').forEach(btn => {
+  btn.addEventListener('click', function() { handleQuickTasks(this, this.dataset.cat); });
+});
+document.querySelectorAll('.quick-cat-btn-form').forEach(btn => {
+  btn.addEventListener('click', function() { handleQuickTasks(this, this.dataset.cat); });
+});
 
 document.getElementById('btn-edit-tasks').onclick = async () => {
   showScreen('screen-edit-tasks');
