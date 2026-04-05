@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ניהול ניקוד</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+
+<!-- ==================== SPLASH ==================== -->
+<div id="screen-splash" class="screen active visible" style="justify-content:center;min-height:100vh;">
+  <div style="text-align:center;">
+    <div style="font-size:3.5rem;margin-bottom:16px;">⭐</div>
+    <div class="spinner-lg" style="width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px;"></div>
+    <p style="font-weight:700;color:var(--muted);">טוען...</p>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: MANAGE POINTS ==================== -->
+<div id="screen-manage-points" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" id="btn-back-to-parent">→</button>
+    <h2>ניהול ניקוד ⭐</h2>
+  </div>
+  <p style="color:var(--muted);font-size:0.85rem;max-width:420px;width:100%;margin-bottom:10px;">מטלות שבוצעו השבוע. סוויפ לביטול ביצוע.</p>
+  <div class="filter-scroll" id="mp-filter">
+    <span class="filter-chip active" data-filter="all">📋 הכל</span>
+    <span class="filter-chip" data-filter="child">👧👦 לפי ילד</span>
+    <span class="filter-chip" data-filter="cat">📂 לפי קטגוריה</span>
+    <span class="filter-chip" data-filter="stars">⭐ לפי כוכבים</span>
+    <span class="filter-chip" data-filter="day">📅 לפי יום</span>
+  </div>
+  <div class="sub-filter-scroll" id="mp-sub-filter" style="display:none;"></div>
+  <div class="etask-list" id="mp-list">
+    <div class="empty-state">טוען...</div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script type="module" src="./js/main-points.js"></script>
+</body>
+</html>

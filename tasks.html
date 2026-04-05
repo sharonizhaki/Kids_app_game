@@ -3,110 +3,217 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>המשימות שלי</title>
+  <title>ניהול מטלות</title>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/child.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
+  <link rel="stylesheet" href="./css/styles.css">
 </head>
 <body>
 
 <!-- ==================== SPLASH ==================== -->
-<div id="screen-splash" class="screen active visible">
-  <div class="splash">
-    <div>
-      <div style="font-size:3rem;margin-bottom:16px;">⭐</div>
-      <div class="spinner-lg"></div>
-      <p style="font-weight:700;color:var(--muted);">טוען...</p>
-    </div>
+<div id="screen-splash" class="screen active visible" style="justify-content:center;min-height:100vh;">
+  <div style="text-align:center;">
+    <div style="font-size:3.5rem;margin-bottom:16px;">📋</div>
+    <div class="spinner-lg" style="width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px;"></div>
+    <p style="font-weight:700;color:var(--muted);">טוען...</p>
   </div>
 </div>
 
-<!-- ==================== MAIN CHILD SCREEN ==================== -->
-<div id="screen-child" class="screen">
-  <div class="user-header">
-    <div class="header-photo" id="child-header-photo">
-      <span id="child-header-emoji">⭐</span>
-    </div>
-    <h2 id="child-title">שלום!</h2>
-    <button class="logout-btn" id="btn-child-logout" title="יציאה">🚪</button>
+<!-- ==================== SCREEN: ADD TASK ==================== -->
+<div id="screen-add-task" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" id="btn-back-to-parent">→</button>
+    <h2>הוספת מטלה 📋</h2>
   </div>
-
-  <div class="greeting-card" id="greeting-card">
-    <div class="greeting-text" id="greeting-text"></div>
-    <div class="greeting-sub" id="greeting-sub"></div>
-  </div>
-
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-val" id="pb-val" style="color:var(--child-color);">0</div>
-      <div class="stat-label">כוכבים השבוע ⭐</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-val" id="monthly-val" style="color:var(--child-color);">0</div>
-      <div class="stat-label">כוכבים החודש 🌙</div>
-    </div>
-  </div>
-
-  <div class="progress-card">
-    <div class="progress-header">
-      <span>התקדמות שבועית 🎯</span>
-      <span id="progress-text">0 / 100 כוכבים</span>
-    </div>
-    <div class="progress-bar">
-      <div class="progress-fill" id="progress-fill" style="width:0%">
-        <span class="progress-pts-label" id="progress-pts-label"></span>
+  <div class="card">
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">✏️</span> שם המטלה</div>
+      <div class="input-group" style="margin-bottom:6px;">
+        <input type="text" id="task-name-input" placeholder="לדוגמה: צחצוח שיניים" autocomplete="off">
       </div>
-    </div>
-  </div>
-
-  <div class="categories-grid" id="cats-grid"></div>
-
-  <div class="history-section">
-    <h3>פעולות אחרונות 📋</h3>
-    <div class="history-list" id="user-hist">
-      <div class="empty-state">עדיין לא ביצעת משימות</div>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== SCREEN: CHILD PROFILE EDIT ==================== -->
-<div id="screen-child-profile" class="screen" style="padding-top:20px;">
-  <div class="user-header">
-    <button class="back-btn" id="btn-profile-back">→</button>
-    <h2>הפרופיל שלי ✏️</h2>
-  </div>
-  <div class="profile-card">
-    <div class="profile-header">
-      <div class="profile-name" id="profile-child-name"></div>
-      <div class="profile-gender" id="profile-child-gender"></div>
-    </div>
-
-    <label class="profile-label">צבע 🎨</label>
-    <div id="profile-color-display" class="profile-color-circle" title="לחץ לעריכה"></div>
-
-    <label class="profile-label">אימוג'י</label>
-    <div id="profile-emoji-display" class="profile-emoji-btn" title="לחץ לעריכה"></div>
-
-    <label class="profile-label">תמונה</label>
-    <div class="profile-photo-row">
-      <div class="profile-photo-upload" id="profile-photo-upload">
-        <div id="profile-photo-placeholder" class="profile-photo-placeholder">
-          <span>📷</span>
-          <small>בחר תמונה</small>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm" id="btn-task-suggestions" style="padding:8px 14px;font-size:0.82rem;background:#FCE7F3;color:#BE185D;border:none;border-radius:20px;width:auto;max-width:none;display:inline-flex;box-shadow:none;flex:1;justify-content:center;">💡 לחץ למשימות לדוגמא</button>
+      </div>
+      <div id="form-quick-cats-section" style="margin-top:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+          <div style="font-size:0.63rem;font-weight:700;color:#94A3B8;flex:1;text-align:right;">⚡ הוספת 5 משימות לפי קטגוריה</div>
+          <button id="btn-form-quick-close" style="background:none;border:none;color:#94A3B8;font-size:0.95rem;font-weight:900;cursor:pointer;padding:0 0 0 6px;">✕</button>
         </div>
-        <img id="profile-photo-preview" class="profile-photo-preview" alt="">
-        <input type="file" accept="image/*" id="profile-photo-input" class="profile-photo-input">
+        <div id="form-quick-cats-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+          <button class="quick-cat-btn-form" data-cat="hygiene" style="background:#EEF2FF;color:#4338CA;border:1.5px solid #C7D2FE;border-radius:10px;padding:6px 4px;font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">🧼 היגיינה</button>
+          <button class="quick-cat-btn-form" data-cat="chores" style="background:#EEF2FF;color:#4338CA;border:1.5px solid #C7D2FE;border-radius:10px;padding:6px 4px;font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">🏠 בית</button>
+          <button class="quick-cat-btn-form" data-cat="study" style="background:#EEF2FF;color:#4338CA;border:1.5px solid #C7D2FE;border-radius:10px;padding:6px 4px;font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">📚 לימודים</button>
+        </div>
       </div>
-      <button id="btn-profile-clear-photo" class="profile-clear-btn">🗑️ נקה</button>
+      <div class="suggestions-wrap" id="suggestions-wrap" style="display:none;"></div>
     </div>
 
-    <div id="profile-error" class="profile-error"></div>
-    <button id="btn-profile-save" class="profile-save-btn">שמור ✅</button>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📂</span> קטגוריה</div>
+      <div class="cat-scroll" id="task-cat-scroll"></div>
+      <div id="new-cat-input-wrap" style="display:none;margin-top:8px;">
+        <div class="input-group" style="margin-bottom:0;">
+          <input type="text" id="task-new-cat-input" placeholder="שם קטגוריה חדשה..." autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">👧👦</span> שיוך לילד/ים</div>
+      <div class="assign-grid" id="task-assign-grid"></div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">🎨</span> אייקון</div>
+      <div class="task-emoji-grid" id="task-emoji-grid"></div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">⭐</span> מספר כוכבים</div>
+      <div class="stars-picker" id="task-stars-picker">
+        <span class="star-btn" data-val="1">⭐</span>
+        <span class="star-btn" data-val="2">⭐</span>
+        <span class="star-btn" data-val="3">⭐</span>
+        <span class="star-btn" data-val="4">⭐</span>
+        <span class="star-btn" data-val="5">⭐</span>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📅</span> תדירות</div>
+      <div class="freq-grid" id="task-freq-grid">
+        <div class="freq-opt" data-freq="daily"><span class="fo-icon">📆</span><span class="fo-label">כל יום</span></div>
+        <div class="freq-opt" data-freq="specific"><span class="fo-icon">🗓️</span><span class="fo-label">ימים<br>ספציפיים</span></div>
+        <div class="freq-opt" data-freq="weekly"><span class="fo-icon">📋</span><span class="fo-label">פעם<br>בשבוע</span></div>
+        <div class="freq-opt" data-freq="once"><span class="fo-icon">☝️</span><span class="fo-label">חד פעמית</span></div>
+      </div>
+      <div class="days-grid" id="task-days-grid" style="display:none;">
+        <div class="day-opt" data-day="0">א'</div>
+        <div class="day-opt" data-day="1">ב'</div>
+        <div class="day-opt" data-day="2">ג'</div>
+        <div class="day-opt" data-day="3">ד'</div>
+        <div class="day-opt" data-day="4">ה'</div>
+        <div class="day-opt" data-day="5">ו'</div>
+        <div class="day-opt" data-day="6">ש'</div>
+      </div>
+    </div>
+
+    <div id="task-reminder-desc-wrap">
+      <div class="form-section">
+        <div class="form-label"><span class="fl-icon">🔔</span> תזכורת</div>
+        <input type="time" class="reminder-input" id="task-reminder-input">
+      </div>
+      <div class="form-section">
+        <div class="form-label"><span class="fl-icon">📝</span> תיאור (לא חובה)</div>
+        <div class="input-group" style="margin-bottom:0;">
+          <input type="text" id="task-desc-input" placeholder="הסבר קצר על המטלה" autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <div class="error-msg" id="add-task-error"></div>
+    <button class="btn btn-success" id="btn-save-task" style="margin-top:18px;">שמור מטלה ✅</button>
   </div>
 </div>
 
-<div class="success-toast" id="toast"></div>
+<!-- ==================== SCREEN: EDIT TASKS LIST ==================== -->
+<div id="screen-edit-tasks" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" id="btn-back-edit-list">→</button>
+    <h2>עריכת מטלות ✏️</h2>
+  </div>
+  <div class="filter-scroll" id="edit-tasks-filter">
+    <span class="filter-chip active" data-filter="all">📋 לפי סדר הוספה</span>
+    <span class="filter-chip" data-filter="child">👧👦 לפי ילד</span>
+    <span class="filter-chip" data-filter="cat">📂 לפי קטגוריה</span>
+    <span class="filter-chip" data-filter="stars">⭐ לפי כוכבים</span>
+    <span class="filter-chip" data-filter="freq">📅 לפי תדירות</span>
+  </div>
+  <div class="sub-filter-scroll" id="edit-tasks-sub-filter" style="display:none;"></div>
+  <div class="etask-list" id="edit-tasks-list">
+    <div class="empty-state">טוען...</div>
+  </div>
+</div>
 
-<script type="module" src="js/child.js"></script>
+<!-- ==================== SCREEN: EDIT SINGLE TASK ==================== -->
+<div id="screen-edit-task" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" id="btn-back-edit-task">→</button>
+    <h2>עריכת מטלה ✏️</h2>
+  </div>
+  <div class="card">
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">✏️</span> שם המטלה</div>
+      <div class="input-group" style="margin-bottom:0;">
+        <input type="text" id="et-name" placeholder="שם המטלה" autocomplete="off">
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📂</span> קטגוריה</div>
+      <div class="cat-scroll" id="et-cat-scroll"></div>
+      <div id="et-new-cat-wrap" style="display:none;margin-top:8px;">
+        <div class="input-group" style="margin-bottom:0;">
+          <input type="text" id="et-new-cat" placeholder="קטגוריה חדשה..." autocomplete="off">
+        </div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">👧👦</span> שיוך לילד/ים</div>
+      <div class="assign-grid" id="et-assign-grid"></div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">🎨</span> אייקון</div>
+      <div class="task-emoji-grid" id="et-emoji-grid"></div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">⭐</span> מספר כוכבים</div>
+      <div class="stars-picker" id="et-stars-picker">
+        <span class="star-btn" data-val="1">⭐</span>
+        <span class="star-btn" data-val="2">⭐</span>
+        <span class="star-btn" data-val="3">⭐</span>
+        <span class="star-btn" data-val="4">⭐</span>
+        <span class="star-btn" data-val="5">⭐</span>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📅</span> תדירות</div>
+      <div class="freq-grid" id="et-freq-grid">
+        <div class="freq-opt" data-freq="daily"><span class="fo-icon">📆</span><span class="fo-label">כל יום</span></div>
+        <div class="freq-opt" data-freq="specific"><span class="fo-icon">🗓️</span><span class="fo-label">ימים<br>ספציפיים</span></div>
+        <div class="freq-opt" data-freq="weekly"><span class="fo-icon">📋</span><span class="fo-label">פעם<br>בשבוע</span></div>
+        <div class="freq-opt" data-freq="once"><span class="fo-icon">☝️</span><span class="fo-label">חד פעמית</span></div>
+      </div>
+      <div class="days-grid" id="et-days-grid" style="display:none;">
+        <div class="day-opt" data-day="0">א'</div>
+        <div class="day-opt" data-day="1">ב'</div>
+        <div class="day-opt" data-day="2">ג'</div>
+        <div class="day-opt" data-day="3">ד'</div>
+        <div class="day-opt" data-day="4">ה'</div>
+        <div class="day-opt" data-day="5">ו'</div>
+        <div class="day-opt" data-day="6">ש'</div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">🔔</span> תזכורת</div>
+      <input type="time" class="reminder-input" id="et-reminder">
+    </div>
+    <div class="form-section">
+      <div class="form-label"><span class="fl-icon">📝</span> תיאור</div>
+      <div class="input-group" style="margin-bottom:0;">
+        <input type="text" id="et-desc" placeholder="הסבר קצר" autocomplete="off">
+      </div>
+    </div>
+    <div class="error-msg" id="et-error"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-success btn-sm" id="btn-et-save" style="flex:2;">שמור ✅</button>
+      <button class="btn btn-sm" id="btn-et-hide" style="flex:1;background:#FEF3C7;color:#92400E;border:none;">👁️ הסתר</button>
+    </div>
+    <button class="btn btn-danger btn-sm" id="btn-et-delete" style="margin-top:8px;">🗑️ מחק מטלה</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script type="module" src="./js/main-tasks.js"></script>
 </body>
 </html>

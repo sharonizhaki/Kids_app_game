@@ -9,14 +9,20 @@
 </head>
 <body>
 
+<!-- ==================== SPLASH ==================== -->
+<div id="screen-splash" class="screen active visible" style="justify-content:center;min-height:100vh;">
+  <div style="text-align:center;">
+    <div style="font-size:3.5rem;margin-bottom:16px;">🏠</div>
+    <div class="spinner-lg" style="width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px;"></div>
+    <p style="font-weight:700;color:var(--muted);">טוען...</p>
+  </div>
+</div>
+
 <!-- ==================== SCREEN: WHO ARE YOU ==================== -->
 <div id="screen-who" class="screen" style="padding:0;background:linear-gradient(170deg,#EEF2FF 0%,#E0E7FF 45%,#C7D2FE 100%);justify-content:flex-start;height:100dvh;max-height:100vh;overflow:hidden;">
-
-  <!-- ── Slides area ── -->
   <div id="who-slider" dir="ltr" style="flex:1;width:100%;overflow:hidden;position:relative;min-height:0;touch-action:none;overscroll-behavior:none;">
     <div id="who-track" style="display:flex;width:300%;height:100%;will-change:transform;transition:transform 0.38s cubic-bezier(0.4,0,0.2,1);">
-
-      <!-- SLIDE 1 – Tasks -->
+      <!-- SLIDE 1 -->
       <div dir="rtl" style="width:33.333%;flex-shrink:0;padding:0 22px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;gap:16px;">
         <div style="text-align:center;">
           <div style="width:72px;height:72px;border-radius:24px;background:linear-gradient(135deg,#6366F1,#4F46E5);display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 14px;box-shadow:0 8px 24px rgba(99,102,241,0.35);">✅</div>
@@ -44,8 +50,7 @@
           </div>
         </div>
       </div>
-
-      <!-- SLIDE 2 – Rewards -->
+      <!-- SLIDE 2 -->
       <div dir="rtl" style="width:33.333%;flex-shrink:0;padding:0 22px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;gap:16px;">
         <div style="text-align:center;">
           <div style="width:72px;height:72px;border-radius:24px;background:linear-gradient(135deg,#F59E0B,#D97706);display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 14px;box-shadow:0 8px 24px rgba(245,158,11,0.35);">🎁</div>
@@ -53,40 +58,15 @@
           <p style="font-size:0.82rem;color:#64748B;margin:6px 0 0;font-weight:600;">כוכבים שנצברים — פרסים שמחכים</p>
         </div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;width:100%;max-width:300px;">
-          <div style="background:white;border-radius:16px;padding:12px 6px;text-align:center;box-shadow:0 4px 16px rgba(99,102,241,0.11);">
-            <div style="font-size:1.6rem;margin-bottom:4px;">🎬</div>
-            <div style="font-size:0.65rem;font-weight:800;color:#1E293B;margin-bottom:3px;">קולנוע</div>
-            <div style="font-size:0.68rem;font-weight:800;color:#F59E0B;">300 ⭐</div>
-          </div>
-          <div style="background:white;border-radius:16px;padding:12px 6px;text-align:center;box-shadow:0 4px 16px rgba(99,102,241,0.11);">
-            <div style="font-size:1.6rem;margin-bottom:4px;">🚲</div>
-            <div style="font-size:0.65rem;font-weight:800;color:#1E293B;margin-bottom:3px;">אופניים</div>
-            <div style="font-size:0.68rem;font-weight:800;color:#F59E0B;">800 ⭐</div>
-          </div>
-          <div style="background:white;border-radius:16px;padding:12px 6px;text-align:center;box-shadow:0 4px 16px rgba(99,102,241,0.11);">
-            <div style="font-size:1.6rem;margin-bottom:4px;">🎮</div>
-            <div style="font-size:0.65rem;font-weight:800;color:#1E293B;margin-bottom:3px;">משחק</div>
-            <div style="font-size:0.68rem;font-weight:800;color:#F59E0B;">500 ⭐</div>
-          </div>
-          <div style="background:white;border-radius:16px;padding:12px 6px;text-align:center;box-shadow:0 4px 16px rgba(99,102,241,0.11);">
-            <div style="font-size:1.6rem;margin-bottom:4px;">🍕</div>
-            <div style="font-size:0.65rem;font-weight:800;color:#1E293B;margin-bottom:3px;">פיצה</div>
-            <div style="font-size:0.68rem;font-weight:800;color:#F59E0B;">200 ⭐</div>
-          </div>
-          <div style="background:white;border-radius:16px;padding:12px 6px;text-align:center;box-shadow:0 4px 16px rgba(99,102,241,0.11);">
-            <div style="font-size:1.6rem;margin-bottom:4px;">🛒</div>
-            <div style="font-size:0.65rem;font-weight:800;color:#1E293B;margin-bottom:3px;">קיוסק</div>
-            <div style="font-size:0.68rem;font-weight:800;color:#F59E0B;">150 ⭐</div>
-          </div>
-          <div style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border-radius:16px;padding:12px 6px;text-align:center;box-shadow:0 4px 16px rgba(99,102,241,0.15);">
-            <div style="font-size:1.6rem;margin-bottom:4px;">✨</div>
-            <div style="font-size:0.65rem;font-weight:800;color:#4F46E5;margin-bottom:3px;">בחר בעצמך</div>
-            <div style="font-size:0.68rem;font-weight:800;color:#6366F1;">אתה קובע</div>
-          </div>
+          <div style="background:white;border-radius:16px;padding:12px 6px;text-align:center;box-shadow:0 4px 16px rgba(99,102,241,0.11);"><div style="font-size:1.6rem;margin-bottom:4px;">🎬</div><div style="font-size:0.65rem;font-weight:800;color:#1E293B;margin-bottom:3px;">קולנוע</div><div style="font-size:0.68rem;font-weight:800;color:#F59E0B;">300 ⭐</div></div>
+          <div style="background:white;border-radius:16px;padding:12px 6px;text-align:center;box-shadow:0 4px 16px rgba(99,102,241,0.11);"><div style="font-size:1.6rem;margin-bottom:4px;">🚲</div><div style="font-size:0.65rem;font-weight:800;color:#1E293B;margin-bottom:3px;">אופניים</div><div style="font-size:0.68rem;font-weight:800;color:#F59E0B;">800 ⭐</div></div>
+          <div style="background:white;border-radius:16px;padding:12px 6px;text-align:center;box-shadow:0 4px 16px rgba(99,102,241,0.11);"><div style="font-size:1.6rem;margin-bottom:4px;">🎮</div><div style="font-size:0.65rem;font-weight:800;color:#1E293B;margin-bottom:3px;">משחק</div><div style="font-size:0.68rem;font-weight:800;color:#F59E0B;">500 ⭐</div></div>
+          <div style="background:white;border-radius:16px;padding:12px 6px;text-align:center;box-shadow:0 4px 16px rgba(99,102,241,0.11);"><div style="font-size:1.6rem;margin-bottom:4px;">🍕</div><div style="font-size:0.65rem;font-weight:800;color:#1E293B;margin-bottom:3px;">פיצה</div><div style="font-size:0.68rem;font-weight:800;color:#F59E0B;">200 ⭐</div></div>
+          <div style="background:white;border-radius:16px;padding:12px 6px;text-align:center;box-shadow:0 4px 16px rgba(99,102,241,0.11);"><div style="font-size:1.6rem;margin-bottom:4px;">🛒</div><div style="font-size:0.65rem;font-weight:800;color:#1E293B;margin-bottom:3px;">קיוסק</div><div style="font-size:0.68rem;font-weight:800;color:#F59E0B;">150 ⭐</div></div>
+          <div style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border-radius:16px;padding:12px 6px;text-align:center;box-shadow:0 4px 16px rgba(99,102,241,0.15);"><div style="font-size:1.6rem;margin-bottom:4px;">✨</div><div style="font-size:0.65rem;font-weight:800;color:#4F46E5;margin-bottom:3px;">בחר בעצמך</div><div style="font-size:0.68rem;font-weight:800;color:#6366F1;">אתה קובע</div></div>
         </div>
       </div>
-
-      <!-- SLIDE 3 – Family tracking -->
+      <!-- SLIDE 3 -->
       <div dir="rtl" style="width:33.333%;flex-shrink:0;padding:0 22px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;gap:16px;">
         <div style="text-align:center;">
           <div style="width:72px;height:72px;border-radius:24px;background:linear-gradient(135deg,#10B981,#059669);display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 14px;box-shadow:0 8px 24px rgba(16,185,129,0.35);">👨‍👩‍👧‍👦</div>
@@ -95,95 +75,53 @@
         </div>
         <div style="width:100%;max-width:310px;display:flex;flex-direction:column;gap:8px;">
           <div style="background:white;border-radius:16px;padding:11px 13px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(99,102,241,0.11);">
-            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#FEF3C7,#FDE68A);display:flex;align-items:center;justify-content:center;font-size:1.35rem;flex-shrink:0;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.1);">👧</div>
-            <div style="flex:1;">
-              <div style="font-weight:800;font-size:0.88rem;color:#1E293B;">אמה</div>
-              <div style="font-size:0.73rem;color:#94A3B8;font-weight:600;margin-top:1px;">נותרו 2 משימות</div>
-            </div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;">
-              <span style="font-size:0.8rem;font-weight:800;color:#F59E0B;">3 ⭐ היום</span>
-              <span style="font-size:0.7rem;font-weight:700;color:#10B981;">28 ⭐ שבוע</span>
-            </div>
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#FEF3C7,#FDE68A);display:flex;align-items:center;justify-content:center;font-size:1.35rem;flex-shrink:0;">👧</div>
+            <div style="flex:1;"><div style="font-weight:800;font-size:0.88rem;color:#1E293B;">אמה</div><div style="font-size:0.73rem;color:#94A3B8;font-weight:600;margin-top:1px;">נותרו 2 משימות</div></div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;"><span style="font-size:0.8rem;font-weight:800;color:#F59E0B;">3 ⭐ היום</span><span style="font-size:0.7rem;font-weight:700;color:#10B981;">28 ⭐ שבוע</span></div>
           </div>
           <div style="background:white;border-radius:16px;padding:11px 13px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(99,102,241,0.11);">
-            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#DBEAFE,#BFDBFE);display:flex;align-items:center;justify-content:center;font-size:1.35rem;flex-shrink:0;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.1);">👦</div>
-            <div style="flex:1;">
-              <div style="font-weight:800;font-size:0.88rem;color:#1E293B;">ריף</div>
-              <div style="font-size:0.73rem;color:#10B981;font-weight:700;margin-top:1px;">✓ הכל בוצע היום!</div>
-            </div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;">
-              <span style="font-size:0.8rem;font-weight:800;color:#F59E0B;">10 ⭐ היום</span>
-              <span style="font-size:0.7rem;font-weight:700;color:#10B981;">42 ⭐ שבוע</span>
-            </div>
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#DBEAFE,#BFDBFE);display:flex;align-items:center;justify-content:center;font-size:1.35rem;flex-shrink:0;">👦</div>
+            <div style="flex:1;"><div style="font-weight:800;font-size:0.88rem;color:#1E293B;">ריף</div><div style="font-size:0.73rem;color:#10B981;font-weight:700;margin-top:1px;">✓ הכל בוצע היום!</div></div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;"><span style="font-size:0.8rem;font-weight:800;color:#F59E0B;">10 ⭐ היום</span><span style="font-size:0.7rem;font-weight:700;color:#10B981;">42 ⭐ שבוע</span></div>
           </div>
         </div>
       </div>
-
     </div>
   </div>
-
-  <!-- ── Dots (dir=ltr so dot-0 always on left) ── -->
   <div dir="ltr" style="display:flex;gap:8px;justify-content:center;padding:14px 0 10px;">
     <div id="who-dot-0" style="width:22px;height:8px;border-radius:4px;background:var(--primary);transition:all 0.3s ease;"></div>
     <div id="who-dot-1" style="width:8px;height:8px;border-radius:4px;background:rgba(99,102,241,0.28);transition:all 0.3s ease;"></div>
     <div id="who-dot-2" style="width:8px;height:8px;border-radius:4px;background:rgba(99,102,241,0.28);transition:all 0.3s ease;"></div>
   </div>
-
-  <!-- ── Bottom buttons ── -->
   <div style="width:100%;padding:16px 20px 40px;background:white;border-radius:28px 28px 0 0;box-shadow:0 -4px 24px rgba(99,102,241,0.13);display:flex;gap:12px;">
     <button id="btn-who-parent" style="flex:1;padding:17px;border:none;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;font-size:1.05rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(99,102,241,0.35);">אני הורה</button>
     <button id="btn-who-child" style="flex:1;padding:17px;border:none;border-radius:16px;background:linear-gradient(135deg,#10B981,#059669);color:white;font-size:1.05rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(16,185,129,0.35);">👧👦 אני ילד/ה</button>
   </div>
-
 </div>
 
 <!-- ==================== SCREEN: PARENT LOGIN ==================== -->
-<div id="screen-parent-login" class="screen" style="padding:0;background:linear-gradient(170deg,#EEF2FF 0%,#E0E7FF 60%,#C7D2FE 100%);justify-content:flex-end;height:100dvh;max-height:100dvh;overflow:hidden;overscroll-behavior:none;position:relative;">
-
-  <!-- Back button -->
+<div id="screen-parent-login" class="screen" style="padding:0;background:linear-gradient(170deg,#EEF2FF 0%,#E0E7FF 60%,#C7D2FE 100%);justify-content:flex-end;height:100dvh;overflow:hidden;position:relative;">
   <button onclick="showScreen('screen-who')" style="position:absolute;top:max(16px,env(safe-area-inset-top,16px));right:20px;background:white;border:none;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 2px 10px rgba(99,102,241,0.18);cursor:pointer;color:var(--primary);font-weight:900;z-index:10;">→</button>
-
-  <!-- Illustration area -->
   <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:16px;">
     <div style="font-size:5.5rem;line-height:1;margin-bottom:16px;filter:drop-shadow(0 8px 20px rgba(99,102,241,0.25));">👨‍👩‍👧‍👦</div>
     <h2 style="font-size:1.6rem;font-weight:900;color:#1E293B;margin-bottom:6px;">ברוך הבא!</h2>
     <p style="color:var(--muted);font-size:0.92rem;">התחבר כדי להמשיך</p>
   </div>
-
-  <!-- Bottom card -->
   <div style="width:100%;background:white;border-radius:32px 32px 0 0;padding:22px 24px max(24px,env(safe-area-inset-bottom,24px));box-shadow:0 -6px 32px rgba(99,102,241,0.14);">
-
-    <!-- Google button -->
-    <button id="btn-google-login" style="width:100%;max-width:420px;display:flex;align-items:center;justify-content:center;gap:14px;padding:15px 24px;border:2px solid #E2E8F0;border-radius:50px;background:white;color:#1E293B;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,0.06);margin-bottom:10px;position:relative;">
-      <span style="position:absolute;right:18px;width:36px;height:36px;background:#F8FAFC;border-radius:50%;display:flex;align-items:center;justify-content:center;">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:20px;height:20px;">
-      </span>
+    <button id="btn-google-login" style="width:100%;display:flex;align-items:center;justify-content:center;gap:14px;padding:15px 24px;border:2px solid #E2E8F0;border-radius:50px;background:white;color:#1E293B;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,0.06);margin-bottom:10px;position:relative;">
+      <span style="position:absolute;right:18px;width:36px;height:36px;background:#F8FAFC;border-radius:50%;display:flex;align-items:center;justify-content:center;"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:20px;height:20px;"></span>
       התחבר עם Google
     </button>
-
-    <!-- Facebook button -->
-    <button id="btn-facebook-login" style="width:100%;max-width:420px;display:flex;align-items:center;justify-content:center;gap:14px;padding:15px 24px;border:none;border-radius:50px;background:linear-gradient(135deg,#6366F1,#4F46E5);color:white;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 6px 20px rgba(99,102,241,0.4);margin-bottom:10px;position:relative;">
-      <span style="position:absolute;right:18px;width:36px;height:36px;background:rgba(255,255,255,0.18);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-      </span>
+    <button id="btn-facebook-login" style="width:100%;display:flex;align-items:center;justify-content:center;gap:14px;padding:15px 24px;border:none;border-radius:50px;background:linear-gradient(135deg,#6366F1,#4F46E5);color:white;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 6px 20px rgba(99,102,241,0.4);margin-bottom:10px;position:relative;">
+      <span style="position:absolute;right:18px;width:36px;height:36px;background:rgba(255,255,255,0.18);border-radius:50%;display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></span>
       התחבר עם Facebook
     </button>
-
-    <!-- Email button -->
-    <button id="btn-email-login" style="width:100%;max-width:420px;display:flex;align-items:center;justify-content:center;gap:14px;padding:15px 24px;border:none;border-radius:50px;background:linear-gradient(135deg,#A5B4FC,#818CF8);color:white;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(129,140,248,0.35);margin-bottom:6px;position:relative;">
+    <button id="btn-email-login" style="width:100%;display:flex;align-items:center;justify-content:center;gap:14px;padding:15px 24px;border:none;border-radius:50px;background:linear-gradient(135deg,#A5B4FC,#818CF8);color:white;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(129,140,248,0.35);margin-bottom:6px;position:relative;">
       <span style="position:absolute;right:18px;width:36px;height:36px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">✉️</span>
       התחבר עם אימייל
     </button>
-
-    <!-- Error -->
     <div class="error-msg" id="login-error" style="text-align:center;min-height:18px;margin-bottom:2px;"></div>
-
-    <!-- Terms -->
-    <p style="text-align:center;font-size:0.73rem;color:#94A3B8;line-height:1.5;margin-top:2px;">
-      בהמשך אתה מסכים ל<a href="terms.html" style="color:var(--primary);font-weight:700;text-decoration:none;">תנאי השימוש</a>
-      ו<a href="#" style="color:var(--primary);font-weight:700;text-decoration:none;">מדיניות הפרטיות</a>
-    </p>
-
+    <p style="text-align:center;font-size:0.73rem;color:#94A3B8;line-height:1.5;margin-top:2px;">בהמשך אתה מסכים ל<a href="terms.html" style="color:var(--primary);font-weight:700;text-decoration:none;">תנאי השימוש</a> ו<a href="#" style="color:var(--primary);font-weight:700;text-decoration:none;">מדיניות הפרטיות</a></p>
   </div>
 </div>
 
@@ -214,21 +152,17 @@
   </div>
 </div>
 
-<!-- ==================== ONBOARDING 1 – רישום ילד ==================== -->
+<!-- ==================== ONBOARDING 1 ==================== -->
 <div id="screen-onboard-1" class="screen" style="padding:0;background:white;justify-content:flex-start;min-height:100dvh;overflow:hidden;">
-
-  <!-- Hero banner -->
   <div style="width:100%;background:linear-gradient(150deg,#6366F1 0%,#4338CA 100%);padding-top:env(safe-area-inset-top,0px);">
     <div style="width:100%;max-width:480px;margin:0 auto;">
-      <!-- Nav -->
       <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 20px 0;">
         <button id="ob1-back" style="background:rgba(255,255,255,0.2);border:none;color:white;font-size:0.88rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;padding:7px 14px;border-radius:20px;">→ חזור</button>
         <button id="ob1-top-next" style="background:rgba(255,255,255,0.2);border:none;color:white;font-size:0.88rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;padding:7px 14px;border-radius:20px;">הבא ←</button>
       </div>
-      <!-- Icon + title + steps -->
       <div style="text-align:center;padding:16px 20px 44px;">
-        <div style="font-size:3rem;margin-bottom:6px;filter:drop-shadow(0 4px 14px rgba(0,0,0,0.18));">👶</div>
-        <h2 id="ob1-title" style="color:white;font-size:1.45rem;font-weight:900;margin:0 0 14px;text-shadow:0 2px 8px rgba(0,0,0,0.12);">הוסף ילד/ה ראשון</h2>
+        <div style="font-size:3rem;margin-bottom:6px;">👶</div>
+        <h2 id="ob1-title" style="color:white;font-size:1.45rem;font-weight:900;margin:0 0 14px;">הוסף ילד/ה ראשון</h2>
         <div style="display:flex;gap:6px;justify-content:center;">
           <div style="width:28px;height:6px;border-radius:3px;background:white;"></div>
           <div style="width:8px;height:6px;border-radius:3px;background:rgba(255,255,255,0.35);"></div>
@@ -237,34 +171,23 @@
       </div>
     </div>
   </div>
-
-  <!-- Content card -->
   <div style="width:100%;max-width:480px;margin:0 auto;background:white;border-radius:28px 28px 0 0;margin-top:-26px;flex:1;padding:26px 22px 24px;display:flex;flex-direction:column;gap:14px;box-shadow:0 -4px 24px rgba(0,0,0,0.07);">
-
     <div id="ob1-error" class="error-msg"></div>
-
-    <!-- Name + Gender -->
     <div style="display:flex;align-items:flex-end;gap:10px;">
       <div style="flex:1;">
         <label style="display:block;font-weight:700;font-size:0.84rem;color:#64748B;margin-bottom:6px;">שם הילד/ה</label>
-        <input id="ob1-name" type="text" placeholder="למשל: יובל, נועה..." maxlength="20"
-          style="width:100%;padding:13px 16px;border:2px solid #E2E8F0;border-radius:14px;font-size:1rem;font-family:'Heebo',sans-serif;background:#F8FAFC;color:var(--text);outline:none;text-align:right;box-sizing:border-box;transition:border-color 0.2s;">
+        <input id="ob1-name" type="text" placeholder="למשל: יובל, נועה..." maxlength="20" style="width:100%;padding:13px 16px;border:2px solid #E2E8F0;border-radius:14px;font-size:1rem;font-family:'Heebo',sans-serif;background:#F8FAFC;color:var(--text);outline:none;text-align:right;box-sizing:border-box;">
       </div>
       <div id="ob1-gender-wrap" style="display:flex;gap:7px;padding-bottom:3px;">
         <button class="ob1-gender gender-opt" data-gender="male" style="width:46px;height:46px;font-size:1.6rem;border-radius:12px;">👦</button>
         <button class="ob1-gender gender-opt" data-gender="female" style="width:46px;height:46px;font-size:1.6rem;border-radius:12px;">👧</button>
       </div>
     </div>
-
-    <!-- Photo + Emoji + Color strip -->
     <div style="display:flex;justify-content:space-around;align-items:flex-start;background:#F8FAFC;border-radius:14px;padding:10px 6px;">
       <div style="text-align:center;cursor:pointer;" onclick="document.getElementById('ob1-photo-input').click()">
         <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">תמונה 📷</div>
         <div id="ob1-photo-circle" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);display:flex;align-items:center;justify-content:center;border:3px dashed #818CF8;overflow:hidden;margin:0 auto;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-            <circle cx="12" cy="13" r="4"/>
-          </svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         </div>
         <input type="file" id="ob1-photo-input" accept="image/*" style="display:none;">
       </div>
@@ -277,33 +200,23 @@
         <div id="ob1-color-display" style="width:60px;height:60px;border-radius:50%;margin:0 auto;border:3px dashed #818CF8;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);"></div>
       </div>
     </div>
-
-    <!-- CTA -->
     <div style="margin-top:4px;">
-      <button id="ob1-next"
-        style="width:100%;padding:15px;background:linear-gradient(135deg,#6366F1,#4338CA);border:none;border-radius:18px;font-size:1.05rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;box-shadow:0 6px 22px rgba(99,102,241,0.38);letter-spacing:0.2px;">
-        ➕ הוסף ילד/ה
-      </button>
+      <button id="ob1-next" style="width:100%;padding:15px;background:linear-gradient(135deg,#6366F1,#4338CA);border:none;border-radius:18px;font-size:1.05rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;box-shadow:0 6px 22px rgba(99,102,241,0.38);">➕ הוסף ילד/ה</button>
     </div>
-
   </div>
 </div>
 
-<!-- ==================== ONBOARDING 2 – הזמנת הורה ==================== -->
+<!-- ==================== ONBOARDING 2 ==================== -->
 <div id="screen-onboard-2" class="screen" style="padding:0;background:white;justify-content:flex-start;min-height:100dvh;overflow:hidden;">
-
-  <!-- Hero banner -->
   <div style="width:100%;background:linear-gradient(150deg,#7C3AED 0%,#5B21B6 100%);padding-top:env(safe-area-inset-top,0px);">
     <div style="width:100%;max-width:480px;margin:0 auto;">
-      <!-- Nav -->
       <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 20px 0;">
         <button id="ob2-back" style="background:rgba(255,255,255,0.2);border:none;color:white;font-size:0.88rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;padding:7px 14px;border-radius:20px;">→ חזור</button>
         <button id="ob2-skip" style="background:rgba(255,255,255,0.2);border:none;color:white;font-size:0.88rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;padding:7px 14px;border-radius:20px;">דלג ←</button>
       </div>
-      <!-- Icon + title + steps -->
       <div style="text-align:center;padding:16px 20px 44px;">
-        <div style="font-size:3rem;margin-bottom:6px;filter:drop-shadow(0 4px 14px rgba(0,0,0,0.18));">🤝</div>
-        <h2 style="color:white;font-size:1.45rem;font-weight:900;margin:0 0 14px;text-shadow:0 2px 8px rgba(0,0,0,0.12);">הזמן הורה נוסף</h2>
+        <div style="font-size:3rem;margin-bottom:6px;">🤝</div>
+        <h2 style="color:white;font-size:1.45rem;font-weight:900;margin:0 0 14px;">הזמן הורה נוסף</h2>
         <div style="display:flex;gap:6px;justify-content:center;">
           <div style="width:8px;height:6px;border-radius:3px;background:rgba(255,255,255,0.35);"></div>
           <div style="width:28px;height:6px;border-radius:3px;background:white;"></div>
@@ -312,45 +225,27 @@
       </div>
     </div>
   </div>
-
-  <!-- Content card -->
   <div style="width:100%;max-width:480px;margin:0 auto;background:white;border-radius:28px 28px 0 0;margin-top:-26px;flex:1;padding:26px 22px 24px;display:flex;flex-direction:column;gap:16px;box-shadow:0 -4px 24px rgba(0,0,0,0.07);">
-
-    <p style="color:#64748B;font-size:0.88rem;line-height:1.6;margin:0;text-align:right;">
-      שתף את הקוד כדי שבן/בת זוגך יצטרפו ויוכלו לנהל משימות יחד.<br>
-      <span style="font-size:0.8rem;color:#94A3B8;">אפשר תמיד לעשות זאת בהמשך דרך <b>מסך ניהול משפחה</b> בהגדרות ⚙️</span>
-    </p>
-
-    <!-- Code card -->
+    <p style="color:#64748B;font-size:0.88rem;line-height:1.6;margin:0;">שתף את הקוד כדי שבן/בת זוגך יצטרפו.<br><span style="font-size:0.8rem;color:#94A3B8;">אפשר תמיד לעשות זאת בהמשך דרך <b>ניהול משפחה</b> בדשבורד.</span></p>
     <div style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border-radius:22px;padding:22px 20px;text-align:center;">
-      <div style="font-size:0.75rem;color:#6D28D9;font-weight:700;margin-bottom:10px;letter-spacing:0.4px;">קוד ההזמנה שלך</div>
+      <div style="font-size:0.75rem;color:#6D28D9;font-weight:700;margin-bottom:10px;">קוד ההזמנה שלך</div>
       <div id="ob2-code" style="font-size:2.3rem;font-weight:900;color:#4C1D95;letter-spacing:10px;font-variant-numeric:tabular-nums;">——————</div>
-      <div style="font-size:0.74rem;color:#7C3AED;margin-top:10px;font-weight:600;">⏰ תקף ל-24 שעות · לבן/בת משפחה אחד</div>
+      <div style="font-size:0.74rem;color:#7C3AED;margin-top:10px;font-weight:600;">⏰ תקף ל-24 שעות</div>
     </div>
-
-    <!-- Share button -->
-    <button id="ob2-share"
-      style="width:100%;padding:15px;background:linear-gradient(135deg,#7C3AED,#5B21B6);border:none;border-radius:18px;font-size:1.05rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;box-shadow:0 6px 22px rgba(124,58,237,0.38);">
-      📤 שתף הזמנה
-    </button>
-
+    <button id="ob2-share" style="width:100%;padding:15px;background:linear-gradient(135deg,#7C3AED,#5B21B6);border:none;border-radius:18px;font-size:1.05rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;box-shadow:0 6px 22px rgba(124,58,237,0.38);">📤 שתף הזמנה</button>
   </div>
 </div>
 
-<!-- ==================== ONBOARDING 3 – הרשאות ==================== -->
+<!-- ==================== ONBOARDING 3 ==================== -->
 <div id="screen-onboard-3" class="screen" style="padding:0;background:white;justify-content:flex-start;min-height:100dvh;overflow:hidden;">
-
-  <!-- Hero banner -->
   <div style="width:100%;background:linear-gradient(150deg,#059669 0%,#047857 100%);padding-top:env(safe-area-inset-top,0px);">
     <div style="width:100%;max-width:480px;margin:0 auto;">
-      <!-- Nav -->
       <div style="display:flex;justify-content:flex-start;align-items:center;padding:18px 20px 0;">
         <button id="ob3-back" style="background:rgba(255,255,255,0.2);border:none;color:white;font-size:0.88rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;padding:7px 14px;border-radius:20px;">→ חזור</button>
       </div>
-      <!-- Icon + title + steps -->
       <div style="text-align:center;padding:16px 20px 44px;">
-        <div style="font-size:3rem;margin-bottom:6px;filter:drop-shadow(0 4px 14px rgba(0,0,0,0.18));">🔔</div>
-        <h2 style="color:white;font-size:1.45rem;font-weight:900;margin:0 0 14px;text-shadow:0 2px 8px rgba(0,0,0,0.12);">קבל התראות</h2>
+        <div style="font-size:3rem;margin-bottom:6px;">🔔</div>
+        <h2 style="color:white;font-size:1.45rem;font-weight:900;margin:0 0 14px;">קבל התראות</h2>
         <div style="display:flex;gap:6px;justify-content:center;">
           <div style="width:8px;height:6px;border-radius:3px;background:rgba(255,255,255,0.35);"></div>
           <div style="width:8px;height:6px;border-radius:3px;background:rgba(255,255,255,0.35);"></div>
@@ -359,526 +254,20 @@
       </div>
     </div>
   </div>
-
-  <!-- Content card -->
   <div style="width:100%;max-width:480px;margin:0 auto;background:white;border-radius:28px 28px 0 0;margin-top:-26px;flex:1;padding:26px 22px 24px;display:flex;flex-direction:column;gap:16px;box-shadow:0 -4px 24px rgba(0,0,0,0.07);">
-
-    <p style="color:#64748B;font-size:0.88rem;line-height:1.6;margin:0;text-align:right;">
-      הישאר מעודכן על ביצוע משימות, השגת כוכבים ועוד — בזמן אמת.
-    </p>
-
-    <!-- Notification preview -->
-    <div style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:20px;padding:16px 16px;display:flex;flex-direction:column;gap:10px;">
+    <p style="color:#64748B;font-size:0.88rem;line-height:1.6;margin:0;">הישאר מעודכן על ביצוע משימות, השגת כוכבים ועוד — בזמן אמת.</p>
+    <div style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:10px;">
       <div style="background:white;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 10px rgba(0,0,0,0.07);">
         <div style="width:40px;height:40px;background:linear-gradient(135deg,#6366F1,#4338CA);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">⭐</div>
-        <div style="text-align:right;flex:1;">
-          <div style="font-weight:800;font-size:0.85rem;color:#1E293B;">התקדמות היומית</div>
-          <div style="font-size:0.78rem;color:#64748B;margin-top:2px;">יובל השלים 3 משימות היום! 🎉</div>
-        </div>
+        <div style="text-align:right;flex:1;"><div style="font-weight:800;font-size:0.85rem;color:#1E293B;">התקדמות היומית</div><div style="font-size:0.78rem;color:#64748B;margin-top:2px;">יובל השלים 3 משימות היום! 🎉</div></div>
       </div>
       <div style="background:white;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 10px rgba(0,0,0,0.07);">
         <div style="width:40px;height:40px;background:linear-gradient(135deg,#F59E0B,#D97706);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">🏆</div>
-        <div style="text-align:right;flex:1;">
-          <div style="font-weight:800;font-size:0.85rem;color:#1E293B;">פרס ממתין!</div>
-          <div style="font-size:0.78rem;color:#64748B;margin-top:2px;">נועה הגיעה ל-50 כוכבים השבוע</div>
-        </div>
+        <div style="text-align:right;flex:1;"><div style="font-weight:800;font-size:0.85rem;color:#1E293B;">פרס ממתין!</div><div style="font-size:0.78rem;color:#64748B;margin-top:2px;">נועה הגיעה ל-50 כוכבים השבוע</div></div>
       </div>
     </div>
-
-    <!-- Buttons -->
-    <button id="ob3-allow"
-      style="width:100%;padding:15px;background:linear-gradient(135deg,#059669,#047857);border:none;border-radius:18px;font-size:1.05rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;box-shadow:0 6px 22px rgba(5,150,105,0.38);">
-      🔔 אפשר התראות
-    </button>
-    <button id="ob3-later"
-      style="width:100%;padding:14px;background:linear-gradient(135deg,#6366F1,#4338CA);border:none;border-radius:18px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;box-shadow:0 6px 22px rgba(99,102,241,0.35);">
-      🚀 בואו נתחיל!
-    </button>
-
-  </div>
-</div>
-
-<!-- ==================== TUTORIAL OVERLAY ==================== -->
-<div id="tutorial-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.72);z-index:3000;align-items:flex-end;justify-content:center;">
-  <div style="background:white;border-radius:32px 32px 0 0;width:100%;max-width:480px;padding:36px 28px 52px;box-shadow:0 -8px 40px rgba(0,0,0,0.15);">
-    <div id="tutorial-content" style="text-align:center;padding-bottom:4px;min-height:150px;"></div>
-    <div id="tutorial-dots" style="display:flex;gap:8px;justify-content:center;margin:20px 0 20px;"></div>
-    <button id="tutorial-next" class="btn btn-primary">הבא</button>
-  </div>
-</div>
-
-<!-- ==================== SCREEN: PARENT DASHBOARD ==================== -->
-<div id="screen-dashboard" class="screen">
-  <button class="settings-btn" id="btn-open-menu">⚙️</button>
-  <button class="settings-btn" id="btn-replay-tour" style="right:68px;">🧭</button>
-  <button class="settings-btn" id="btn-delete-account-dev" style="right:120px;font-size:0.7rem;opacity:0.4;" title="מחק חשבון (פיתוח)">🗑️</button>
-  <div class="page-header">
-    <div style="font-size:2rem;margin-bottom:4px;">👋</div>
-    <h1 id="dash-greeting">שלום!</h1>
-  </div>
-  <div id="dash-children-grid" style="width:100%;max-width:480px;display:flex;flex-wrap:nowrap;overflow-x:hidden;margin-top:8px;padding:0 4px;"></div>
-
-  <!-- Pending tasks rows — one per child -->
-  <div id="dash-task-rows" style="width:100%;max-width:480px;margin-top:10px;padding:0 4px;display:flex;flex-direction:column;gap:0;"></div>
-
-  <!-- Quick tasks banner — shown only when no tasks exist yet -->
-  <div id="quick-tasks-banner" style="display:none;width:100%;max-width:480px;margin-top:20px;padding:0 4px;">
-    <div id="quick-tasks-inner" style="background:linear-gradient(135deg,#EEF2FF,#E0E7FF);border:2px dashed #A5B4FC;border-radius:20px;padding:18px 16px;text-align:center;position:relative;">
-      <button id="btn-quick-banner-close" title="סגור" style="position:absolute;top:8px;left:8px;background:rgba(99,102,241,0.13);border:none;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:0.8rem;display:flex;align-items:center;justify-content:center;color:#6366F1;font-weight:900;font-family:'Heebo',sans-serif;">✕</button>
-      <div style="font-size:2rem;margin-bottom:6px;">⚡</div>
-      <div style="font-weight:900;font-size:1rem;color:#1E293B;margin-bottom:3px;">מתחילים מהר!</div>
-      <div style="font-size:0.82rem;color:#64748B;margin-bottom:14px;line-height:1.5;">בחר קטגוריה — 5 מטלות יתווספו אוטומטית</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-        <button class="quick-cat-btn" data-cat="hygiene" style="background:white;border:2px solid #A5B4FC;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;">
-          <div style="font-size:1.5rem;margin-bottom:4px;">🧼</div>
-          <div style="font-size:0.78rem;font-weight:800;color:#4338CA;">היגיינה</div>
-          <div style="font-size:0.65rem;color:#64748B;margin-top:2px;">5 משימות</div>
-        </button>
-        <button class="quick-cat-btn" data-cat="chores" style="background:white;border:2px solid #A5B4FC;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;">
-          <div style="font-size:1.5rem;margin-bottom:4px;">🏠</div>
-          <div style="font-size:0.78rem;font-weight:800;color:#4338CA;">מטלות בית</div>
-          <div style="font-size:0.65rem;color:#64748B;margin-top:2px;">5 משימות</div>
-        </button>
-        <button class="quick-cat-btn" data-cat="study" style="background:white;border:2px solid #A5B4FC;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;">
-          <div style="font-size:1.5rem;margin-bottom:4px;">📚</div>
-          <div style="font-size:0.78rem;font-weight:800;color:#4338CA;">לימודים</div>
-          <div style="font-size:0.65rem;color:#64748B;margin-top:2px;">5 משימות</div>
-        </button>
-      </div>
-      <div dir="rtl" style="margin-top:11px;font-size:0.71rem;color:#94A3B8;line-height:1.45;">⚙️ ניתן לערוך ולמחוק את המטלות דרך <strong style="color:#6366F1;">עריכת מטלות</strong> בהגדרות</div>
-    </div>
-  </div>
-
-  <button style="display:none;" id="btn-manage-family"></button>
-  <button style="display:none;" id="btn-add-tasks"></button>
-  <button style="display:none;" id="btn-edit-tasks"></button>
-  <button style="display:none;" id="btn-add-prizes"></button>
-  <button style="display:none;" id="btn-manage-prizes"></button>
-  <button style="display:none;" id="btn-manage-points"></button>
-  <button style="display:none;" id="btn-logout"></button>
-  <button style="display:none;" id="btn-delete-account"></button>
-</div>
-
-<!-- ==================== SCREEN: MANAGE FAMILY ==================== -->
-<div id="screen-manage-family" class="screen" style="overflow:hidden;">
-  <div class="screen-header">
-    <button class="back-btn" onclick="showScreen('screen-dashboard')">→</button>
-    <h2>ניהול משפחה 👨‍👩‍👧‍👦</h2>
-  </div>
-  <div class="section-label">ילדים</div>
-  <div class="family-grid" id="family-grid">
-    <div class="empty-state">עדיין לא נוספו ילדים</div>
-  </div>
-  <div class="section-label" style="margin-top:20px;">הורים</div>
-  <div id="parents-list" style="width:100%;max-width:420px;"></div>
-  <button class="btn btn-primary btn-sm" id="btn-create-child" style="max-width:420px;margin-top:12px;">👶 הוספת ילד/ה</button>
-  <button class="btn btn-outline btn-sm" id="btn-invite-parent" style="max-width:420px;margin-top:12px;">👫 הזמנת הורה נוסף</button>
-</div>
-
-<!-- ==================== SCREEN: CREATE CHILD ==================== -->
-<div id="screen-create-child" class="screen" style="overflow:hidden;">
-  <div class="screen-header">
-    <h2>הוספת ילד/ה 👶</h2>
-  </div>
-  <div class="card">
-    <div class="input-group">
-      <label>שם הילד/ה</label>
-      <input type="text" id="child-name-input" placeholder="הכנס שם..." autocomplete="off">
-    </div>
-    <label style="font-weight:700;font-size:0.9rem;display:block;margin-bottom:8px;">מין</label>
-    <div class="gender-picker" id="create-gender-picker">
-      <div class="gender-opt" data-gender="male" id="gender-male">👦</div>
-      <div class="gender-opt" data-gender="female" id="gender-female">👧</div>
-    </div>
-
-    <!-- Photo + Emoji + Color strip -->
-    <div style="display:flex;justify-content:space-around;align-items:flex-start;background:#F8FAFC;border-radius:14px;padding:10px 6px;margin-top:12px;">
-      <div style="text-align:center;cursor:pointer;" onclick="document.getElementById('new-child-photo-input').click()">
-        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">תמונה 📷</div>
-        <div id="new-child-photo-circle" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);display:flex;align-items:center;justify-content:center;border:3px dashed #818CF8;overflow:hidden;margin:0 auto;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-            <circle cx="12" cy="13" r="4"/>
-          </svg>
-        </div>
-        <input type="file" id="new-child-photo-input" accept="image/*" style="display:none;">
-      </div>
-      <div style="text-align:center;cursor:pointer;" onclick="showNewChildEmojiModal()">
-        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">אימוג'י</div>
-        <div id="new-child-emoji-display" style="width:60px;height:60px;border-radius:50%;border:3px dashed #818CF8;margin:0 auto;font-size:1.6rem;font-weight:900;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);color:#818CF8;">?</div>
-      </div>
-      <div style="text-align:center;cursor:pointer;" onclick="showNewChildColorModal()">
-        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">צבע 🎨</div>
-        <div id="new-child-color-display" style="width:60px;height:60px;border-radius:50%;margin:0 auto;border:3px dashed #818CF8;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);"></div>
-      </div>
-    </div>
-
-    <div class="error-msg" id="create-child-error"></div>
-    <div class="btn-row" style="margin-top:16px;">
-      <button class="btn btn-primary btn-sm" id="btn-do-create-child">צור ילד/ה</button>
-      <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-manage-family')">חזרה</button>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== SCREEN: INVITE CODE ==================== -->
-<div id="screen-invite-code" class="screen" style="overflow:hidden;">
-  <div class="screen-header">
-    <h2>קוד הזמנה 🎉</h2>
-  </div>
-  <div class="card" style="text-align:center;">
-    <div class="emoji-big">🔑</div>
-    <p style="font-weight:700;font-size:1.1rem;margin-bottom:16px;">הילד/ה נוצר/ה בהצלחה!</p>
-    <div style="text-align:right;margin-bottom:18px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">1</span>
-        <span style="font-size:0.92rem;font-weight:600;">פתח את האפליקציה במכשיר של הילד/ה</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">2</span>
-        <span style="font-size:0.92rem;font-weight:600;">בחר <strong>"אני ילד/ה"</strong></span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">3</span>
-        <span style="font-size:0.92rem;font-weight:600;">הזן את קוד ההזמנה למטה</span>
-      </div>
-    </div>
-    <p style="color:var(--muted);font-size:0.82rem;margin-bottom:12px;">הקוד תקף ל-24 שעות ולבן משפחה אחד</p>
-    <div class="invite-code-display" id="invite-code-value">000000</div>
-    <div class="btn-row" style="margin-top:16px;">
-      <button class="btn btn-primary btn-sm" id="btn-share-code">📤 שתף קוד</button>
-      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('btn-manage-family').click()">חזרה</button>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== SCREEN: PARENT INVITE CODE ==================== -->
-<div id="screen-parent-invite" class="screen" style="overflow:hidden;">
-  <div class="screen-header">
-    <button class="back-btn" onclick="showScreen('screen-manage-family');renderFamily();">→</button>
-    <h2>הזמנת הורה 👫</h2>
-  </div>
-  <div class="card" style="text-align:center;">
-    <div class="emoji-big">👨‍👩‍👧‍👦</div>
-    <p style="font-weight:700;font-size:1.1rem;margin-bottom:16px;">הזמנת הורה נוסף</p>
-    <div style="text-align:right;margin-bottom:18px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">1</span>
-        <span style="font-size:0.92rem;font-weight:600;">פתח את האפליקציה במכשיר של ההורה הנוסף</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">2</span>
-        <span style="font-size:0.92rem;font-weight:600;">בחר <strong>"הורה"</strong> והתחבר עם Google או Facebook</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">3</span>
-        <span style="font-size:0.92rem;font-weight:600;">הזן את קוד ההזמנה למטה</span>
-      </div>
-    </div>
-    <p style="color:var(--muted);font-size:0.82rem;margin-bottom:12px;">הקוד תקף ל-24 שעות</p>
-    <div class="invite-code-display" id="parent-invite-code-value">000000</div>
-    <div class="btn-row" style="margin-top:16px;">
-      <button class="btn btn-primary btn-sm" id="btn-share-parent-code">📤 שתף קוד</button>
-      <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-manage-family');renderFamily();">חזרה</button>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== SCREEN: EDIT CHILD ==================== -->
-<div id="screen-edit-child" class="screen" style="overflow:hidden;">
-  <div class="screen-header">
-    <button class="back-btn" onclick="showScreen('screen-manage-family');renderFamily();">→</button>
-    <h2>עריכת ילד/ה ✏️</h2>
-  </div>
-  <div class="card" style="padding:16px 18px;">
-
-    <!-- שורה 1: שם + מין -->
-    <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:12px;">
-      <div style="flex:1;">
-        <label style="display:block;font-weight:700;font-size:0.85rem;margin-bottom:5px;color:var(--text);">שם</label>
-        <input type="text" id="edit-child-name" placeholder="שם הילד/ה" autocomplete="off"
-          style="width:100%;padding:11px 14px;border:2px solid var(--border);border-radius:12px;font-size:0.97rem;font-family:'Heebo',sans-serif;background:var(--card);color:var(--text);box-sizing:border-box;transition:border-color 0.2s;">
-      </div>
-      <div style="display:flex;gap:7px;padding-bottom:3px;">
-        <div class="gender-opt" data-gender="male" id="edit-gender-male"
-          style="width:46px;height:46px;font-size:1.6rem;border-radius:12px;">👦</div>
-        <div class="gender-opt" data-gender="female" id="edit-gender-female"
-          style="width:46px;height:46px;font-size:1.6rem;border-radius:12px;">👧</div>
-      </div>
-    </div>
-
-    <!-- שורה 2: צבע + אימוג'י + תמונה -->
-    <div style="display:flex;justify-content:space-around;align-items:flex-start;margin-bottom:12px;background:#F8FAFC;border-radius:14px;padding:10px 6px;">
-      <div style="text-align:center;">
-        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">צבע 🎨</div>
-        <div id="edit-child-color-display"
-          style="width:60px;height:60px;border-radius:50%;margin:0 auto;border:3px dashed #818CF8;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);cursor:pointer;" title="לחץ לעריכה"></div>
-      </div>
-      <div style="text-align:center;">
-        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">אימוג'י</div>
-        <div id="edit-child-emoji-display"
-          style="width:60px;height:60px;border-radius:50%;margin:0 auto;border:3px dashed #818CF8;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);font-size:2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="לחץ לעריכה"></div>
-      </div>
-      <div style="text-align:center;">
-        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">תמונה 📷</div>
-        <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
-          <div class="photo-upload" id="edit-photo-upload" style="width:60px;height:60px;">
-            <div class="ph-placeholder" id="edit-photo-placeholder">
-              <span style="font-size:1.2rem;">📷</span>
-              <small>בחר</small>
-            </div>
-            <img id="edit-photo-preview" style="display:none;" alt="">
-            <input type="file" accept="image/*" id="edit-photo-input">
-          </div>
-          <button class="btn btn-sm btn-secondary" id="btn-clear-photo"
-            style="width:30px;height:30px;padding:0;font-size:0.85rem;min-width:unset;border-radius:50%;display:flex;align-items:center;justify-content:center;align-self:center;">🗑️</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- סעיף הזמנה (מוסתר כברירת מחדל) -->
-    <div id="edit-child-invite-section" style="display:none;margin-bottom:12px;padding:12px;background:#F8FAFC;border-radius:14px;">
-      <p style="font-weight:700;font-size:0.88rem;text-align:center;margin-bottom:10px;">⏳ ממתין לכניסה</p>
-      <div style="text-align:right;margin-bottom:8px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
-          <span style="background:var(--primary);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:800;flex-shrink:0;">1</span>
-          <span style="font-size:0.81rem;font-weight:600;">פתח את האפליקציה במכשיר של הילד/ה</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
-          <span style="background:var(--primary);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:800;flex-shrink:0;">2</span>
-          <span style="font-size:0.81rem;font-weight:600;">בחר <strong>"אני ילד/ה"</strong></span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="background:var(--primary);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:800;flex-shrink:0;">3</span>
-          <span style="font-size:0.81rem;font-weight:600;">הזן את הקוד למטה</span>
-        </div>
-      </div>
-      <p style="color:var(--muted);font-size:0.74rem;text-align:center;margin-bottom:8px;">הקוד תקף ל-24 שעות ולבן משפחה אחד</p>
-      <div style="font-size:1.5rem;font-weight:900;letter-spacing:8px;color:var(--primary);direction:ltr;text-align:center;" id="edit-child-invite-code">000000</div>
-      <div style="text-align:center;margin-top:10px;">
-        <button class="btn btn-primary btn-sm" id="btn-share-child-code-edit" style="width:auto;padding:9px 22px;display:inline-flex;">📤 שתף קוד</button>
-      </div>
-    </div>
-
-    <div class="error-msg" id="edit-child-error"></div>
-    <div style="display:flex;gap:8px;margin-top:6px;">
-      <button class="btn btn-primary btn-sm" id="btn-save-child" style="flex:2;">שמור</button>
-      <button class="btn btn-danger btn-sm" id="btn-delete-child" style="flex:1;">מחק</button>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== SCREEN: ADD TASK ==================== -->
-<div id="screen-add-task" class="screen">
-  <div class="screen-header">
-    <button class="back-btn" onclick="showScreen('screen-dashboard')">→</button>
-    <h2>הוספת מטלה 📋</h2>
-  </div>
-  <div class="card">
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">✏️</span> שם המטלה</div>
-      <div class="input-group" style="margin-bottom:6px;">
-        <input type="text" id="task-name-input" placeholder="לדוגמה: צחצוח שיניים" autocomplete="off">
-      </div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-sm" id="btn-task-suggestions" style="padding:8px 14px;font-size:0.82rem;background:#FCE7F3;color:#BE185D;border:none;border-radius:20px;width:auto;max-width:none;display:inline-flex;box-shadow:none;flex:1;justify-content:center;">💡 לחץ למשימות לדוגמא</button>
-      </div>
-      <div id="form-quick-cats-section" style="margin-top:8px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
-          <div style="font-size:0.63rem;font-weight:700;color:#94A3B8;flex:1;min-width:0;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">⚡ הוספת 5 משימות לפי קטגוריה - ערוך ומחק במסך עריכת מטלות</div>
-          <button id="btn-form-quick-close" style="background:none;border:none;color:#94A3B8;font-size:0.95rem;font-weight:900;cursor:pointer;padding:0 0 0 6px;line-height:1;flex-shrink:0;">✕</button>
-        </div>
-        <div id="form-quick-cats-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
-          <button class="quick-cat-btn-form" data-cat="hygiene" style="background:#EEF2FF;color:#4338CA;border:1.5px solid #C7D2FE;border-radius:10px;padding:6px 4px;font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🧼 היגיינה</button>
-          <button class="quick-cat-btn-form" data-cat="chores" style="background:#EEF2FF;color:#4338CA;border:1.5px solid #C7D2FE;border-radius:10px;padding:6px 4px;font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">🏠 בית</button>
-          <button class="quick-cat-btn-form" data-cat="study" style="background:#EEF2FF;color:#4338CA;border:1.5px solid #C7D2FE;border-radius:10px;padding:6px 4px;font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📚 לימודים</button>
-        </div>
-      </div>
-      <div class="suggestions-wrap" id="suggestions-wrap" style="display:none;"></div>
-    </div>
-
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">📂</span> קטגוריה</div>
-      <div class="cat-scroll" id="task-cat-scroll"></div>
-      <div id="new-cat-input-wrap" style="display:none;margin-top:8px;">
-        <div class="input-group" style="margin-bottom:0;">
-          <input type="text" id="task-new-cat-input" placeholder="שם קטגוריה חדשה..." autocomplete="off">
-        </div>
-      </div>
-    </div>
-
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">👧👦</span> שיוך לילד/ים</div>
-      <div class="assign-grid" id="task-assign-grid"></div>
-    </div>
-
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">🎨</span> אייקון</div>
-      <div class="task-emoji-grid" id="task-emoji-grid"></div>
-    </div>
-
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">⭐</span> מספר כוכבים</div>
-      <div class="stars-picker" id="task-stars-picker">
-        <span class="star-btn" data-val="1">⭐</span>
-        <span class="star-btn" data-val="2">⭐</span>
-        <span class="star-btn" data-val="3">⭐</span>
-        <span class="star-btn" data-val="4">⭐</span>
-        <span class="star-btn" data-val="5">⭐</span>
-      </div>
-    </div>
-
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">📅</span> תדירות</div>
-      <div class="freq-grid" id="task-freq-grid">
-        <div class="freq-opt" data-freq="daily"><span class="fo-icon">📆</span><span class="fo-label">כל יום</span></div>
-        <div class="freq-opt" data-freq="specific"><span class="fo-icon">🗓️</span><span class="fo-label">ימים<br>ספציפיים</span></div>
-        <div class="freq-opt" data-freq="weekly"><span class="fo-icon">📋</span><span class="fo-label">פעם<br>בשבוע</span></div>
-        <div class="freq-opt" data-freq="once"><span class="fo-icon">☝️</span><span class="fo-label">חד פעמית</span></div>
-      </div>
-      <div class="days-grid" id="task-days-grid" style="display:none;">
-        <div class="day-opt" data-day="0">א'</div>
-        <div class="day-opt" data-day="1">ב'</div>
-        <div class="day-opt" data-day="2">ג'</div>
-        <div class="day-opt" data-day="3">ד'</div>
-        <div class="day-opt" data-day="4">ה'</div>
-        <div class="day-opt" data-day="5">ו'</div>
-        <div class="day-opt" data-day="6">ש'</div>
-      </div>
-    </div>
-
-    <div id="task-reminder-desc-wrap">
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">🔔</span> תזכורת</div>
-      <input type="time" class="reminder-input" id="task-reminder-input">
-    </div>
-
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">📝</span> תיאור (לא חובה)</div>
-      <div class="input-group" style="margin-bottom:0;">
-        <input type="text" id="task-desc-input" placeholder="הסבר קצר על המטלה" autocomplete="off">
-      </div>
-    </div>
-    </div>
-
-    <div class="error-msg" id="add-task-error"></div>
-    <button class="btn btn-success" id="btn-save-task" style="margin-top:18px;">שמור מטלה ✅</button>
-  </div>
-</div>
-
-<!-- ==================== SCREEN: EDIT TASKS LIST ==================== -->
-<div id="screen-edit-tasks" class="screen">
-  <div class="screen-header">
-    <button class="back-btn" onclick="showScreen('screen-dashboard')">→</button>
-    <h2>עריכת מטלות ✏️</h2>
-  </div>
-  <div class="filter-scroll" id="edit-tasks-filter">
-    <span class="filter-chip active" data-filter="all">📋 לפי סדר הוספה</span>
-    <span class="filter-chip" data-filter="child">👧👦 לפי ילד</span>
-    <span class="filter-chip" data-filter="cat">📂 לפי קטגוריה</span>
-    <span class="filter-chip" data-filter="stars">⭐ לפי כוכבים</span>
-    <span class="filter-chip" data-filter="freq">📅 לפי תדירות</span>
-  </div>
-  <div class="sub-filter-scroll" id="edit-tasks-sub-filter" style="display:none;"></div>
-  <div class="etask-list" id="edit-tasks-list">
-    <div class="empty-state">טוען...</div>
-  </div>
-</div>
-
-<!-- ==================== SCREEN: EDIT SINGLE TASK ==================== -->
-<div id="screen-edit-task" class="screen">
-  <div class="screen-header">
-    <button class="back-btn" id="btn-back-edit-task">→</button>
-    <h2>עריכת מטלה ✏️</h2>
-  </div>
-  <div class="card">
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">✏️</span> שם המטלה</div>
-      <div class="input-group" style="margin-bottom:0;">
-        <input type="text" id="et-name" placeholder="שם המטלה" autocomplete="off">
-      </div>
-    </div>
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">📂</span> קטגוריה</div>
-      <div class="cat-scroll" id="et-cat-scroll"></div>
-      <div id="et-new-cat-wrap" style="display:none;margin-top:8px;">
-        <div class="input-group" style="margin-bottom:0;">
-          <input type="text" id="et-new-cat" placeholder="קטגוריה חדשה..." autocomplete="off">
-        </div>
-      </div>
-    </div>
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">👧👦</span> שיוך לילד/ים</div>
-      <div class="assign-grid" id="et-assign-grid"></div>
-    </div>
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">🎨</span> אייקון</div>
-      <div class="task-emoji-grid" id="et-emoji-grid"></div>
-    </div>
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">⭐</span> מספר כוכבים</div>
-      <div class="stars-picker" id="et-stars-picker">
-        <span class="star-btn" data-val="1">⭐</span>
-        <span class="star-btn" data-val="2">⭐</span>
-        <span class="star-btn" data-val="3">⭐</span>
-        <span class="star-btn" data-val="4">⭐</span>
-        <span class="star-btn" data-val="5">⭐</span>
-      </div>
-    </div>
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">📅</span> תדירות</div>
-      <div class="freq-grid" id="et-freq-grid">
-        <div class="freq-opt" data-freq="daily"><span class="fo-icon">📆</span><span class="fo-label">כל יום</span></div>
-        <div class="freq-opt" data-freq="specific"><span class="fo-icon">🗓️</span><span class="fo-label">ימים<br>ספציפיים</span></div>
-        <div class="freq-opt" data-freq="weekly"><span class="fo-icon">📋</span><span class="fo-label">פעם<br>בשבוע</span></div>
-        <div class="freq-opt" data-freq="once"><span class="fo-icon">☝️</span><span class="fo-label">חד פעמית</span></div>
-      </div>
-      <div class="days-grid" id="et-days-grid" style="display:none;">
-        <div class="day-opt" data-day="0">א'</div>
-        <div class="day-opt" data-day="1">ב'</div>
-        <div class="day-opt" data-day="2">ג'</div>
-        <div class="day-opt" data-day="3">ד'</div>
-        <div class="day-opt" data-day="4">ה'</div>
-        <div class="day-opt" data-day="5">ו'</div>
-        <div class="day-opt" data-day="6">ש'</div>
-      </div>
-    </div>
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">🔔</span> תזכורת</div>
-      <input type="time" class="reminder-input" id="et-reminder">
-    </div>
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">📝</span> תיאור</div>
-      <div class="input-group" style="margin-bottom:0;">
-        <input type="text" id="et-desc" placeholder="הסבר קצר" autocomplete="off">
-      </div>
-    </div>
-    <div class="error-msg" id="et-error"></div>
-    <div style="display:flex;gap:8px;margin-top:16px;">
-      <button class="btn btn-success btn-sm" id="btn-et-save" style="flex:2;">שמור ✅</button>
-      <button class="btn btn-sm" id="btn-et-hide" style="flex:1;background:#FEF3C7;color:#92400E;border:none;">👁️ הסתר</button>
-    </div>
-    <button class="btn btn-danger btn-sm" id="btn-et-delete" style="margin-top:8px;">🗑️ מחק מטלה</button>
-  </div>
-</div>
-
-<!-- ==================== SCREEN: MANAGE POINTS ==================== -->
-<div id="screen-manage-points" class="screen">
-  <div class="screen-header">
-    <button class="back-btn" onclick="showScreen('screen-dashboard')">→</button>
-    <h2>ניהול ניקוד ⭐</h2>
-  </div>
-  <p style="color:var(--muted);font-size:0.85rem;max-width:420px;width:100%;margin-bottom:10px;">מטלות שבוצעו השבוע. סוויפ לביטול ביצוע.</p>
-  <div class="filter-scroll" id="mp-filter">
-    <span class="filter-chip active" data-filter="all">📋 הכל</span>
-    <span class="filter-chip" data-filter="child">👧👦 לפי ילד</span>
-    <span class="filter-chip" data-filter="cat">📂 לפי קטגוריה</span>
-    <span class="filter-chip" data-filter="stars">⭐ לפי כוכבים</span>
-    <span class="filter-chip" data-filter="day">📅 לפי יום</span>
-  </div>
-  <div class="sub-filter-scroll" id="mp-sub-filter" style="display:none;"></div>
-  <div class="etask-list" id="mp-list">
-    <div class="empty-state">טוען...</div>
+    <button id="ob3-allow" style="width:100%;padding:15px;background:linear-gradient(135deg,#059669,#047857);border:none;border-radius:18px;font-size:1.05rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;box-shadow:0 6px 22px rgba(5,150,105,0.38);">🔔 אפשר התראות</button>
+    <button id="ob3-later" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366F1,#4338CA);border:none;border-radius:18px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;box-shadow:0 6px 22px rgba(99,102,241,0.35);">🚀 בואו נתחיל!</button>
   </div>
 </div>
 
@@ -917,25 +306,18 @@
   </div>
   <div class="card">
     <p style="text-align:center;font-weight:700;font-size:1.1rem;margin-bottom:16px;" id="child-setup-name"></p>
-
     <label style="font-weight:700;font-size:0.9rem;display:block;margin-bottom:8px;">בחר/י אימוג'י 😊</label>
     <div class="emoji-grid" id="emoji-picker"></div>
     <div class="error-msg" id="emoji-error"></div>
-
     <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">בחר/י צבע 🎨</label>
     <div class="color-grid" id="color-picker"></div>
     <div class="error-msg" id="color-error"></div>
-
     <label style="font-weight:700;font-size:0.9rem;display:block;margin:12px 0 8px;">תמונה (לא חובה) 📸</label>
     <div class="photo-upload" id="child-photo-upload">
-      <div class="ph-placeholder" id="child-photo-placeholder">
-        <span>📷</span>
-        <small>בחר תמונה</small>
-      </div>
+      <div class="ph-placeholder" id="child-photo-placeholder"><span>📷</span><small>בחר תמונה</small></div>
       <img id="child-photo-preview" style="display:none;" alt="">
       <input type="file" accept="image/*" id="child-photo-input">
     </div>
-
     <div class="error-msg" id="setup-error"></div>
     <div class="btn-row" style="margin-top:18px;">
       <button class="btn btn-success btn-sm" id="btn-finish-setup">המשך</button>
@@ -944,31 +326,9 @@
   </div>
 </div>
 
-<!-- ==================== SPLASH ==================== -->
-<div id="screen-splash" class="screen active visible" style="justify-content:center;min-height:100vh;">
-  <div style="text-align:center;">
-    <div style="font-size:3.5rem;margin-bottom:16px;">🏠</div>
-    <div class="spinner-lg" style="width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px;"></div>
-    <p style="font-weight:700;color:var(--muted);">טוען...</p>
-  </div>
-</div>
-
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<script type="module" src="./js/main.js"></script>
-<!-- ==================== MODAL: NO CHILD WARNING ==================== -->
-<div id="modal-no-child" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.65);z-index:4000;align-items:center;justify-content:center;padding:24px;">
-  <div style="background:white;border-radius:24px;padding:32px 24px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.18);">
-    <div style="font-size:2.4rem;margin-bottom:10px;">👶</div>
-    <div style="font-weight:900;font-size:1.05rem;color:#1E293B;margin-bottom:8px;">אין עדיין ילדים במשפחה</div>
-    <div style="font-size:0.85rem;color:#64748B;line-height:1.6;margin-bottom:24px;">כדי ליצור מטלה צריך להוסיף<br>לפחות ילד אחד קודם</div>
-    <div style="display:flex;gap:10px;">
-      <button id="modal-no-child-back" style="flex:1;background:#F1F5F9;color:#475569;border:none;border-radius:12px;padding:13px;font-size:0.9rem;font-weight:700;font-family:'Heebo',sans-serif;cursor:pointer;">חזור</button>
-      <button id="modal-no-child-create" style="flex:1.6;background:linear-gradient(135deg,#6366F1,#4F46E5);color:white;border:none;border-radius:12px;padding:13px;font-size:0.9rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">➕ צור ילד</button>
-    </div>
-  </div>
-</div>
-
+<script type="module" src="./js/main-index.js"></script>
 </body>
 </html>
