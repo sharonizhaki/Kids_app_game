@@ -420,6 +420,22 @@ const _dtrIntervals = [];
 
 const PLACEHOLDER_HTML = `<div class="dash-task-placeholder" style="background:white;border-radius:14px;padding:14px 16px;text-align:center;color:#CBD5E1;font-size:0.82rem;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.05);border:2px dashed #E2E8F0;">כאן יוצגו המטלות להיום</div>`;
 
+function buildChildPlaceholders(children) {
+  return children.map((child, ci) => {
+    const genderEmoji = child.gender === 'female' ? '👧' : '👦';
+    const displayEmoji = child.emoji || genderEmoji;
+    const color = child.color || CHILD_COLORS[ci % CHILD_COLORS.length];
+    return `<div style="background:white;border-radius:14px;padding:10px 14px;margin-bottom:7px;box-shadow:0 2px 8px rgba(0,0,0,0.06),inset -4px 0 0 ${color},inset 0 -3px 0 ${color}70;display:flex;align-items:center;gap:10px;">
+      <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;min-width:68px;">
+        <span style="font-size:1.1rem;">${displayEmoji}</span>
+        <span style="font-weight:800;font-size:0.8rem;color:var(--text);white-space:nowrap;">${child.name}</span>
+      </div>
+      <div style="width:1px;height:22px;background:#E2E8F0;flex-shrink:0;"></div>
+      <div style="flex:1;font-size:0.8rem;color:#CBD5E1;font-weight:600;">אין מטלות להיום ✓</div>
+    </div>`;
+  }).join('');
+}
+
 export async function renderDashTaskRows(familyId) {
   _dtrIntervals.forEach(clearInterval);
   _dtrIntervals.length = 0;
@@ -437,9 +453,9 @@ export async function renderDashTaskRows(familyId) {
   try {
     const tSnap = await getDocs(collection(db, 'families', familyId, 'tasks'));
     allFamilyTasks = tSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(t => !t.hidden);
-  } catch(e) { container.innerHTML = PLACEHOLDER_HTML; return; }
+  } catch(e) { container.innerHTML = buildChildPlaceholders(children); return; }
 
-  if (!allFamilyTasks.length) { container.innerHTML = PLACEHOLDER_HTML; return; }
+  if (!allFamilyTasks.length) { container.innerHTML = buildChildPlaceholders(children); return; }
 
   const childRows = await Promise.all(children.map(async (child) => {
     const childTasks = allFamilyTasks.filter(t =>
@@ -458,8 +474,6 @@ export async function renderDashTaskRows(familyId) {
 
   let anyRows = false;
   childRows.forEach(({ child, remaining }, ci) => {
-    if (!remaining.length) return;
-    anyRows = true;
     const genderEmoji = child.gender === 'female' ? '👧' : '👦';
     const displayEmoji = child.emoji || genderEmoji;
     const color = child.color || CHILD_COLORS[ci % CHILD_COLORS.length];
@@ -468,32 +482,43 @@ export async function renderDashTaskRows(familyId) {
     row.className = 'dash-task-row';
     row.style.boxShadow = `0 2px 8px rgba(0,0,0,0.06),inset -4px 0 0 ${color},inset 0 -3px 0 ${color}70`;
 
-    row.innerHTML = `
-      <div class="dtr-name">
-        <span style="font-size:1.1rem;">${displayEmoji}</span>
-        <span style="font-weight:800;font-size:0.8rem;color:var(--text);white-space:nowrap;">${child.name}</span>
-      </div>
-      <div class="dtr-divider"></div>
-      <div class="dtr-tasks">
-        <span class="dtr-task-text">${remaining[0].emoji || '📋'} ${remaining[0].task}</span>
-      </div>`;
-    container.appendChild(row);
+    if (!remaining.length) {
+      row.innerHTML = `
+        <div class="dtr-name">
+          <span style="font-size:1.1rem;">${displayEmoji}</span>
+          <span style="font-weight:800;font-size:0.8rem;color:var(--text);white-space:nowrap;">${child.name}</span>
+        </div>
+        <div class="dtr-divider"></div>
+        <div class="dtr-tasks">
+          <span class="dtr-task-text" style="color:#10B981;">✅ הכל בוצע!</span>
+        </div>`;
+    } else {
+      anyRows = true;
+      row.innerHTML = `
+        <div class="dtr-name">
+          <span style="font-size:1.1rem;">${displayEmoji}</span>
+          <span style="font-weight:800;font-size:0.8rem;color:var(--text);white-space:nowrap;">${child.name}</span>
+        </div>
+        <div class="dtr-divider"></div>
+        <div class="dtr-tasks">
+          <span class="dtr-task-text">${remaining[0].emoji || '📋'} ${remaining[0].task}</span>
+        </div>`;
 
-    if (remaining.length > 1) {
-      let idx = 0;
-      const taskEl = row.querySelector('.dtr-task-text');
-      _dtrIntervals.push(setInterval(() => {
-        idx = (idx + 1) % remaining.length;
-        taskEl.style.opacity = '0';
-        setTimeout(() => {
-          taskEl.textContent = `${remaining[idx].emoji || '📋'} ${remaining[idx].task}`;
-          taskEl.style.opacity = '1';
-        }, 300);
-      }, 3000));
+      if (remaining.length > 1) {
+        let idx = 0;
+        const taskEl = row.querySelector('.dtr-task-text');
+        _dtrIntervals.push(setInterval(() => {
+          idx = (idx + 1) % remaining.length;
+          taskEl.style.opacity = '0';
+          setTimeout(() => {
+            taskEl.textContent = `${remaining[idx].emoji || '📋'} ${remaining[idx].task}`;
+            taskEl.style.opacity = '1';
+          }, 300);
+        }, 3000));
+      }
     }
+    container.appendChild(row);
   });
-
-  if (!anyRows) container.innerHTML = PLACEHOLDER_HTML;
 }
 
 export function shareParentCode(code) {

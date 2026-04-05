@@ -405,13 +405,6 @@ document.getElementById('ob1-next').onclick = async () => {
   const err = document.getElementById('ob1-error');
   err.textContent = '';
 
-  // אם אין שם — תמיד שגיאה (גם אם יש ילדים)
-  // אם יש ילדים ואין שם ואין מין — אפשר לדלג דרך כפתור "דלג"
-  if (!name && childrenCache.length > 0) {
-    // אין שם, אבל יש כבר ילדים → דלג (ללא ולידציה)
-    goToOnboard2(); return;
-  }
-
   const nameInput = document.getElementById('ob1-name');
   const genderPicker = document.getElementById('ob1-gender-picker');
 

@@ -55,28 +55,12 @@ function saveClickedCategory(cat) {
 function markButtonDone(btn) {
   const cat = btn.dataset.cat;
   const labels = { hygiene: 'היגיינה', chores: 'מטלות בית', study: 'לימודים' };
-  const emojis = { hygiene: '🧼', chores: '🏠', study: '📚' };
-  const checkSVG = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px;flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>`;
   btn.style.opacity = '1';
-  btn.style.background = 'linear-gradient(135deg,#DCFCE7,#BBF7D0)';
+  btn.style.background = 'rgba(22,163,74,0.10)';
   btn.style.borderColor = '#16A34A';
-  btn.style.borderWidth = '2px';
-  btn.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.18), inset 0 1px 0 rgba(255,255,255,0.6)';
-  btn.style.transform = 'scale(1)';
-  btn.style.transition = 'all 0.35s cubic-bezier(.34,1.4,.64,1)';
-  btn.innerHTML = `
-    <div style="font-size:1.5rem;margin-bottom:3px;">${emojis[cat] || '✨'}</div>
-    <div style="font-size:0.78rem;font-weight:800;color:#15803D;">${labels[cat] || ''}</div>
-    <div style="font-size:0.63rem;color:#16A34A;margin-top:3px;display:flex;align-items:center;justify-content:center;gap:2px;font-weight:700;">${checkSVG} נוסף!</div>`;
+  btn.innerHTML = `<div style="font-size:1.5rem;margin-bottom:4px;">✅</div><div style="font-size:0.78rem;font-weight:800;color:#15803D;">${labels[cat] || ''}</div><div style="font-size:0.65rem;color:#15803D;margin-top:2px;">נוסף!</div>`;
   btn.style.cursor = 'default';
   btn.disabled = true;
-  // אנימציה — pulse ירוק
-  btn.animate([
-    { transform: 'scale(1)', boxShadow: '0 0 0 0 rgba(22,163,74,0.45)' },
-    { transform: 'scale(1.08)', boxShadow: '0 0 0 8px rgba(22,163,74,0.22)' },
-    { transform: 'scale(1.04)', boxShadow: '0 0 0 14px rgba(22,163,74,0.08)' },
-    { transform: 'scale(1)',   boxShadow: '0 0 0 18px rgba(22,163,74,0)' }
-  ], { duration: 560, easing: 'cubic-bezier(.34,1.4,.64,1)', fill: 'forwards' });
 }
 
 function refreshQuickTasksBanner() {
@@ -93,23 +77,34 @@ function refreshQuickTasksBanner() {
 function animateBannerAway() {
   const inner = document.getElementById('quick-tasks-inner');
   const banner = document.getElementById('quick-tasks-banner');
-  if (!inner || !banner) return;
-  inner.style.transition = 'transform 0.1s ease-out,opacity 0.1s ease';
-  inner.style.transform = 'scale(1.05)';
+  if (!inner || !banner || banner.style.display === 'none') return;
+
+  // שלב 1: bounce קטן
+  inner.style.transition = 'transform 0.12s ease-out';
+  inner.style.transform = 'scale(1.03)';
+
   setTimeout(() => {
-    inner.style.transition = 'transform 0.5s cubic-bezier(.55,1.8,.65,.8),opacity 0.38s ease';
-    inner.style.transformOrigin = 'top left';
-    inner.style.transform = 'scale(0) rotate(-20deg)';
+    // שלב 2: flip + shrink עם blur
+    inner.style.transition = 'transform 0.45s cubic-bezier(.4,0,.2,1), opacity 0.38s ease, filter 0.38s ease';
+    inner.style.transformOrigin = 'center top';
+    inner.style.transform = 'scaleY(0) rotateX(30deg)';
     inner.style.opacity = '0';
+    inner.style.filter = 'blur(4px)';
+
     setTimeout(() => {
+      // שלב 3: כיווץ גובה הבאנר
       const h = banner.offsetHeight;
       banner.style.overflow = 'hidden';
       banner.style.maxHeight = h + 'px';
-      banner.style.transition = 'max-height 0.36s cubic-bezier(.4,0,.2,1),margin-top 0.36s ease';
-      requestAnimationFrame(() => { banner.style.maxHeight = '0'; banner.style.marginTop = '0'; });
-      setTimeout(() => { banner.style.display = 'none'; }, 380);
-    }, 440);
-  }, 90);
+      banner.style.transition = 'max-height 0.32s cubic-bezier(.4,0,.2,1), margin-top 0.32s ease, opacity 0.2s ease';
+      banner.style.opacity = '0';
+      requestAnimationFrame(() => {
+        banner.style.maxHeight = '0';
+        banner.style.marginTop = '0';
+      });
+      setTimeout(() => { banner.style.display = 'none'; }, 340);
+    }, 420);
+  }, 110);
 }
 
 function dismissQuickBanner() {
@@ -126,14 +121,14 @@ async function handleQuickTasks(triggerEl, category) {
     if (ok && triggerEl) {
       saveClickedCategory(category);
       markButtonDone(triggerEl);
-      const allDone = [...document.querySelectorAll('#quick-tasks-inner .quick-cat-btn')].every(b => b.disabled || b.innerHTML.includes('✅'));
+      const allDone = [...document.querySelectorAll('#quick-tasks-inner .quick-cat-btn')].every(b => b.disabled);
       if (allDone) {
         localStorage.setItem(quickBannerKey(), '1');
-        setTimeout(animateBannerAway, 950);
+        setTimeout(animateBannerAway, 1100);
       }
     }
   } finally {
-    if (triggerEl && !triggerEl.innerHTML.includes('✅')) { triggerEl.disabled = false; triggerEl.style.opacity = ''; }
+    if (triggerEl && !triggerEl.disabled) { triggerEl.disabled = false; triggerEl.style.opacity = ''; }
   }
 }
 
@@ -151,7 +146,7 @@ async function handleQuickTasks(triggerEl, category) {
   } catch(e) { window.location.href = 'index.html'; return; }
 
   const name = user.displayName ? user.displayName.split(' ')[0] : 'הורה';
-  document.getElementById('dash-greeting').textContent = `שלום ${name} 👋`;
+  document.getElementById('dash-greeting').textContent = `שלום ${name}! 👋`;
 
   // Check if no children → redirect to onboarding
   await loadChildren(currentFamilyId);

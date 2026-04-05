@@ -160,7 +160,7 @@ export async function saveTask(familyId) {
     });
     hideLoading();
     showToast('מטלה נוספה! ✅');
-    showScreen('screen-dashboard');
+    setTimeout(() => { window.location.href = 'parent.html'; }, 800);
   } catch(e) {
     hideLoading();
     document.getElementById('add-task-error').textContent = 'שגיאה בשמירה, נסה שוב';
