@@ -77,34 +77,23 @@ function refreshQuickTasksBanner() {
 function animateBannerAway() {
   const inner = document.getElementById('quick-tasks-inner');
   const banner = document.getElementById('quick-tasks-banner');
-  if (!inner || !banner || banner.style.display === 'none') return;
-
-  // שלב 1: bounce קטן
-  inner.style.transition = 'transform 0.12s ease-out';
-  inner.style.transform = 'scale(1.03)';
-
+  if (!inner || !banner) return;
+  inner.style.transition = 'transform 0.1s ease-out,opacity 0.1s ease';
+  inner.style.transform = 'scale(1.05)';
   setTimeout(() => {
-    // שלב 2: flip + shrink עם blur
-    inner.style.transition = 'transform 0.45s cubic-bezier(.4,0,.2,1), opacity 0.38s ease, filter 0.38s ease';
-    inner.style.transformOrigin = 'center top';
-    inner.style.transform = 'scaleY(0) rotateX(30deg)';
+    inner.style.transition = 'transform 0.5s cubic-bezier(.55,1.8,.65,.8),opacity 0.38s ease';
+    inner.style.transformOrigin = 'top left';
+    inner.style.transform = 'scale(0) rotate(-20deg)';
     inner.style.opacity = '0';
-    inner.style.filter = 'blur(4px)';
-
     setTimeout(() => {
-      // שלב 3: כיווץ גובה הבאנר
       const h = banner.offsetHeight;
       banner.style.overflow = 'hidden';
       banner.style.maxHeight = h + 'px';
-      banner.style.transition = 'max-height 0.32s cubic-bezier(.4,0,.2,1), margin-top 0.32s ease, opacity 0.2s ease';
-      banner.style.opacity = '0';
-      requestAnimationFrame(() => {
-        banner.style.maxHeight = '0';
-        banner.style.marginTop = '0';
-      });
-      setTimeout(() => { banner.style.display = 'none'; }, 340);
-    }, 420);
-  }, 110);
+      banner.style.transition = 'max-height 0.36s cubic-bezier(.4,0,.2,1),margin-top 0.36s ease';
+      requestAnimationFrame(() => { banner.style.maxHeight = '0'; banner.style.marginTop = '0'; });
+      setTimeout(() => { banner.style.display = 'none'; }, 380);
+    }, 440);
+  }, 90);
 }
 
 function dismissQuickBanner() {
@@ -121,14 +110,14 @@ async function handleQuickTasks(triggerEl, category) {
     if (ok && triggerEl) {
       saveClickedCategory(category);
       markButtonDone(triggerEl);
-      const allDone = [...document.querySelectorAll('#quick-tasks-inner .quick-cat-btn')].every(b => b.disabled);
+      const allDone = [...document.querySelectorAll('#quick-tasks-inner .quick-cat-btn')].every(b => b.disabled || b.innerHTML.includes('✅'));
       if (allDone) {
         localStorage.setItem(quickBannerKey(), '1');
-        setTimeout(animateBannerAway, 1100);
+        setTimeout(animateBannerAway, 950);
       }
     }
   } finally {
-    if (triggerEl && !triggerEl.disabled) { triggerEl.disabled = false; triggerEl.style.opacity = ''; }
+    if (triggerEl && !triggerEl.innerHTML.includes('✅')) { triggerEl.disabled = false; triggerEl.style.opacity = ''; }
   }
 }
 
@@ -189,11 +178,11 @@ document.getElementById('btn-manage-points').onclick = () => {
 };
 
 document.getElementById('btn-add-prizes').onclick = () => {
-  window.location.href = 'prizes.html';
+  window.location.href = 'prizes.html?mode=add';
 };
 
 document.getElementById('btn-manage-prizes').onclick = () => {
-  window.location.href = 'prizes.html';
+  window.location.href = 'prizes.html?mode=manage';
 };
 
 document.getElementById('btn-logout').onclick = () => {

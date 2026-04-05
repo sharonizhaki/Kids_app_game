@@ -108,9 +108,10 @@ export function openSideMenu({ auth, onAction }) {
       <div class="side-icon" style="background:linear-gradient(135deg,#FCE7F3,#FBCFE8);">🎁</div>
       <span class="side-item-text">הוספת פרסים</span>
     </div>
-    <div class="side-item" data-action="manage-prizes">
+    <div class="side-item" data-action="manage-prizes" style="position:relative;">
       <div class="side-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);">🏆</div>
       <span class="side-item-text">ניהול פרסים</span>
+      <span id="side-prizes-badge" style="display:none;background:#EF4444;color:white;font-size:0.65rem;font-weight:900;border-radius:999px;padding:2px 7px;min-width:18px;text-align:center;margin-right:auto;"></span>
     </div>
     <div class="side-item" data-action="manage-points">
       <div class="side-icon" style="background:linear-gradient(135deg,#CCFBF1,#99F6E4);">⭐</div>
@@ -145,6 +146,23 @@ export function openSideMenu({ auth, onAction }) {
   document.body.appendChild(menu);
 
   document.getElementById('side-settings-close').onclick = closeSideMenu;
+
+  // טען badge בקשות ממתינות
+  try {
+    const { db } = await import('./firebase.js');
+    const { getDocs, collection } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const { currentFamilyId } = await import('./auth.js');
+    if (currentFamilyId) {
+      const snap = await getDocs(collection(db, 'families', currentFamilyId, 'prizeRequests'));
+      let pending = 0;
+      snap.forEach(d => { if (d.data().status === 'pending') pending++; });
+      const badge = document.getElementById('side-prizes-badge');
+      if (badge && pending > 0) {
+        badge.textContent = pending > 9 ? '9+' : pending;
+        badge.style.display = 'inline-block';
+      }
+    }
+  } catch(e) { /* badge לא קריטי */ }
 
   // Swipe to close
   let swStartX = 0, swCurrentX = 0, swSwiping = false;
