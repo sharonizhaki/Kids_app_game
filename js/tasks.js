@@ -98,12 +98,6 @@ export async function openAddTask(familyId) {
 
   showScreen('screen-add-task');
 
-  // אם כל 3 כפתורי הדשבורד כבר בוצעו — הסתר מיידית את סקציית 5 המהירות בטופס
-  const allDashDone = [...document.querySelectorAll('#quick-tasks-inner .quick-cat-btn')].every(b => b.innerHTML.includes('✅'));
-  if (allDashDone) {
-    const qs = document.getElementById('form-quick-cats-section');
-    if (qs) qs.style.display = 'none';
-  }
 
   setTimeout(async () => {
     try {
