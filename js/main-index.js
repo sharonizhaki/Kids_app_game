@@ -403,9 +403,36 @@ document.getElementById('ob1-back').onclick = () => showScreen('screen-join-fami
 document.getElementById('ob1-next').onclick = async () => {
   const name = document.getElementById('ob1-name').value.trim();
   const err = document.getElementById('ob1-error');
-  if (!name && childrenCache.length > 0) { goToOnboard2(); return; }
-  if (!name) { err.textContent = 'חובה להזין שם ילד/ה'; return; }
-  if (!obGender) { err.textContent = 'חובה לבחור בן או בת'; return; }
+  err.textContent = '';
+
+  // אם אין שם — תמיד שגיאה (גם אם יש ילדים)
+  // אם יש ילדים ואין שם ואין מין — אפשר לדלג דרך כפתור "דלג"
+  if (!name && childrenCache.length > 0) {
+    // אין שם, אבל יש כבר ילדים → דלג (ללא ולידציה)
+    goToOnboard2(); return;
+  }
+
+  const nameInput = document.getElementById('ob1-name');
+  const genderPicker = document.getElementById('ob1-gender-picker');
+
+  if (!name && !obGender) {
+    err.textContent = 'חובה להזין שם ולבחור בן/בת';
+    nameInput.classList.remove('input-error'); void nameInput.offsetWidth; nameInput.classList.add('input-error');
+    if (genderPicker) { genderPicker.classList.remove('gender-error'); void genderPicker.offsetWidth; genderPicker.classList.add('gender-error'); }
+    setTimeout(() => { nameInput.classList.remove('input-error'); if (genderPicker) genderPicker.classList.remove('gender-error'); }, 1200);
+    return;
+  }
+  if (!name) {
+    err.textContent = 'חובה להזין שם ילד/ה';
+    nameInput.classList.remove('input-error'); void nameInput.offsetWidth; nameInput.classList.add('input-error');
+    setTimeout(() => nameInput.classList.remove('input-error'), 1200);
+    return;
+  }
+  if (!obGender) {
+    err.textContent = 'חובה לבחור בן או בת';
+    if (genderPicker) { genderPicker.classList.remove('gender-error'); void genderPicker.offsetWidth; genderPicker.classList.add('gender-error'); setTimeout(() => genderPicker.classList.remove('gender-error'), 1200); }
+    return;
+  }
   err.textContent = '';
 
   const nameLC = name.toLowerCase();

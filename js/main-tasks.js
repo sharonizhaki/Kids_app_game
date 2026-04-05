@@ -43,7 +43,8 @@ document.getElementById('btn-back-edit-task')?.addEventListener('click', () => {
 });
 
 // =========== QUICK CATS FORM ===========
-function formQuickBannerKey() { return `quickFormDismissed_${getFamilyId() || 'none'}`; }
+// משתמש באותו key כמו הבאנר בדשבורד כדי לסנכרן ביניהם
+function formQuickBannerKey() { return `quickBannerDismissed_${getFamilyId() || 'none'}`; }
 function formQuickClickedKey() { return `quickBannerClicked_${getFamilyId() || 'none'}`; }
 function formGetClicked() { try { return JSON.parse(localStorage.getItem(formQuickClickedKey()) || '[]'); } catch(e) { return []; } }
 function formSaveClicked(cat) {

@@ -295,8 +295,28 @@ document.getElementById('btn-do-create-child').onclick = async () => {
   const name = document.getElementById('child-name-input').value.trim();
   const errEl = document.getElementById('create-child-error');
   errEl.textContent = '';
-  if (!name) { errEl.textContent = 'חובה להכניס שם ילד/ה'; return; }
-  if (!selectedGender) { errEl.textContent = 'חובה לבחור בן או בת'; return; }
+  const nameInput = document.getElementById('child-name-input');
+  const genderPicker = document.getElementById('create-gender-picker');
+
+  if (!name && !selectedGender) {
+    errEl.textContent = 'חובה להכניס שם ולבחור בן/בת';
+    nameInput.classList.remove('input-error'); void nameInput.offsetWidth; nameInput.classList.add('input-error');
+    genderPicker.classList.remove('gender-error'); void genderPicker.offsetWidth; genderPicker.classList.add('gender-error');
+    setTimeout(() => { nameInput.classList.remove('input-error'); genderPicker.classList.remove('gender-error'); }, 1200);
+    return;
+  }
+  if (!name) {
+    errEl.textContent = 'חובה להכניס שם ילד/ה';
+    nameInput.classList.remove('input-error'); void nameInput.offsetWidth; nameInput.classList.add('input-error');
+    setTimeout(() => nameInput.classList.remove('input-error'), 1200);
+    return;
+  }
+  if (!selectedGender) {
+    errEl.textContent = 'חובה לבחור בן או בת';
+    genderPicker.classList.remove('gender-error'); void genderPicker.offsetWidth; genderPicker.classList.add('gender-error');
+    setTimeout(() => genderPicker.classList.remove('gender-error'), 1200);
+    return;
+  }
   const nameLC = name.toLowerCase();
   const duplicate = childrenCache.find(c => c.name && c.name.toLowerCase() === nameLC);
   if (duplicate) { errEl.textContent = `ילד/ה בשם "${name}" כבר קיים/ת`; return; }
