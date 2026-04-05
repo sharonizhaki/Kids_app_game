@@ -368,10 +368,18 @@ function openEditChild(childId) {
   emojiEl.textContent = child.emoji || '';
   emojiEl.style.borderStyle = child.emoji ? 'solid' : 'dashed';
   emojiEl.onclick = () => showEditEmojiModal(child.emoji);
-  const preview = document.getElementById('edit-photo-preview');
-  const placeholder = document.getElementById('edit-photo-placeholder');
-  if (child.photo && child.photo.length > 10) { preview.src = child.photo; preview.style.display = 'block'; placeholder.style.display = 'none'; }
-  else { preview.style.display = 'none'; placeholder.style.display = ''; }
+  const photoCircle = document.getElementById('edit-child-photo-circle');
+  const clearBtn = document.getElementById('btn-clear-photo');
+  const svgPlaceholder = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  if (child.photo && child.photo.length > 10) {
+    photoCircle.innerHTML = `<img src="${child.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    photoCircle.style.borderStyle = 'solid';
+    clearBtn.style.display = 'block';
+  } else {
+    photoCircle.innerHTML = svgPlaceholder;
+    photoCircle.style.borderStyle = 'dashed';
+    clearBtn.style.display = 'none';
+  }
   const inviteSection = document.getElementById('edit-child-invite-section');
   if (child.status === 'waiting' && child.inviteCode) {
     inviteSection.style.display = 'block';
@@ -384,21 +392,26 @@ function openEditChild(childId) {
 document.getElementById('edit-gender-male').onclick = () => { editGender = 'male'; document.getElementById('edit-gender-male').classList.add('selected'); document.getElementById('edit-gender-female').classList.remove('selected'); };
 document.getElementById('edit-gender-female').onclick = () => { editGender = 'female'; document.getElementById('edit-gender-female').classList.add('selected'); document.getElementById('edit-gender-male').classList.remove('selected'); };
 
+const _editSvgPlaceholder = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+
 document.getElementById('edit-photo-input').onchange = async (e) => {
   const file = e.target.files[0]; if (!file) return;
   editPhotoCleared = false;
   try {
     editPhotoData = await cropAndCompressPhoto(file);
-    document.getElementById('edit-photo-preview').src = editPhotoData;
-    document.getElementById('edit-photo-preview').style.display = 'block';
-    document.getElementById('edit-photo-placeholder').style.display = 'none';
+    const pc = document.getElementById('edit-child-photo-circle');
+    pc.innerHTML = `<img src="${editPhotoData}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    pc.style.borderStyle = 'solid';
+    document.getElementById('btn-clear-photo').style.display = 'block';
   } catch(err) { showToast('שגיאה ⚠️'); }
 };
 
 document.getElementById('btn-clear-photo').onclick = () => {
   editPhotoData = null; editPhotoCleared = true;
-  document.getElementById('edit-photo-preview').style.display = 'none';
-  document.getElementById('edit-photo-placeholder').style.display = '';
+  const pc = document.getElementById('edit-child-photo-circle');
+  pc.innerHTML = _editSvgPlaceholder;
+  pc.style.borderStyle = 'dashed';
+  document.getElementById('btn-clear-photo').style.display = 'none';
   document.getElementById('edit-photo-input').value = '';
 };
 

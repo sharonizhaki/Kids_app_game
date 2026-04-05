@@ -184,12 +184,13 @@
       </div>
     </div>
     <div style="display:flex;justify-content:space-around;align-items:flex-start;background:#F8FAFC;border-radius:14px;padding:10px 6px;">
-      <div style="text-align:center;cursor:pointer;" onclick="document.getElementById('ob1-photo-input').click()">
+      <div style="text-align:center;">
         <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">תמונה 📷</div>
-        <div id="ob1-photo-circle" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);display:flex;align-items:center;justify-content:center;border:3px dashed #818CF8;overflow:hidden;margin:0 auto;">
+        <div id="ob1-photo-circle" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);display:flex;align-items:center;justify-content:center;border:3px dashed #818CF8;overflow:hidden;margin:0 auto;cursor:pointer;" onclick="document.getElementById('ob1-photo-input').click()">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         </div>
         <input type="file" id="ob1-photo-input" accept="image/*" style="display:none;">
+        <button id="ob1-clear-photo" style="display:none;margin-top:5px;background:none;border:none;font-size:0.9rem;cursor:pointer;color:#64748B;padding:0;">🗑️</button>
       </div>
       <div style="text-align:center;cursor:pointer;" onclick="showOb1EmojiModal()">
         <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">אימוג'י</div>

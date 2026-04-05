@@ -313,6 +313,8 @@ function showOb1ColorModal() {
 window.showOb1EmojiModal = showOb1EmojiModal;
 window.showOb1ColorModal = showOb1ColorModal;
 
+const _ob1SvgPlaceholder = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+
 document.getElementById('ob1-photo-input').onchange = async (e) => {
   const file = e.target.files[0]; if (!file) return;
   try {
@@ -320,7 +322,17 @@ document.getElementById('ob1-photo-input').onchange = async (e) => {
     const ob1pc = document.getElementById('ob1-photo-circle');
     ob1pc.innerHTML = `<img src="${obChildPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     ob1pc.style.borderStyle = 'solid';
+    document.getElementById('ob1-clear-photo').style.display = 'block';
   } catch(err) { showToast('שגיאה ⚠️'); }
+};
+
+document.getElementById('ob1-clear-photo').onclick = () => {
+  obChildPhoto = null;
+  const ob1pc = document.getElementById('ob1-photo-circle');
+  ob1pc.innerHTML = _ob1SvgPlaceholder;
+  ob1pc.style.borderStyle = 'dashed';
+  document.getElementById('ob1-clear-photo').style.display = 'none';
+  document.getElementById('ob1-photo-input').value = '';
 };
 
 const OB1_ORDINALS = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שביעי','שמיני','תשיעי','עשירי'];
@@ -349,6 +361,7 @@ function resetOb1Form() {
   ob1pc.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
   ob1pc.style.borderStyle = 'dashed';
   document.getElementById('ob1-photo-input').value = '';
+  document.getElementById('ob1-clear-photo').style.display = 'none';
   const emojiEl = document.getElementById('ob1-emoji-display');
   emojiEl.textContent = '?'; emojiEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
   emojiEl.style.borderStyle = 'dashed'; emojiEl.style.color = '#818CF8';
