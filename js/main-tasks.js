@@ -43,6 +43,34 @@ document.getElementById('btn-back-edit-task')?.addEventListener('click', () => {
 });
 
 // =========== QUICK CATS FORM ===========
+function formQuickBannerKey() { return `quickBannerDismissed_${getFamilyId() || 'none'}`; }
+function formQuickClickedKey() { return `quickBannerClicked_${getFamilyId() || 'none'}`; }
+function formGetClicked() { try { return JSON.parse(localStorage.getItem(formQuickClickedKey()) || '[]'); } catch(e) { return []; } }
+function formSaveClicked(cat) {
+  const arr = formGetClicked();
+  if (!arr.includes(cat)) { arr.push(cat); localStorage.setItem(formQuickClickedKey(), JSON.stringify(arr)); }
+}
+
+function markFormBtnDone(btn) {
+  const labels = { hygiene: 'היגיינה', chores: 'מטלות בית', study: 'לימודים' };
+  btn.style.background = 'rgba(22,163,74,0.10)';
+  btn.style.borderColor = '#16A34A';
+  btn.style.color = '#15803D';
+  btn.textContent = `✅ ${labels[btn.dataset.cat] || ''}`;
+  btn.style.cursor = 'default';
+  btn.disabled = true;
+}
+
+function refreshFormQuickSection() {
+  const section = document.getElementById('form-quick-cats-section');
+  if (!section) return;
+  if (localStorage.getItem(formQuickBannerKey()) === '1') { section.style.display = 'none'; return; }
+  const clicked = formGetClicked();
+  document.querySelectorAll('.quick-cat-btn-form').forEach(btn => {
+    if (clicked.includes(btn.dataset.cat)) markFormBtnDone(btn);
+  });
+}
+
 function animateFormQuickAway() {
   const section = document.getElementById('form-quick-cats-section');
   if (!section || section.style.display === 'none') return;
@@ -58,20 +86,24 @@ function animateFormQuickAway() {
   }, 120);
 }
 
+function dismissFormQuickSection() {
+  localStorage.setItem(formQuickBannerKey(), '1');
+  animateFormQuickAway();
+}
+
 async function handleQuickTasksForm(triggerEl, category) {
   const fid = getFamilyId(); if (!fid) return;
   if (triggerEl) { triggerEl.disabled = true; triggerEl.style.opacity = '0.55'; }
   try {
     const ok = await createQuickTasks(fid, category);
     if (ok && triggerEl) {
-      const labels = { hygiene: 'היגיינה', chores: 'מטלות בית', study: 'לימודים' };
-      triggerEl.style.background = 'rgba(22,163,74,0.10)';
-      triggerEl.style.borderColor = '#16A34A';
-      triggerEl.style.color = '#15803D';
-      triggerEl.textContent = `✅ ${labels[category] || ''}`;
-      triggerEl.style.cursor = 'default';
-      const allDone = [...document.querySelectorAll('.quick-cat-btn-form')].every(b => b.textContent.includes('✅'));
-      if (allDone) setTimeout(animateFormQuickAway, 950);
+      formSaveClicked(category);
+      markFormBtnDone(triggerEl);
+      const allDone = [...document.querySelectorAll('.quick-cat-btn-form')].every(b => b.disabled || b.textContent.includes('✅'));
+      if (allDone) {
+        localStorage.setItem(formQuickBannerKey(), '1');
+        setTimeout(animateFormQuickAway, 950);
+      }
     }
   } finally {
     if (triggerEl && !triggerEl.textContent.includes('✅')) { triggerEl.disabled = false; triggerEl.style.opacity = ''; }
@@ -107,7 +139,8 @@ async function handleQuickTasksForm(triggerEl, category) {
   }
 
   // Quick cats form
-  document.getElementById('btn-form-quick-close')?.addEventListener('click', animateFormQuickAway);
+  refreshFormQuickSection();
+  document.getElementById('btn-form-quick-close')?.addEventListener('click', dismissFormQuickSection);
   document.querySelectorAll('.quick-cat-btn-form').forEach(btn => {
     btn.addEventListener('click', function() { handleQuickTasksForm(this, this.dataset.cat); });
   });
