@@ -1,0 +1,109 @@
+/* =========================================================
+   PRIZES — additions to styles.css
+   הדבק בסוף styles.css
+   ========================================================= */
+
+/* --- Prize Tabs --- */
+.prize-tab {
+  flex: 1; padding: 10px 14px;
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: 12px; font-family: 'Heebo', sans-serif;
+  font-size: 0.88rem; font-weight: 700; cursor: pointer;
+  color: var(--muted); transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.prize-tab.active {
+  background: var(--primary); color: white; border-color: var(--primary);
+}
+.prize-tab-badge {
+  min-width: 18px; height: 18px;
+  background: #EF4444; color: white;
+  border-radius: 9px; font-size: 0.65rem; font-weight: 800;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 4px;
+}
+
+/* --- Prize Management Card --- */
+.prize-mgmt-card {
+  background: var(--card); border-radius: 14px;
+  padding: 14px 16px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.prize-mgmt-emoji { font-size: 1.8rem; flex-shrink: 0; }
+.prize-mgmt-info  { flex: 1; }
+.prize-mgmt-info strong { display: block; font-weight: 700; font-size: 0.92rem; }
+.prize-mgmt-info span   { font-size: 0.78rem; color: var(--muted); }
+.prize-mgmt-actions { display: flex; gap: 6px; }
+.prize-mgmt-edit,
+.prize-mgmt-del {
+  background: #F1F5F9; border: none; border-radius: 10px;
+  width: 36px; height: 36px; font-size: 1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.prize-mgmt-edit:hover { background: #E0E7FF; }
+.prize-mgmt-del:hover  { background: #FEE2E2; }
+
+/* --- Request Section Title --- */
+.prize-req-section-title {
+  font-size: 0.78rem; font-weight: 800; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+/* --- Request Card --- */
+.prize-req-card {
+  background: var(--card); border-radius: 14px;
+  padding: 14px 16px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.prize-req-emoji { font-size: 1.8rem; flex-shrink: 0; }
+.prize-req-info  { flex: 1; }
+.prize-req-info strong { display: block; font-weight: 700; font-size: 0.9rem; }
+.prize-req-info span   { font-size: 0.78rem; color: var(--muted); }
+.prize-req-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.prize-req-badge-status {
+  font-size: 0.72rem; font-weight: 800;
+  border-radius: 8px; padding: 3px 8px;
+  white-space: nowrap;
+}
+.prize-req-btns { display: flex; gap: 6px; }
+.prize-req-approve,
+.prize-req-reject {
+  padding: 7px 12px; border: none; border-radius: 10px;
+  font-size: 0.8rem; font-weight: 700; cursor: pointer;
+  font-family: 'Heebo', sans-serif; transition: opacity 0.15s;
+}
+.prize-req-approve { background: #DCFCE7; color: #15803D; }
+.prize-req-reject  { background: #FEE2E2; color: #991B1B; }
+.prize-req-approve:hover { opacity: 0.8; }
+.prize-req-reject:hover  { opacity: 0.8; }
+
+/* status chips (shared) */
+.status-pending  { background: #FEF3C7; color: #92400E; }
+.status-approved { background: #DCFCE7; color: #15803D; }
+.status-rejected { background: #FEE2E2; color: #991B1B; }
+
+/* --- Prize Children Checkboxes --- */
+.prize-child-check {
+  display: flex; align-items: center; gap: 6px;
+  background: #F8FAFC; border: 2px solid var(--border);
+  border-radius: 10px; padding: 8px 12px;
+  font-size: 0.88rem; font-weight: 600; cursor: pointer;
+  font-family: 'Heebo', sans-serif; transition: border-color 0.15s;
+}
+.prize-child-check:has(input:checked) {
+  border-color: var(--primary); background: #EEF2FF;
+}
+.prize-child-check input { accent-color: var(--primary); }
+
+/* --- Prizes dashboard badge --- */
+#prizes-dash-badge {
+  min-width: 18px; height: 18px;
+  background: #EF4444; color: white;
+  border-radius: 9px; font-size: 0.65rem; font-weight: 800;
+  display: none; align-items: center; justify-content: center;
+  padding: 0 4px; margin-right: 4px;
+}

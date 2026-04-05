@@ -21,8 +21,8 @@
   </div>
 </div>
 
-<!-- ==================== MAIN CHILD SCREEN ==================== -->
-<div id="screen-child" class="screen">
+<!-- ==================== SCREEN: HOME ==================== -->
+<div id="screen-child" class="screen has-nav">
   <div class="user-header">
     <div class="header-photo" id="child-header-photo">
       <span id="child-header-emoji">⭐</span>
@@ -36,6 +36,7 @@
     <div class="greeting-sub" id="greeting-sub"></div>
   </div>
 
+  <!-- stats + streak row -->
   <div class="stats-row">
     <div class="stat-card">
       <div class="stat-val" id="pb-val" style="color:var(--child-color);">0</div>
@@ -45,8 +46,13 @@
       <div class="stat-val" id="monthly-val" style="color:var(--child-color);">0</div>
       <div class="stat-label">כוכבים החודש 🌙</div>
     </div>
+    <div class="stat-card stat-streak" id="streak-card">
+      <div class="stat-val streak-val" id="streak-val">0</div>
+      <div class="stat-label">ימים ברצף 🔥</div>
+    </div>
   </div>
 
+  <!-- progress bar -->
   <div class="progress-card">
     <div class="progress-header">
       <span>התקדמות שבועית 🎯</span>
@@ -59,8 +65,17 @@
     </div>
   </div>
 
+  <!-- weekly mini-graph -->
+  <div class="week-graph-card" id="week-graph-card">
+    <div class="week-graph-title">7 ימים אחרונים</div>
+    <div class="week-graph-bars" id="week-graph-bars"></div>
+    <div class="week-graph-days" id="week-graph-days"></div>
+  </div>
+
+  <!-- categories -->
   <div class="categories-grid" id="cats-grid"></div>
 
+  <!-- history -->
   <div class="history-section">
     <h3>פעולות אחרונות 📋</h3>
     <div class="history-list" id="user-hist">
@@ -69,7 +84,41 @@
   </div>
 </div>
 
-<!-- ==================== SCREEN: CHILD PROFILE EDIT ==================== -->
+<!-- ==================== SCREEN: PRIZES ==================== -->
+<div id="screen-prizes-child" class="screen has-nav">
+  <div class="user-header">
+    <h2>חנות הפרסים 🎁</h2>
+  </div>
+
+  <!-- my stars banner -->
+  <div class="prizes-stars-banner" id="prizes-stars-banner">
+    <span class="psb-label">הכוכבים שלי</span>
+    <span class="psb-val" id="prizes-stars-val">0 ⭐</span>
+  </div>
+
+  <!-- pending requests -->
+  <div id="prizes-pending-section" style="display:none;">
+    <div class="section-title">בקשות שלחתי ⏳</div>
+    <div id="prizes-pending-list"></div>
+  </div>
+
+  <!-- available prizes -->
+  <div class="section-title">פרסים זמינים</div>
+  <div class="prizes-grid" id="prizes-grid">
+    <div class="empty-state">עדיין לא הוגדרו פרסים 🎁<br><small>ההורים יגדירו בקרוב</small></div>
+  </div>
+</div>
+
+<!-- ==================== SCREEN: BADGES ==================== -->
+<div id="screen-badges" class="screen has-nav">
+  <div class="user-header">
+    <h2>ההישגים שלי 🏆</h2>
+  </div>
+  <div class="badges-summary" id="badges-summary"></div>
+  <div class="badges-grid" id="badges-grid"></div>
+</div>
+
+<!-- ==================== SCREEN: PROFILE EDIT ==================== -->
 <div id="screen-child-profile" class="screen" style="padding-top:20px;">
   <div class="user-header">
     <button class="back-btn" id="btn-profile-back">→</button>
@@ -87,7 +136,9 @@
     <label class="profile-label">תמונה</label>
     <div class="profile-photo-row">
       <div class="profile-photo-upload" id="profile-photo-upload">
-        <div id="profile-photo-placeholder" class="profile-photo-placeholder"><span>📷</span><small>בחר תמונה</small></div>
+        <div id="profile-photo-placeholder" class="profile-photo-placeholder">
+          <span>📷</span><small>בחר תמונה</small>
+        </div>
         <img id="profile-photo-preview" class="profile-photo-preview" alt="">
         <input type="file" accept="image/*" id="profile-photo-input" class="profile-photo-input">
       </div>
@@ -98,6 +149,29 @@
   </div>
 </div>
 
+<!-- ==================== BOTTOM NAV ==================== -->
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="nav-btn active" data-screen="screen-child" data-tab="home">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">בית</span>
+  </button>
+  <button class="nav-btn" data-screen="screen-prizes-child" data-tab="prizes">
+    <span class="nav-icon">🎁</span>
+    <span class="nav-label">פרסים</span>
+    <span class="nav-badge" id="nav-badge-prizes" style="display:none;"></span>
+  </button>
+  <button class="nav-btn" data-screen="screen-badges" data-tab="badges">
+    <span class="nav-icon">🏆</span>
+    <span class="nav-label">הישגים</span>
+    <span class="nav-badge" id="nav-badge-badges" style="display:none;"></span>
+  </button>
+  <button class="nav-btn" data-screen="screen-child-profile" data-tab="profile">
+    <span class="nav-icon" id="nav-profile-icon">👤</span>
+    <span class="nav-label">פרופיל</span>
+  </button>
+</nav>
+
+<!-- TOAST -->
 <div class="success-toast" id="toast"></div>
 
 <script type="module" src="js/child.js"></script>
