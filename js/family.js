@@ -8,7 +8,7 @@ import { generateCode } from './auth.js';
 
 // =========== CONSTANTS ===========
 export const CHILD_EMOJIS = ["🦁","🐱","🦄","🐶","🐸","🦊","🐼","🦋","🌟","🎈","🐯","🐰","🦜","🐻","🎀","🚀","⚽","🎸","🌈","🧸","🐬","🦕","🐝","🍀"];
-export const CHILD_COLORS = ["#EF4444","#F59E0B","#10B981","#3B82F6","#8B5CF6","#EC4899","#06B6D4","#F97316","#84CC16","#6366F1"];
+export const CHILD_COLORS = ["#8B5CF6","#3B82F6","#06B6D4","#10B981","#EF4444","#F59E0B","#EC4899","#F97316","#84CC16","#6366F1"];
 const CODE_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
 // =========== STATE ===========

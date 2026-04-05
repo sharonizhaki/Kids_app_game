@@ -15,12 +15,13 @@ import {
 // =========== GUARD ===========
 async function checkAuth() {
   return new Promise((resolve) => {
+    let timeoutId = setTimeout(() => { window.location.href = 'index.html'; }, 5000);
     const unsub = onAuthStateChanged(auth, (user) => {
+      clearTimeout(timeoutId);
       unsub();
       if (!user || user.isAnonymous) window.location.href = 'index.html';
       else resolve(user);
     });
-    setTimeout(() => { window.location.href = 'index.html'; }, 5000);
   });
 }
 
