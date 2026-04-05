@@ -10,7 +10,7 @@ import {
   loadPrizeRequests, countPendingRequests,
   approvePrizeRequest, declinePrizeRequest, reversePrizeRequest,
   renderPrizeEmojiGrid, renderPrizeAssignGrid, renderPrizeSuggestions,
-  DECLINE_REASONS,
+  DECLINE_REASONS, startPrizeTour,
   setPrizeEmoji, setPrizePts, setPrizeChildren, resetPrizeState, getPrizeState
 } from './prizes.js';
 
@@ -194,7 +194,23 @@ async function openAddPrize(familyId) {
 
   refreshQuickSection();
   showScreen('screen-add-prize');
-  setTimeout(() => document.getElementById('prize-name-input').focus(), 350);
+
+  // הפעל טיול אם לא נעשה עדיין
+  setTimeout(async () => {
+    try {
+      const { getDoc, doc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+      const { db } = await import('./firebase.js');
+      const famDoc = await getDoc(doc(db, 'families', familyId));
+      const tourDone = famDoc.exists() && famDoc.data().prizeTourDone;
+      if (!tourDone) {
+        startPrizeTour(familyId);
+      } else {
+        document.getElementById('prize-name-input').focus();
+      }
+    } catch(e) {
+      document.getElementById('prize-name-input').focus();
+    }
+  }, 400);
 }
 
 // =========== SAVE PRIZE ===========

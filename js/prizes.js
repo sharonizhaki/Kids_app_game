@@ -428,3 +428,113 @@ export function renderPrizeSuggestions(onSelect) {
     };
   });
 }
+// =========== GUIDED TOUR ===========
+export function startPrizeTour(familyId) {
+  const quickVisible = getComputedStyle(
+    document.getElementById('prize-quick-section') || document.createElement('div')
+  ).display !== 'none';
+
+  const step1Text = quickVisible
+    ? 'הכנס שם לפרס, לחץ "💡 רעיונות לדוגמא" לרשימה מוכנה — או צור 5 פרסים אוטומטיים בלחיצה על הקטגוריה'
+    : 'הכנס שם לפרס ולחץ "💡 רעיונות לדוגמא" לקבל השראה';
+
+  const steps = [
+    { el: '#prize-name-input',  title: 'שם הפרס',         text: step1Text },
+    { el: '#prize-emoji-grid',  title: 'אייקון',           text: 'בחר אייקון שמייצג את הפרס — יופיע לילד במסך הפרסים שלו' },
+    { el: '#prize-pts-input',   title: 'מחיר בכוכבים ⭐',  text: 'כמה כוכבים עולה הפרס? הקלד מספר או בחר מהקיצורים המהירים למטה' },
+    { el: '#prize-assign-grid', title: 'שיוך לילד/ים',    text: 'בחר לאיזה ילד/ים הפרס זמין — ניתן לשייך לכמה ילדים בו-זמנית' },
+    { el: '#prize-desc-input',  title: 'תיאור (לא חובה)', text: 'הוסף הסבר קצר — למשל "עד 22:00" או "פעם בחודש"' },
+  ];
+
+  let currentStep = 0;
+  const PAD = 6;
+  document.body.style.overflow = 'hidden';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'tour-overlay';
+  overlay.id = 'tour-overlay';
+  overlay.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+  const shutterTop = document.createElement('div');
+  shutterTop.className = 'tour-shutter-top';
+  shutterTop.style.height = '0px';
+
+  const shutterBottom = document.createElement('div');
+  shutterBottom.className = 'tour-shutter-bottom';
+  shutterBottom.style.height = '0px';
+
+  const card = document.createElement('div');
+  card.className = 'tour-card';
+
+  overlay.appendChild(shutterTop);
+  overlay.appendChild(shutterBottom);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  function showStep(idx) {
+    const step = steps[idx];
+    const rawEl = document.querySelector(step.el);
+    if (!rawEl) { endTour(); return; }
+    if (getComputedStyle(rawEl).display === 'none') {
+      currentStep++;
+      if (currentStep >= steps.length) endTour(); else showStep(currentStep);
+      return;
+    }
+    const el = step.exact ? rawEl : (rawEl.closest('.form-section') || rawEl);
+
+    card.classList.remove('visible');
+    void card.offsetWidth;
+    shutterTop.style.height = '0px';
+    shutterBottom.style.height = '0px';
+    rawEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    setTimeout(() => {
+      const rect = el.getBoundingClientRect();
+      shutterTop.style.height    = Math.max(0, rect.top - PAD) + 'px';
+      shutterBottom.style.height = Math.max(0, window.innerHeight - rect.bottom - PAD) + 'px';
+
+      const dotsHTML = steps.map((_, i) =>
+        `<span class="tour-dot${i === idx ? ' active' : ''}"></span>`
+      ).join('');
+
+      card.innerHTML = `
+        <div class="tour-card-btns" style="margin-bottom:10px;">
+          <span dir="ltr" style="font-size:0.78rem;color:var(--muted);">${idx + 1} / ${steps.length}</span>
+          ${idx < steps.length - 1 ? '<button class="tour-skip-btn" id="tour-skip">דלג</button>' : ''}
+        </div>
+        <h4>${step.title}</h4>
+        <p>${step.text}</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;gap:5px;">${dotsHTML}</div>
+          <button class="tour-next-btn" id="tour-next">${idx === steps.length - 1 ? 'סיום ✅' : 'הבא ←'}</button>
+        </div>`;
+
+      const fitsBelow = rect.bottom + 180 < window.innerHeight;
+      card.style.top    = fitsBelow ? (rect.bottom + 8) + 'px' : 'auto';
+      card.style.bottom = fitsBelow ? 'auto' : (window.innerHeight - rect.top + 8) + 'px';
+
+      document.getElementById('tour-next').onclick = () => {
+        currentStep++;
+        if (currentStep >= steps.length) endTour(); else showStep(currentStep);
+      };
+      document.getElementById('tour-skip')?.addEventListener('click', endTour);
+
+      setTimeout(() => card.classList.add('visible'), 130);
+    }, 520);
+  }
+
+  function endTour() {
+    card.classList.remove('visible');
+    shutterTop.style.height    = Math.ceil(window.innerHeight / 2 + 2) + 'px';
+    shutterBottom.style.height = Math.ceil(window.innerHeight / 2 + 2) + 'px';
+    setTimeout(() => {
+      overlay.remove();
+      document.body.style.overflow = '';
+      updateDoc(doc(db, 'families', familyId), { prizeTourDone: true }).catch(() => {});
+      setTimeout(() => document.getElementById('prize-name-input')?.focus(), 200);
+    }, 540);
+  }
+
+  overlay.onclick = (e) => e.stopPropagation();
+  showStep(0);
+}

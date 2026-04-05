@@ -156,6 +156,12 @@ async function handleQuickTasks(triggerEl, category) {
   document.querySelectorAll('.quick-cat-btn').forEach(btn => {
     btn.addEventListener('click', function() { handleQuickTasks(this, this.dataset.cat); });
   });
+
+  // הפעל טוטוריאל חד-פעמי לדשבורד
+  const uid = user.uid;
+  if (!localStorage.getItem('dashTourDone_' + uid)) {
+    setTimeout(() => startDashTour(currentFamilyId, uid), 700);
+  }
 })();
 
 // =========== DASHBOARD NAVIGATION ===========
@@ -178,11 +184,11 @@ document.getElementById('btn-manage-points').onclick = () => {
 };
 
 document.getElementById('btn-add-prizes').onclick = () => {
-  window.location.href = 'prizes.html?mode=add';
+  window.location.href = 'prizes.html';
 };
 
 document.getElementById('btn-manage-prizes').onclick = () => {
-  window.location.href = 'prizes.html?mode=manage';
+  window.location.href = 'prizes.html';
 };
 
 document.getElementById('btn-logout').onclick = () => {
@@ -499,8 +505,122 @@ function showEditColorModal(current) {
   ov.appendChild(sh); document.body.appendChild(ov);
 }
 
-// =========== DASH TOUR (stub — same logic as before) ===========
+// =========== DASH TOUR ===========
 async function startDashTour(familyId, uid) {
-  // אותו קוד כמו ב-main.js המקורי — ניתן להעתיק מהמקור
-  showToast('סיור מודרך 🧭');
+  const { getDoc, doc, updateDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+
+  const steps = [
+    {
+      el: '#dash-children-grid',
+      title: 'סקירת הילדים 👨‍👧‍👦',
+      text: 'כאן תוכל לראות את כל הילדים — כוכבים שצברו השבוע והחודש, ומטלות שנותרו להיום'
+    },
+    {
+      el: '#dash-task-rows',
+      title: 'מטלות להיום 📋',
+      text: 'כאן מוצגות המטלות שנותרו לביצוע היום לכל ילד — מתחלפות אוטומטית אם יש כמה'
+    },
+    {
+      el: '#quick-tasks-banner',
+      title: 'יצירת משימות מהירה ⚡',
+      text: 'בחר קטגוריה ו-5 מטלות מוכנות יתווספו אוטומטית לכל הילדים — חסוך זמן!'
+    },
+    {
+      el: '#btn-open-menu',
+      title: 'תפריט הגדרות ⚙️',
+      text: 'כאן תוכל לנהל משפחה, מטלות, פרסים, נקודות ועוד — הכל במקום אחד',
+      exact: true
+    },
+  ];
+
+  // סנן שלבים שהאלמנט שלהם לא מוצג (כמו הבאנר אם נסגר)
+  const visibleSteps = steps.filter(s => {
+    const el = document.querySelector(s.el);
+    return el && getComputedStyle(el).display !== 'none' && el.offsetHeight > 0;
+  });
+  if (!visibleSteps.length) return;
+
+  let currentStep = 0;
+  const PAD = 6;
+  document.body.style.overflow = 'hidden';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'tour-overlay';
+  overlay.id = 'dash-tour-overlay';
+  overlay.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+  const shutterTop = document.createElement('div');
+  shutterTop.className = 'tour-shutter-top';
+  shutterTop.style.height = '0px';
+
+  const shutterBottom = document.createElement('div');
+  shutterBottom.className = 'tour-shutter-bottom';
+  shutterBottom.style.height = '0px';
+
+  const card = document.createElement('div');
+  card.className = 'tour-card';
+
+  overlay.appendChild(shutterTop);
+  overlay.appendChild(shutterBottom);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  function showStep(idx) {
+    const step = visibleSteps[idx];
+    const rawEl = document.querySelector(step.el);
+    if (!rawEl) { endTour(); return; }
+
+    const el = step.exact ? rawEl : (rawEl.closest('.card') || rawEl.closest('[style]') || rawEl);
+
+    card.classList.remove('visible');
+    void card.offsetWidth;
+    shutterTop.style.height = '0px';
+    shutterBottom.style.height = '0px';
+    rawEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    setTimeout(() => {
+      const rect = el.getBoundingClientRect();
+      shutterTop.style.height = Math.max(0, rect.top - PAD) + 'px';
+      shutterBottom.style.height = Math.max(0, window.innerHeight - rect.bottom - PAD) + 'px';
+
+      const dotsHTML = visibleSteps.map((_, i) => `<span class="tour-dot${i === idx ? ' active' : ''}"></span>`).join('');
+      card.innerHTML = `
+        <div class="tour-card-btns" style="margin-bottom:10px;">
+          <span dir="ltr" style="font-size:0.78rem;color:var(--muted);">${idx + 1} / ${visibleSteps.length}</span>
+          ${idx < visibleSteps.length - 1 ? '<button class="tour-skip-btn" id="tour-skip">דלג</button>' : ''}
+        </div>
+        <h4>${step.title}</h4>
+        <p>${step.text}</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;gap:5px;">${dotsHTML}</div>
+          <button class="tour-next-btn" id="tour-next">${idx === visibleSteps.length - 1 ? 'סיום ✅' : 'הבא ←'}</button>
+        </div>`;
+
+      const fitsBelow = rect.bottom + 190 < window.innerHeight;
+      card.style.top    = fitsBelow ? (rect.bottom + 8) + 'px' : 'auto';
+      card.style.bottom = fitsBelow ? 'auto' : (window.innerHeight - rect.top + 8) + 'px';
+
+      document.getElementById('tour-next').onclick = () => {
+        currentStep++;
+        if (currentStep >= visibleSteps.length) endTour(); else showStep(currentStep);
+      };
+      document.getElementById('tour-skip')?.addEventListener('click', endTour);
+
+      setTimeout(() => card.classList.add('visible'), 130);
+    }, 520);
+  }
+
+  async function endTour() {
+    card.classList.remove('visible');
+    shutterTop.style.height = Math.ceil(window.innerHeight / 2 + 2) + 'px';
+    shutterBottom.style.height = Math.ceil(window.innerHeight / 2 + 2) + 'px';
+    setTimeout(() => {
+      overlay.remove();
+      document.body.style.overflow = '';
+      if (uid) localStorage.setItem('dashTourDone_' + uid, '1');
+    }, 540);
+  }
+
+  overlay.onclick = (e) => e.stopPropagation();
+  showStep(0);
 }
