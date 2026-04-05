@@ -17,16 +17,18 @@ import { createQuickTasks } from './tasks.js';
 // =========== GUARD: הורה חייב להיות מחובר ===========
 function checkAuth() {
   return new Promise((resolve) => {
+    let timeoutId;
     const unsub = onAuthStateChanged(auth, (user) => {
       unsub();
+      clearTimeout(timeoutId);
       if (!user || user.isAnonymous) {
         window.location.href = 'index.html';
       } else {
         resolve(user);
       }
     });
-    // timeout safety
-    setTimeout(() => { window.location.href = 'index.html'; }, 5000);
+    // timeout safety — redirect only if auth never responds
+    timeoutId = setTimeout(() => { window.location.href = 'index.html'; }, 5000);
   });
 }
 
