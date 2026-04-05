@@ -42,16 +42,36 @@ function getFamilyId() { return currentFamilyId; }
 
 // =========== QUICK TASKS BANNER ===========
 function quickBannerKey() { return `quickBannerDismissed_${currentFamilyId || 'none'}`; }
+function quickClickedKey() { return `quickBannerClicked_${currentFamilyId || 'none'}`; }
 
-async function refreshQuickTasksBanner(familyId) {
+function getClickedCategories() {
+  try { return JSON.parse(localStorage.getItem(quickClickedKey()) || '[]'); } catch(e) { return []; }
+}
+function saveClickedCategory(cat) {
+  const clicked = getClickedCategories();
+  if (!clicked.includes(cat)) { clicked.push(cat); localStorage.setItem(quickClickedKey(), JSON.stringify(clicked)); }
+}
+
+function markButtonDone(btn) {
+  const cat = btn.dataset.cat;
+  const labels = { hygiene: 'היגיינה', chores: 'מטלות בית', study: 'לימודים' };
+  btn.style.opacity = '1';
+  btn.style.background = 'rgba(22,163,74,0.10)';
+  btn.style.borderColor = '#16A34A';
+  btn.innerHTML = `<div style="font-size:1.5rem;margin-bottom:4px;">✅</div><div style="font-size:0.78rem;font-weight:800;color:#15803D;">${labels[cat] || ''}</div><div style="font-size:0.65rem;color:#15803D;margin-top:2px;">נוסף!</div>`;
+  btn.style.cursor = 'default';
+  btn.disabled = true;
+}
+
+function refreshQuickTasksBanner() {
   const banner = document.getElementById('quick-tasks-banner');
   if (!banner) return;
   if (localStorage.getItem(quickBannerKey()) === '1') { banner.style.display = 'none'; return; }
-  try {
-    const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-    const snap = await getDocs(collection(db, 'families', familyId, 'tasks'));
-    banner.style.display = snap.empty ? 'block' : 'none';
-  } catch(e) { banner.style.display = 'none'; }
+  banner.style.display = 'block';
+  const clicked = getClickedCategories();
+  document.querySelectorAll('#quick-tasks-inner .quick-cat-btn').forEach(btn => {
+    if (clicked.includes(btn.dataset.cat)) markButtonDone(btn);
+  });
 }
 
 function animateBannerAway() {
@@ -88,14 +108,13 @@ async function handleQuickTasks(triggerEl, category) {
   try {
     const ok = await createQuickTasks(fid, category);
     if (ok && triggerEl) {
-      const labels = { hygiene: 'היגיינה', chores: 'מטלות בית', study: 'לימודים' };
-      triggerEl.style.opacity = '1';
-      triggerEl.style.background = 'rgba(22,163,74,0.10)';
-      triggerEl.style.borderColor = '#16A34A';
-      triggerEl.innerHTML = `<div style="font-size:1.5rem;margin-bottom:4px;">✅</div><div style="font-size:0.78rem;font-weight:800;color:#15803D;">${labels[category] || ''}</div><div style="font-size:0.65rem;color:#15803D;margin-top:2px;">נוסף!</div>`;
-      triggerEl.style.cursor = 'default';
-      const allDone = [...document.querySelectorAll('#quick-tasks-inner .quick-cat-btn')].every(b => b.innerHTML.includes('✅'));
-      if (allDone) setTimeout(animateBannerAway, 950);
+      saveClickedCategory(category);
+      markButtonDone(triggerEl);
+      const allDone = [...document.querySelectorAll('#quick-tasks-inner .quick-cat-btn')].every(b => b.disabled || b.innerHTML.includes('✅'));
+      if (allDone) {
+        localStorage.setItem(quickBannerKey(), '1');
+        setTimeout(animateBannerAway, 950);
+      }
     }
   } finally {
     if (triggerEl && !triggerEl.innerHTML.includes('✅')) { triggerEl.disabled = false; triggerEl.style.opacity = ''; }
@@ -128,7 +147,7 @@ async function handleQuickTasks(triggerEl, category) {
   hideLoading();
   showScreen('screen-dashboard');
   renderDashboardChildren(currentFamilyId);
-  refreshQuickTasksBanner(currentFamilyId);
+  refreshQuickTasksBanner();
   renderDashTaskRows(currentFamilyId);
   saveWeeklySnapshot(currentFamilyId).catch(() => {});
 
