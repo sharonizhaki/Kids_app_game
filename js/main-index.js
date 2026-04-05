@@ -12,7 +12,7 @@ import {
 import {
   childrenCache, loadChildren, createChild, saveChild,
   createParentInviteCode, verifyChildCode, shareParentCode,
-  CHILD_EMOJIS, CHILD_COLORS
+  CHILD_EMOJIS, CHILD_COLORS, colorGradient
 } from './family.js';
 
 window.showScreen = showScreen;
@@ -200,7 +200,7 @@ function setupEmojiPicker() {
 function setupColorPicker() {
   selectedColor = '';
   const grid = document.getElementById('color-picker');
-  grid.innerHTML = CHILD_COLORS.map(c => `<div class="color-opt" data-color="${c}" style="background:${c}"></div>`).join('');
+  grid.innerHTML = CHILD_COLORS.map(c => `<div class="color-opt" data-color="${c}" style="background:${colorGradient(c)}"></div>`).join('');
   grid.querySelectorAll('.color-opt').forEach(el => {
     el.onclick = () => {
       grid.querySelectorAll('.color-opt').forEach(x => x.classList.remove('selected'));
@@ -296,14 +296,14 @@ function showOb1ColorModal() {
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
   sh.innerHTML = `<div class="modal-handle"></div>
     <div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div>
-    <div class="modal-body"><div class="color-grid">${CHILD_COLORS.map(c => `<div class="color-opt${c === obColor ? ' selected' : ''}" data-color="${c}" style="background:${c}"></div>`).join('')}</div></div>`;
+    <div class="modal-body"><div class="color-grid">${CHILD_COLORS.map(c => `<div class="color-opt${c === obColor ? ' selected' : ''}" data-color="${c}" style="background:${colorGradient(c)}"></div>`).join('')}</div></div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
   sh.querySelectorAll('.color-opt').forEach(el => {
     el.onclick = () => {
       obColor = el.dataset.color;
       const cd = document.getElementById('ob1-color-display');
-      cd.style.background = obColor; cd.style.borderStyle = 'solid';
+      cd.style.background = colorGradient(obColor); cd.style.borderStyle = 'solid';
       ov.remove();
     };
   });

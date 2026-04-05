@@ -8,7 +8,7 @@ import {
   childrenCache, clearChildrenCache, loadChildren, renderFamily,
   createChild, saveChild, deleteChild,
   createParentInviteCode, shareCode, shareParentCode,
-  CHILD_EMOJIS, CHILD_COLORS,
+  CHILD_EMOJIS, CHILD_COLORS, colorGradient,
   renderDashboardChildren, renderDashTaskRows, saveWeeklySnapshot,
   showChildInviteModal
 } from './family.js';
@@ -325,14 +325,14 @@ function showNewChildEmojiModal() {
 function showNewChildColorModal() {
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
-  sh.innerHTML = `<div class="modal-handle"></div><div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div><div class="modal-body"><div class="color-grid">${CHILD_COLORS.map(c => `<div class="color-opt${c === newChildColor ? ' selected' : ''}" data-color="${c}" style="background:${c}"></div>`).join('')}</div></div>`;
+  sh.innerHTML = `<div class="modal-handle"></div><div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div><div class="modal-body"><div class="color-grid">${CHILD_COLORS.map(c => `<div class="color-opt${c === newChildColor ? ' selected' : ''}" data-color="${c}" style="background:${colorGradient(c)}"></div>`).join('')}</div></div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
   sh.querySelectorAll('.color-opt').forEach(el => {
     el.onclick = () => {
       newChildColor = el.dataset.color;
       const cd = document.getElementById('new-child-color-display');
-      cd.style.background = newChildColor; cd.style.borderStyle = 'solid';
+      cd.style.background = colorGradient(newChildColor); cd.style.borderStyle = 'solid';
       ov.remove();
     };
   });
@@ -360,7 +360,7 @@ function openEditChild(childId) {
   document.getElementById('edit-gender-female').classList.toggle('selected', child.gender === 'female');
   editColor = child.color || '';
   const colorEl = document.getElementById('edit-child-color-display');
-  colorEl.style.background = child.color || 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
+  colorEl.style.background = child.color ? colorGradient(child.color) : 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
   colorEl.style.borderStyle = child.color ? 'solid' : 'dashed';
   colorEl.onclick = () => showEditColorModal(child.color);
   editEmoji = child.emoji || '';
@@ -471,11 +471,11 @@ function showEditEmojiModal(current) {
 function showEditColorModal(current) {
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
-  sh.innerHTML = `<div class="modal-handle"></div><div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div><div class="modal-body"><div class="color-grid">${CHILD_COLORS.map(c => `<div class="color-opt${c === current ? ' selected' : ''}" data-color="${c}" style="background:${c}"></div>`).join('')}</div></div>`;
+  sh.innerHTML = `<div class="modal-handle"></div><div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div><div class="modal-body"><div class="color-grid">${CHILD_COLORS.map(c => `<div class="color-opt${c === current ? ' selected' : ''}" data-color="${c}" style="background:${colorGradient(c)}"></div>`).join('')}</div></div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
   sh.querySelectorAll('.color-opt').forEach(el => {
-    el.onclick = () => { editColor = el.dataset.color; const cd = document.getElementById('edit-child-color-display'); cd.style.background = editColor; cd.style.borderStyle = 'solid'; ov.remove(); };
+    el.onclick = () => { editColor = el.dataset.color; const cd = document.getElementById('edit-child-color-display'); cd.style.background = colorGradient(editColor); cd.style.borderStyle = 'solid'; ov.remove(); };
   });
   ov.appendChild(sh); document.body.appendChild(ov);
 }
