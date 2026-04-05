@@ -418,6 +418,8 @@ export async function saveWeeklySnapshot(familyId) {
 // =========== DASH TASK ROWS ===========
 const _dtrIntervals = [];
 
+const PLACEHOLDER_HTML = `<div class="dash-task-placeholder" style="background:white;border-radius:14px;padding:14px 16px;text-align:center;color:#CBD5E1;font-size:0.82rem;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.05);border:2px dashed #E2E8F0;">כאן יוצגו המטלות להיום</div>`;
+
 export async function renderDashTaskRows(familyId) {
   _dtrIntervals.forEach(clearInterval);
   _dtrIntervals.length = 0;
@@ -426,7 +428,7 @@ export async function renderDashTaskRows(familyId) {
 
   await loadChildren(familyId);
   const children = childrenCache;
-  if (!children.length) { container.innerHTML = ''; return; }
+  if (!children.length) { container.innerHTML = PLACEHOLDER_HTML; return; }
 
   const todayStart = (() => { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); })();
   const dayOfWeek = new Date().getDay();
@@ -435,9 +437,9 @@ export async function renderDashTaskRows(familyId) {
   try {
     const tSnap = await getDocs(collection(db, 'families', familyId, 'tasks'));
     allFamilyTasks = tSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(t => !t.hidden);
-  } catch(e) { return; }
+  } catch(e) { container.innerHTML = PLACEHOLDER_HTML; return; }
 
-  if (!allFamilyTasks.length) { container.innerHTML = ''; return; }
+  if (!allFamilyTasks.length) { container.innerHTML = PLACEHOLDER_HTML; return; }
 
   const childRows = await Promise.all(children.map(async (child) => {
     const childTasks = allFamilyTasks.filter(t =>
@@ -454,8 +456,10 @@ export async function renderDashTaskRows(familyId) {
 
   container.innerHTML = '';
 
+  let anyRows = false;
   childRows.forEach(({ child, remaining }, ci) => {
     if (!remaining.length) return;
+    anyRows = true;
     const genderEmoji = child.gender === 'female' ? '👧' : '👦';
     const displayEmoji = child.emoji || genderEmoji;
     const color = child.color || CHILD_COLORS[ci % CHILD_COLORS.length];
@@ -488,6 +492,8 @@ export async function renderDashTaskRows(familyId) {
       }, 3000));
     }
   });
+
+  if (!anyRows) container.innerHTML = PLACEHOLDER_HTML;
 }
 
 export function shareParentCode(code) {

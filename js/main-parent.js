@@ -55,12 +55,28 @@ function saveClickedCategory(cat) {
 function markButtonDone(btn) {
   const cat = btn.dataset.cat;
   const labels = { hygiene: 'היגיינה', chores: 'מטלות בית', study: 'לימודים' };
+  const emojis = { hygiene: '🧼', chores: '🏠', study: '📚' };
+  const checkSVG = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px;flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>`;
   btn.style.opacity = '1';
-  btn.style.background = 'rgba(22,163,74,0.10)';
+  btn.style.background = 'linear-gradient(135deg,#DCFCE7,#BBF7D0)';
   btn.style.borderColor = '#16A34A';
-  btn.innerHTML = `<div style="font-size:1.5rem;margin-bottom:4px;">✅</div><div style="font-size:0.78rem;font-weight:800;color:#15803D;">${labels[cat] || ''}</div><div style="font-size:0.65rem;color:#15803D;margin-top:2px;">נוסף!</div>`;
+  btn.style.borderWidth = '2px';
+  btn.style.boxShadow = '0 0 0 3px rgba(22,163,74,0.18), inset 0 1px 0 rgba(255,255,255,0.6)';
+  btn.style.transform = 'scale(1)';
+  btn.style.transition = 'all 0.35s cubic-bezier(.34,1.4,.64,1)';
+  btn.innerHTML = `
+    <div style="font-size:1.5rem;margin-bottom:3px;">${emojis[cat] || '✨'}</div>
+    <div style="font-size:0.78rem;font-weight:800;color:#15803D;">${labels[cat] || ''}</div>
+    <div style="font-size:0.63rem;color:#16A34A;margin-top:3px;display:flex;align-items:center;justify-content:center;gap:2px;font-weight:700;">${checkSVG} נוסף!</div>`;
   btn.style.cursor = 'default';
   btn.disabled = true;
+  // אנימציה — pulse ירוק
+  btn.animate([
+    { transform: 'scale(1)', boxShadow: '0 0 0 0 rgba(22,163,74,0.45)' },
+    { transform: 'scale(1.08)', boxShadow: '0 0 0 8px rgba(22,163,74,0.22)' },
+    { transform: 'scale(1.04)', boxShadow: '0 0 0 14px rgba(22,163,74,0.08)' },
+    { transform: 'scale(1)',   boxShadow: '0 0 0 18px rgba(22,163,74,0)' }
+  ], { duration: 560, easing: 'cubic-bezier(.34,1.4,.64,1)', fill: 'forwards' });
 }
 
 function refreshQuickTasksBanner() {
@@ -135,7 +151,7 @@ async function handleQuickTasks(triggerEl, category) {
   } catch(e) { window.location.href = 'index.html'; return; }
 
   const name = user.displayName ? user.displayName.split(' ')[0] : 'הורה';
-  document.getElementById('dash-greeting').textContent = `שלום ${name}! 👋`;
+  document.getElementById('dash-greeting').textContent = `שלום ${name} 👋`;
 
   // Check if no children → redirect to onboarding
   await loadChildren(currentFamilyId);
@@ -295,28 +311,8 @@ document.getElementById('btn-do-create-child').onclick = async () => {
   const name = document.getElementById('child-name-input').value.trim();
   const errEl = document.getElementById('create-child-error');
   errEl.textContent = '';
-  const nameInput = document.getElementById('child-name-input');
-  const genderPicker = document.getElementById('create-gender-picker');
-
-  if (!name && !selectedGender) {
-    errEl.textContent = 'חובה להכניס שם ולבחור בן/בת';
-    nameInput.classList.remove('input-error'); void nameInput.offsetWidth; nameInput.classList.add('input-error');
-    genderPicker.classList.remove('gender-error'); void genderPicker.offsetWidth; genderPicker.classList.add('gender-error');
-    setTimeout(() => { nameInput.classList.remove('input-error'); genderPicker.classList.remove('gender-error'); }, 1200);
-    return;
-  }
-  if (!name) {
-    errEl.textContent = 'חובה להכניס שם ילד/ה';
-    nameInput.classList.remove('input-error'); void nameInput.offsetWidth; nameInput.classList.add('input-error');
-    setTimeout(() => nameInput.classList.remove('input-error'), 1200);
-    return;
-  }
-  if (!selectedGender) {
-    errEl.textContent = 'חובה לבחור בן או בת';
-    genderPicker.classList.remove('gender-error'); void genderPicker.offsetWidth; genderPicker.classList.add('gender-error');
-    setTimeout(() => genderPicker.classList.remove('gender-error'), 1200);
-    return;
-  }
+  if (!name) { errEl.textContent = 'חובה להכניס שם ילד/ה'; return; }
+  if (!selectedGender) { errEl.textContent = 'חובה לבחור בן או בת'; return; }
   const nameLC = name.toLowerCase();
   const duplicate = childrenCache.find(c => c.name && c.name.toLowerCase() === nameLC);
   if (duplicate) { errEl.textContent = `ילד/ה בשם "${name}" כבר קיים/ת`; return; }
