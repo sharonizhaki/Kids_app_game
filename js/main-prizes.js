@@ -1,6 +1,4 @@
-import { auth, db } from './firebase.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getDocs, collection, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { db } from './firebase.js';
 
 import { showScreen, showToast, showLoading, hideLoading, showConfirm } from './ui.js';
 import { currentFamilyId, setCurrentFamilyId } from './auth.js';
@@ -13,19 +11,6 @@ import {
   DECLINE_REASONS, startPrizeTour,
   setPrizeEmoji, setPrizePts, setPrizeChildren, resetPrizeState, getPrizeState
 } from './prizes.js';
-
-// =========== AUTH GUARD ===========
-async function checkAuth() {
-  return new Promise((resolve) => {
-    const timeoutId = setTimeout(() => { window.location.href = 'index.html'; }, 5000);
-    const unsub = onAuthStateChanged(auth, (user) => {
-      clearTimeout(timeoutId);
-      unsub();
-      if (!user || user.isAnonymous) window.location.href = 'index.html';
-      else resolve(user);
-    });
-  });
-}
 
 function getFamilyId() { return currentFamilyId; }
 window.showScreen = showScreen;
