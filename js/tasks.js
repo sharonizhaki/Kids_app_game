@@ -4,7 +4,7 @@ import {
   collection, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { showScreen, showToast, showLoading, hideLoading, highlightField, showConfirm } from './ui.js';
-import { childrenCache, loadChildren } from './family.js';
+import { childrenCache, loadChildren, colorGradient } from './family.js';
 
 // =========== CONSTANTS ===========
 export const TASK_EMOJIS = ["🪥","🛏️","🚿","🧹","🧼","👕","🗑️","🍽️","🎒","📚","📖","✏️","🧮","🎨","🎵","💪","🌱","🐕","🍳","🚲","🧸","🎯","🎹","⭐","🏃","🧃","🍎","🦷","🎮","🌙"];
@@ -645,7 +645,10 @@ export function renderAssignGrid(gridId, selectedIds, onChange) {
     const hasPhoto = c.photo && c.photo.length > 10;
     const photoHTML = hasPhoto ? `<img src="${c.photo}" alt="${c.name}">` : `<span>${c.emoji || genderEmoji}</span>`;
     const isSelected = selectedIds.includes(c.id);
-    return `<div class="assign-opt${isSelected?' selected':''}" data-child-id="${c.id}">
+    const color = c.color || '#6366F1';
+    const bg = colorGradient ? colorGradient(color) : color;
+    const selStyle = isSelected ? `border-color:${color};background:${bg};box-shadow:0 0 0 3px ${color}33;` : '';
+    return `<div class="assign-opt${isSelected?' selected':''}" data-child-id="${c.id}" data-color="${color}" style="${selStyle}">
       <div class="assign-photo">${photoHTML}</div>
       <span class="assign-name">${c.name}</span>
     </div>`;
@@ -654,6 +657,17 @@ export function renderAssignGrid(gridId, selectedIds, onChange) {
     el.onclick = () => {
       el.classList.toggle('selected');
       const cid = el.dataset.childId;
+      const color = el.dataset.color || '#6366F1';
+      const bg = colorGradient ? colorGradient(color) : color;
+      if (el.classList.contains('selected')) {
+        el.style.borderColor = color;
+        el.style.background = bg;
+        el.style.boxShadow = `0 0 0 3px ${color}33`;
+      } else {
+        el.style.borderColor = '';
+        el.style.background = '';
+        el.style.boxShadow = '';
+      }
       if (assigned.includes(cid)) assigned = assigned.filter(id => id !== cid);
       else assigned.push(cid);
       onChange(assigned);
