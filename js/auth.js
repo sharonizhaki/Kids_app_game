@@ -62,7 +62,8 @@ export function initAuth(onParentReady, onNoFamily) {
 
     // Google/Facebook user — parent
     currentParentUid = user.uid;
-    try {
+
+    const firestoreWork = async () => {
       let famSnap = await getDocs(query(collection(db, 'families'), where('parentUid', '==', user.uid)));
       if (!famSnap.empty) {
         currentFamilyId = famSnap.docs[0].id;
@@ -76,9 +77,24 @@ export function initAuth(onParentReady, onNoFamily) {
         return;
       }
       onNoFamily();
+    };
+
+    const connectionTimeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('connection-timeout')), 8000)
+    );
+
+    try {
+      await Promise.race([firestoreWork(), connectionTimeout]);
     } catch(e) {
-      console.error('Firestore error:', e);
-      onNoFamily();
+      if (e.message === 'connection-timeout') {
+        console.warn('Firestore timeout — showing fallback screen');
+        hideLoading();
+        showScreen('screen-who');
+        showToast('בעיית חיבור — נסה לרענן את הדף 🔄');
+      } else {
+        console.error('Firestore error:', e);
+        onNoFamily();
+      }
     }
   });
 }
