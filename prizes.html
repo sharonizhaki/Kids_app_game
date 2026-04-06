@@ -9,57 +9,276 @@
 </head>
 <body>
 
-<div id="screen-prizes" class="screen active visible">
+<!-- ============================================================
+     SCREEN: הוספת פרס
+     ============================================================ -->
+<div id="screen-add-prize" class="screen">
   <div class="screen-header">
-    <button class="back-btn" onclick="window.location.href='parent.html'">→</button>
+    <button class="back-btn" id="btn-back-add-prize">→</button>
+    <h2>הוסף פרס 🎁</h2>
+  </div>
+
+  <!-- Quick prizes banner -->
+  <div id="prize-quick-section" class="card" style="max-width:480px;width:100%;margin-bottom:16px;padding:14px 16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-weight:800;font-size:0.95rem;">⚡ צור 5 פרסים בלחיצה</div>
+      <button id="btn-prize-quick-close" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted);">✕</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="quick-prize-cat-btn btn" data-cat="treats"
+        style="flex:1;min-width:80px;padding:9px 6px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:#FEF3C7;color:#92400E;border:2px solid #FDE68A;border-radius:12px;cursor:pointer;">
+        🍦 פינוקים
+      </button>
+      <button class="quick-prize-cat-btn btn" data-cat="fun"
+        style="flex:1;min-width:80px;padding:9px 6px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:#EDE9FE;color:#5B21B6;border:2px solid #DDD6FE;border-radius:12px;cursor:pointer;">
+        🎮 פנאי
+      </button>
+      <button class="quick-prize-cat-btn btn" data-cat="gifts"
+        style="flex:1;min-width:80px;padding:9px 6px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:#D1FAE5;color:#065F46;border:2px solid #A7F3D0;border-radius:12px;cursor:pointer;">
+        🎁 מתנות
+      </button>
+    </div>
+  </div>
+
+  <!-- Prize name -->
+  <div class="form-section" style="max-width:480px;width:100%;">
+    <label class="form-label">שם הפרס *</label>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input id="prize-name-input" class="form-input" type="text" placeholder="למשל: ערב קולנוע" style="flex:1;">
+      <button id="btn-prize-suggestions" class="btn"
+        style="padding:10px 12px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:#F0FDF4;color:#15803D;border:2px solid #BBF7D0;border-radius:12px;white-space:nowrap;cursor:pointer;">
+        💡 רעיונות
+      </button>
+    </div>
+    <div id="prize-suggestions-wrap"
+      style="display:none;flex-wrap:wrap;gap:8px;margin-top:8px;max-height:140px;overflow-y:auto;"></div>
+  </div>
+
+  <!-- Emoji grid -->
+  <div class="form-section" style="max-width:480px;width:100%;">
+    <label class="form-label">אייקון *</label>
+    <div id="prize-emoji-grid" class="emoji-grid"></div>
+  </div>
+
+  <!-- Pts -->
+  <div class="form-section" style="max-width:480px;width:100%;">
+    <label class="form-label">מחיר בכוכבים ⭐ *</label>
+    <input id="prize-pts-input" class="form-input" type="number" placeholder="למשל: 100" min="1">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+      <button class="btn prize-pts-shortcut" data-val="20"
+        style="padding:7px 14px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:#FEF3C7;color:#92400E;border:2px solid #FDE68A;border-radius:10px;cursor:pointer;">20 ⭐</button>
+      <button class="btn prize-pts-shortcut" data-val="50"
+        style="padding:7px 14px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:#FEF3C7;color:#92400E;border:2px solid #FDE68A;border-radius:10px;cursor:pointer;">50 ⭐</button>
+      <button class="btn prize-pts-shortcut" data-val="100"
+        style="padding:7px 14px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:#FEF3C7;color:#92400E;border:2px solid #FDE68A;border-radius:10px;cursor:pointer;">100 ⭐</button>
+      <button class="btn prize-pts-shortcut" data-val="150"
+        style="padding:7px 14px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:#FEF3C7;color:#92400E;border:2px solid #FDE68A;border-radius:10px;cursor:pointer;">150 ⭐</button>
+      <button class="btn prize-pts-shortcut" data-val="200"
+        style="padding:7px 14px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:#FEF3C7;color:#92400E;border:2px solid #FDE68A;border-radius:10px;cursor:pointer;">200 ⭐</button>
+      <button class="btn prize-pts-shortcut" data-val="300"
+        style="padding:7px 14px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:#FEF3C7;color:#92400E;border:2px solid #FDE68A;border-radius:10px;cursor:pointer;">300 ⭐</button>
+    </div>
+  </div>
+
+  <!-- Assign children -->
+  <div class="form-section" style="max-width:480px;width:100%;">
+    <label class="form-label">שיוך לילד/ים *</label>
+    <div id="prize-assign-grid" class="assign-grid"></div>
+  </div>
+
+  <!-- Description -->
+  <div class="form-section" style="max-width:480px;width:100%;">
+    <label class="form-label">תיאור (לא חובה)</label>
+    <textarea id="prize-desc-input" class="form-input" rows="2"
+      placeholder="למשל: עד 22:00, פעם בחודש..."></textarea>
+  </div>
+
+  <div class="error-msg" id="add-prize-error"></div>
+
+  <button id="btn-save-prize" class="btn btn-primary" style="max-width:480px;width:100%;margin-top:4px;">
+    שמור פרס 🎁
+  </button>
+</div>
+
+<!-- ============================================================
+     SCREEN: ניהול פרסים (רשימה + tabs)
+     ============================================================ -->
+<div id="screen-manage-prizes" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" id="btn-back-manage">→</button>
     <h2>ניהול פרסים 🎁</h2>
   </div>
 
-  <!-- Tabs -->
-  <div id="prize-tabs" style="display:flex;gap:8px;max-width:420px;width:100%;margin-bottom:16px;"></div>
+  <button id="btn-add-new-prize" class="btn btn-primary" style="max-width:480px;width:100%;margin-bottom:16px;">
+    + הוסף פרס חדש
+  </button>
 
-  <!-- Content -->
-  <div id="prizes-list" style="max-width:420px;width:100%;"></div>
+  <!-- Tab buttons -->
+  <div style="max-width:480px;width:100%;display:flex;gap:8px;margin-bottom:16px;
+              border:2px solid var(--border);border-radius:14px;padding:4px;background:var(--bg);">
+    <button class="manage-tab btn" data-tab="prizes"
+      style="flex:1;padding:9px 6px;font-size:0.85rem;font-weight:800;font-family:'Heebo',sans-serif;
+             border:none;border-radius:10px;cursor:pointer;transition:all 0.2s;">
+      פרסים
+    </button>
+    <button class="manage-tab btn" data-tab="requests"
+      style="flex:1;padding:9px 6px;font-size:0.85rem;font-weight:800;font-family:'Heebo',sans-serif;
+             border:none;border-radius:10px;cursor:pointer;transition:all 0.2s;position:relative;">
+      בקשות
+      <span id="requests-badge"
+        style="display:none;position:absolute;top:4px;right:6px;min-width:18px;height:18px;
+               background:#EF4444;color:white;border-radius:50%;font-size:0.65rem;font-weight:900;
+               line-height:18px;text-align:center;padding:0 3px;">0</span>
+    </button>
+    <button class="manage-tab btn" data-tab="stats"
+      style="flex:1;padding:9px 6px;font-size:0.85rem;font-weight:800;font-family:'Heebo',sans-serif;
+             border:none;border-radius:10px;cursor:pointer;transition:all 0.2s;">
+      סטטיסטיקה
+    </button>
+  </div>
+
+  <!-- Tab: prizes list -->
+  <div id="tab-prizes" class="tab-content" style="display:none;max-width:480px;width:100%;">
+    <div id="prizes-list"></div>
+  </div>
+
+  <!-- Tab: requests -->
+  <div id="tab-requests" class="tab-content" style="display:none;max-width:480px;width:100%;">
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button class="req-filter-btn btn" data-filter="pending"
+        style="flex:1;padding:8px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               border:2px solid var(--border);border-radius:10px;background:var(--primary);color:white;cursor:pointer;">
+        ⏳ ממתינות
+      </button>
+      <button class="req-filter-btn btn" data-filter="history"
+        style="flex:1;padding:8px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               border:2px solid var(--border);border-radius:10px;background:var(--card);color:var(--muted);cursor:pointer;">
+        📜 היסטוריה
+      </button>
+    </div>
+    <div id="requests-list"></div>
+  </div>
+
+  <!-- Tab: stats -->
+  <div id="tab-stats" class="tab-content" style="display:none;max-width:480px;width:100%;">
+    <div id="stats-content"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCREEN: עריכת פרס
+     ============================================================ -->
+<div id="screen-edit-prize" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" id="btn-back-edit-prize">→</button>
+    <h2>עריכת פרס ✏️</h2>
+  </div>
+
+  <!-- Prize name -->
+  <div class="form-section" style="max-width:480px;width:100%;">
+    <label class="form-label">שם הפרס *</label>
+    <input id="ep-name" class="form-input" type="text" placeholder="שם הפרס">
+  </div>
+
+  <!-- Emoji grid -->
+  <div class="form-section" style="max-width:480px;width:100%;">
+    <label class="form-label">אייקון *</label>
+    <div id="ep-emoji-grid" class="emoji-grid"></div>
+  </div>
+
+  <!-- Pts -->
+  <div class="form-section" style="max-width:480px;width:100%;">
+    <label class="form-label">מחיר בכוכבים ⭐ *</label>
+    <input id="ep-pts" class="form-input" type="number" placeholder="כמות כוכבים" min="1">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+      <button class="btn ep-pts-shortcut" data-val="20"
+        style="padding:7px 14px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:#FEF3C7;color:#92400E;border:2px solid #FDE68A;border-radius:10px;cursor:pointer;">20 ⭐</button>
+      <button class="btn ep-pts-shortcut" data-val="50"
+        style="padding:7px 14px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:#FEF3C7;color:#92400E;border:2px solid #FDE68A;border-radius:10px;cursor:pointer;">50 ⭐</button>
+      <button class="btn ep-pts-shortcut" data-val="100"
+        style="padding:7px 14px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:#FEF3C7;color:#92400E;border:2px solid #FDE68A;border-radius:10px;cursor:pointer;">100 ⭐</button>
+      <button class="btn ep-pts-shortcut" data-val="150"
+        style="padding:7px 14px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:#FEF3C7;color:#92400E;border:2px solid #FDE68A;border-radius:10px;cursor:pointer;">150 ⭐</button>
+      <button class="btn ep-pts-shortcut" data-val="200"
+        style="padding:7px 14px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:#FEF3C7;color:#92400E;border:2px solid #FDE68A;border-radius:10px;cursor:pointer;">200 ⭐</button>
+      <button class="btn ep-pts-shortcut" data-val="300"
+        style="padding:7px 14px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:#FEF3C7;color:#92400E;border:2px solid #FDE68A;border-radius:10px;cursor:pointer;">300 ⭐</button>
+    </div>
+  </div>
+
+  <!-- Assign children -->
+  <div class="form-section" style="max-width:480px;width:100%;">
+    <label class="form-label">שיוך לילד/ים *</label>
+    <div id="ep-assign-grid" class="assign-grid"></div>
+  </div>
+
+  <!-- Description -->
+  <div class="form-section" style="max-width:480px;width:100%;">
+    <label class="form-label">תיאור (לא חובה)</label>
+    <textarea id="ep-desc" class="form-input" rows="2" placeholder="תיאור הפרס..."></textarea>
+  </div>
+
+  <div class="error-msg" id="ep-error"></div>
+
+  <div style="max-width:480px;width:100%;display:flex;gap:10px;margin-top:4px;">
+    <button id="btn-ep-save" class="btn btn-primary" style="flex:2;">שמור שינויים ✅</button>
+    <button id="btn-ep-hide" class="btn"
+      style="flex:1;background:var(--card);border:2px solid var(--border);color:var(--text);
+             font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">
+      👁️ הסתר
+    </button>
+  </div>
+  <button id="btn-ep-delete" class="btn"
+    style="max-width:480px;width:100%;margin-top:10px;background:#FEF2F2;color:#991B1B;
+           border:2px solid #FCA5A5;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">
+    🗑️ מחק פרס
+  </button>
+</div>
+
+<!-- ============================================================
+     MODAL: דחיית בקשה
+     ============================================================ -->
+<div id="modal-decline"
+  style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:4000;
+         align-items:flex-end;justify-content:center;padding-bottom:0;">
+  <div style="background:var(--card);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;">
+    <div style="font-weight:900;font-size:1.1rem;margin-bottom:16px;">סיבת הדחייה</div>
+    <div id="decline-reasons-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+    <textarea id="decline-custom-reason" class="form-input" rows="2"
+      placeholder="או כתוב סיבה חופשית..." style="margin-bottom:14px;"></textarea>
+    <div style="display:flex;gap:10px;">
+      <button id="btn-cancel-decline" class="btn"
+        style="flex:1;padding:11px;font-size:0.9rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:var(--bg);border:2px solid var(--border);border-radius:12px;cursor:pointer;">
+        ביטול
+      </button>
+      <button id="btn-confirm-decline" class="btn"
+        style="flex:2;padding:11px;font-size:0.9rem;font-weight:800;font-family:'Heebo',sans-serif;
+               background:linear-gradient(135deg,#EF4444,#DC2626);color:white;border:none;border-radius:12px;cursor:pointer;">
+        ❌ דחה בקשה
+      </button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
-<div id="loading-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:5000;align-items:center;justify-content:center;flex-direction:column;gap:12px;">
-  <div class="spinner-lg"></div>
-  <div id="loading-text" style="color:white;font-weight:700;font-size:1rem;font-family:'Heebo',sans-serif;">טוען...</div>
-</div>
 
-<script type="module">
-import { auth, db } from './js/firebase.js';
-import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getDocs, query, collection, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { initPrizesScreen } from './js/prizes.js';
-
-// showLoading / hideLoading globals
-window.showLoading = (msg = 'טוען...') => {
-  const ov = document.getElementById('loading-overlay');
-  document.getElementById('loading-text').textContent = msg;
-  ov.style.display = 'flex';
-};
-window.hideLoading = () => { document.getElementById('loading-overlay').style.display = 'none'; };
-
-// Toast global
-window.showToast = (msg) => {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
-};
-
-// Auth guard
-onAuthStateChanged(auth, async user => {
-  if (!user || user.isAnonymous) { window.location.href = 'index.html'; return; }
-  try {
-    let fSnap = await getDocs(query(collection(db, 'families'), where('parentUid', '==', user.uid)));
-    if (fSnap.empty) fSnap = await getDocs(query(collection(db, 'families'), where('secondaryParentUid', '==', user.uid)));
-    if (fSnap.empty) { window.location.href = 'index.html'; return; }
-    const familyId = fSnap.docs[0].id;
-    initPrizesScreen(familyId);
-  } catch (e) { window.location.href = 'index.html'; }
-});
-</script>
+<script type="module" src="./js/main-prizes.js"></script>
 </body>
 </html>
