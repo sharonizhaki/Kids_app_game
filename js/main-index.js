@@ -2,7 +2,7 @@ import { auth, db } from './firebase.js';
 import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-import { showScreen, showToast, showLoading, hideLoading, showConnectionError } from './ui.js';
+import { showScreen, showToast, showLoading, hideLoading } from './ui.js';
 import { cropAndCompressPhoto } from './utils.js';
 import {
   initAuth, loginWithGoogle, loginWithFacebook, logoutParent,
