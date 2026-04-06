@@ -2,6 +2,7 @@ import { auth, db } from './firebase.js';
 import {
   signInWithPopup,
   signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   FacebookAuthProvider,
   onAuthStateChanged,
@@ -26,6 +27,23 @@ export function setCurrentFamilyId(id) { currentFamilyId = id; }
 
 const CODE_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
+// =========== ERROR MESSAGES ===========
+const AUTH_ERROR_MESSAGES = {
+  'auth/unauthorized-domain': 'הדומיין הנוכחי אינו מורשה ב-Firebase. יש להוסיף אותו ברשימת הדומיינים המורשים במסוף Firebase.',
+  'auth/popup-blocked': 'הדפדפן חסם את החלון הקופץ. מנסה להפנות...',
+  'auth/network-request-failed': 'שגיאת רשת. בדוק את החיבור לאינטרנט.',
+  'auth/too-many-requests': 'יותר מדי ניסיונות. נסה שוב מאוחר יותר.',
+  'auth/user-disabled': 'החשבון הושבת.',
+  'auth/account-exists-with-different-credential': 'חשבון קיים עם אמצעי התחברות אחר (כנראה Google). נסה להתחבר עם Google.',
+  'auth/cancelled-popup-request': null,
+  'auth/popup-closed-by-user': null,
+};
+
+function getAuthErrorMsg(code, fallback) {
+  if (AUTH_ERROR_MESSAGES[code] === null) return null;
+  return AUTH_ERROR_MESSAGES[code] || fallback || `שגיאה: ${code}`;
+}
+
 // =========== AUTH STATE ===========
 // נקרא רק מ-index.html
 export function initAuth(onParentReady, onNoFamily) {
@@ -33,11 +51,24 @@ export function initAuth(onParentReady, onNoFamily) {
     const savedChildId = localStorage.getItem('childId');
     const savedFamilyId = localStorage.getItem('childFamilyId');
     if (savedChildId && savedFamilyId) {
-      window.location.href = 'child.html'; // ← שינוי: היה tasks.html
+      window.location.href = 'child.html';
       return true;
     }
     return false;
   }
+
+  // Handle redirect result (after signInWithRedirect)
+  getRedirectResult(auth).then(result => {
+    // result is null if no redirect happened; Firebase handles auth state via onAuthStateChanged
+  }).catch(e => {
+    console.warn('getRedirectResult error:', e.code, e.message);
+    const msg = getAuthErrorMsg(e.code, `שגיאה בהתחברות: ${e.code}`);
+    if (msg) {
+      const errEl = document.getElementById('login-error');
+      if (errEl) errEl.textContent = msg;
+    }
+    hideLoading();
+  });
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
@@ -103,16 +134,17 @@ export async function loginWithGoogle() {
   try {
     await signInWithPopup(auth, provider);
   } catch(e) {
-    if (['auth/popup-blocked','auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(e.code)) {
+    const popupErrors = ['auth/popup-blocked','auth/popup-closed-by-user','auth/cancelled-popup-request'];
+    if (popupErrors.includes(e.code)) {
       showLoading('מעביר ל-Google...');
       try {
         await signInWithRedirect(auth, provider);
       } catch(e2) {
         hideLoading();
-        return `שגיאה: ${e2.code || e2.message}`;
+        return getAuthErrorMsg(e2.code, `שגיאה: ${e2.code || e2.message}`);
       }
-    } else if (e.code !== 'auth/cancelled-popup-request') {
-      return `שגיאה: ${e.code || e.message}`;
+    } else {
+      return getAuthErrorMsg(e.code, `שגיאה: ${e.code || e.message}`);
     }
   }
   return null;
@@ -126,18 +158,17 @@ export async function loginWithFacebook() {
     await signInWithPopup(auth, provider);
   } catch(e) {
     hideLoading();
-    if (['auth/popup-blocked','auth/popup-closed-by-user','auth/cancelled-popup-request'].includes(e.code)) {
+    const popupErrors = ['auth/popup-blocked','auth/popup-closed-by-user','auth/cancelled-popup-request'];
+    if (popupErrors.includes(e.code)) {
       showLoading('מעביר ל-Facebook...');
       try {
         await signInWithRedirect(auth, provider);
       } catch(e2) {
         hideLoading();
-        return `שגיאה: ${e2.code || e2.message}`;
+        return getAuthErrorMsg(e2.code, `שגיאה: ${e2.code || e2.message}`);
       }
-    } else if (e.code === 'auth/account-exists-with-different-credential') {
-      return 'חשבון קיים עם Google. התחבר עם Google במקום.';
     } else {
-      return `שגיאה: ${e.code || e.message}`;
+      return getAuthErrorMsg(e.code, `שגיאה: ${e.code || e.message}`);
     }
   }
   return null;

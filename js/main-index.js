@@ -472,9 +472,11 @@ document.getElementById('ob3-later').onclick = () => { window.location.href = 'p
     track.style.transform = `translateX(-${current * (100 / 3)}%)`;
     dots.forEach((d, i) => { if (!d) return; d.style.width = i === current ? '22px' : '8px'; d.style.background = i === current ? 'var(--primary)' : 'rgba(99,102,241,0.28)'; });
   }
-  dots.forEach((d, i) => { if (d) d.onclick = () => goTo(i); });
-  let startX = 0, autoInterval;
-  const startAuto = () => { autoInterval = setInterval(() => goTo((current + 1) % 3), 3800); };
+  dots.forEach((d, i) => { if (d) d.onclick = () => { clearInterval(autoInterval); goTo(i); startAuto(); }; });
+  let startX = 0, autoInterval, isDragging = false;
+  const startAuto = () => { clearInterval(autoInterval); autoInterval = setInterval(() => goTo((current + 1) % 3), 3800); };
+
+  // Touch support
   slider.addEventListener('touchstart', e => { startX = e.touches[0].clientX; clearInterval(autoInterval); track.style.transition = 'none'; }, { passive: true });
   slider.addEventListener('touchend', e => {
     track.style.transition = 'transform 0.38s cubic-bezier(0.4,0,0.2,1)';
@@ -482,5 +484,30 @@ document.getElementById('ob3-later').onclick = () => { window.location.href = 'p
     if (Math.abs(dx) > 48) goTo(dx > 0 ? current - 1 : current + 1); else goTo(current);
     startAuto();
   });
+
+  // Mouse drag support for desktop
+  slider.addEventListener('mousedown', e => {
+    startX = e.clientX;
+    isDragging = true;
+    clearInterval(autoInterval);
+    track.style.transition = 'none';
+    e.preventDefault();
+  });
+  window.addEventListener('mouseup', e => {
+    if (!isDragging) return;
+    isDragging = false;
+    track.style.transition = 'transform 0.38s cubic-bezier(0.4,0,0.2,1)';
+    const dx = e.clientX - startX;
+    if (Math.abs(dx) > 48) goTo(dx > 0 ? current - 1 : current + 1); else goTo(current);
+    startAuto();
+  });
+  slider.addEventListener('mouseleave', () => {
+    if (!isDragging) return;
+    isDragging = false;
+    track.style.transition = 'transform 0.38s cubic-bezier(0.4,0,0.2,1)';
+    goTo(current);
+    startAuto();
+  });
+
   startAuto();
 })();
