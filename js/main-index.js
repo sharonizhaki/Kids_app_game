@@ -335,13 +335,24 @@ document.getElementById('ob1-clear-photo').onclick = () => {
   document.getElementById('ob1-photo-input').value = '';
 };
 
-const OB1_ORDINALS = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שביעי','שמיני','תשיעי','עשירי'];
+const OB1_ORDINALS = [
+  ['ראשון', 'ראשונה'],
+  ['שני',   'שנייה'],
+  ['שלישי', 'שלישית'],
+  ['רביעי', 'רביעית'],
+  ['חמישי', 'חמישית'],
+  ['שישי',  'שישית'],
+  ['שביעי', 'שביעית'],
+  ['שמיני', 'שמינית'],
+  ['תשיעי', 'תשיעית'],
+  ['עשירי', 'עשירית'],
+];
 
 function updateOb1Title() {
   const idx = childrenCache.length;
-  const ord = OB1_ORDINALS[idx] || `${idx + 1}`;
+  const pair = OB1_ORDINALS[idx] || [`${idx + 1}`, `${idx + 1}`];
   const el = document.getElementById('ob1-title');
-  if (el) el.textContent = `הוסף ילד/ה ${ord}`;
+  if (el) el.textContent = `הוספת ילד/ה ${pair[0]}/${pair[1]}`;
   const topNext = document.getElementById('ob1-top-next');
   if (topNext) {
     topNext.style.visibility = idx === 0 ? 'hidden' : 'visible';
@@ -376,19 +387,37 @@ async function goToOnboard2() {
   if (invResult && invResult.code) document.getElementById('ob2-code').textContent = invResult.code;
 }
 
-function showChildAddedPopup(name, gender, onAddMore, onContinue) {
+function showChildAddedPopup(name, gender, inviteCode, onAddMore, onContinue) {
   const isBoy = gender === 'male';
   const backdrop = document.createElement('div');
   backdrop.style.cssText = 'position:fixed;inset:0;z-index:7000;background:rgba(15,23,42,0.55);display:flex;align-items:center;justify-content:center;padding:24px;';
   const card = document.createElement('div');
   card.style.cssText = 'background:white;border-radius:28px;padding:30px 24px 24px;width:100%;max-width:340px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.28);direction:rtl;font-family:Heebo,sans-serif;';
+
+  const codeBlock = inviteCode ? `
+    <div style="background:linear-gradient(135deg,#EEF2FF,#E0E7FF);border-radius:18px;padding:14px 16px;margin-bottom:16px;">
+      <div style="font-size:0.72rem;font-weight:700;color:#6366F1;margin-bottom:6px;">קוד כניסה לילד/ה</div>
+      <div style="font-size:2rem;font-weight:900;color:#4338CA;letter-spacing:8px;direction:ltr;font-variant-numeric:tabular-nums;">${inviteCode}</div>
+      <div style="font-size:0.7rem;color:#818CF8;margin-top:6px;font-weight:600;">⏰ תקף ל-24 שעות</div>
+    </div>
+    <button id="pop-share-code" style="width:100%;padding:13px;background:linear-gradient(135deg,#6366F1,#4338CA);border:none;border-radius:16px;font-size:0.95rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;margin-bottom:10px;">📤 שתף קוד עם ${name}</button>` : '';
+
   card.innerHTML = `
     <div style="font-size:3.2rem;margin-bottom:10px;">🎉</div>
     <div style="font-size:1.25rem;font-weight:900;color:#1E293B;margin-bottom:6px;">${name} ${isBoy ? 'נוסף' : 'נוספה'} בהצלחה!</div>
-    <div style="font-size:0.86rem;color:#64748B;margin-bottom:24px;">${isBoy ? 'הוא' : 'היא'} כבר חלק מהמשפחה ✨</div>
+    <div style="font-size:0.86rem;color:#64748B;margin-bottom:20px;">${isBoy ? 'הוא' : 'היא'} כבר חלק מהמשפחה ✨</div>
+    ${codeBlock}
     <button id="pop-add-more" style="width:100%;padding:13px;background:#F1F5F9;border:2px dashed #CBD5E1;border-radius:16px;font-size:0.95rem;font-weight:800;font-family:Heebo,sans-serif;cursor:pointer;color:#475569;margin-bottom:10px;">➕ הוסף ילד/ה נוספ/ת</button>
     <button id="pop-continue" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366F1,#4F46E5);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;">המשך ←</button>`;
   backdrop.appendChild(card); document.body.appendChild(backdrop);
+  if (inviteCode) {
+    card.querySelector('#pop-share-code').onclick = () => {
+      const { shareChildCode } = window.__familyExports || {};
+      if (shareChildCode) shareChildCode(inviteCode, name);
+      else if (navigator.share) navigator.share({ title: `קוד כניסה עבור ${name}`, text: `הקוד שלך הוא: ${inviteCode}` }).catch(() => {});
+      else { navigator.clipboard?.writeText(inviteCode); showToast('הקוד הועתק! 📋'); }
+    };
+  }
   card.querySelector('#pop-add-more').onclick = () => { backdrop.remove(); onAddMore(); };
   card.querySelector('#pop-continue').onclick = () => { backdrop.remove(); onContinue(); };
 }
@@ -444,7 +473,7 @@ document.getElementById('ob1-next').onclick = async () => {
 
   const savedName = name; const savedGender = obGender;
   resetOb1Form();
-  showChildAddedPopup(savedName, savedGender, () => {}, () => goToOnboard2());
+  showChildAddedPopup(savedName, savedGender, result.inviteCode || null, () => {}, () => goToOnboard2());
 };
 
 document.getElementById('ob2-back').onclick = () => { updateOb1Title(); showScreen('screen-onboard-1'); };
@@ -474,7 +503,7 @@ document.getElementById('ob3-later').onclick = () => { window.location.href = 'p
   }
   dots.forEach((d, i) => { if (d) d.onclick = () => { clearInterval(autoInterval); goTo(i); startAuto(); }; });
   let startX = 0, autoInterval, isDragging = false;
-  const startAuto = () => { clearInterval(autoInterval); autoInterval = setInterval(() => goTo((current + 1) % 3), 3800); };
+  const startAuto = () => { clearInterval(autoInterval); autoInterval = setInterval(() => goTo((current + 1) % 3), 4800); };
 
   // Touch support
   slider.addEventListener('touchstart', e => { startX = e.touches[0].clientX; clearInterval(autoInterval); track.style.transition = 'none'; }, { passive: true });
