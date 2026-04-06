@@ -465,6 +465,7 @@ document.getElementById('ob3-later').onclick = () => { window.location.href = 'p
   const slider = document.getElementById('who-slider');
   const track = document.getElementById('who-track');
   const dots = [0, 1, 2].map(i => document.getElementById('who-dot-' + i));
+  if (typeof _diag === 'function') _diag('slider=' + !!slider + ' track=' + !!track + ' dots=' + dots.filter(Boolean).length);
   if (!slider || !track) return;
   let current = 0;
   function goTo(idx) {
@@ -510,4 +511,5 @@ document.getElementById('ob3-later').onclick = () => { window.location.href = 'p
   });
 
   startAuto();
+  if (typeof _diag === 'function') _diag('✅ slider running, auto started');
 })();
