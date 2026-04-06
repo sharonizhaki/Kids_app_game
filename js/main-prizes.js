@@ -659,19 +659,11 @@ document.querySelectorAll('.ep-pts-shortcut').forEach(btn => {
   });
 });
 
-// =========== INIT ===========
-(async () => {
-  const user = await checkAuth();
+// =========== EXPORTED INIT (called by prizes.html after auth) ===========
+export async function initPrizesPage(familyId) {
+  setCurrentFamilyId(familyId);
 
-  try {
-    let famSnap = await getDocs(query(collection(db, 'families'), where('parentUid', '==', user.uid)));
-    if (famSnap.empty)
-      famSnap = await getDocs(query(collection(db, 'families'), where('secondaryParentUid', '==', user.uid)));
-    if (!famSnap.empty) setCurrentFamilyId(famSnap.docs[0].id);
-    else { window.location.href = 'parent.html'; return; }
-  } catch(e) { window.location.href = 'parent.html'; return; }
-
-  await loadChildren(getFamilyId());
+  await loadChildren(familyId);
   hideLoading();
 
   // routing לפי prizesTab (localStorage) או ?mode (URL param)
@@ -682,11 +674,11 @@ document.querySelectorAll('.ep-pts-shortcut').forEach(btn => {
 
   if (mode === 'manage') {
     showScreen('screen-manage-prizes');
+    switchTab('prizes');
     await updateRequestsBadge();
-    renderPrizesList();
   } else {
     // ברירת מחדל: הוספת פרס
-    await openAddPrize(getFamilyId());
+    await openAddPrize(familyId);
     initPrizeSuggestions();
     initPtsShortcuts('prize-pts-input', 'prize-pts-shortcut', (val) => setPrizePts(val));
     // quick prizes
@@ -698,4 +690,4 @@ document.querySelectorAll('.ep-pts-shortcut').forEach(btn => {
       btn.addEventListener('click', function() { handleQuickPrizes(this, this.dataset.cat); });
     });
   }
-})();
+}

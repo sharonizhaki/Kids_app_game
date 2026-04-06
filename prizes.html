@@ -279,6 +279,21 @@
 
 <div class="toast" id="toast"></div>
 
-<script type="module" src="./js/main-prizes.js"></script>
+<script type="module">
+import { auth, db } from './js/firebase.js';
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getDocs, query, collection, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { initPrizesPage } from './js/main-prizes.js';
+
+onAuthStateChanged(auth, async user => {
+  if (!user || user.isAnonymous) { window.location.href = 'index.html'; return; }
+  try {
+    let fSnap = await getDocs(query(collection(db, 'families'), where('parentUid', '==', user.uid)));
+    if (fSnap.empty) fSnap = await getDocs(query(collection(db, 'families'), where('secondaryParentUid', '==', user.uid)));
+    if (fSnap.empty) { window.location.href = 'index.html'; return; }
+    await initPrizesPage(fSnap.docs[0].id);
+  } catch (e) { console.error(e); window.location.href = 'index.html'; }
+});
+</script>
 </body>
 </html>
