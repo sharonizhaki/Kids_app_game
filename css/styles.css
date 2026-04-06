@@ -186,9 +186,8 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
 .star-btn.filled{filter:none;}
 .stars-display{display:inline;letter-spacing:1px;font-size:0.85em;}
 
-.assign-grid{display:flex;gap:10px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;}
-.assign-grid::-webkit-scrollbar{display:none;}
-.assign-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 12px;border-radius:14px;border:2px solid var(--border);background:var(--card);cursor:pointer;transition:transform 0.12s,border-color 0.2s;flex-shrink:0;}
+.assign-grid{display:flex;gap:12px;flex-wrap:wrap;}
+.assign-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 14px;border-radius:14px;border:2px solid var(--border);background:var(--card);cursor:pointer;transition:transform 0.12s,border-color 0.2s;min-width:70px;}
 .assign-opt:active{transform:scale(0.93);}
 .assign-opt.selected{border-color:var(--primary);background:#F0F0FF;box-shadow:0 0 0 3px rgba(99,102,241,0.2);}
 .assign-opt.assign-error{border-color:#EF4444!important;background:#FEF2F2!important;animation:assignShake 0.42s ease;}
@@ -218,7 +217,7 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
 
 .cat-scroll{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .cat-scroll::-webkit-scrollbar{display:none;}
-.cat-chip{flex-shrink:0;padding:6px 12px;border-radius:16px;background:var(--card);border:2px solid var(--border);font-size:0.78rem;font-weight:600;cursor:pointer;transition:border-color 0.15s,background 0.15s;font-family:'Heebo',sans-serif;white-space:nowrap;}
+.cat-chip{flex-shrink:0;padding:8px 16px;border-radius:20px;background:var(--card);border:2px solid var(--border);font-size:0.85rem;font-weight:600;cursor:pointer;transition:border-color 0.15s,background 0.15s;font-family:'Heebo',sans-serif;white-space:nowrap;}
 .cat-chip:active{transform:scale(0.95);}
 .cat-chip.selected{border-color:var(--primary);background:#F0F0FF;color:var(--primary);}
 .cat-chip.new-cat{border-style:dashed;color:var(--muted);}
@@ -329,23 +328,186 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
 }
 .quick-cat-done { animation: quickCatDone 0.48s cubic-bezier(.34,1.4,.64,1) forwards; }
 .quick-check-pop { display:inline-block; animation: quickCheckPop 0.42s cubic-bezier(.34,1.5,.64,1) forwards; }
+/* =========================================================
+   PRIZES — additions to styles.css
+   הדבק בסוף styles.css
+   ========================================================= */
 
-/* === VALIDATION SHAKE + ERROR BORDER === */
-@keyframes shake-short {
-  0%,100% { transform: translateX(0); }
-  20%      { transform: translateX(-5px); }
-  40%      { transform: translateX(5px); }
-  60%      { transform: translateX(-4px); }
-  80%      { transform: translateX(3px); }
+/* --- Prize Tabs --- */
+.prize-tab {
+  flex: 1; padding: 10px 14px;
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: 12px; font-family: 'Heebo', sans-serif;
+  font-size: 0.88rem; font-weight: 700; cursor: pointer;
+  color: var(--muted); transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
 }
-.input-error {
-  border-color: #EF4444 !important;
-  box-shadow: 0 0 0 3px rgba(239,68,68,0.18) !important;
-  animation: shake-short 0.32s ease;
+.prize-tab.active {
+  background: var(--primary); color: white; border-color: var(--primary);
 }
-.gender-error {
-  outline: 2.5px solid #EF4444 !important;
-  outline-offset: 3px;
-  border-radius: 16px;
-  animation: shake-short 0.32s ease;
+.prize-tab-badge {
+  min-width: 18px; height: 18px;
+  background: #EF4444; color: white;
+  border-radius: 9px; font-size: 0.65rem; font-weight: 800;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 4px;
 }
+
+/* --- Prize Management Card --- */
+.prize-mgmt-card {
+  background: var(--card); border-radius: 14px;
+  padding: 14px 16px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.prize-mgmt-emoji { font-size: 1.8rem; flex-shrink: 0; }
+.prize-mgmt-info  { flex: 1; }
+.prize-mgmt-info strong { display: block; font-weight: 700; font-size: 0.92rem; }
+.prize-mgmt-info span   { font-size: 0.78rem; color: var(--muted); }
+.prize-mgmt-actions { display: flex; gap: 6px; }
+.prize-mgmt-edit,
+.prize-mgmt-del {
+  background: #F1F5F9; border: none; border-radius: 10px;
+  width: 36px; height: 36px; font-size: 1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.prize-mgmt-edit:hover { background: #E0E7FF; }
+.prize-mgmt-del:hover  { background: #FEE2E2; }
+
+/* --- Request Section Title --- */
+.prize-req-section-title {
+  font-size: 0.78rem; font-weight: 800; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+/* --- Request Card --- */
+.prize-req-card {
+  background: var(--card); border-radius: 14px;
+  padding: 14px 16px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.prize-req-emoji { font-size: 1.8rem; flex-shrink: 0; }
+.prize-req-info  { flex: 1; }
+.prize-req-info strong { display: block; font-weight: 700; font-size: 0.9rem; }
+.prize-req-info span   { font-size: 0.78rem; color: var(--muted); }
+.prize-req-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.prize-req-badge-status {
+  font-size: 0.72rem; font-weight: 800;
+  border-radius: 8px; padding: 3px 8px;
+  white-space: nowrap;
+}
+.prize-req-btns { display: flex; gap: 6px; }
+.prize-req-approve,
+.prize-req-reject {
+  padding: 7px 12px; border: none; border-radius: 10px;
+  font-size: 0.8rem; font-weight: 700; cursor: pointer;
+  font-family: 'Heebo', sans-serif; transition: opacity 0.15s;
+}
+.prize-req-approve { background: #DCFCE7; color: #15803D; }
+.prize-req-reject  { background: #FEE2E2; color: #991B1B; }
+.prize-req-approve:hover { opacity: 0.8; }
+.prize-req-reject:hover  { opacity: 0.8; }
+
+/* status chips (shared) */
+.status-pending  { background: #FEF3C7; color: #92400E; }
+.status-approved { background: #DCFCE7; color: #15803D; }
+.status-rejected { background: #FEE2E2; color: #991B1B; }
+
+/* --- Prize Children Checkboxes --- */
+.prize-child-check {
+  display: flex; align-items: center; gap: 6px;
+  background: #F8FAFC; border: 2px solid var(--border);
+  border-radius: 10px; padding: 8px 12px;
+  font-size: 0.88rem; font-weight: 600; cursor: pointer;
+  font-family: 'Heebo', sans-serif; transition: border-color 0.15s;
+}
+.prize-child-check:has(input:checked) {
+  border-color: var(--primary); background: #EEF2FF;
+}
+.prize-child-check input { accent-color: var(--primary); }
+
+/* --- Prizes dashboard badge --- */
+#prizes-dash-badge {
+  min-width: 18px; height: 18px;
+  background: #EF4444; color: white;
+  border-radius: 9px; font-size: 0.65rem; font-weight: 800;
+  display: none; align-items: center; justify-content: center;
+  padding: 0 4px; margin-right: 4px;
+}
+/* =========================================================
+   PENDING APPROVALS + TABS + TOGGLE — additions to styles.css
+   הדבק בסוף styles.css
+   ========================================================= */
+
+/* --- Points Tabs --- */
+.mp-tab {
+  flex: 1; padding: 10px 14px;
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: 12px; font-family: 'Heebo', sans-serif;
+  font-size: 0.88rem; font-weight: 700; cursor: pointer;
+  color: var(--muted); transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.mp-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+.mp-tab-badge {
+  min-width: 18px; height: 18px;
+  background: #EF4444; color: white;
+  border-radius: 9px; font-size: 0.65rem; font-weight: 800;
+  display: inline-flex; align-items: center; justify-content: center; padding: 0 4px;
+}
+
+/* --- Section Title (pending) --- */
+.mp-section-title {
+  font-size: 0.78rem; font-weight: 800; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+}
+
+/* --- Approval Card --- */
+.approval-card {
+  background: var(--card); border-radius: 14px;
+  padding: 14px 16px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  max-width: 420px; width: 100%;
+}
+.approval-emoji { font-size: 1.8rem; flex-shrink: 0; }
+.approval-info  { flex: 1; min-width: 0; }
+.approval-info strong { display: block; font-weight: 700; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.approval-info span   { font-size: 0.75rem; color: var(--muted); }
+.approval-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+.approval-status-badge { font-size: 0.72rem; font-weight: 800; border-radius: 8px; padding: 3px 8px; white-space: nowrap; }
+.approval-btns { display: flex; gap: 5px; }
+.approval-btn  { padding: 7px 11px; border: none; border-radius: 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; font-family: 'Heebo', sans-serif; transition: opacity 0.15s; white-space: nowrap; }
+.approve-btn { background: #DCFCE7; color: #15803D; }
+.reject-btn  { background: #FEE2E2; color: #991B1B; }
+.approve-btn:hover { opacity: 0.8; }
+.reject-btn:hover  { opacity: 0.8; }
+
+/* status chips */
+.status-pending  { background: #FEF3C7; color: #92400E; }
+.status-approved { background: #DCFCE7; color: #15803D; }
+.status-rejected { background: #FEE2E2; color: #991B1B; }
+
+/* --- Toggle Switch (tasks.html) --- */
+.require-approval-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: #F5F3FF; border-radius: 14px; padding: 14px 16px;
+  border: 1.5px solid #DDD6FE;
+}
+.toggle-switch { position: relative; display: inline-block; width: 48px; height: 26px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; border-radius: 13px;
+  background: #CBD5E1; cursor: pointer; transition: background 0.2s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute;
+  width: 20px; height: 20px; left: 3px; top: 3px;
+  border-radius: 50%; background: white;
+  transition: transform 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}
+.toggle-switch input:checked + .toggle-slider { background: #6366F1; }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }

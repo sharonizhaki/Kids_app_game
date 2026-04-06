@@ -1,6 +1,4 @@
 // =========== child.js ===========
-// אורכסטרטור ראשי: auth, load, renderChild, nav, logout.
-
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
@@ -9,11 +7,14 @@ import {
   collection, updateDoc, onSnapshot,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-import { state }                                   from './child-state.js';
-import { show, showToast, showConfirm }            from './child-ui.js';
-import { isDone, renderCategories, renderHistory } from './child-tasks.js';
-import { initProfile }                             from './child-profile.js';
-import { initPrizes, renderPrizesScreen }          from './child-prizes.js';
+import { state }                                              from './child-state.js';
+import { show, showToast, showConfirm }                      from './child-ui.js';
+import {
+  isDone, renderCategories, renderHistory,
+  renderPendingSection, initTasksModule,
+} from './child-tasks.js';
+import { initProfile }                                        from './child-profile.js';
+import { initPrizes, renderPrizesScreen }                    from './child-prizes.js';
 import {
   checkAndGrantBadges, computeStreak,
   renderBadgesScreen, renderWeekGraph,
@@ -73,7 +74,7 @@ export async function saveState() {
   } catch (e) { console.error('saveState error:', e); }
 }
 
-// -------- RENDER CHILD (home screen) --------
+// -------- RENDER CHILD --------
 export function renderChild() {
   const { childData, childState } = state;
   if (!childData || !childState) return;
@@ -89,20 +90,19 @@ export function renderChild() {
   const titleEl = document.getElementById('child-title');
   if (titleEl) titleEl.textContent = childData.name;
 
-  // nav profile icon
-  const navProfileIcon = document.getElementById('nav-profile-icon');
-  if (navProfileIcon) navProfileIcon.textContent = childData.emoji || '👤';
+  const navIcon = document.getElementById('nav-profile-icon');
+  if (navIcon) navIcon.textContent = childData.emoji || '👤';
 
   // greeting
   const color = childData.color || '#6366F1';
-  const gc = document.getElementById('greeting-card');
+  const gc    = document.getElementById('greeting-card');
   if (gc) {
     gc.style.background = `linear-gradient(135deg, ${color}, ${darkenColor(color)})`;
     gc.style.boxShadow  = `0 6px 24px ${color}55`;
   }
   const greetings = childData.gender === 'female' ? GREETINGS_F : GREETINGS_M;
   const gtEl = document.getElementById('greeting-text');
-  if (gtEl) gtEl.textContent = `שלום ${childData.name}! ${greetings[Math.floor(Math.random() * greetings.length)]}`;
+  if (gtEl) gtEl.textContent = `שלום ${childData.name}! ${greetings[Math.floor(Math.random()*greetings.length)]}`;
 
   const todayDone = state.tasksData.filter(t => isDone(t)).length;
   const gsEl = document.getElementById('greeting-sub');
@@ -111,7 +111,7 @@ export function renderChild() {
     : (childData.gender === 'female' ? 'בחרי קטגוריה והתחילי!' : 'בחר קטגוריה והתחל!');
 
   // stats
-  const pts = childState.pts || 0;
+  const pts   = childState.pts || 0;
   const pbVal = document.getElementById('pb-val');
   const moVal = document.getElementById('monthly-val');
   if (pbVal) pbVal.textContent = pts;
@@ -124,7 +124,7 @@ export function renderChild() {
   if (streakVal)  streakVal.textContent = streak;
   if (streakCard) streakCard.classList.toggle('active', streak >= 2);
 
-  // progress bar
+  // progress
   const ptEl = document.getElementById('progress-text');
   if (ptEl) ptEl.textContent = `${pts} / 100 כוכבים`;
   const pf = document.getElementById('progress-fill');
@@ -136,16 +136,17 @@ export function renderChild() {
     setTimeout(() => { pf.style.width = Math.min(100, pts) + '%'; }, 100);
   }
 
-  // weekly graph + tasks + history
+  // sub-modules
   renderWeekGraph();
+  renderPendingSection();          // ⬅ שלב 5
   renderCategories(saveState, renderChild);
   renderHistory();
 
-  // badge check
+  // badges
   const newBadges = checkAndGrantBadges(saveState);
   if (newBadges.length > 0) {
-    const navBadge = document.getElementById('nav-badge-badges');
-    if (navBadge) { navBadge.textContent = '!'; navBadge.style.display = 'flex'; }
+    const nb = document.getElementById('nav-badge-badges');
+    if (nb) { nb.textContent = '!'; nb.style.display = 'flex'; }
   }
 }
 
@@ -154,11 +155,10 @@ function initNav() {
   const navBtns = document.querySelectorAll('.nav-btn');
   navBtns.forEach(btn => {
     btn.onclick = () => {
-      const screenId = btn.dataset.screen;
-      const tab      = btn.dataset.tab;
+      const tab = btn.dataset.tab;
       navBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      show(screenId);
+      show(btn.dataset.screen);
       if (tab === 'prizes') renderPrizesScreen();
       if (tab === 'badges') {
         renderBadgesScreen();
@@ -171,7 +171,7 @@ function initNav() {
 
 // -------- AUTH & LOAD --------
 function clearStorage() {
-  ['childId', 'childFamilyId', 'childAnonUid'].forEach(k => localStorage.removeItem(k));
+  ['childId','childFamilyId','childAnonUid'].forEach(k => localStorage.removeItem(k));
 }
 
 if (!state.childId || !state.familyId) {
@@ -201,7 +201,6 @@ async function loadChild() {
     if (stateSnap.exists()) {
       state.childState = stateSnap.data();
       const cs = state.childState;
-      // backfill
       if (cs.monthlyPts === undefined) cs.monthlyPts = 0;
       if (!cs.mk)       cs.mk       = monthKey();
       if (!cs.dailyPts) cs.dailyPts = {};
@@ -231,6 +230,8 @@ async function loadChild() {
       });
     } catch (e) { state.tasksData = []; }
 
+    // init modules — חשוב: initTasksModule לפני initProfile ו-initPrizes
+    initTasksModule(db);
     initProfile(db, renderChild);
     initPrizes(db);
     initNav();
@@ -247,6 +248,30 @@ async function loadChild() {
       });
       renderCategories(saveState, renderChild);
     });
+
+    // listener על pendingApprovals — עדכון real-time כשהורה מאשר/דוחה
+    onSnapshot(
+      collection(db, 'families', state.familyId, 'pendingApprovals'),
+      snap => {
+        const cs = state.childState;
+        if (!cs) return;
+        snap.docChanges().forEach(change => {
+          const data = change.doc.data();
+          if (data.childId !== state.childId) return;
+          if (change.type === 'modified' || change.type === 'added') {
+            // עדכן status ב-pending המקומי
+            const idx = (cs.pending || []).findIndex(
+              p => p.taskId === data.taskId && Math.abs(p.ts - data.ts) < 5000
+            );
+            if (idx !== -1) {
+              cs.pending[idx].status = data.status;
+              saveState();
+              renderPendingSection();
+            }
+          }
+        });
+      }
+    );
 
   } catch (e) {
     console.error('loadChild error:', e);

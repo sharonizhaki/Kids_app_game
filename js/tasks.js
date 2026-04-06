@@ -36,6 +36,7 @@ let taskSelectedFreq = '';
 let taskSelectedDays = [];
 let taskAssignedChildren = [];
 let taskSelectedCat = '';
+let taskRequireApproval = false;  // ← חדש: שלב 5
 
 // =========== EDIT TASK STATE ===========
 export let allTasksFlat = [];
@@ -47,6 +48,7 @@ let etSelectedFreq = '';
 let etSelectedDays = [];
 let etFilter = 'all';
 let etSubFilter = '';
+let etRequireApproval = false;  // ← חדש: שלב 5
 
 // =========== OPEN ADD TASK ===========
 export async function openAddTask(familyId) {
@@ -66,6 +68,10 @@ export async function openAddTask(familyId) {
   taskSelectedFreq = '';
   taskSelectedDays = [];
   taskAssignedChildren = [];
+  // ← חדש: reset requireApproval
+  taskRequireApproval = false;
+  const approvalToggle = document.getElementById('task-require-approval');
+  if (approvalToggle) approvalToggle.checked = false;
 
   // Build category list
   await loadChildren(familyId);
@@ -97,7 +103,6 @@ export async function openAddTask(familyId) {
   renderAssignGrid('task-assign-grid', [], (children) => { taskAssignedChildren = children; });
 
   showScreen('screen-add-task');
-
 
   setTimeout(async () => {
     try {
@@ -156,11 +161,12 @@ export async function saveTask(familyId) {
       reminder: reminder || '',
       hidden: false,
       assignedChildren: taskAssignedChildren,
+      requireApproval: taskRequireApproval,  // ← חדש: שלב 5
       createdAt: serverTimestamp()
     });
     hideLoading();
     showToast('מטלה נוספה! ✅');
-    setTimeout(() => { window.location.href = 'parent.html'; }, 800);
+    showScreen('screen-dashboard');
   } catch(e) {
     hideLoading();
     document.getElementById('add-task-error').textContent = 'שגיאה בשמירה, נסה שוב';
@@ -250,6 +256,7 @@ function buildMetaTags(t) {
   const freqTag   = `<span class="etask-tag freq-tag">${FREQ_LABELS[t.freq] || t.freq || ''}</span>`;
   const starsTag  = t.pts > 0 ? `<span class="etask-tag stars-tag">${'⭐'.repeat(Math.min(t.pts,5))}</span>` : '';
   const hiddenTag = t.hidden ? '<span class="etask-tag hidden-tag">מוסתר</span>' : '';
+  const approvalTag = t.requireApproval ? '<span class="etask-tag approval-tag-list">👁️ דורש אישור</span>' : '';  // ← חדש
   const tags = { child: childTag, cat: catTag, freq: freqTag, stars: starsTag };
   let order;
   if      (etFilter === 'child') order = ['child','cat','freq','stars'];
@@ -257,7 +264,7 @@ function buildMetaTags(t) {
   else if (etFilter === 'stars') order = ['stars','child','cat','freq'];
   else if (etFilter === 'freq')  order = ['freq','child','cat','stars'];
   else                           order = ['child','cat','freq','stars'];
-  return order.map(k => tags[k]).filter(Boolean).join('') + hiddenTag;
+  return order.map(k => tags[k]).filter(Boolean).join('') + hiddenTag + approvalTag;
 }
 
 // =========== RENDER EDIT TASKS LIST ===========
@@ -284,19 +291,17 @@ export function renderEditTasksList(familyId) {
     tasks = Array.from(seen.values());
   }
 
-  // כשפילטר ילד פעיל אבל עוד לא נבחר ילד — מציגים הנחייה
   if (etFilter === 'child' && !etSubFilter) {
     list.innerHTML = '<div class="empty-state">👆 בחר ילד מהרשימה למעלה</div>';
     return;
   }
 
-  // sort — מיון ראשי + מיון משני לפי שם מטלה
   const byName = (a,b) => (a.task||'').localeCompare(b.task||'', 'he');
   if (etFilter === 'stars') tasks.sort((a,b) => (b.pts||0) - (a.pts||0) || byName(a,b));
   else if (etFilter === 'cat')   tasks.sort((a,b) => (a.cat||'').localeCompare(b.cat||'','he') || byName(a,b));
   else if (etFilter === 'child') tasks.sort((a,b) => (a.childName||'').localeCompare(b.childName||'','he') || byName(a,b));
   else if (etFilter === 'freq')  tasks.sort((a,b) => (FREQ_ORDER[a.freq]??99) - (FREQ_ORDER[b.freq]??99) || byName(a,b));
-  else tasks.sort((a,b) => b.taskId.localeCompare(a.taskId)); // newest first (by doc ID)
+  else tasks.sort((a,b) => b.taskId.localeCompare(a.taskId));
 
   if (tasks.length === 0) { list.innerHTML = '<div class="empty-state">אין מטלות להצגה</div>'; return; }
 
@@ -316,7 +321,6 @@ export function renderEditTasksList(familyId) {
       </div>
     </div>`).join('');
 
-  // attach handlers
   list.querySelectorAll('.etask-wrap').forEach(wrap => {
     const taskId  = wrap.dataset.taskId;
     const childId = wrap.dataset.childId;
@@ -373,6 +377,11 @@ export function openEditTask(childId, taskId, familyId) {
   document.getElementById('et-desc').value = t.desc || '';
   document.getElementById('et-reminder').value = t.reminder || '';
   document.getElementById('et-error').textContent = '';
+
+  // ← חדש: טעינת requireApproval קיים
+  etRequireApproval = t.requireApproval || false;
+  const etApprovalToggle = document.getElementById('et-require-approval');
+  if (etApprovalToggle) etApprovalToggle.checked = etRequireApproval;
 
   // Assign grid
   const assignGrid = document.getElementById('et-assign-grid');
@@ -452,7 +461,8 @@ export async function saveEditedTask(familyId) {
       days: etSelectedFreq === 'specific' ? etSelectedDays : [],
       desc: document.getElementById('et-desc').value.trim(),
       reminder: document.getElementById('et-reminder').value || '',
-      assignedChildren: assigned
+      assignedChildren: assigned,
+      requireApproval: etRequireApproval,  // ← חדש: שלב 5
     });
     await loadAllTasks(familyId);
     hideLoading();
@@ -589,7 +599,6 @@ export function renderTaskEmojiGrid(gridId, current, onSelect) {
     });
   }
 
-  // if selected emoji is beyond initial set, expand fully from start
   const currentIdx = TASK_EMOJIS.indexOf(current);
   buildGrid(currentIdx >= SHOW_INITIAL);
 }
@@ -661,44 +670,46 @@ const QUICK_TASKS_HYGIENE = [
   { task:'סידור שיער',         emoji:'💇', cat:'🧼 היגיינה', pts:1, freq:'daily' },
   { task:'שטיפת ידיים',        emoji:'🧼', cat:'🧼 היגיינה', pts:1, freq:'daily' },
 ];
-
 const QUICK_TASKS_CHORES = [
-  { task:'סידור מיטה',      emoji:'🛏️', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
-  { task:'לזרוק זבל',       emoji:'🗑️', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
-  { task:'ניקוי שולחן',     emoji:'🧹', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
-  { task:'שטיפת כלים',      emoji:'🍽️', cat:'🏠 מטלות בית', pts:2, freq:'daily' },
-  { task:'סידור צעצועים',   emoji:'🧸', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
+  { task:'סידור מיטה',    emoji:'🛏️', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
+  { task:'לזרוק זבל',     emoji:'🗑️', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
+  { task:'ניקוי שולחן',   emoji:'🧹', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
+  { task:'שטיפת כלים',    emoji:'🍽️', cat:'🏠 מטלות בית', pts:2, freq:'daily' },
+  { task:'סידור צעצועים', emoji:'🧸', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
 ];
-
 const QUICK_TASKS_STUDY = [
-  { task:'שיעורי בית',      emoji:'✏️', cat:'📚 לימודים', pts:3, freq:'daily' },
-  { task:'קריאה',           emoji:'📚', cat:'📚 לימודים', pts:2, freq:'daily' },
-  { task:'חזרה על חומר',    emoji:'📖', cat:'📚 לימודים', pts:2, freq:'daily' },
-  { task:'סדר בתיק',        emoji:'🎒', cat:'📚 לימודים', pts:1, freq:'daily' },
+  { task:'שיעורי בית',          emoji:'✏️', cat:'📚 לימודים', pts:3, freq:'daily' },
+  { task:'קריאה',               emoji:'📚', cat:'📚 לימודים', pts:2, freq:'daily' },
+  { task:'חזרה על חומר',        emoji:'📖', cat:'📚 לימודים', pts:2, freq:'daily' },
+  { task:'סדר בתיק',            emoji:'🎒', cat:'📚 לימודים', pts:1, freq:'daily' },
   { task:'הכנת ציוד ליום המחר', emoji:'📐', cat:'📚 לימודים', pts:1, freq:'daily' },
 ];
-
-const QUICK_TASK_SETS = {
-  hygiene: QUICK_TASKS_HYGIENE,
-  chores:  QUICK_TASKS_CHORES,
-  study:   QUICK_TASKS_STUDY,
-};
+const QUICK_TASK_SETS = { hygiene: QUICK_TASKS_HYGIENE, chores: QUICK_TASKS_CHORES, study: QUICK_TASKS_STUDY };
 
 export async function createQuickTasks(familyId, category) {
   await loadChildren(familyId);
   const childIds = childrenCache.map(c => c.id);
   if (!childIds.length) { showToast('יש להוסיף ילד תחילה'); return false; }
-
   const tasks = QUICK_TASK_SETS[category] || QUICK_TASKS_HYGIENE;
   await Promise.all(tasks.map(t =>
     setDoc(doc(collection(db, 'families', familyId, 'tasks')), {
       task: t.task, emoji: t.emoji, cat: t.cat, catIcon: t.emoji,
       pts: t.pts, freq: t.freq, days: [], desc: '', reminder: '',
-      hidden: false, assignedChildren: childIds, createdAt: serverTimestamp()
+      hidden: false, requireApproval: false, assignedChildren: childIds,
+      createdAt: serverTimestamp()
     })
   ));
   return true;
 }
+
+// =========== EVENT LISTENERS — requireApproval toggles ===========
+// ← חדש: שלב 5
+document.getElementById('task-require-approval')?.addEventListener('change', (e) => {
+  taskRequireApproval = e.target.checked;
+});
+document.getElementById('et-require-approval')?.addEventListener('change', (e) => {
+  etRequireApproval = e.target.checked;
+});
 
 // =========== GUIDED TOUR ===========
 export function startTaskTour(familyId) {
@@ -707,7 +718,7 @@ export function startTaskTour(familyId) {
     ? 'הכנס שם למטלה, לחץ "💡 משימות לדוגמא" לרעיונות מוכנים — או צרו 5 משימות אוטומטיות בלחיצה על הקטגוריה'
     : 'הכנס שם למטלה, לחץ "💡 משימות לדוגמא" לרעיונות מוכנים';
   const steps = [
-    { el: '#task-name-input', title: 'שם המטלה', text: step1Text },
+    { el: '#task-name-input',         title: 'שם המטלה',      text: step1Text },
     { el: '#task-cat-scroll',         title: 'קטגוריה',       text: 'בחר קטגוריה — היגיינה, לימודים, מטלות בית... או צור קטגוריה חדשה' },
     { el: '#task-assign-grid',        title: 'שיוך לילד/ים',  text: 'כאן מופיעים הילדים שלך — בחר לאיזה ילד/ים המטלה משויכת' },
     { el: '#task-emoji-grid',         title: 'אייקון',         text: 'בחר אייקון שיופיע ליד שם המטלה' },
@@ -745,7 +756,6 @@ export function startTaskTour(familyId) {
     const step = steps[idx];
     const rawEl = document.querySelector(step.el);
     if (!rawEl) { endTour(); return; }
-    // אם האלמנט מוסתר — דלג לשלב הבא
     if (getComputedStyle(rawEl).display === 'none') {
       currentStep++;
       if (currentStep >= steps.length) endTour(); else showStep(currentStep);
@@ -754,20 +764,16 @@ export function startTaskTour(familyId) {
     const el = step.exact ? rawEl : (rawEl.closest('.form-section') || rawEl);
 
     card.classList.remove('visible');
-    void card.offsetWidth; // force reflow so animation resets cleanly
+    void card.offsetWidth;
     shutterTop.style.height = '0px';
     shutterBottom.style.height = '0px';
     rawEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    // wait for shutters to fully close + scroll to settle
     setTimeout(() => {
       const rect = el.getBoundingClientRect();
-
-      // Open spotlight shutters
       shutterTop.style.height = Math.max(0, rect.top - PAD) + 'px';
       shutterBottom.style.height = Math.max(0, window.innerHeight - rect.bottom - PAD) + 'px';
 
-      // Populate card while spotlight is opening (no delay — just hidden via clip-path)
       const dotsHTML = steps.map((_, i) => `<span class="tour-dot${i === idx ? ' active' : ''}"></span>`).join('');
       card.innerHTML = `
         <div class="tour-card-btns" style="margin-bottom:10px;">
@@ -790,15 +796,12 @@ export function startTaskTour(familyId) {
         if (currentStep >= steps.length) endTour(); else showStep(currentStep);
       };
       document.getElementById('tour-skip')?.addEventListener('click', endTour);
-
-      // Iris-open animation — starts ~130ms after spotlight begins (synced)
       setTimeout(() => card.classList.add('visible'), 130);
     }, 520);
   }
 
   function endTour() {
     card.classList.remove('visible');
-    // close shutters inward to cover full screen — no exposed area
     shutterTop.style.height = Math.ceil(window.innerHeight / 2 + 2) + 'px';
     shutterBottom.style.height = Math.ceil(window.innerHeight / 2 + 2) + 'px';
     setTimeout(() => {

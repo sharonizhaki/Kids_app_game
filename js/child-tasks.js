@@ -1,7 +1,11 @@
 // =========== child-tasks.js ===========
-// לוגיקת משימות: isDone, completeTask, render קטגוריות, render היסטוריה, modals.
+// לוגיקת משימות: isDone, completeTask (עם pending), render קטגוריות, היסטוריה, modals.
 
-import { state } from './child-state.js';
+import {
+  collection, addDoc, serverTimestamp,
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+import { state }                                    from './child-state.js';
 import { starsText, makeModal, closeModals, showToast } from './child-ui.js';
 
 // -------- CONSTANTS --------
@@ -19,10 +23,14 @@ export const FREQ_CLS = {
 };
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
+// db מועבר מ-child.js בעת init
+let _db = null;
+export function initTasksModule(db) { _db = db; }
+
 // -------- DATE HELPERS --------
 export function todayKey() {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 // -------- IS DONE --------
@@ -37,43 +45,123 @@ export function isDone(t) {
   return false;
 }
 
-// -------- COMPLETE TASK --------
-// saveStateFn — async פונקציה לשמירת state ל-Firestore
-export function completeTask(t, saveStateFn) {
-  const d = new Date();
-  const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  const day  = DAYS[d.getDay()];
-  const dateKey = todayKey();
-  const cs = state.childState;
+// -------- IS PENDING --------
+// האם המשימה כבר שלוחה לאישור ועדיין ממתינה
+export function isPending(t) {
+  return (state.childState?.pending || []).some(
+    p => p.taskId === t.id && p.status === 'pending'
+  );
+}
 
-  // כוכבים
+// -------- COMPLETE TASK (entry point) --------
+export function completeTask(t, saveStateFn) {
+  if (t.requireApproval) {
+    _submitPending(t, saveStateFn);
+  } else {
+    _finalizeTask(t, saveStateFn);
+  }
+}
+
+// -------- FINALIZE (ביצוע סופי — ישיר או לאחר אישור הורה) --------
+export function _finalizeTask(t, saveStateFn) {
+  const d       = new Date();
+  const time    = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  const day     = DAYS[d.getDay()];
+  const dateKey = todayKey();
+  const cs      = state.childState;
+
   cs.pts = (cs.pts || 0) + t.pts;
 
-  // comp
   const c = cs.comp?.[t.id] || { wc: 0, d: '', count: 0, lastTs: 0 };
   c.wc++; c.d = dateKey; c.count++; c.lastTs = Date.now();
   if (!cs.comp) cs.comp = {};
   cs.comp[t.id] = c;
 
-  // streak + dailyPts
   cs.lastActive = dateKey;
   if (!cs.dailyPts) cs.dailyPts = {};
   cs.dailyPts[dateKey] = (cs.dailyPts[dateKey] || 0) + t.pts;
 
-  // hist
   if (!cs.hist) cs.hist = [];
   cs.hist.unshift({
     taskId: t.id,
     task:   t.task,
     emoji:  t.emojis?.split?.(' ')?.[0] || t.emoji || '⭐',
     pts:    t.pts,
-    time,
-    day,
+    time, day,
     ts:     Date.now(),
   });
   if (cs.hist.length > 50) cs.hist.pop();
 
   saveStateFn();
+}
+
+// -------- SUBMIT PENDING (שליחה לאישור הורה) --------
+async function _submitPending(t, saveStateFn) {
+  const d    = new Date();
+  const time = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  const day  = DAYS[d.getDay()];
+  const cs   = state.childState;
+  const ts   = Date.now();
+
+  // עדכון מקומי מיידי
+  if (!cs.pending) cs.pending = [];
+  cs.pending.push({
+    taskId: t.id,
+    task:   t.task,
+    emoji:  t.emojis?.split?.(' ')?.[0] || t.emoji || '⭐',
+    pts:    t.pts,
+    time, day, ts,
+    status: 'pending',
+  });
+  saveStateFn();
+
+  // כתיבה ל-Firestore (שההורה יראה)
+  if (_db && state.familyId && state.childId) {
+    try {
+      await addDoc(
+        collection(_db, 'families', state.familyId, 'pendingApprovals'),
+        {
+          taskId:     t.id,
+          task:       t.task,
+          emoji:      t.emojis?.split?.(' ')?.[0] || t.emoji || '⭐',
+          pts:        t.pts,
+          time, day, ts,
+          childId:    state.childId,
+          childName:  state.childData?.name  || '',
+          childEmoji: state.childData?.emoji || '👦',
+          status:     'pending',
+          createdAt:  serverTimestamp(),
+        }
+      );
+    } catch (e) { console.error('pendingApprovals write error:', e); }
+  }
+}
+
+// -------- RENDER PENDING SECTION (home screen) --------
+export function renderPendingSection() {
+  const section = document.getElementById('pending-section');
+  if (!section) return;
+
+  const pending = (state.childState?.pending || []);
+  const active  = pending.filter(p => p.status !== 'rejected');
+
+  if (active.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+
+  const list = document.getElementById('pending-list');
+  if (!list) return;
+
+  list.innerHTML = active.map(p => `
+    <div class="pending-item">
+      <span class="pending-emoji">${p.emoji || '⭐'}</span>
+      <div class="pending-info">
+        <strong>${p.task}</strong>
+        <span>${p.day} ${p.time}</span>
+      </div>
+      <span class="pending-badge ${p.status === 'approved' ? 'pending-approved' : 'pending-waiting'}">
+        ${p.status === 'approved' ? '✅ אושר!' : '⏳ ממתין'}
+      </span>
+    </div>`).join('');
 }
 
 // -------- RENDER CATEGORIES GRID --------
@@ -91,7 +179,6 @@ export function renderCategories(saveStateFn, renderChildFn) {
     return;
   }
 
-  // קיבוץ לפי קטגוריה
   const cats = {};
   visibleTasks.forEach(t => {
     const cat = t.cat || 'כללי';
@@ -100,16 +187,18 @@ export function renderCategories(saveStateFn, renderChildFn) {
   });
 
   grid.innerHTML = Object.entries(cats).map(([cat, tasks]) => {
-    const dn   = tasks.filter(t => isDone(t)).length;
-    const icon = tasks[0]?.catIcon || '📋';
+    const dn      = tasks.filter(t => isDone(t)).length;
+    const pn      = tasks.filter(t => !isDone(t) && isPending(t)).length;
     const allDone = dn === tasks.length;
+    const icon    = tasks[0]?.catIcon || '📋';
+
     return `
       <button class="cat-btn${allDone ? ' cat-btn-done' : ''}" data-cat="${cat}">
         <span class="cat-icon">${icon}</span>
         <span class="cat-name">${cat}</span>
         ${allDone
           ? '<span class="cat-done">✅ הושלם!</span>'
-          : `<span class="cat-count">${dn}/${tasks.length} בוצעו</span>`}
+          : `<span class="cat-count">${dn}/${tasks.length} בוצעו${pn > 0 ? ` · ${pn} ⏳` : ''}</span>`}
       </button>`;
   }).join('');
 
@@ -142,19 +231,21 @@ function showCatModal(cat, saveStateFn, renderChildFn) {
   const body  = makeModal(`${tasks[0]?.catIcon || '📋'} ${cat}`);
 
   tasks.forEach(t => {
-    const done = isDone(t);
-    const d = document.createElement('div');
-    d.className = `task-card${done ? ' done' : ''}`;
-    d.innerHTML = `
+    const done    = isDone(t);
+    const pending = !done && isPending(t);
+    const d       = document.createElement('div');
+    d.className   = `task-card${done ? ' done' : pending ? ' task-pending' : ''}`;
+    d.innerHTML   = `
       <div class="tc-left">
         <span class="tc-emoji">${t.emoji || '⭐'}</span>
         <div class="tc-info">
           <strong>${t.task}</strong>
           <span class="freq-tag ${FREQ_CLS[t.freq] || ''}">${FREQ_LABEL[t.freq] || ''}</span>
+          ${t.requireApproval ? '<span class="approval-tag">👁️ דורש אישור</span>' : ''}
         </div>
       </div>
-      <span class="tc-pts">${done ? '✅' : starsText(t.pts)}</span>`;
-    if (!done) d.onclick = () => showTaskDetail(t, saveStateFn, renderChildFn);
+      <span class="tc-pts">${done ? '✅' : pending ? '⏳' : starsText(t.pts)}</span>`;
+    if (!done && !pending) d.onclick = () => showTaskDetail(t, saveStateFn, renderChildFn);
     body.appendChild(d);
   });
 }
@@ -172,22 +263,27 @@ function showTaskDetail(t, saveStateFn, renderChildFn) {
   }
 
   const desc = document.createElement('p');
-  desc.className = 'td-desc';
+  desc.className   = 'td-desc';
   desc.textContent = t.desc || '';
 
   const meta = document.createElement('div');
   meta.className = 'td-meta';
   meta.innerHTML = `
     <span>${starsText(t.pts)}</span>
-    <span>🔁 ${FREQ_LABEL[t.freq] || ''}</span>`;
+    <span>🔁 ${FREQ_LABEL[t.freq] || ''}</span>
+    ${t.requireApproval ? '<span class="approval-meta-tag">👁️ דורש אישור הורה</span>' : ''}`;
 
   const btn = document.createElement('button');
-  btn.className = 'done-btn';
-  btn.textContent = '✅ בוצע!';
+  btn.className   = 'done-btn';
+  btn.textContent = t.requireApproval ? '📤 שלח לאישור הורה' : '✅ בוצע!';
   btn.onclick = () => {
     completeTask(t, saveStateFn);
     closeModals();
-    showToast({ pts: t.pts, color: state.childData?.color });
+    if (t.requireApproval) {
+      showToast({ message: 'נשלח לאישור הורה! ⏳', color: state.childData?.color });
+    } else {
+      showToast({ pts: t.pts, color: state.childData?.color });
+    }
     renderChildFn();
   };
 

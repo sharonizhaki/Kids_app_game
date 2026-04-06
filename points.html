@@ -24,15 +24,23 @@
     <button class="back-btn" id="btn-back-to-parent">→</button>
     <h2>ניהול ניקוד ⭐</h2>
   </div>
-  <p style="color:var(--muted);font-size:0.85rem;max-width:420px;width:100%;margin-bottom:10px;">מטלות שבוצעו השבוע. סוויפ לביטול ביצוע.</p>
-  <div class="filter-scroll" id="mp-filter">
-    <span class="filter-chip active" data-filter="all">📋 הכל</span>
-    <span class="filter-chip" data-filter="child">👧👦 לפי ילד</span>
-    <span class="filter-chip" data-filter="cat">📂 לפי קטגוריה</span>
-    <span class="filter-chip" data-filter="stars">⭐ לפי כוכבים</span>
-    <span class="filter-chip" data-filter="day">📅 לפי יום</span>
+
+  <!-- Tabs: בוצעו | ממתין לאישור -->
+  <div id="mp-tabs" style="display:flex;gap:8px;max-width:420px;width:100%;margin-bottom:14px;"></div>
+
+  <!-- filter section — מוסתר בtab ממתין -->
+  <div id="mp-filter-section">
+    <p style="color:var(--muted);font-size:0.85rem;max-width:420px;width:100%;margin-bottom:10px;">מטלות שבוצעו השבוע. סוויפ לביטול ביצוע.</p>
+    <div class="filter-scroll" id="mp-filter">
+      <span class="filter-chip active" data-filter="all">📋 הכל</span>
+      <span class="filter-chip" data-filter="child">👧👦 לפי ילד</span>
+      <span class="filter-chip" data-filter="cat">📂 לפי קטגוריה</span>
+      <span class="filter-chip" data-filter="stars">⭐ לפי כוכבים</span>
+      <span class="filter-chip" data-filter="day">📅 לפי יום</span>
+    </div>
+    <div class="sub-filter-scroll" id="mp-sub-filter" style="display:none;"></div>
   </div>
-  <div class="sub-filter-scroll" id="mp-sub-filter" style="display:none;"></div>
+
   <div class="etask-list" id="mp-list">
     <div class="empty-state">טוען...</div>
   </div>
