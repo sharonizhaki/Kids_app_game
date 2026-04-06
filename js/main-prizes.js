@@ -674,9 +674,11 @@ document.querySelectorAll('.ep-pts-shortcut').forEach(btn => {
   await loadChildren(getFamilyId());
   hideLoading();
 
-  // routing לפי ?mode
+  // routing לפי prizesTab (localStorage) או ?mode (URL param)
+  const prizesTab = localStorage.getItem('prizesTab');
+  localStorage.removeItem('prizesTab');
   const params = new URLSearchParams(window.location.search);
-  const mode   = params.get('mode');
+  const mode = prizesTab || params.get('mode');
 
   if (mode === 'manage') {
     showScreen('screen-manage-prizes');

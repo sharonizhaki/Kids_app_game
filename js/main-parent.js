@@ -184,11 +184,13 @@ document.getElementById('btn-manage-points').onclick = () => {
 };
 
 document.getElementById('btn-add-prizes').onclick = () => {
+  localStorage.setItem('prizesTab', 'add');
   window.location.href = 'prizes.html';
 };
 
 document.getElementById('btn-manage-prizes').onclick = () => {
-  window.location.href = 'prizes.html?mode=manage';
+  localStorage.setItem('prizesTab', 'manage');
+  window.location.href = 'prizes.html';
 };
 
 document.getElementById('btn-logout').onclick = () => {
