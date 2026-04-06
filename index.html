@@ -339,28 +339,6 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<div id="js-diag" style="position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#1E293B;color:#F8FAFC;font-size:13px;font-family:monospace;padding:8px 12px;direction:ltr;display:none;word-break:break-all;"></div>
-<script>
-  function _diag(msg) {
-    var d = document.getElementById('js-diag');
-    if (d) { d.textContent = msg; d.style.display = 'block'; }
-  }
-  window.addEventListener('error', function(e) {
-    _diag('JS ERROR: ' + e.message + ' [' + (e.filename||'').split('/').pop() + ':' + e.lineno + ']');
-  });
-  window.addEventListener('unhandledrejection', function(e) {
-    var r = e.reason;
-    _diag('PROMISE ERR: ' + (r && (r.message||r.code||String(r))));
-  });
-</script>
-<script type="module">
-  try {
-    await import('./js/main-index.js');
-    _diag('✅ JS module loaded OK');
-    setTimeout(() => { var d = document.getElementById('js-diag'); if(d) d.style.display='none'; }, 4000);
-  } catch(e) {
-    _diag('MODULE FAIL: ' + e.message);
-  }
-</script>
+<script type="module" src="./js/main-index.js"></script>
 </body>
 </html>
