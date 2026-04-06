@@ -188,7 +188,7 @@ document.getElementById('btn-add-prizes').onclick = () => {
 };
 
 document.getElementById('btn-manage-prizes').onclick = () => {
-  window.location.href = 'prizes.html';
+  window.location.href = 'prizes.html?mode=manage';
 };
 
 document.getElementById('btn-logout').onclick = () => {
