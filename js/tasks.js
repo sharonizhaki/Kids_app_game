@@ -166,7 +166,6 @@ export async function saveTask(familyId) {
     });
     hideLoading();
     showToast('מטלה נוספה! ✅');
-    showScreen('screen-dashboard');
   } catch(e) {
     hideLoading();
     document.getElementById('add-task-error').textContent = 'שגיאה בשמירה, נסה שוב';
@@ -715,10 +714,10 @@ document.getElementById('et-require-approval')?.addEventListener('change', (e) =
 export function startTaskTour(familyId) {
   const quickCatsVisible = getComputedStyle(document.getElementById('form-quick-cats-section') || document.createElement('div')).display !== 'none';
   const step1Text = quickCatsVisible
-    ? 'הכנס שם למטלה — לחץ "💡 רעיונות לדוגמא" לרשימת רעיונות, או בחר קטגוריה מימין ליצירת 5 משימות מהירות אוטומטית'
+    ? 'הכנס שם למטלה — לחץ "💡 רעיונות לדוגמא" לרשימת רעיונות, או בחר קטגוריה משמאל ליצירת 5 משימות מהירות אוטומטית'
     : 'הכנס שם למטלה, לחץ "💡 רעיונות לדוגמא" לרעיונות מוכנים';
   const steps = [
-    { el: '#btn-task-suggestions',    title: 'שם המטלה',      text: step1Text, exact: true },
+    { el: '#task-name-input',         title: 'שם המטלה',      text: step1Text },
     { el: '#task-cat-scroll',         title: 'קטגוריה',       text: 'בחר קטגוריה — היגיינה, לימודים, מטלות בית... או צור קטגוריה חדשה' },
     { el: '#task-assign-grid',        title: 'שיוך לילד/ים',  text: 'כאן מופיעים הילדים שלך — בחר לאיזה ילד/ים המטלה משויכת' },
     { el: '#task-emoji-grid',         title: 'אייקון',         text: 'בחר אייקון שיופיע ליד שם המטלה' },
