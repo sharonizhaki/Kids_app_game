@@ -340,5 +340,26 @@
 <div class="toast" id="toast"></div>
 
 <script type="module" src="./js/main-index.js"></script>
+<script type="module">
+  // Debug: check if onclick handlers were attached
+  window.addEventListener('load', () => {
+    const gBtn = document.getElementById('btn-google-login');
+    const fBtn = document.getElementById('btn-facebook-login');
+    const dbg = [];
+    dbg.push('Google onclick: ' + (gBtn && gBtn.onclick ? 'SET' : 'MISSING'));
+    dbg.push('Facebook onclick: ' + (fBtn && fBtn.onclick ? 'SET' : 'MISSING'));
+    console.log('[DEBUG]', dbg.join(' | '));
+    if (gBtn && !gBtn.onclick) {
+      const errDiv = document.getElementById('login-error');
+      if (errDiv) errDiv.style.cssText = 'color:red;font-size:0.8rem;text-align:center;margin:4px 0;';
+    }
+  });
+  window.addEventListener('error', (e) => {
+    console.error('[MODULE ERROR]', e.message, e.filename, e.lineno);
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    console.error('[UNHANDLED PROMISE]', e.reason);
+  });
+</script>
 </body>
 </html>
