@@ -86,7 +86,7 @@ export function showConfirm({ icon = '⚠️', title, message, confirmText = 'א
 }
 
 // =========== SIDE MENU ===========
-export function openSideMenu({ auth, onAction }) {
+export async function openSideMenu({ auth, onAction }) {
   closeSideMenu();
 
   const overlay = document.createElement('div');
