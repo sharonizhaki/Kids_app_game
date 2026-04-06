@@ -6,6 +6,20 @@
   <title>משפחה - ניהול מטלות</title>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./css/styles.css">
+  <link rel="modulepreload" href="./js/main-index.js">
+  <link rel="modulepreload" href="./js/firebase.js">
+  <link rel="modulepreload" href="./js/auth.js">
+  <link rel="modulepreload" href="./js/ui.js">
+  <link rel="modulepreload" href="./js/family.js">
+  <link rel="modulepreload" href="./js/utils.js">
+  <script>
+    function _go(id) {
+      document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active','visible'); });
+      var el = document.getElementById(id);
+      if (el) { el.classList.add('active'); requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.classList.add('visible'); }); }); }
+      window.scrollTo(0, 0);
+    }
+  </script>
 </head>
 <body>
 
@@ -86,8 +100,8 @@
     <div id="who-dot-2" style="width:8px;height:8px;border-radius:4px;background:rgba(99,102,241,0.28);transition:all 0.3s ease;"></div>
   </div>
   <div style="width:100%;padding:16px 20px 40px;background:white;border-radius:28px 28px 0 0;box-shadow:0 -4px 24px rgba(99,102,241,0.13);display:flex;gap:12px;">
-    <button id="btn-who-parent" style="flex:1;padding:17px;border:none;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;font-size:1.05rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(99,102,241,0.35);">אני הורה</button>
-    <button id="btn-who-child" style="flex:1;padding:17px;border:none;border-radius:16px;background:linear-gradient(135deg,#10B981,#059669);color:white;font-size:1.05rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(16,185,129,0.35);">👧👦 אני ילד/ה</button>
+    <button id="btn-who-parent" onclick="_go('screen-parent-login')" style="flex:1;padding:17px;border:none;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;font-size:1.05rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(99,102,241,0.35);">אני הורה</button>
+    <button id="btn-who-child" onclick="_go('screen-child-code')" style="flex:1;padding:17px;border:none;border-radius:16px;background:linear-gradient(135deg,#10B981,#059669);color:white;font-size:1.05rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(16,185,129,0.35);">👧👦 אני ילד/ה</button>
   </div>
 </div>
 
