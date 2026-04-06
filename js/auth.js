@@ -16,7 +16,7 @@ import {
   doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
   collection, query, where, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { showScreen, showToast, showLoading, hideLoading } from './ui.js';
+import { showScreen, showToast, showLoading, hideLoading, showConnectionError } from './ui.js';
 
 // =========== STATE ===========
 export let currentParentUid = null;
@@ -63,19 +63,26 @@ export function initAuth(onParentReady, onNoFamily) {
     // Google/Facebook user — parent
     currentParentUid = user.uid;
 
+    let authSettled = false;
+
     const firestoreWork = async () => {
       let famSnap = await getDocs(query(collection(db, 'families'), where('parentUid', '==', user.uid)));
+      if (authSettled) return;
       if (!famSnap.empty) {
+        authSettled = true;
         currentFamilyId = famSnap.docs[0].id;
         onParentReady(user);
         return;
       }
       famSnap = await getDocs(query(collection(db, 'families'), where('secondaryParentUid', '==', user.uid)));
+      if (authSettled) return;
       if (!famSnap.empty) {
+        authSettled = true;
         currentFamilyId = famSnap.docs[0].id;
         onParentReady(user);
         return;
       }
+      authSettled = true;
       onNoFamily();
     };
 
@@ -87,13 +94,13 @@ export function initAuth(onParentReady, onNoFamily) {
       await Promise.race([firestoreWork(), connectionTimeout]);
     } catch(e) {
       if (e.message === 'connection-timeout') {
-        console.warn('Firestore timeout — showing fallback screen');
+        console.warn('Firestore timeout — showing connection error');
+        authSettled = true;
         hideLoading();
-        showScreen('screen-who');
-        showToast('בעיית חיבור — נסה לרענן את הדף 🔄');
+        showConnectionError();
       } else {
         console.error('Firestore error:', e);
-        onNoFamily();
+        if (!authSettled) { authSettled = true; onNoFamily(); }
       }
     }
   });

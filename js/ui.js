@@ -45,6 +45,22 @@ export function hideLoading() {
   document.querySelectorAll('.loading-overlay').forEach(el => el.remove());
 }
 
+// =========== CONNECTION ERROR ===========
+export function showConnectionError() {
+  document.querySelectorAll('.connection-error-overlay').forEach(el => el.remove());
+  const ov = document.createElement('div');
+  ov.className = 'connection-error-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9000;background:var(--bg,#EEF2FF);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;padding:32px;text-align:center;font-family:Heebo,sans-serif;direction:rtl;';
+  ov.innerHTML = `
+    <div style="font-size:3rem;">📡</div>
+    <div style="font-size:1.15rem;font-weight:900;color:#1E293B;">בעיית חיבור לאינטרנט</div>
+    <div style="font-size:0.88rem;color:#64748B;font-weight:600;line-height:1.55;">לא הצלחנו להתחבר לשרת.<br>בדוק שיש חיבור לאינטרנט ונסה שוב.</div>
+    <button id="btn-connection-retry" style="margin-top:8px;padding:14px 36px;background:linear-gradient(135deg,#6366F1,#4F46E5);color:white;border:none;border-radius:16px;font-size:1rem;font-weight:900;cursor:pointer;font-family:Heebo,sans-serif;box-shadow:0 4px 16px rgba(99,102,241,0.35);">נסה שוב 🔄</button>
+  `;
+  ov.querySelector('#btn-connection-retry').onclick = () => window.location.reload();
+  document.body.appendChild(ov);
+}
+
 // =========== CONFIRM MODAL ===========
 export function showConfirm({ icon = '⚠️', title, message, confirmText = 'אישור', confirmColor = 'linear-gradient(135deg,#EF4444,#DC2626)', onConfirm }) {
   const ov = document.createElement('div');
