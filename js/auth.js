@@ -16,7 +16,7 @@ import {
   doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
   collection, query, where, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { showScreen, showToast, showLoading, hideLoading, showConnectionError } from './ui.js';
+import { showToast, showLoading, hideLoading, showConnectionError } from './ui.js';
 
 // =========== STATE ===========
 export let currentParentUid = null;
@@ -39,24 +39,14 @@ export function initAuth(onParentReady, onNoFamily) {
     return false;
   }
 
-  const splashTimeout = setTimeout(() => {
-    if (!auth.currentUser) {
-      hideLoading();
-      if (!checkChildLocal()) showScreen('screen-who');
-    }
-  }, 1500);
-
   onAuthStateChanged(auth, async (user) => {
-    clearTimeout(splashTimeout);
-
     if (!user) {
-      hideLoading();
-      if (!checkChildLocal()) showScreen('screen-who');
+      checkChildLocal();
       return;
     }
 
     if (user.isAnonymous) {
-      if (!checkChildLocal()) showScreen('screen-who');
+      checkChildLocal();
       return;
     }
 

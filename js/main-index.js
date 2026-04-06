@@ -34,13 +34,6 @@ initAuth(
   }
 );
 
-// גיבוי אחרון: אם עדיין על מסך הטעינה אחרי 10 שניות — יציאה לשגיאת חיבור
-setTimeout(() => {
-  if (document.getElementById('screen-splash')?.classList.contains('active')) {
-    showConnectionError();
-  }
-}, 10000);
-
 // =========== WHO ARE YOU ===========
 document.getElementById('btn-who-parent').onclick = () => {
   if (auth.currentUser && !auth.currentUser.isAnonymous) return;
