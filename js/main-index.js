@@ -17,6 +17,9 @@ import {
 
 window.showScreen = showScreen;
 
+// מציג screen-who מיד — JS כבר טעון, כל הכפתורים פעילים
+showScreen('screen-who');
+
 // =========== MAGIC LINK ===========
 completeMagicLinkSignIn();
 
