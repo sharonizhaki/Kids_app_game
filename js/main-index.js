@@ -2,7 +2,7 @@ import { auth, db } from './firebase.js';
 import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-import { showScreen, showToast, showLoading, hideLoading } from './ui.js';
+import { showScreen, showToast, showLoading, hideLoading, showConnectionError } from './ui.js';
 import { cropAndCompressPhoto } from './utils.js';
 import {
   initAuth, loginWithGoogle, loginWithFacebook, logoutParent,
@@ -33,6 +33,13 @@ initAuth(
     showScreen('screen-join-family');
   }
 );
+
+// גיבוי אחרון: אם עדיין על מסך הטעינה אחרי 10 שניות — יציאה לשגיאת חיבור
+setTimeout(() => {
+  if (document.getElementById('screen-splash')?.classList.contains('active')) {
+    showConnectionError();
+  }
+}, 10000);
 
 // =========== WHO ARE YOU ===========
 document.getElementById('btn-who-parent').onclick = () => {

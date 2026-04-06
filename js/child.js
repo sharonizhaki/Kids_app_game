@@ -178,8 +178,19 @@ if (!state.childId || !state.familyId) {
   window.location.href = 'index.html';
 } else {
   let authResolved = false;
+
+  // גיבוי: אם Firebase לא מגיב תוך 10 שניות — נקה ועבור לדף הבית
+  const authFallback = setTimeout(() => {
+    if (!authResolved) {
+      authResolved = true;
+      clearStorage();
+      window.location.href = 'index.html';
+    }
+  }, 10000);
+
   const unsubAuth = onAuthStateChanged(auth, user => {
     if (authResolved) return;
+    clearTimeout(authFallback);
     authResolved = true;
     unsubAuth();
     if (!user) { clearStorage(); window.location.href = 'index.html'; }
