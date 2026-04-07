@@ -75,12 +75,79 @@ export async function saveState() {
   } catch (e) { console.error('saveState error:', e); }
 }
 
+// -------- PRIZE PROGRESS BAR --------
+let _prizes        = [];   // פרסים זמינים — מתעדכן מ-Firestore
+let _prizeRotIdx   = 0;    // אינדקס מתנה נוכחית
+let _prizeRotTimer = null; // setInterval
+
+export function setPrizesForBar(prizes) {
+  _prizes = prizes;
+  _prizeRotIdx = 0;
+  _startPrizeRotation();
+}
+
+function _startPrizeRotation() {
+  if (_prizeRotTimer) clearInterval(_prizeRotTimer);
+  _renderPrizeBar();
+  if (_prizes.length > 1) {
+    _prizeRotTimer = setInterval(() => {
+      _prizeRotIdx = (_prizeRotIdx + 1) % _prizes.length;
+      _renderPrizeBarAnimated();
+    }, 2000);
+  }
+}
+
+function _renderPrizeBar() {
+  const totalPts = (state.childState?.monthlyPts || 0) + (state.childState?.pts || 0);
+  const color    = state.childData?.color || '#6366F1';
+
+  const emojiEl     = document.getElementById('ppcard-emoji');
+  const nameEl      = document.getElementById('ppcard-name');
+  const remainEl    = document.getElementById('ppcard-remaining');
+  const fillEl      = document.getElementById('ppcard-bar-fill');
+  const labelEl     = document.getElementById('ppcard-bar-label');
+
+  if (!emojiEl) return;
+
+  if (_prizes.length === 0) {
+    emojiEl.textContent   = '🎁';
+    nameEl.textContent    = 'ממתין שההורים יצרו מתנות';
+    remainEl.textContent  = '';
+    fillEl.style.width    = '0%';
+    labelEl.textContent   = '';
+    return;
+  }
+
+  const prize   = _prizes[_prizeRotIdx];
+  const cost    = prize.cost || 0;
+  const pct     = cost > 0 ? Math.min(100, Math.round((totalPts / cost) * 100)) : 100;
+  const remain  = Math.max(0, cost - totalPts);
+
+  emojiEl.textContent  = prize.emoji || '🎁';
+  nameEl.textContent   = prize.title || '';
+  remainEl.textContent = remain > 0 ? `עוד ${remain} ⭐` : '✅ הגעת!';
+  fillEl.style.background = `linear-gradient(90deg, ${color}, ${lightenColor(color)})`;
+  fillEl.style.width   = pct + '%';
+  labelEl.textContent  = `${totalPts} / ${cost} ⭐`;
+}
+
+function _renderPrizeBarAnimated() {
+  const row = document.getElementById('ppcard-prize-row');
+  if (!row) { _renderPrizeBar(); return; }
+  row.style.transition  = 'opacity 0.3s ease';
+  row.style.opacity     = '0';
+  setTimeout(() => {
+    _renderPrizeBar();
+    row.style.opacity = '1';
+  }, 300);
+}
+
 // -------- RENDER CHILD --------
 export function renderChild() {
   const { childData, childState } = state;
   if (!childData || !childState) return;
 
-  // header
+  // ---- כרטיס פרופיל ----
   const photoEl = document.getElementById('child-header-photo');
   const emojiEl = document.getElementById('child-header-emoji');
   if (childData.photo && childData.photo.length > 10) {
@@ -88,13 +155,24 @@ export function renderChild() {
   } else if (emojiEl) {
     emojiEl.textContent = childData.emoji || '⭐';
   }
+
   const titleEl = document.getElementById('child-title');
   if (titleEl) titleEl.textContent = childData.name;
 
+  const todayDone = state.tasksData.filter(t => isDone(t)).length;
+  const tasksEl = document.getElementById('cpc-tasks-today');
+  if (tasksEl) tasksEl.textContent = `${todayDone} משימות היום`;
+
+  // סה"כ מצטבר
+  const totalPts = (childState.monthlyPts || 0) + (childState.pts || 0);
+  const totalEl  = document.getElementById('cpc-total-val');
+  if (totalEl) totalEl.textContent = totalPts;
+
+  // nav icon
   const navIcon = document.getElementById('nav-profile-icon');
   if (navIcon) navIcon.textContent = childData.emoji || '👤';
 
-  // greeting
+  // ---- greeting ----
   const color = childData.color || '#6366F1';
   const gc    = document.getElementById('greeting-card');
   if (gc) {
@@ -105,18 +183,15 @@ export function renderChild() {
   const gtEl = document.getElementById('greeting-text');
   if (gtEl) gtEl.textContent = `שלום ${childData.name}! ${greetings[Math.floor(Math.random()*greetings.length)]}`;
 
-  const todayDone = state.tasksData.filter(t => isDone(t)).length;
   const gsEl = document.getElementById('greeting-sub');
   if (gsEl) gsEl.textContent = todayDone > 0
     ? `ביצעת ${todayDone} משימות היום - כל הכבוד! 🎉`
     : (childData.gender === 'female' ? 'בחרי קטגוריה והתחילי!' : 'בחר קטגוריה והתחל!');
 
-  // stats
+  // ---- stats ----
   const pts   = childState.pts || 0;
   const pbVal = document.getElementById('pb-val');
-  const moVal = document.getElementById('monthly-val');
   if (pbVal) pbVal.textContent = pts;
-  if (moVal) moVal.textContent = (childState.monthlyPts || 0) + pts;
 
   // streak
   const streak     = computeStreak();
@@ -125,17 +200,8 @@ export function renderChild() {
   if (streakVal)  streakVal.textContent = streak;
   if (streakCard) streakCard.classList.toggle('active', streak >= 2);
 
-  // progress
-  const ptEl = document.getElementById('progress-text');
-  if (ptEl) ptEl.textContent = `${pts} / 100 כוכבים`;
-  const pf = document.getElementById('progress-fill');
-  if (pf) {
-    pf.style.background = `linear-gradient(90deg, ${color}, ${lightenColor(color)})`;
-    pf.style.width = '0%';
-    const pl = document.getElementById('progress-pts-label');
-    if (pl) pl.textContent = pts > 2 ? `${pts} ⭐` : '';
-    setTimeout(() => { pf.style.width = Math.min(100, pts) + '%'; }, 100);
-  }
+  // ---- prize bar (רק עדכן נתון, הרוטציה רצה לבד) ----
+  _renderPrizeBar();
 
   // sub-modules
   renderWeekGraph();
@@ -219,8 +285,9 @@ async function loadChild() {
       if (!cs.pending)  cs.pending  = [];
       if (cs.streak === undefined) cs.streak = 0;
 
+      // ⬇ לא מאפסים monthlyPts — הוא מצטבר לנצח
+      // רק מעבירים את השבועי למצטבר בסוף שבוע
       let changed = false;
-      if (cs.mk !== monthKey()) { cs.monthlyPts = 0; cs.mk = monthKey(); changed = true; }
       if (cs.wk !== weekKey()) {
         cs.monthlyPts = (cs.monthlyPts || 0) + (cs.pts || 0);
         cs.pts = 0; cs.comp = {}; cs.wk = weekKey(); changed = true;
@@ -241,7 +308,18 @@ async function loadChild() {
       });
     } catch (e) { state.tasksData = []; }
 
-    // init modules — חשוב: initTasksModule לפני initProfile ו-initPrizes
+    // טען פרסים לבר
+    try {
+      const prizesSnap = await getDocs(collection(db, 'families', state.familyId, 'prizes'));
+      const prizes = prizesSnap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(p => p.active !== false)
+        .filter(p => !p.assignedChildren || p.assignedChildren.length === 0 || p.assignedChildren.includes(state.childId))
+        .sort((a, b) => (a.cost || 0) - (b.cost || 0));
+      setPrizesForBar(prizes);
+    } catch (e) { setPrizesForBar([]); }
+
+    // init modules
     initTasksModule(db);
     initProfile(db, renderChild);
     initPrizes(db);
@@ -260,6 +338,7 @@ async function loadChild() {
     renderChild();
     show('screen-child');
 
+    // listener על tasks
     onSnapshot(collection(db, 'families', state.familyId, 'tasks'), snap => {
       state.tasksData = [];
       snap.forEach(d => {
@@ -270,7 +349,17 @@ async function loadChild() {
       renderCategories(saveState, renderChild);
     });
 
-    // listener על pendingApprovals — עדכון real-time כשהורה מאשר/דוחה
+    // listener על prizes — לעדכן את בר המתנות בזמן אמת
+    onSnapshot(collection(db, 'families', state.familyId, 'prizes'), snap => {
+      const prizes = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(p => p.active !== false)
+        .filter(p => !p.assignedChildren || p.assignedChildren.length === 0 || p.assignedChildren.includes(state.childId))
+        .sort((a, b) => (a.cost || 0) - (b.cost || 0));
+      setPrizesForBar(prizes);
+    });
+
+    // listener על pendingApprovals
     onSnapshot(
       collection(db, 'families', state.familyId, 'pendingApprovals'),
       snap => {
@@ -293,21 +382,33 @@ async function loadChild() {
       }
     );
 
+    // listener על prizeRequests — ניכוי מצטבר כשמאושר
+    onSnapshot(
+      query(
+        collection(db, 'families', state.familyId, 'prizeRequests'),
+        where('childId', '==', state.childId),
+      ),
+      snap => {
+        const cs = state.childState;
+        if (!cs) return;
+        snap.docChanges().forEach(change => {
+          const data = change.doc.data();
+          // רק כשעבר מ-pending ל-approved
+          if (change.type === 'modified' && data.status === 'approved' && !data._deducted) {
+            const cost = data.cost || 0;
+            if (cost > 0) {
+              cs.monthlyPts = Math.max(0, (cs.monthlyPts || 0) - cost);
+              saveState();
+              renderChild();
+              showToast({ message: `${data.prizeEmoji || '🎁'} ${data.prizeTitle} אושר!`, color: state.childData?.color });
+            }
+          }
+        });
+      }
+    );
+
   } catch (e) {
     console.error('loadChild error:', e);
     show('screen-child');
   }
 }
-
-// -------- LOGOUT --------
-document.getElementById('btn-child-logout').onclick = () => {
-  showConfirm({
-    icon: '🚪', title: 'לצאת מהחשבון?',
-    message: 'תצטרך להזין קוד כדי להיכנס שוב',
-    confirmText: 'יציאה', confirmClass: 'confirm-btn-danger',
-    onConfirm: () => {
-      clearStorage();
-      signOut(auth).then(() => { window.location.href = 'index.html'; });
-    },
-  });
-};

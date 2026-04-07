@@ -24,28 +24,33 @@
 
 <!-- ==================== SCREEN: HOME ==================== -->
 <div id="screen-child" class="screen has-nav">
-  <div class="user-header">
-    <div class="header-photo" id="child-header-photo">
+
+  <!-- כרטיס פרופיל עליון -->
+  <div class="child-profile-card" id="child-profile-card">
+    <div class="cpc-photo" id="child-header-photo">
       <span id="child-header-emoji">⭐</span>
     </div>
-    <h2 id="child-title">שלום!</h2>
-    <button class="logout-btn" id="btn-child-logout" title="יציאה">🚪</button>
+    <div class="cpc-info">
+      <div class="cpc-name" id="child-title"></div>
+      <div class="cpc-tasks" id="cpc-tasks-today">0 משימות היום</div>
+    </div>
+    <div class="cpc-total">
+      <div class="cpc-total-val" id="cpc-total-val">0</div>
+      <div class="cpc-total-label">⭐ סה"כ</div>
+    </div>
   </div>
 
+  <!-- greeting -->
   <div class="greeting-card" id="greeting-card">
     <div class="greeting-text" id="greeting-text"></div>
     <div class="greeting-sub"  id="greeting-sub"></div>
   </div>
 
-  <!-- stats row: שבוע · חודש · streak -->
+  <!-- stats row: שבוע · streak -->
   <div class="stats-row">
     <div class="stat-card">
       <div class="stat-val" id="pb-val" style="color:var(--child-color);">0</div>
       <div class="stat-label">כוכבים השבוע ⭐</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-val" id="monthly-val" style="color:var(--child-color);">0</div>
-      <div class="stat-label">כוכבים החודש 🌙</div>
     </div>
     <div class="stat-card stat-streak" id="streak-card">
       <div class="stat-val streak-val" id="streak-val">0</div>
@@ -53,16 +58,23 @@
     </div>
   </div>
 
-  <!-- progress bar -->
-  <div class="progress-card">
-    <div class="progress-header">
-      <span>התקדמות שבועית 🎯</span>
-      <span id="progress-text">0 / 100 כוכבים</span>
+  <!-- בר מתנה מסתובב -->
+  <div class="prize-progress-card" id="prize-progress-card">
+    <div class="ppcard-header">
+      <span class="ppcard-label">המטרה הבאה שלי 🎯</span>
     </div>
-    <div class="progress-bar">
-      <div class="progress-fill" id="progress-fill" style="width:0%">
-        <span class="progress-pts-label" id="progress-pts-label"></span>
+    <div class="ppcard-prize-row" id="ppcard-prize-row">
+      <div class="ppcard-prize-emoji" id="ppcard-emoji">🎁</div>
+      <div class="ppcard-prize-info">
+        <div class="ppcard-prize-name" id="ppcard-name">ממתין שההורים יצרו מתנות</div>
+        <div class="ppcard-prize-remaining" id="ppcard-remaining"></div>
       </div>
+    </div>
+    <div class="ppcard-bar-wrap">
+      <div class="ppcard-bar">
+        <div class="ppcard-bar-fill" id="ppcard-bar-fill" style="width:0%"></div>
+      </div>
+      <span class="ppcard-bar-label" id="ppcard-bar-label"></span>
     </div>
   </div>
 

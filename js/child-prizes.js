@@ -5,8 +5,8 @@ import {
   collection, getDocs, addDoc, query, where, onSnapshot, serverTimestamp,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-import { state }       from './child-state.js';
-import { showConfirm, showToast } from './child-ui.js';
+import { state }                    from './child-state.js';
+import { showConfirm, showToast }   from './child-ui.js';
 
 let _db = null;
 
@@ -25,10 +25,10 @@ export function initPrizes(db) {
 export async function renderPrizesScreen() {
   if (!_db) return;
 
-  // עדכן כוכבים
-  const pts = (state.childState?.pts || 0);
+  // סה"כ מצטבר (שבועי + מצטבר)
+  const totalPts = (state.childState?.monthlyPts || 0) + (state.childState?.pts || 0);
   const el = document.getElementById('prizes-stars-val');
-  if (el) el.textContent = `${pts} ⭐`;
+  if (el) el.textContent = `${totalPts} ⭐`;
 
   // טען פרסים
   let prizes = [];
@@ -41,7 +41,7 @@ export async function renderPrizesScreen() {
       .sort((a, b) => (a.cost || 0) - (b.cost || 0));
   } catch (e) { prizes = []; }
 
-  // טען בקשות ממתינות
+  // טען בקשות
   let requests = [];
   try {
     const reqSnap = await getDocs(
@@ -51,15 +51,14 @@ export async function renderPrizesScreen() {
     requests = reqSnap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (e) { requests = []; }
 
-  const pendingIds    = new Set(requests.filter(r => r.status === 'pending').map(r => r.prizeId));
   const pendingByPrize = {};
   requests.forEach(r => { pendingByPrize[r.prizeId] = r; });
 
-  // --- pending section ---
+  // pending section
   const pendingRequests = requests.filter(r => r.status !== 'rejected' || _isRecent(r.resolvedAt));
   renderPendingSection(pendingRequests);
 
-  // --- prizes grid ---
+  // prizes grid
   const grid = document.getElementById('prizes-grid');
   if (!grid) return;
 
@@ -71,7 +70,7 @@ export async function renderPrizesScreen() {
   }
 
   grid.innerHTML = prizes.map(prize => {
-    const canAfford  = pts >= (prize.cost || 0);
+    const canAfford  = totalPts >= (prize.cost || 0);
     const myRequest  = pendingByPrize[prize.id];
     const isPending  = myRequest?.status === 'pending';
     const isApproved = myRequest?.status === 'approved';
@@ -79,7 +78,7 @@ export async function renderPrizesScreen() {
     const lockHTML = !canAfford ? `
       <div class="prize-lock-overlay">
         <span class="prize-lock-icon">🔒</span>
-        <span class="prize-lock-needed">עוד ${(prize.cost || 0) - pts} ⭐</span>
+        <span class="prize-lock-needed">עוד ${(prize.cost || 0) - totalPts} ⭐</span>
       </div>` : '';
 
     const actionHTML = isApproved
@@ -100,7 +99,6 @@ export async function renderPrizesScreen() {
       </div>`;
   }).join('');
 
-  // לחצני "אני רוצה"
   grid.querySelectorAll('.prize-request-btn').forEach(btn => {
     const prizeId = btn.dataset.prizeId;
     const prize   = prizes.find(p => p.id === prizeId);
@@ -111,8 +109,8 @@ export async function renderPrizesScreen() {
   const pendingCount = requests.filter(r => r.status === 'pending').length;
   const badge = document.getElementById('nav-badge-prizes');
   if (badge) {
-    badge.textContent    = pendingCount || '';
-    badge.style.display  = pendingCount > 0 ? 'flex' : 'none';
+    badge.textContent   = pendingCount || '';
+    badge.style.display = pendingCount > 0 ? 'flex' : 'none';
   }
 }
 
@@ -142,11 +140,11 @@ function renderPendingSection(requests) {
 
 // -------- CONFIRM & SEND REQUEST --------
 function confirmPrizeRequest(prize) {
-  const pts = state.childState?.pts || 0;
+  const totalPts = (state.childState?.monthlyPts || 0) + (state.childState?.pts || 0);
   showConfirm({
     icon:         prize.emoji || '🎁',
     title:        `לבקש: ${prize.title}?`,
-    message:      `עולה ${prize.cost} ⭐ — יש לך ${pts} ⭐. ההורים יאשרו את הבקשה.`,
+    message:      `עולה ${prize.cost} ⭐ — יש לך ${totalPts} ⭐. ההורים יאשרו את הבקשה.`,
     confirmText:  'שלח בקשה! 🎁',
     confirmClass: 'confirm-btn-success',
     onConfirm:    () => sendPrizeRequest(prize),
@@ -177,5 +175,5 @@ async function sendPrizeRequest(prize) {
 function _isRecent(ts) {
   if (!ts) return false;
   const ms = ts?.toMillis ? ts.toMillis() : ts;
-  return Date.now() - ms < 3 * 24 * 60 * 60 * 1000; // 3 ימים
+  return Date.now() - ms < 3 * 24 * 60 * 60 * 1000;
 }
