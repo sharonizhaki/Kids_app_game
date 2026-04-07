@@ -19,6 +19,7 @@ import {
   checkAndGrantBadges, computeStreak,
   renderBadgesScreen, renderWeekGraph,
 } from './child-badges.js';
+import { startOnboarding }                                    from './child-onboarding.js';
 
 // -------- FIREBASE --------
 const firebaseConfig = {
@@ -138,7 +139,7 @@ export function renderChild() {
 
   // sub-modules
   renderWeekGraph();
-  renderPendingSection();          // ⬅ שלב 5
+  renderPendingSection();
   renderCategories(saveState, renderChild);
   renderHistory();
 
@@ -179,7 +180,6 @@ if (!state.childId || !state.familyId) {
 } else {
   let authResolved = false;
 
-  // גיבוי: אם Firebase לא מגיב תוך 10 שניות — נקה ועבור לדף הבית
   const authFallback = setTimeout(() => {
     if (!authResolved) {
       authResolved = true;
@@ -247,6 +247,16 @@ async function loadChild() {
     initPrizes(db);
     initNav();
 
+    // -------- ONBOARDING CHECK --------
+    if (!state.childData.onboarded) {
+      window._childShowFn = { show };
+      startOnboarding(db, () => {
+        renderChild();
+        show('screen-child');
+      });
+      return;
+    }
+
     renderChild();
     show('screen-child');
 
@@ -270,7 +280,6 @@ async function loadChild() {
           const data = change.doc.data();
           if (data.childId !== state.childId) return;
           if (change.type === 'modified' || change.type === 'added') {
-            // עדכן status ב-pending המקומי
             const idx = (cs.pending || []).findIndex(
               p => p.taskId === data.taskId && Math.abs(p.ts - data.ts) < 5000
             );
