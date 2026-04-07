@@ -5,7 +5,7 @@ import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/fireb
 import { showScreen, showToast, showLoading, hideLoading } from './ui.js';
 import { cropAndCompressPhoto } from './utils.js';
 import {
-  initAuth, loginWithGoogle, loginWithFacebook, logoutParent,
+  initAuth, loginWithGoogle, loginWithFacebook,
   createNewFamily, joinFamily, currentFamilyId,
   sendMagicLink, completeMagicLinkSignIn
 } from './auth.js';
@@ -24,6 +24,7 @@ completeMagicLinkSignIn();
 const _isOnboardReturn = new URLSearchParams(window.location.search).get('onboard') === '1';
 
 if (_isOnboardReturn) {
+  // הגענו מ-parent.html כי אין ילדים — טען familyId ישירות, הצג אונבורד
   hideLoading();
   (async () => {
     const { onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
@@ -44,19 +45,17 @@ if (_isOnboardReturn) {
         if (famSnap.empty) famSnap = await getDocs(query(collection(db, 'families'), where('secondaryParentUid', '==', user.uid)));
         if (!famSnap.empty) setCurrentFamilyId(famSnap.docs[0].id);
       } catch(e) {}
-      sessionStorage.removeItem('onboardRedirectCount');
       resetOb1Form();
       showScreen('screen-onboard-1');
     });
   })();
+
 } else {
   initAuth(
     async (user) => {
       hideLoading();
-      // בדוק ילדים ישירות — בלי לעבור parent.html
+      // יש משפחה — בדוק ילדים. currentFamilyId כבר מאוכלס על ידי initAuth
       try {
-        const { loadChildren, childrenCache } = await import('./family.js');
-        const { currentFamilyId } = await import('./auth.js');
         await loadChildren(currentFamilyId);
         if (childrenCache.length === 0) {
           resetOb1Form();
@@ -70,6 +69,7 @@ if (_isOnboardReturn) {
     },
     () => {
       hideLoading();
+      // אין משפחה
       const justLoggedIn = sessionStorage.getItem('justLoggedIn') === '1';
       sessionStorage.removeItem('justLoggedIn');
       if (justLoggedIn || sessionStorage.getItem('atJoinFamily') === '1') {
@@ -176,6 +176,7 @@ document.getElementById('btn-join-family').onclick = async () => {
   const result = await joinFamily(code);
   if (result.error) { err.textContent = result.error; return; }
   sessionStorage.setItem('isSecondaryParent', '1');
+  sessionStorage.removeItem('atJoinFamily');
   window.location.href = 'parent.html';
 };
 
@@ -201,12 +202,10 @@ document.getElementById('btn-join-back').onclick = async () => {
         let provider = null;
         if (providerId === 'google.com') provider = new GoogleAuthProvider();
         else if (providerId === 'facebook.com') provider = new FacebookAuthProvider();
-
         if (provider) {
           await reauthenticateWithPopup(user, provider);
           await user.delete();
         } else {
-          // provider לא נתמך — signOut בלבד
           await _so(auth);
           hideLoading();
           sessionStorage.removeItem('atJoinFamily');
@@ -514,9 +513,7 @@ function showChildAddedPopup(name, gender, inviteCode, onAddMore, onContinue) {
   backdrop.appendChild(card); document.body.appendChild(backdrop);
   if (inviteCode) {
     card.querySelector('#pop-share-code').onclick = () => {
-      const { shareChildCode } = window.__familyExports || {};
-      if (shareChildCode) shareChildCode(inviteCode, name);
-      else if (navigator.share) navigator.share({ title: `קוד כניסה עבור ${name}`, text: `הקוד שלך הוא: ${inviteCode}` }).catch(() => {});
+      if (navigator.share) navigator.share({ title: `קוד כניסה עבור ${name}`, text: `הקוד שלך הוא: ${inviteCode}` }).catch(() => {});
       else { navigator.clipboard?.writeText(inviteCode); showToast('הקוד הועתק! 📋'); }
     };
   }
@@ -530,7 +527,6 @@ document.getElementById('ob1-top-next').addEventListener('click', () => {
 });
 
 document.getElementById('ob1-back').onclick = async () => {
-  // אם כבר יש ילדים — לא מוחקים משפחה (לא אמור לקרות, אבל safety)
   if (childrenCache.length > 0) { showScreen('screen-join-family'); return; }
   const fid = currentFamilyId;
   if (!fid) { showScreen('screen-join-family'); return; }
@@ -538,7 +534,6 @@ document.getElementById('ob1-back').onclick = async () => {
   try {
     const { deleteDoc, doc: fsDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
     await deleteDoc(fsDoc(db, 'families', fid));
-    // אפס את ה-familyId
     const { setCurrentFamilyId: _set } = await import('./auth.js');
     _set(null);
   } catch(e) {
@@ -590,9 +585,7 @@ document.getElementById('ob1-next').onclick = async () => {
   if (obColor) extraUpdates.color = obColor;
   if (Object.keys(extraUpdates).length > 0) await saveChild(currentFamilyId, result.childId, extraUpdates);
 
-  // קוד ההזמנה — createChild מחזיר { code, childId }
   const inviteCode = result.code || null;
-
   const savedName = name; const savedGender = obGender;
   resetOb1Form();
   showChildAddedPopup(savedName, savedGender, inviteCode, () => {}, () => goToOnboard2());
@@ -627,7 +620,6 @@ document.getElementById('ob3-later').onclick = () => { window.location.href = 'p
   let startX = 0, autoInterval, isDragging = false;
   const startAuto = () => { clearInterval(autoInterval); autoInterval = setInterval(() => goTo((current + 1) % 3), 4800); };
 
-  // Touch support
   slider.addEventListener('touchstart', e => { startX = e.touches[0].clientX; clearInterval(autoInterval); track.style.transition = 'none'; }, { passive: true });
   slider.addEventListener('touchend', e => {
     track.style.transition = 'transform 0.38s cubic-bezier(0.4,0,0.2,1)';
@@ -636,7 +628,6 @@ document.getElementById('ob3-later').onclick = () => { window.location.href = 'p
     startAuto();
   });
 
-  // Mouse drag support for desktop
   slider.addEventListener('mousedown', e => {
     startX = e.clientX;
     isDragging = true;
