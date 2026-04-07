@@ -175,11 +175,13 @@ document.getElementById('btn-manage-family').onclick = async () => {
 };
 
 document.getElementById('btn-add-tasks').onclick = () => {
-  window.location.href = 'tasks.html?mode=add';
+  sessionStorage.setItem('tasksMode', 'add');
+  window.location.href = 'tasks.html';
 };
 
 document.getElementById('btn-edit-tasks').onclick = () => {
-  window.location.href = 'tasks.html?mode=edit';
+  sessionStorage.setItem('tasksMode', 'edit');
+  window.location.href = 'tasks.html';
 };
 
 document.getElementById('btn-manage-points').onclick = () => {

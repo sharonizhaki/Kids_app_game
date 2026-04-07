@@ -125,9 +125,9 @@ async function handleQuickTasksForm(triggerEl, category) {
   await loadChildren(getFamilyId());
   hideLoading();
 
-  // בדוק mode מה-URL
-  const params = new URLSearchParams(window.location.search);
-  const mode = params.get('mode');
+  // בדוק mode מ-sessionStorage (מועבר מ-parent.html)
+  const mode = sessionStorage.getItem('tasksMode') || 'add';
+  sessionStorage.removeItem('tasksMode');
 
   if (mode === 'edit') {
     showScreen('screen-edit-tasks');
