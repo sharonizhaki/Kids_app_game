@@ -137,10 +137,13 @@ async function handleQuickTasks(triggerEl, category) {
   const name = user.displayName ? user.displayName.split(' ')[0] : 'הורה';
   document.getElementById('dash-greeting').textContent = `שלום ${name}! 👋`;
 
-  // Check if no children → redirect to onboarding
+  // Check if no children → redirect to onboarding (לא לשני הורים)
   await loadChildren(currentFamilyId);
-  if (childrenCache.length === 0) {
-    window.location.href = 'index.html';
+  const isSecondaryParent = sessionStorage.getItem('isSecondaryParent') === '1';
+  sessionStorage.removeItem('isSecondaryParent');
+  if (childrenCache.length === 0 && !isSecondaryParent) {
+    // fallback — לא אמור לקרות, אבל למקרה קיצון
+    window.location.href = 'index.html?onboard=1';
     return;
   }
 
@@ -518,7 +521,7 @@ async function startDashTour(familyId, uid) {
       text: 'כאן תוכל לראות את כל הילדים — כוכבים שצברו השבוע והחודש, ומטלות שנותרו להיום'
     },
     {
-      el: '#dash-task-rows',
+      el: '#dash-task-section',
       title: 'מטלות להיום 📋',
       text: 'כאן מוצגות המטלות שנותרו לביצוע היום לכל ילד — מתחלפות אוטומטית אם יש כמה'
     },

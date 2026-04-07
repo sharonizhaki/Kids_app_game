@@ -21,23 +21,76 @@ window.showScreen = showScreen;
 completeMagicLinkSignIn();
 
 // =========== AUTH INIT ===========
-initAuth(
-  (user) => {
-    hideLoading();
-    // הורה מחובר — עבור לדשבורד
-    window.location.href = 'parent.html';
-  },
-  () => {
-    hideLoading();
-    // אין משפחה — מסך הצטרפות
-    showScreen('screen-join-family');
-  }
-);
+const _isOnboardReturn = new URLSearchParams(window.location.search).get('onboard') === '1';
+
+if (_isOnboardReturn) {
+  hideLoading();
+  (async () => {
+    const { onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+    const { getDocs, collection, query, where } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const { setCurrentFamilyId } = await import('./auth.js');
+    let handled = false;
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (handled) return;
+      handled = true;
+      unsub();
+      window.history.replaceState(null, '', window.location.pathname);
+      if (!user || user.isAnonymous) {
+        showScreen('screen-who');
+        return;
+      }
+      try {
+        let famSnap = await getDocs(query(collection(db, 'families'), where('parentUid', '==', user.uid)));
+        if (famSnap.empty) famSnap = await getDocs(query(collection(db, 'families'), where('secondaryParentUid', '==', user.uid)));
+        if (!famSnap.empty) setCurrentFamilyId(famSnap.docs[0].id);
+      } catch(e) {}
+      sessionStorage.removeItem('onboardRedirectCount');
+      resetOb1Form();
+      showScreen('screen-onboard-1');
+    });
+  })();
+} else {
+  initAuth(
+    async (user) => {
+      hideLoading();
+      // בדוק ילדים ישירות — בלי לעבור parent.html
+      try {
+        const { loadChildren, childrenCache } = await import('./family.js');
+        const { currentFamilyId } = await import('./auth.js');
+        await loadChildren(currentFamilyId);
+        if (childrenCache.length === 0) {
+          resetOb1Form();
+          showScreen('screen-onboard-1');
+        } else {
+          window.location.href = 'parent.html';
+        }
+      } catch(e) {
+        window.location.href = 'parent.html';
+      }
+    },
+    () => {
+      hideLoading();
+      const justLoggedIn = sessionStorage.getItem('justLoggedIn') === '1';
+      sessionStorage.removeItem('justLoggedIn');
+      if (justLoggedIn || sessionStorage.getItem('atJoinFamily') === '1') {
+        sessionStorage.setItem('atJoinFamily', '1');
+        showScreen('screen-join-family');
+      } else {
+        showScreen('screen-who');
+      }
+    }
+  );
+}
 
 // =========== WHO ARE YOU ===========
 document.getElementById('btn-who-parent').onclick = () => {
-  if (auth.currentUser && !auth.currentUser.isAnonymous) return;
-  showScreen('screen-parent-login');
+  const user = auth.currentUser;
+  if (user && !user.isAnonymous) {
+    sessionStorage.setItem('atJoinFamily', '1');
+    showScreen('screen-join-family');
+  } else {
+    showScreen('screen-parent-login');
+  }
 };
 
 document.getElementById('btn-who-child').onclick = () => {
@@ -50,11 +103,13 @@ document.getElementById('btn-who-child').onclick = () => {
 
 // =========== PARENT LOGIN ===========
 document.getElementById('btn-google-login').onclick = async () => {
+  sessionStorage.setItem('justLoggedIn', '1');
   const err = await loginWithGoogle();
   if (err) document.getElementById('login-error').textContent = err;
 };
 
 document.getElementById('btn-facebook-login').onclick = async () => {
+  sessionStorage.setItem('justLoggedIn', '1');
   const err = await loginWithFacebook();
   if (err) document.getElementById('login-error').textContent = err;
 };
@@ -120,20 +175,66 @@ document.getElementById('btn-join-family').onclick = async () => {
   if (code.length < 6) { err.textContent = 'הכנס 6 ספרות'; return; }
   const result = await joinFamily(code);
   if (result.error) { err.textContent = result.error; return; }
+  sessionStorage.setItem('isSecondaryParent', '1');
   window.location.href = 'parent.html';
 };
 
 document.getElementById('btn-create-new-family').onclick = async () => {
+  sessionStorage.removeItem('atJoinFamily');
   const result = await createNewFamily(auth.currentUser);
   if (!result.success) { showToast('שגיאה, נסה שוב'); return; }
   resetOb1Form();
   showScreen('screen-onboard-1');
-  setTimeout(() => document.getElementById('ob1-name').focus(), 200);
 };
 
 document.getElementById('btn-join-back').onclick = async () => {
-  const { signOut } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
-  await signOut(auth);
+  const user = auth.currentUser;
+  if (!user) { sessionStorage.removeItem('atJoinFamily'); showScreen('screen-who'); return; }
+  showLoading('מנקה...');
+  try {
+    await user.delete();
+  } catch(e) {
+    if (e.code === 'auth/requires-recent-login') {
+      try {
+        const { GoogleAuthProvider, FacebookAuthProvider, reauthenticateWithPopup, signOut: _so } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+        const providerId = user.providerData?.[0]?.providerId;
+        let provider = null;
+        if (providerId === 'google.com') provider = new GoogleAuthProvider();
+        else if (providerId === 'facebook.com') provider = new FacebookAuthProvider();
+
+        if (provider) {
+          await reauthenticateWithPopup(user, provider);
+          await user.delete();
+        } else {
+          // provider לא נתמך — signOut בלבד
+          await _so(auth);
+          hideLoading();
+          sessionStorage.removeItem('atJoinFamily');
+          showToast('אירעה שגיאה, נסה שוב ⚠️');
+          showScreen('screen-who');
+          return;
+        }
+      } catch(reAuthErr) {
+        const { signOut: _so2 } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+        await _so2(auth);
+        hideLoading();
+        sessionStorage.removeItem('atJoinFamily');
+        showToast('אירעה שגיאה, נסה שוב ⚠️');
+        showScreen('screen-who');
+        return;
+      }
+    } else {
+      const { signOut: _so3 } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+      await _so3(auth);
+      hideLoading();
+      sessionStorage.removeItem('atJoinFamily');
+      showToast('אירעה שגיאה, נסה שוב ⚠️');
+      showScreen('screen-who');
+      return;
+    }
+  }
+  hideLoading();
+  sessionStorage.removeItem('atJoinFamily');
   showScreen('screen-who');
 };
 
@@ -350,9 +451,8 @@ const OB1_ORDINALS = [
 
 function updateOb1Title() {
   const idx = childrenCache.length;
-  const pair = OB1_ORDINALS[idx] || [`${idx + 1}`, `${idx + 1}`];
   const el = document.getElementById('ob1-title');
-  if (el) el.textContent = `הוספת ילד/ה ${pair[0]}/${pair[1]}`;
+  if (el) el.textContent = idx === 0 ? 'הוספת ילד/ה' : 'הוספת ילד/ה נוסף';
   const topNext = document.getElementById('ob1-top-next');
   if (topNext) {
     topNext.style.visibility = idx === 0 ? 'hidden' : 'visible';
@@ -399,8 +499,7 @@ function showChildAddedPopup(name, gender, inviteCode, onAddMore, onContinue) {
       <div style="font-size:0.72rem;font-weight:700;color:#6366F1;margin-bottom:6px;">קוד כניסה לילד/ה</div>
       <div style="font-size:2rem;font-weight:900;color:#4338CA;letter-spacing:8px;direction:ltr;font-variant-numeric:tabular-nums;">${inviteCode}</div>
       <div style="font-size:0.7rem;color:#818CF8;margin-top:6px;font-weight:600;">⏰ תקף ל-24 שעות</div>
-    </div>
-    <button id="pop-share-code" style="width:100%;padding:13px;background:linear-gradient(135deg,#6366F1,#4338CA);border:none;border-radius:16px;font-size:0.95rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;margin-bottom:10px;">📤 שתף קוד עם ${name}</button>` : '';
+    </div>` : '';
 
   card.innerHTML = `
     <div style="font-size:3.2rem;margin-bottom:10px;">🎉</div>
@@ -408,7 +507,10 @@ function showChildAddedPopup(name, gender, inviteCode, onAddMore, onContinue) {
     <div style="font-size:0.86rem;color:#64748B;margin-bottom:20px;">${isBoy ? 'הוא' : 'היא'} כבר חלק מהמשפחה ✨</div>
     ${codeBlock}
     <button id="pop-add-more" style="width:100%;padding:13px;background:#F1F5F9;border:2px dashed #CBD5E1;border-radius:16px;font-size:0.95rem;font-weight:800;font-family:Heebo,sans-serif;cursor:pointer;color:#475569;margin-bottom:10px;">➕ הוסף ילד/ה נוספ/ת</button>
-    <button id="pop-continue" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366F1,#4F46E5);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;">המשך ←</button>`;
+    <div style="display:flex;gap:8px;">
+      ${inviteCode ? `<button id="pop-share-code" style="flex:1;padding:13px 8px;background:linear-gradient(135deg,#10B981,#059669);border:none;border-radius:16px;font-size:0.88rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;">📤 שתף קוד</button>` : ''}
+      <button id="pop-continue" style="flex:1;padding:13px;background:linear-gradient(135deg,#6366F1,#4F46E5);border:none;border-radius:16px;font-size:0.88rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;">המשך ←</button>
+    </div>`;
   backdrop.appendChild(card); document.body.appendChild(backdrop);
   if (inviteCode) {
     card.querySelector('#pop-share-code').onclick = () => {
@@ -427,7 +529,24 @@ document.getElementById('ob1-top-next').addEventListener('click', () => {
   else document.getElementById('ob1-next').click();
 });
 
-document.getElementById('ob1-back').onclick = () => showScreen('screen-join-family');
+document.getElementById('ob1-back').onclick = async () => {
+  // אם כבר יש ילדים — לא מוחקים משפחה (לא אמור לקרות, אבל safety)
+  if (childrenCache.length > 0) { showScreen('screen-join-family'); return; }
+  const fid = currentFamilyId;
+  if (!fid) { showScreen('screen-join-family'); return; }
+  showLoading('מוחק...');
+  try {
+    const { deleteDoc, doc: fsDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    await deleteDoc(fsDoc(db, 'families', fid));
+    // אפס את ה-familyId
+    const { setCurrentFamilyId: _set } = await import('./auth.js');
+    _set(null);
+  } catch(e) {
+    console.warn('ob1-back: family delete failed', e);
+  }
+  hideLoading();
+  showScreen('screen-join-family');
+};
 
 document.getElementById('ob1-next').onclick = async () => {
   const name = document.getElementById('ob1-name').value.trim();
@@ -471,9 +590,12 @@ document.getElementById('ob1-next').onclick = async () => {
   if (obColor) extraUpdates.color = obColor;
   if (Object.keys(extraUpdates).length > 0) await saveChild(currentFamilyId, result.childId, extraUpdates);
 
+  // קוד ההזמנה — createChild מחזיר { code, childId }
+  const inviteCode = result.code || null;
+
   const savedName = name; const savedGender = obGender;
   resetOb1Form();
-  showChildAddedPopup(savedName, savedGender, result.inviteCode || null, () => {}, () => goToOnboard2());
+  showChildAddedPopup(savedName, savedGender, inviteCode, () => {}, () => goToOnboard2());
 };
 
 document.getElementById('ob2-back').onclick = () => { updateOb1Title(); showScreen('screen-onboard-1'); };

@@ -29,12 +29,14 @@
   <div id="dash-children-grid" style="width:100%;max-width:480px;display:flex;flex-wrap:nowrap;overflow-x:hidden;margin-top:8px;padding:0 4px;"></div>
 
   <!-- כותרת מטלות להיום -->
-  <div style="width:100%;max-width:480px;padding:0 4px;margin-top:14px;margin-bottom:4px;font-size:0.82rem;font-weight:800;color:#64748B;display:flex;align-items:center;gap:6px;">
-    <span>📋</span><span>מטלות להיום</span>
-  </div>
-  <div id="dash-task-rows" style="width:100%;max-width:480px;padding:0 4px;display:flex;flex-direction:column;gap:0;">
-    <!-- placeholder נטען בהתחלה, יוחלף ע"י renderDashTaskRows -->
-    <div class="dash-task-placeholder" style="background:white;border-radius:14px;padding:14px 16px;text-align:center;color:#CBD5E1;font-size:0.82rem;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.05);border:2px dashed #E2E8F0;">כאן יוצגו המטלות להיום</div>
+  <div id="dash-task-section" style="width:100%;max-width:480px;">
+    <div style="padding:0 4px;margin-top:14px;margin-bottom:4px;font-size:0.82rem;font-weight:800;color:#64748B;display:flex;align-items:center;gap:6px;">
+      <span>📋</span><span>מטלות להיום</span>
+    </div>
+    <div id="dash-task-rows" style="width:100%;padding:0 4px;display:flex;flex-direction:column;gap:0;">
+      <!-- placeholder נטען בהתחלה, יוחלף ע"י renderDashTaskRows -->
+      <div class="dash-task-placeholder" style="background:white;border-radius:14px;padding:14px 16px;text-align:center;color:#CBD5E1;font-size:0.82rem;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.05);border:2px dashed #E2E8F0;">כאן יוצגו המטלות להיום</div>
+    </div>
   </div>
 
   <!-- Quick tasks banner -->
