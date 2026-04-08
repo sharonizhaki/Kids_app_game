@@ -2,5 +2,5 @@
 !*/
 !.gitignore
 !*.html
-!js/
-!css/
+!js/**
+!css/**
