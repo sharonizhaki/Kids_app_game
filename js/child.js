@@ -17,7 +17,7 @@ import { initProfile, openChildProfile }                      from './child-prof
 import { initPrizes, renderPrizesScreen }                    from './child-prizes.js';
 import {
   checkAndGrantBadges, computeStreak,
-  renderBadgesScreen, renderWeekGraph,
+  renderBadgesScreen,
 } from './child-badges.js';
 import { startOnboarding }                                    from './child-onboarding.js';
 
@@ -212,7 +212,6 @@ export function renderChild() {
   _renderPrizeBar();
 
   // sub-modules
-  renderWeekGraph();
   renderPendingSection();
   renderCategories(saveState, renderChild);
   renderHistory();

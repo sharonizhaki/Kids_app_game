@@ -4,8 +4,7 @@
 
 import { doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { state } from './child-state.js';
-import { cropAndCompressPhoto } from './utils.js';
-import { SPLAT_SVG } from './icons.js';
+import { cropAndCompressPhoto } from './ui.js';
 
 // -------- CONSTANTS --------
 const ONBOARD_EMOJIS = [
@@ -21,24 +20,27 @@ const ONBOARD_COLORS = [
 // -------- LOCAL STATE --------
 let _db = null;
 let _renderChildFn = null;
-let _obPhoto = null;
+let _obPhoto = null;      // base64 או null
 let _obColor = '';
 let _obEmoji = '';
-let _currentStep = 0;
+let _currentStep = 0;     // 0=welcome, 1=photo, 2=color, 3=emoji
 
 // -------- ENTRY POINT --------
 export function startOnboarding(db, renderChildFn) {
   _db = db;
   _renderChildFn = renderChildFn;
 
+  // קח ערכים קיימים מ-childData
   _obPhoto = state.childData?.photo || null;
   _obColor = state.childData?.color || '';
   _obEmoji = state.childData?.emoji || '';
 
+  // צור overlay
   const overlay = document.createElement('div');
   overlay.id = 'onboarding-overlay';
   document.body.appendChild(overlay);
 
+  // הצג שלב פתיחה
   showWelcome();
 }
 
@@ -47,10 +49,11 @@ function getOverlay() { return document.getElementById('onboarding-overlay'); }
 
 function animateIn(el) {
   el.style.animation = 'none';
-  el.offsetHeight;
+  el.offsetHeight; // reflow
   el.style.animation = 'obCardIn 0.38s cubic-bezier(.34,1.28,.64,1)';
 }
 
+// פופאפ מגניב — מוצג מעל הכרטיסייה, נסגר לבד
 function showPopup(icon, message, duration = 1600) {
   const popup = document.createElement('div');
   popup.className = 'ob-popup';
@@ -63,12 +66,14 @@ function showPopup(icon, message, duration = 1600) {
   }, duration);
 }
 
+// נקודות התקדמות (שלבים 1-3)
 function dotsHTML(active) {
   return `<div class="ob-dots">
     ${[1,2,3].map(i => `<div class="ob-dot${i === active ? ' ob-dot-active' : i < active ? ' ob-dot-done' : ''}"></div>`).join('')}
   </div>`;
 }
 
+// כפתורי ניווט
 function navBtnsHTML(step) {
   if (step === 1) return `
     <button class="ob-btn ob-btn-primary" id="ob-next">המשך ←</button>`;
@@ -164,15 +169,18 @@ function showPhotoStep() {
 
   animateIn(overlay.querySelector('#ob-card'));
 
+  // העלאת תמונה
   overlay.querySelector('#ob-photo-input').onchange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     try {
       _obPhoto = await cropAndCompressPhoto(file);
+      // עדכן תצוגה
       const circle = overlay.querySelector('#ob-photo-circle');
       circle.innerHTML = `
         <img id="ob-photo-img" src="${_obPhoto}" alt="תמונה">
         <input type="file" accept="image/*" id="ob-photo-input" class="ob-photo-file-input">`;
+      // הוסף כפתור פח
       if (!overlay.querySelector('#ob-photo-trash')) {
         const trash = document.createElement('button');
         trash.className = 'ob-trash-btn'; trash.id = 'ob-photo-trash'; trash.title = 'הסר תמונה';
@@ -180,6 +188,7 @@ function showPhotoStep() {
         overlay.querySelector('.ob-photo-area').appendChild(trash);
         trash.onclick = () => clearPhoto();
       }
+      // re-attach file input listener
       overlay.querySelector('#ob-photo-input').onchange = arguments.callee;
       showPopup('📸', 'תמונה נבחרה!');
     } catch {
@@ -187,6 +196,7 @@ function showPhotoStep() {
     }
   };
 
+  // כפתור פח
   const trashBtn = overlay.querySelector('#ob-photo-trash');
   if (trashBtn) trashBtn.onclick = () => clearPhoto();
 
@@ -238,19 +248,20 @@ function showColorStep() {
         <h2 class="ob-step-title">הצבע שלך 🎨</h2>
         <p class="ob-step-sub">${_obColor ? 'הצבע שנבחר עבורך — אפשר לשנות' : 'בחר צבע שמייצג אותך'}</p>
 
-        <div class="ob-splat-preview-row">
-          <div class="ob-splat-preview" id="ob-splat-preview">
-            ${_obColor ? SPLAT_SVG(_obColor, 72) : SPLAT_SVG('#E2E8F0', 72)}
+        <div class="ob-color-preview-row">
+          <div class="ob-color-preview-circle" id="ob-color-preview"
+            style="background:${_obColor || '#E2E8F0'}">
           </div>
           <span class="ob-color-preview-label" id="ob-color-preview-label">
             ${_obColor ? 'הצבע שלי ✓' : 'לא נבחר עדיין'}
           </span>
         </div>
 
-        <div class="ob-splat-grid">
+        <div class="ob-color-grid">
           ${ONBOARD_COLORS.map(c => `
-            <div class="ob-splat-opt${c === _obColor ? ' ob-splat-selected' : ''}" data-color="${c}">
-              ${SPLAT_SVG(c, 48)}
+            <div class="ob-color-opt${c === _obColor ? ' ob-color-selected' : ''}"
+              data-color="${c}"
+              style="background:${c}">
             </div>`).join('')}
         </div>
 
@@ -261,14 +272,15 @@ function showColorStep() {
 
   animateIn(overlay.querySelector('#ob-card'));
 
-  overlay.querySelectorAll('.ob-splat-opt').forEach(el => {
+  overlay.querySelectorAll('.ob-color-opt').forEach(el => {
     el.onclick = () => {
       const prev = _obColor;
       _obColor = el.dataset.color;
-      overlay.querySelectorAll('.ob-splat-opt').forEach(x => x.classList.remove('ob-splat-selected'));
-      el.classList.add('ob-splat-selected');
-      overlay.querySelector('#ob-splat-preview').innerHTML = SPLAT_SVG(_obColor, 72);
+      overlay.querySelectorAll('.ob-color-opt').forEach(x => x.classList.remove('ob-color-selected'));
+      el.classList.add('ob-color-selected');
+      overlay.querySelector('#ob-color-preview').style.background = _obColor;
       overlay.querySelector('#ob-color-preview-label').textContent = 'הצבע שלי ✓';
+      // פופאפ רק אם שינה
       if (_obColor !== prev) showPopup('🎨', 'צבע נבחר!', 1200);
     };
   });
@@ -347,6 +359,7 @@ function showEmojiStep() {
 async function finishOnboarding() {
   const overlay = getOverlay();
 
+  // פופאפ סיום
   const card = overlay.querySelector('#ob-card');
   if (card) {
     card.innerHTML = `
@@ -359,6 +372,7 @@ async function finishOnboarding() {
     animateIn(card);
   }
 
+  // שמור ל-Firestore
   try {
     const updates = {
       onboarded: true,
@@ -378,12 +392,14 @@ async function finishOnboarding() {
     console.error('onboarding save error', e);
   }
 
+  // מעבר לדשבורד אחרי אנימציית הסיום
   setTimeout(() => {
     overlay.style.transition = 'opacity 0.4s ease';
     overlay.style.opacity = '0';
     setTimeout(() => {
       overlay.remove();
       _renderChildFn();
+      // show dashboard
       const { show } = window._childShowFn || {};
       if (show) show('screen-child');
       else document.getElementById('screen-child')?.classList.add('active','visible');

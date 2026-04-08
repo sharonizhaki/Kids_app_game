@@ -5,7 +5,7 @@
 import { doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { state } from './child-state.js';
 import { show } from './child-ui.js';
-import { cropAndCompressPhoto } from './utils.js';
+import { cropAndCompressPhoto } from './ui.js';
 import { SPLAT_SVG } from './icons.js';
 
 // -------- CONSTANTS --------

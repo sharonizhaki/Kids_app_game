@@ -16,46 +16,9 @@ export function show(id) {
   requestAnimationFrame(() => requestAnimationFrame(() => next.classList.add('visible')));
 }
 
-// -------- TOAST (כוכבים או הודעה חופשית) --------
-// pts: מספר כוכבים | message: הודעה חופשית | color: צבע הילד
-export function showToast({ pts, message, color = '#6366F1' } = {}) {
-  const el = document.getElementById('toast');
-  if (!el) return;
-  el.innerHTML = message
-    ? message
-    : `כל הכבוד! 🎉<br><span style="font-size:1.2rem">+${starsText(pts)}</span>`;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2000);
 
-  if (typeof confetti === 'function') {
-    const colors = [color, '#FCD34D', '#10B981', '#EC4899', '#3B82F6'];
-    confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 }, colors });
-    setTimeout(() => confetti({ particleCount: 50, angle: 60,  spread: 55, origin: { x: 0, y: 0.65 }, colors }), 200);
-    setTimeout(() => confetti({ particleCount: 50, angle: 120, spread: 55, origin: { x: 1, y: 0.65 }, colors }), 400);
-  }
-}
-
-// -------- CONFIRM MODAL --------
-export function showConfirm({ icon, title, message, confirmText, confirmClass, onConfirm }) {
-  const ov = document.createElement('div'); ov.className = 'modal-overlay';
-  const sh = document.createElement('div'); sh.className = 'modal-sheet';
-  sh.innerHTML = `
-    <div class="modal-handle"></div>
-    <div class="confirm-body">
-      <div class="confirm-icon">${icon}</div>
-      <div class="confirm-title">${title}</div>
-      <div class="confirm-msg">${message}</div>
-      <div class="confirm-btns">
-        <button class="confirm-btn confirm-btn-cancel">ביטול</button>
-        <button class="confirm-btn ${confirmClass || 'confirm-btn-danger'}">${confirmText}</button>
-      </div>
-    </div>`;
-  sh.querySelector('.confirm-btn-cancel').onclick = () => ov.remove();
-  sh.querySelector(`.${confirmClass || 'confirm-btn-danger'}`).onclick = () => { ov.remove(); onConfirm(); };
-  ov.onclick = e => { if (e.target === ov) ov.remove(); };
-  ov.appendChild(sh);
-  document.body.appendChild(ov);
-}
+// -------- TOAST & CONFIRM — re-export זמני מ-ui.js עד לבניית גרסה חדשה --------
+export { showToast, showConfirm } from './ui.js';
 
 // -------- GENERIC MODAL SHELL --------
 // מחזיר את ה-body div להכנסת תוכן

@@ -72,9 +72,6 @@ let prizeSelectedEmoji = '';
 let prizeSelectedPts   = 0;
 let prizeAssignedChildren = [];
 
-export function getPrizeState() {
-  return { prizeSelectedEmoji, prizeSelectedPts, prizeAssignedChildren };
-}
 export function setPrizeEmoji(e)    { prizeSelectedEmoji = e; }
 export function setPrizePts(p)      { prizeSelectedPts = p; }
 export function setPrizeChildren(c) { prizeAssignedChildren = c; }

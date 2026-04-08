@@ -2,7 +2,7 @@ import { auth, db } from './firebase.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 import { showScreen, showToast, showLoading, hideLoading, openSideMenu, closeSideMenu, showConfirm } from './ui.js';
-import { cropAndCompressPhoto } from './utils.js';
+import { cropAndCompressPhoto } from './ui.js';
 import { logoutParent, currentFamilyId, setCurrentFamilyId, confirmDeleteAccount, deleteAccount } from './auth.js';
 import {
   childrenCache, clearChildrenCache, loadChildren, renderFamily,
