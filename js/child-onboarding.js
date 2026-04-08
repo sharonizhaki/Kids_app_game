@@ -5,6 +5,7 @@
 import { doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { state } from './child-state.js';
 import { cropAndCompressPhoto } from './ui.js';
+import { SPLAT_SVG } from './icons.js';
 
 // -------- CONSTANTS --------
 const ONBOARD_EMOJIS = [
@@ -249,19 +250,19 @@ function showColorStep() {
         <p class="ob-step-sub">${_obColor ? 'הצבע שנבחר עבורך — אפשר לשנות' : 'בחר צבע שמייצג אותך'}</p>
 
         <div class="ob-color-preview-row">
-          <div class="ob-color-preview-circle" id="ob-color-preview"
-            style="background:${_obColor || '#E2E8F0'}">
+          <div class="ob-color-preview-splat" id="ob-color-preview">
+            ${_obColor ? SPLAT_SVG(_obColor, 56) : SPLAT_SVG('#E2E8F0', 56)}
           </div>
           <span class="ob-color-preview-label" id="ob-color-preview-label">
             ${_obColor ? 'הצבע שלי ✓' : 'לא נבחר עדיין'}
           </span>
         </div>
 
-        <div class="ob-color-grid">
+        <div class="ob-color-grid splat-color-grid">
           ${ONBOARD_COLORS.map(c => `
-            <div class="ob-color-opt${c === _obColor ? ' ob-color-selected' : ''}"
-              data-color="${c}"
-              style="background:${c}">
+            <div class="ob-color-opt splat-color-opt${c === _obColor ? ' ob-color-selected splat-selected' : ''}"
+              data-color="${c}">
+              ${SPLAT_SVG(c, 44)}
             </div>`).join('')}
         </div>
 
@@ -272,13 +273,13 @@ function showColorStep() {
 
   animateIn(overlay.querySelector('#ob-card'));
 
-  overlay.querySelectorAll('.ob-color-opt').forEach(el => {
+      overlay.querySelectorAll('.ob-color-opt').forEach(el => {
     el.onclick = () => {
       const prev = _obColor;
       _obColor = el.dataset.color;
-      overlay.querySelectorAll('.ob-color-opt').forEach(x => x.classList.remove('ob-color-selected'));
-      el.classList.add('ob-color-selected');
-      overlay.querySelector('#ob-color-preview').style.background = _obColor;
+      overlay.querySelectorAll('.ob-color-opt').forEach(x => { x.classList.remove('ob-color-selected'); x.classList.remove('splat-selected'); });
+      el.classList.add('ob-color-selected'); el.classList.add('splat-selected');
+      overlay.querySelector('#ob-color-preview').innerHTML = SPLAT_SVG(_obColor, 56);
       overlay.querySelector('#ob-color-preview-label').textContent = 'הצבע שלי ✓';
       // פופאפ רק אם שינה
       if (_obColor !== prev) showPopup('🎨', 'צבע נבחר!', 1200);

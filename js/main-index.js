@@ -14,6 +14,7 @@ import {
   createParentInviteCode, verifyChildCode, shareParentCode,
   CHILD_EMOJIS, CHILD_COLORS, colorGradient
 } from './family.js';
+import { SPLAT_SVG } from './icons.js';
 
 window.showScreen = showScreen;
 
@@ -300,11 +301,11 @@ function setupEmojiPicker() {
 function setupColorPicker() {
   selectedColor = '';
   const grid = document.getElementById('color-picker');
-  grid.innerHTML = CHILD_COLORS.map(c => `<div class="color-opt" data-color="${c}" style="background:${colorGradient(c)}"></div>`).join('');
+  grid.innerHTML = CHILD_COLORS.map(c => `<div class="color-opt splat-color-opt" data-color="${c}">${SPLAT_SVG(c, 44)}</div>`).join('');
   grid.querySelectorAll('.color-opt').forEach(el => {
     el.onclick = () => {
-      grid.querySelectorAll('.color-opt').forEach(x => x.classList.remove('selected'));
-      el.classList.add('selected');
+      grid.querySelectorAll('.color-opt').forEach(x => { x.classList.remove('selected'); x.classList.remove('splat-selected'); });
+      el.classList.add('selected'); el.classList.add('splat-selected');
       selectedColor = el.dataset.color;
     };
   });
@@ -396,14 +397,14 @@ function showOb1ColorModal() {
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
   sh.innerHTML = `<div class="modal-handle"></div>
     <div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div>
-    <div class="modal-body"><div class="color-grid">${CHILD_COLORS.map(c => `<div class="color-opt${c === obColor ? ' selected' : ''}" data-color="${c}" style="background:${colorGradient(c)}"></div>`).join('')}</div></div>`;
+    <div class="modal-body"><div class="splat-color-grid">${CHILD_COLORS.map(c => `<div class="splat-color-opt${c === obColor ? ' splat-selected' : ''}" data-color="${c}">${SPLAT_SVG(c, 44)}</div>`).join('')}</div></div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
-  sh.querySelectorAll('.color-opt').forEach(el => {
+  sh.querySelectorAll('.splat-color-opt').forEach(el => {
     el.onclick = () => {
       obColor = el.dataset.color;
       const cd = document.getElementById('ob1-color-display');
-      cd.style.background = colorGradient(obColor); cd.style.borderStyle = 'solid';
+      cd.innerHTML = SPLAT_SVG(obColor, 44); cd.style.background = 'transparent'; cd.style.borderStyle = 'solid';
       ov.remove();
     };
   });
@@ -476,7 +477,7 @@ function resetOb1Form() {
   emojiEl.textContent = '?'; emojiEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
   emojiEl.style.borderStyle = 'dashed'; emojiEl.style.color = '#818CF8';
   const colorEl = document.getElementById('ob1-color-display');
-  colorEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)'; colorEl.style.borderStyle = 'dashed';
+  colorEl.innerHTML = ''; colorEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)'; colorEl.style.borderStyle = 'dashed';
 }
 
 async function goToOnboard2() {

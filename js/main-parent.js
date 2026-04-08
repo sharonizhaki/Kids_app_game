@@ -12,6 +12,7 @@ import {
   renderDashboardChildren, renderDashTaskRows, saveWeeklySnapshot,
   showChildInviteModal
 } from './family.js';
+import { SPLAT_SVG } from './icons.js';
 import { createQuickTasks } from './tasks.js';
 
 // =========== GUARD: הורה חייב להיות מחובר ===========
@@ -290,7 +291,7 @@ function resetNewChildUI() {
   const emojiEl = document.getElementById('new-child-emoji-display');
   emojiEl.textContent = '?'; emojiEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)'; emojiEl.style.borderStyle = 'dashed';
   const colorEl = document.getElementById('new-child-color-display');
-  colorEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)'; colorEl.style.borderStyle = 'dashed';
+  colorEl.innerHTML = ''; colorEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)'; colorEl.style.borderStyle = 'dashed';
 }
 
 document.getElementById('btn-invite-parent').onclick = async () => {
@@ -357,14 +358,14 @@ function showNewChildEmojiModal() {
 function showNewChildColorModal() {
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
-  sh.innerHTML = `<div class="modal-handle"></div><div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div><div class="modal-body"><div class="color-grid">${CHILD_COLORS.map(c => `<div class="color-opt${c === newChildColor ? ' selected' : ''}" data-color="${c}" style="background:${colorGradient(c)}"></div>`).join('')}</div></div>`;
+  sh.innerHTML = `<div class="modal-handle"></div><div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div><div class="modal-body"><div class="splat-color-grid">${CHILD_COLORS.map(c => `<div class="splat-color-opt${c === newChildColor ? ' splat-selected' : ''}" data-color="${c}">${SPLAT_SVG(c, 44)}</div>`).join('')}</div></div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
-  sh.querySelectorAll('.color-opt').forEach(el => {
+  sh.querySelectorAll('.splat-color-opt').forEach(el => {
     el.onclick = () => {
       newChildColor = el.dataset.color;
       const cd = document.getElementById('new-child-color-display');
-      cd.style.background = colorGradient(newChildColor); cd.style.borderStyle = 'solid';
+      cd.innerHTML = SPLAT_SVG(newChildColor, 44); cd.style.background = 'transparent'; cd.style.borderStyle = 'solid';
       ov.remove();
     };
   });
@@ -392,8 +393,11 @@ function openEditChild(childId) {
   document.getElementById('edit-gender-female').classList.toggle('selected', child.gender === 'female');
   editColor = child.color || '';
   const colorEl = document.getElementById('edit-child-color-display');
-  colorEl.style.background = child.color ? colorGradient(child.color) : 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
-  colorEl.style.borderStyle = child.color ? 'solid' : 'dashed';
+  if (child.color) {
+    colorEl.innerHTML = SPLAT_SVG(child.color, 44); colorEl.style.background = 'transparent'; colorEl.style.borderStyle = 'solid';
+  } else {
+    colorEl.innerHTML = ''; colorEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)'; colorEl.style.borderStyle = 'dashed';
+  }
   colorEl.onclick = () => showEditColorModal(child.color);
   editEmoji = child.emoji || '';
   const emojiEl = document.getElementById('edit-child-emoji-display');
@@ -503,11 +507,16 @@ function showEditEmojiModal(current) {
 function showEditColorModal(current) {
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
-  sh.innerHTML = `<div class="modal-handle"></div><div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div><div class="modal-body"><div class="color-grid">${CHILD_COLORS.map(c => `<div class="color-opt${c === current ? ' selected' : ''}" data-color="${c}" style="background:${colorGradient(c)}"></div>`).join('')}</div></div>`;
+  sh.innerHTML = `<div class="modal-handle"></div><div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div><div class="modal-body"><div class="splat-color-grid">${CHILD_COLORS.map(c => `<div class="splat-color-opt${c === current ? ' splat-selected' : ''}" data-color="${c}">${SPLAT_SVG(c, 44)}</div>`).join('')}</div></div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
-  sh.querySelectorAll('.color-opt').forEach(el => {
-    el.onclick = () => { editColor = el.dataset.color; const cd = document.getElementById('edit-child-color-display'); cd.style.background = colorGradient(editColor); cd.style.borderStyle = 'solid'; ov.remove(); };
+  sh.querySelectorAll('.splat-color-opt').forEach(el => {
+    el.onclick = () => {
+      editColor = el.dataset.color;
+      const cd = document.getElementById('edit-child-color-display');
+      cd.innerHTML = SPLAT_SVG(editColor, 44); cd.style.background = 'transparent'; cd.style.borderStyle = 'solid';
+      ov.remove();
+    };
   });
   ov.appendChild(sh); document.body.appendChild(ov);
 }
