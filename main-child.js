@@ -1,9 +1,9 @@
-// =========== child.js ===========
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, onAuthStateChanged, signOut }
+// =========== main-child.js ===========
+import { auth, db }                                          from './firebase.js';
+import { onAuthStateChanged, signOut }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import {
-  getFirestore, doc, getDoc, setDoc, getDocs,
+  doc, getDoc, setDoc, getDocs,
   collection, updateDoc, onSnapshot,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
@@ -20,20 +20,6 @@ import {
   renderBadgesScreen,
 } from './child-badges.js';
 import { startOnboarding }                                    from './child-onboarding.js';
-
-// -------- FIREBASE --------
-const firebaseConfig = {
-  apiKey:            'AIzaSyDC0GADxe3qv6uv6s6fGR3O7_lL9iHl4ag',
-  authDomain:        'kidssapp-izhaki.firebaseapp.com',
-  databaseURL:       'https://kidssapp-izhaki-default-rtdb.europe-west1.firebasedatabase.app',
-  projectId:         'kidssapp-izhaki',
-  storageBucket:     'kidssapp-izhaki.firebasestorage.app',
-  messagingSenderId: '663906163746',
-  appId:             '1:663906163746:web:a4f66772a2ae0dedc47e7b',
-};
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
 
 // -------- GREETINGS --------
 const GREETINGS_M = ['יאללה נתחיל! 💪','בוא נעשה את זה! 🚀','היום תהיה מדהים! ✨','מוכן לאסוף כוכבים? 🔥','הגיבור שלנו הגיע! 🦸‍♂️'];
