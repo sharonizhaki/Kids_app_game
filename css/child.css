@@ -339,3 +339,42 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 .progress-fill::after { content: ""; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); animation: shimmer 2s infinite; }
 @keyframes shimmer { 0% { left: -100%; } 100% { left: 100%; } }
 .progress-pts-label { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+
+/* =========================================================
+   SPLAT COLOR PICKER — additions
+   ========================================================= */
+
+/* כפתור פתיחת בורר צבע — palette icon */
+#profile-color-display {
+  display: flex;
+  align-items: center; justify-content: center;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: transparent !important;
+  border: none; cursor: pointer;
+  transition: transform 0.18s;
+  margin: 0 auto 4px;
+}
+#profile-color-display:hover { transform: scale(1.12); }
+
+/* רשת splat במודל עריכת פרופיל */
+.splat-color-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 8px; justify-items: center; align-items: center;
+  margin: 8px 0 16px;
+}
+.splat-color-opt {
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 12px; padding: 4px;
+  transition: transform 0.22s cubic-bezier(.34,1.5,.64,1), filter 0.18s;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2));
+}
+.splat-color-opt:hover {
+  transform: scale(1.18) rotate(-5deg);
+  filter: drop-shadow(0 5px 14px rgba(0,0,0,0.28));
+}
+.splat-color-opt.splat-selected {
+  transform: scale(1.22) rotate(-3deg);
+  filter: drop-shadow(0 5px 18px rgba(0,0,0,0.32));
+}

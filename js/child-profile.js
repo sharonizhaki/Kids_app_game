@@ -6,6 +6,7 @@ import { doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/fireb
 import { state } from './child-state.js';
 import { show } from './child-ui.js';
 import { cropAndCompressPhoto } from './utils.js';
+import { SPLAT_SVG, PALETTE_ICON } from './icons.js';
 
 // -------- CONSTANTS --------
 const PROFILE_EMOJIS = [
@@ -75,8 +76,10 @@ function openChildProfile() {
   document.getElementById('profile-child-gender').textContent =
     childData.gender === 'female' ? '👧 נקבה' : '👦 זכר';
 
+  // כפתור צבע — splat בצבע הנוכחי + אייקון פלטה
   const colorEl = document.getElementById('profile-color-display');
-  colorEl.style.background = childData.color || 'var(--border)';
+  colorEl.innerHTML = PALETTE_ICON(childData.color || '#94A3B8', 32);
+  colorEl.style.background = 'transparent';
   colorEl.onclick = () => showProfileColorModal();
 
   const emojiEl = document.getElementById('profile-emoji-display');
@@ -161,22 +164,26 @@ function showProfileColorModal() {
   sh.innerHTML = `
     <div class="modal-handle"></div>
     <div class="modal-header">
-      <h2>בחר צבע</h2>
+      <h2>בחר צבע 🎨</h2>
       <button class="modal-close">✕</button>
     </div>
     <div class="modal-body">
-      <div class="color-grid">
-        ${PROFILE_COLORS.map(c =>
-          `<div class="color-opt${c === profileColor ? ' selected' : ''}" data-color="${c}" style="background:${c}"></div>`
+      <div class="splat-color-grid">
+        ${PROFILE_COLORS.map(c => `
+          <div class="splat-color-opt${c === profileColor ? ' splat-selected' : ''}" data-color="${c}">
+            ${SPLAT_SVG(c, 52)}
+          </div>`
         ).join('')}
       </div>
     </div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
-  sh.querySelectorAll('.color-opt').forEach(el => {
+  sh.querySelectorAll('.splat-color-opt').forEach(el => {
     el.onclick = () => {
       profileColor = el.dataset.color;
-      document.getElementById('profile-color-display').style.background = profileColor;
+      // עדכן כפתור הפתיחה
+      const colorEl = document.getElementById('profile-color-display');
+      colorEl.innerHTML = PALETTE_ICON(profileColor, 32);
       ov.remove();
     };
   });

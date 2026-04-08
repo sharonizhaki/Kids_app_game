@@ -1,6 +1,5 @@
 /* =========================================================
-   ONBOARDING — child-onboarding styles
-   הדבק בסוף child.css
+   ONBOARDING — child-onboarding.css
    ========================================================= */
 
 /* ---- OVERLAY ---- */
@@ -99,8 +98,7 @@
 .ob-btn-start {
   width: 100%;
   background: linear-gradient(135deg, var(--child-color, #6366F1), #8B5CF6);
-  color: white;
-  font-size: 1.1rem;
+  color: white; font-size: 1.1rem;
   box-shadow: 0 6px 20px rgba(99,102,241,0.38);
 }
 .ob-btn-primary {
@@ -109,26 +107,19 @@
   color: white;
   box-shadow: 0 4px 14px rgba(99,102,241,0.3);
 }
-.ob-btn-ghost {
-  flex: 1;
-  background: #F1F5F9; color: var(--text);
-}
+.ob-btn-ghost { flex: 1; background: #F1F5F9; color: var(--text); }
 .ob-btn-finish {
   flex: 1;
   background: linear-gradient(135deg, #10B981, #059669);
   color: white;
   box-shadow: 0 4px 14px rgba(16,185,129,0.35);
 }
-
-.ob-nav-row {
-  display: flex; gap: 10px; margin-top: 4px;
-}
+.ob-nav-row { display: flex; gap: 10px; margin-top: 4px; }
 
 /* ---- PHOTO STEP ---- */
 .ob-photo-area {
   display: flex; flex-direction: column;
-  align-items: center; gap: 10px;
-  margin-bottom: 16px;
+  align-items: center; gap: 10px; margin-bottom: 16px;
 }
 .ob-photo-circle {
   width: 120px; height: 120px; border-radius: 50%;
@@ -139,17 +130,11 @@
   transition: border-color 0.2s, transform 0.15s;
 }
 .ob-photo-circle:hover { border-color: var(--child-color, #6366F1); transform: scale(1.03); }
-.ob-photo-circle img {
-  width: 100%; height: 100%; object-fit: cover;
-}
-.ob-photo-placeholder {
-  text-align: center; color: var(--muted); pointer-events: none;
-}
+.ob-photo-circle img { width: 100%; height: 100%; object-fit: cover; }
+.ob-photo-placeholder { text-align: center; color: var(--muted); pointer-events: none; }
 .ob-photo-placeholder span  { font-size: 2.2rem; display: block; }
 .ob-photo-placeholder small { font-size: 0.72rem; }
-.ob-photo-file-input {
-  position: absolute; inset: 0; opacity: 0; cursor: pointer;
-}
+.ob-photo-file-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .ob-trash-btn {
   background: #FEE2E2; border: none; border-radius: 12px;
   padding: 8px 14px; font-size: 0.85rem; cursor: pointer;
@@ -158,34 +143,36 @@
 }
 .ob-trash-btn:hover { background: #FECACA; }
 
-/* ---- COLOR STEP ---- */
-.ob-color-preview-row {
-  display: flex; align-items: center; gap: 14px;
-  justify-content: center; margin-bottom: 16px;
-}
-.ob-color-preview-circle {
-  width: 56px; height: 56px; border-radius: 50%;
-  border: 3px solid var(--border);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-  transition: background 0.3s;
-}
+/* ---- COLOR STEP — SPLAT ---- */
 .ob-color-preview-label {
   font-size: 0.9rem; font-weight: 700; color: var(--muted);
 }
-.ob-color-grid {
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
-  margin-bottom: 16px;
+.ob-splat-preview-row {
+  display: flex; align-items: center; gap: 14px;
+  justify-content: center; margin-bottom: 14px;
 }
-.ob-color-opt {
-  aspect-ratio: 1; border-radius: 50%; cursor: pointer;
-  border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-  transition: transform 0.15s, box-shadow 0.15s;
+.ob-splat-preview {
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
+  transition: filter 0.2s;
 }
-.ob-color-opt:hover  { transform: scale(1.12); }
-.ob-color-opt:active { transform: scale(0.88); }
-.ob-color-opt.ob-color-selected {
-  transform: scale(1.1);
-  box-shadow: 0 0 0 3px white, 0 0 0 6px #1E293B;
+.ob-splat-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+  justify-items: center; align-items: center; margin-bottom: 14px;
+}
+.ob-splat-opt {
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px; padding: 3px;
+  transition: transform 0.22s cubic-bezier(.34,1.5,.64,1), filter 0.18s;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2));
+}
+.ob-splat-opt:hover {
+  transform: scale(1.18) rotate(-5deg);
+  filter: drop-shadow(0 5px 14px rgba(0,0,0,0.28));
+}
+.ob-splat-opt.ob-splat-selected {
+  transform: scale(1.22) rotate(-3deg);
+  filter: drop-shadow(0 5px 18px rgba(0,0,0,0.32));
 }
 
 /* ---- EMOJI STEP ---- */
@@ -215,16 +202,12 @@
 }
 
 /* ---- FINISH SCREEN ---- */
-.ob-finish-body {
-  text-align: center; padding: 12px 0 8px;
-}
+.ob-finish-body { text-align: center; padding: 12px 0 8px; }
 .ob-finish-emoji {
   font-size: 5rem; margin-bottom: 12px;
   animation: obBounce 0.8s ease infinite alternate;
 }
-.ob-finish-title {
-  font-size: 1.5rem; font-weight: 900; margin-bottom: 6px;
-}
+.ob-finish-title { font-size: 1.5rem; font-weight: 900; margin-bottom: 6px; }
 .ob-finish-sub {
   font-size: 0.9rem; color: var(--muted);
   line-height: 1.6; margin-bottom: 20px;
@@ -240,7 +223,8 @@
 
 /* ---- POPUP ---- */
 .ob-popup {
-  position: absolute; top: 20px; left: 50%; transform: translateX(-50%) translateY(-10px);
+  position: absolute; top: 20px; left: 50%;
+  transform: translateX(-50%) translateY(-10px);
   background: rgba(15,23,42,0.82); color: white;
   border-radius: 20px; padding: 10px 20px;
   display: flex; align-items: center; gap: 8px;
@@ -250,9 +234,7 @@
   transition: opacity 0.25s, transform 0.3s cubic-bezier(.34,1.28,.64,1);
   z-index: 10;
 }
-.ob-popup-show {
-  opacity: 1; transform: translateX(-50%) translateY(0);
-}
+.ob-popup-show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .ob-popup-icon { font-size: 1.2rem; }
 
 /* ---- ERROR ---- */
