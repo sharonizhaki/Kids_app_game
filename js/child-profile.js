@@ -6,7 +6,7 @@ import { doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/fireb
 import { state } from './child-state.js';
 import { show } from './child-ui.js';
 import { cropAndCompressPhoto } from './utils.js';
-import { SPLAT_SVG, PALETTE_ICON } from './icons.js';
+import { SPLAT_SVG } from './icons.js';
 
 // -------- CONSTANTS --------
 const PROFILE_EMOJIS = [
@@ -65,7 +65,7 @@ export function initProfile(db, renderChildFn) {
 }
 
 // -------- OPEN PROFILE SCREEN --------
-function openChildProfile() {
+export function openChildProfile() {
   const { childData } = state;
   profileEmoji        = childData.emoji || '';
   profileColor        = childData.color || '';
@@ -76,9 +76,9 @@ function openChildProfile() {
   document.getElementById('profile-child-gender').textContent =
     childData.gender === 'female' ? '👧 נקבה' : '👦 זכר';
 
-  // כפתור צבע — splat בצבע הנוכחי + אייקון פלטה
+  // כפתור צבע — splat בצבע הנוכחי
   const colorEl = document.getElementById('profile-color-display');
-  colorEl.innerHTML = PALETTE_ICON(childData.color || '#94A3B8', 32);
+  colorEl.innerHTML = SPLAT_SVG(childData.color || '#94A3B8', 48);
   colorEl.style.background = 'transparent';
   colorEl.onclick = () => showProfileColorModal();
 
@@ -183,7 +183,7 @@ function showProfileColorModal() {
       profileColor = el.dataset.color;
       // עדכן כפתור הפתיחה
       const colorEl = document.getElementById('profile-color-display');
-      colorEl.innerHTML = PALETTE_ICON(profileColor, 32);
+      colorEl.innerHTML = SPLAT_SVG(profileColor, 48);
       ov.remove();
     };
   });

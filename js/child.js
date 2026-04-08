@@ -13,7 +13,7 @@ import {
   isDone, renderCategories, renderHistory,
   renderPendingSection, initTasksModule,
 } from './child-tasks.js';
-import { initProfile }                                        from './child-profile.js';
+import { initProfile, openChildProfile }                      from './child-profile.js';
 import { initPrizes, renderPrizesScreen }                    from './child-prizes.js';
 import {
   checkAndGrantBadges, computeStreak,
@@ -168,9 +168,17 @@ export function renderChild() {
   const totalEl  = document.getElementById('cpc-total-val');
   if (totalEl) totalEl.textContent = totalPts;
 
-  // nav icon
+  // nav icon — תמונה או אימוג'י
   const navIcon = document.getElementById('nav-profile-icon');
-  if (navIcon) navIcon.textContent = childData.emoji || '👤';
+  if (navIcon) {
+    if (childData.photo && childData.photo.length > 10) {
+      navIcon.innerHTML = `<img src="${childData.photo}" alt="${childData.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      navIcon.style.cssText = 'width:28px;height:28px;border-radius:50%;overflow:hidden;display:flex;border:2px solid var(--child-color);flex-shrink:0;';
+    } else {
+      navIcon.textContent = childData.emoji || '👤';
+      navIcon.style.cssText = '';
+    }
+  }
 
   // ---- greeting ----
   const color = childData.color || '#6366F1';
@@ -225,6 +233,10 @@ function initNav() {
       const tab = btn.dataset.tab;
       navBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+      if (tab === 'profile') {
+        if (state.childData) openChildProfile();
+        return;
+      }
       show(btn.dataset.screen);
       if (tab === 'prizes') renderPrizesScreen();
       if (tab === 'badges') {
