@@ -6,6 +6,10 @@
   <title>דשבורד הורה</title>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./css/styles.css">
+  <style>
+    #new-child-color-display svg,
+    #edit-child-color-display svg { width:118px !important; height:118px !important; margin-right:-23px; margin-top:-12px; }
+  </style>
 </head>
 <body>
 
@@ -53,7 +57,7 @@
         <button class="quick-cat-btn" data-cat="chores" style="background:white;border:2px solid #A5B4FC;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">🏠</div><div style="font-size:0.78rem;font-weight:800;color:#4338CA;">מטלות בית</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">5 משימות</div></button>
         <button class="quick-cat-btn" data-cat="study" style="background:white;border:2px solid #A5B4FC;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">📚</div><div style="font-size:0.78rem;font-weight:800;color:#4338CA;">לימודים</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">5 משימות</div></button>
       </div>
-      <div dir="rtl" style="margin-top:11px;font-size:0.71rem;color:#94A3B8;line-height:1.45;">ניתן לערוך ולמחוק את המטלות דרך <strong style="color:#6366F1;">עריכת מטלות</strong> במסך <strong style="color:#6366F1;">הגדרות</strong> ⚙️</div>
+      <div dir="rtl" style="margin-top:11px;font-size:0.71rem;color:#94A3B8;line-height:1.45;">ניתן לערוך ולמחוק מטלות במסך <strong style="color:#6366F1;">עריכת מטלות</strong> בתפריט <strong style="color:#6366F1;">הגדרות</strong> ⚙️</div>
     </div>
   </div>
 
@@ -99,21 +103,21 @@
       <div class="gender-opt" data-gender="male" id="gender-male">👦</div>
       <div class="gender-opt" data-gender="female" id="gender-female">👧</div>
     </div>
-    <div style="display:flex;justify-content:space-around;align-items:flex-start;background:#F8FAFC;border-radius:14px;padding:10px 6px;margin-top:12px;">
-      <div style="text-align:center;cursor:pointer;" onclick="document.getElementById('new-child-photo-input').click()">
-        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">תמונה 📷</div>
-        <div id="new-child-photo-circle" style="width:75px;height:75px;border-radius:50%;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);display:flex;align-items:center;justify-content:center;border:3px dashed #818CF8;overflow:hidden;margin:0 auto;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    <div style="display:flex;align-items:flex-start;background:#F8FAFC;border-radius:14px;padding:10px 6px;margin-top:12px;">
+      <div style="flex:1;text-align:center;cursor:pointer;" onclick="showNewChildColorModal()">
+        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;display:block;text-align:center;">צבע</div>
+        <div id="new-child-color-display" style="display:flex;justify-content:center;overflow:visible;cursor:pointer;min-height:95px;align-items:center;"></div>
+      </div>
+      <div style="flex:1;text-align:center;cursor:pointer;" onclick="showNewChildEmojiModal()">
+        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">אימוג'י</div>
+        <div id="new-child-emoji-display" style="width:95px;height:95px;border-radius:50%;border:3px dashed #818CF8;margin:0 auto;font-size:2.2rem;font-weight:900;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);color:#818CF8;">?</div>
+      </div>
+      <div style="flex:1;text-align:center;">
+        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">תמונה</div>
+        <div id="new-child-photo-circle" style="width:95px;height:95px;border-radius:50%;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);display:flex;align-items:center;justify-content:center;border:3px dashed #818CF8;overflow:hidden;margin:0 auto;cursor:pointer;" onclick="document.getElementById('new-child-photo-input').click()">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         </div>
         <input type="file" id="new-child-photo-input" accept="image/*" style="display:none;">
-      </div>
-      <div style="text-align:center;cursor:pointer;" onclick="showNewChildEmojiModal()">
-        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">אימוג'י</div>
-        <div id="new-child-emoji-display" style="width:75px;height:75px;border-radius:50%;border:3px dashed #818CF8;margin:0 auto;font-size:2rem;font-weight:900;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);color:#818CF8;">?</div>
-      </div>
-      <div style="text-align:center;cursor:pointer;" onclick="showNewChildColorModal()">
-        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">צבע 🎨</div>
-        <div id="new-child-color-display" style="width:75px;height:75px;margin:0 auto;display:flex;align-items:center;justify-content:center;overflow:visible;cursor:pointer;"></div>
       </div>
     </div>
     <div class="error-msg" id="create-child-error"></div>
@@ -180,22 +184,22 @@
         <div class="gender-opt" data-gender="female" id="edit-gender-female" style="width:46px;height:46px;font-size:1.6rem;border-radius:12px;">👧</div>
       </div>
     </div>
-    <div style="display:flex;justify-content:space-around;align-items:flex-start;margin-bottom:12px;background:#F8FAFC;border-radius:14px;padding:10px 6px;">
-      <div style="text-align:center;">
-        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">צבע 🎨</div>
-        <div id="edit-child-color-display" style="width:75px;height:75px;margin:0 auto;display:flex;align-items:center;justify-content:center;overflow:visible;cursor:pointer;"></div>
+    <div style="display:flex;align-items:flex-start;margin-bottom:12px;background:#F8FAFC;border-radius:14px;padding:10px 6px;">
+      <div style="flex:1;text-align:center;">
+        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;display:block;text-align:center;">צבע</div>
+        <div id="edit-child-color-display" style="display:flex;justify-content:center;overflow:visible;cursor:pointer;min-height:95px;align-items:center;"></div>
       </div>
-      <div style="text-align:center;">
+      <div style="flex:1;text-align:center;">
         <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">אימוג'י</div>
-        <div id="edit-child-emoji-display" style="width:75px;height:75px;border-radius:50%;margin:0 auto;border:3px dashed #818CF8;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);font-size:2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;"></div>
+        <div id="edit-child-emoji-display" style="width:95px;height:95px;border-radius:50%;margin:0 auto;border:3px dashed #818CF8;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);font-size:2.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;"></div>
       </div>
-      <div style="text-align:center;">
-        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">תמונה 📷</div>
-        <div id="edit-child-photo-circle" style="width:75px;height:75px;border-radius:50%;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);display:flex;align-items:center;justify-content:center;border:3px dashed #818CF8;overflow:hidden;margin:0 auto;cursor:pointer;" onclick="document.getElementById('edit-photo-input').click()">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <div style="flex:1;text-align:center;">
+        <div style="font-size:0.75rem;font-weight:700;color:#64748B;margin-bottom:5px;">תמונה</div>
+        <div id="edit-child-photo-circle" style="width:95px;height:95px;border-radius:50%;background:linear-gradient(135deg,#EDE9FE,#C7D2FE);display:flex;align-items:center;justify-content:center;border:3px dashed #818CF8;overflow:hidden;margin:0 auto;cursor:pointer;" onclick="document.getElementById('edit-photo-input').click()">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         </div>
         <input type="file" accept="image/*" id="edit-photo-input" style="display:none;">
-        <button id="btn-clear-photo" style="display:none;margin-top:5px;background:none;border:none;font-size:0.9rem;cursor:pointer;color:#64748B;padding:0;">🗑️</button>
+        <button id="btn-clear-photo" style="display:none;margin-top:6px;background:none;border:none;font-size:0.8rem;font-weight:700;cursor:pointer;color:#64748B;padding:0;width:100%;text-align:center;font-family:'Heebo',sans-serif;">🗑️ מחק</button>
       </div>
     </div>
     <div id="edit-child-invite-section" style="display:none;margin-bottom:12px;padding:12px;background:#F8FAFC;border-radius:14px;">

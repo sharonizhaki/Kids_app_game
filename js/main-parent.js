@@ -285,11 +285,14 @@ document.getElementById('btn-create-child').onclick = () => {
 
 function resetNewChildUI() {
   const ncpc = document.getElementById('new-child-photo-circle');
-  ncpc.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
-  ncpc.style.borderStyle = 'dashed'; ncpc.style.borderColor = '#818CF8';
+  ncpc.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  ncpc.style.border = '3px dashed #818CF8';
   document.getElementById('new-child-photo-input').value = '';
   const emojiEl = document.getElementById('new-child-emoji-display');
-  emojiEl.textContent = '?'; emojiEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)'; emojiEl.style.borderStyle = 'dashed';
+  emojiEl.textContent = '?';
+  emojiEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
+  emojiEl.style.border = '3px dashed #818CF8';
+  emojiEl.style.fontSize = '';
   const colorEl = document.getElementById('new-child-color-display');
   colorEl.innerHTML = SPLAT_SVG('#94A3B8', 75, true); colorEl.style.background = 'transparent'; colorEl.style.border = 'none'; colorEl.style.borderRadius = '0';
 }
@@ -334,7 +337,7 @@ document.getElementById('new-child-photo-input').onchange = async (e) => {
     newChildPhotoData = await cropAndCompressPhoto(file);
     const ncpc = document.getElementById('new-child-photo-circle');
     ncpc.innerHTML = `<img src="${newChildPhotoData}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    ncpc.style.borderStyle = 'solid';
+    ncpc.style.border = 'none';
   } catch(err) { showToast('שגיאה ⚠️'); }
 };
 
@@ -348,7 +351,10 @@ function showNewChildEmojiModal() {
     el.onclick = () => {
       newChildEmoji = el.dataset.emoji;
       const ed = document.getElementById('new-child-emoji-display');
-      ed.textContent = newChildEmoji; ed.style.background = 'transparent'; ed.style.borderStyle = 'solid';
+      ed.textContent = newChildEmoji;
+      ed.style.background = 'none';
+      ed.style.border = 'none';
+      ed.style.fontSize = '80px';
       ov.remove();
     };
   });
@@ -416,18 +422,27 @@ function openEditChild(childId) {
   editEmoji = child.emoji || '';
   const emojiEl = document.getElementById('edit-child-emoji-display');
   emojiEl.textContent = child.emoji || '';
-  emojiEl.style.borderStyle = child.emoji ? 'solid' : 'dashed';
+  if (child.emoji) {
+    emojiEl.style.background = 'none';
+    emojiEl.style.border = 'none';
+    emojiEl.style.fontSize = '80px';
+  } else {
+    emojiEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
+    emojiEl.style.border = '3px dashed #818CF8';
+    emojiEl.style.fontSize = '';
+  }
   emojiEl.onclick = () => showEditEmojiModal(child.emoji);
   const photoCircle = document.getElementById('edit-child-photo-circle');
   const clearBtn = document.getElementById('btn-clear-photo');
-  const svgPlaceholder = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  const svgPlaceholder = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
   if (child.photo && child.photo.length > 10) {
     photoCircle.innerHTML = `<img src="${child.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    photoCircle.style.borderStyle = 'solid';
+    photoCircle.style.border = 'none';
+    clearBtn.innerHTML = '🗑️ מחק';
     clearBtn.style.display = 'block';
   } else {
     photoCircle.innerHTML = svgPlaceholder;
-    photoCircle.style.borderStyle = 'dashed';
+    photoCircle.style.border = '3px dashed #818CF8';
     clearBtn.style.display = 'none';
   }
   const inviteSection = document.getElementById('edit-child-invite-section');
@@ -451,8 +466,10 @@ document.getElementById('edit-photo-input').onchange = async (e) => {
     editPhotoData = await cropAndCompressPhoto(file);
     const pc = document.getElementById('edit-child-photo-circle');
     pc.innerHTML = `<img src="${editPhotoData}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    pc.style.borderStyle = 'solid';
-    document.getElementById('btn-clear-photo').style.display = 'block';
+    pc.style.border = 'none';
+    const clearBtn = document.getElementById('btn-clear-photo');
+    clearBtn.innerHTML = '🗑️ מחק';
+    clearBtn.style.display = 'block';
   } catch(err) { showToast('שגיאה ⚠️'); }
 };
 
@@ -460,8 +477,10 @@ document.getElementById('btn-clear-photo').onclick = () => {
   editPhotoData = null; editPhotoCleared = true;
   const pc = document.getElementById('edit-child-photo-circle');
   pc.innerHTML = _editSvgPlaceholder;
-  pc.style.borderStyle = 'dashed';
-  document.getElementById('btn-clear-photo').style.display = 'none';
+  pc.style.border = '3px dashed #818CF8';
+  const clearBtn = document.getElementById('btn-clear-photo');
+  clearBtn.style.display = 'none';
+  clearBtn.innerHTML = '🗑️ מחק';
   document.getElementById('edit-photo-input').value = '';
 };
 
@@ -513,7 +532,15 @@ function showEditEmojiModal(current) {
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
   sh.querySelectorAll('.emoji-opt').forEach(el => {
-    el.onclick = () => { editEmoji = el.dataset.emoji; const ed = document.getElementById('edit-child-emoji-display'); ed.textContent = editEmoji; ed.style.borderStyle = 'solid'; ov.remove(); };
+    el.onclick = () => {
+      editEmoji = el.dataset.emoji;
+      const ed = document.getElementById('edit-child-emoji-display');
+      ed.textContent = editEmoji;
+      ed.style.background = 'none';
+      ed.style.border = 'none';
+      ed.style.fontSize = '80px';
+      ov.remove();
+    };
   });
   ov.appendChild(sh); document.body.appendChild(ov);
 }

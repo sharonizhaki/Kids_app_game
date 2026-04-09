@@ -46,6 +46,11 @@ export function initProfile(db, renderChildFn) {
       document.getElementById('profile-photo-preview').src = profilePhotoData;
       document.getElementById('profile-photo-preview').style.display = 'block';
       document.getElementById('profile-photo-placeholder').style.display = 'none';
+      const upload = document.getElementById('profile-photo-upload');
+      upload.style.border = 'none';
+      const clearBtn = document.getElementById('btn-profile-clear-photo');
+      clearBtn.innerHTML = '🗑️ מחק';
+      clearBtn.style.display = 'block';
     } catch (err) {
       document.getElementById('profile-error').textContent = 'שגיאה בטעינת התמונה ⚠️';
     }
@@ -57,6 +62,11 @@ export function initProfile(db, renderChildFn) {
     document.getElementById('profile-photo-preview').style.display = 'none';
     document.getElementById('profile-photo-placeholder').style.display = '';
     document.getElementById('profile-photo-input').value = '';
+    const upload = document.getElementById('profile-photo-upload');
+    upload.style.border = '3px dashed var(--border)';
+    const clearBtn = document.getElementById('btn-profile-clear-photo');
+    clearBtn.style.display = 'none';
+    clearBtn.innerHTML = '🗑️ מחק';
   };
 
   document.getElementById('btn-profile-save').onclick = saveProfile;
@@ -81,18 +91,34 @@ export function openChildProfile() {
   colorEl.onclick = () => showProfileColorModal();
 
   const emojiEl = document.getElementById('profile-emoji-display');
-  emojiEl.textContent = childData.emoji || '—';
+  emojiEl.textContent = childData.emoji || '';
+  if (childData.emoji) {
+    emojiEl.style.background = 'none';
+    emojiEl.style.border = 'none';
+    emojiEl.style.fontSize = '80px';
+  } else {
+    emojiEl.style.background = '';
+    emojiEl.style.border = '';
+    emojiEl.style.fontSize = '';
+  }
   emojiEl.onclick = () => showProfileEmojiModal();
 
   const preview     = document.getElementById('profile-photo-preview');
   const placeholder = document.getElementById('profile-photo-placeholder');
+  const upload      = document.getElementById('profile-photo-upload');
+  const clearBtn    = document.getElementById('btn-profile-clear-photo');
   if (childData.photo && childData.photo.length > 10) {
     preview.src            = childData.photo;
     preview.style.display  = 'block';
     placeholder.style.display = 'none';
+    upload.style.border = 'none';
+    clearBtn.innerHTML = '🗑️ מחק';
+    clearBtn.style.display = 'block';
   } else {
     preview.style.display     = 'none';
     placeholder.style.display = '';
+    upload.style.border = '3px dashed var(--border)';
+    clearBtn.style.display = 'none';
   }
 
   document.getElementById('profile-error').textContent = '';
@@ -147,7 +173,11 @@ function showProfileEmojiModal() {
   sh.querySelectorAll('.emoji-opt').forEach(el => {
     el.onclick = () => {
       profileEmoji = el.dataset.emoji;
-      document.getElementById('profile-emoji-display').textContent = profileEmoji;
+      const ed = document.getElementById('profile-emoji-display');
+      ed.textContent = profileEmoji;
+      ed.style.background = 'none';
+      ed.style.border = 'none';
+      ed.style.fontSize = '80px';
       ov.remove();
     };
   });
@@ -195,3 +225,4 @@ function showProfileColorModal() {
   };
   ov.appendChild(sh); document.body.appendChild(ov);
 }
+

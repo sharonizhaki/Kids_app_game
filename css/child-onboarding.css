@@ -11,8 +11,9 @@
 .ob-backdrop {
   position: absolute; inset: 0;
   background: linear-gradient(160deg, #667eea 0%, #764ba2 100%);
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: flex-start; justify-content: center;
   padding: 24px 16px;
+  overflow-y: auto;
 }
 
 /* ---- CARD ---- */
@@ -184,7 +185,8 @@
 }
 .ob-emoji-grid {
   display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
-  margin-bottom: 16px; max-height: 180px; overflow-y: auto;
+  margin-bottom: 16px;
+  padding: 4px;
 }
 .ob-emoji-opt {
   width: 100%; aspect-ratio: 1; border-radius: 12px;
@@ -199,6 +201,7 @@
   transform: scale(1.12);
   background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15));
   box-shadow: 0 0 0 2.5px rgba(99,102,241,0.5);
+  padding: 3px;
 }
 
 /* ---- FINISH SCREEN ---- */

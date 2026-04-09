@@ -244,7 +244,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 
 /* ===== CONFIRM MODAL ===== */
 .confirm-body  { padding: 28px 24px 32px; text-align: center; }
-.confirm-icon  { font-size: 2.8rem; margin-bottom: 12px; }
+.confirm-icon  { font-size: 2.4rem; margin-bottom: 12px; }
 .confirm-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; }
 .confirm-msg   { font-size: 0.88rem; color: var(--muted); margin-bottom: 24px; }
 .confirm-btns  { display: flex; gap: 10px; }
@@ -326,10 +326,11 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
   background: transparent;
 }
 .profile-color-circle:hover { transform: scale(1.08); }
+.profile-color-circle svg { width:118px; height:118px; margin-right:-23px; margin-top:-12px; }
 
 /* אימוג'י */
 .profile-emoji-btn {
-  width: 75px; height: 75px; border-radius: 50%;
+  width: 95px; height: 95px; border-radius: 50%;
   border: 3px dashed var(--border); background: var(--card);
   font-size: 2.4rem; display: flex; align-items: center; justify-content: center;
   cursor: pointer; transition: transform 0.15s;
@@ -338,7 +339,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 
 /* תמונה */
 .profile-photo-upload {
-  width: 75px; height: 75px; border-radius: 50%;
+  width: 95px; height: 95px; border-radius: 50%;
   border: 3px dashed var(--border); display: flex; align-items: center;
   justify-content: center; cursor: pointer; overflow: hidden;
   position: relative; background: var(--card);
@@ -351,8 +352,10 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 
 /* כפתור נקה קטן */
 .profile-clear-btn-sm {
-  background: none; border: none; font-size: 1rem;
+  background: none; border: none; font-size: 0.8rem; font-weight: 700;
   cursor: pointer; color: var(--muted); padding: 2px;
+  width: 100%; text-align: center; font-family: 'Heebo', sans-serif;
+  display: none;
 }
 
 .profile-label  { font-weight: 700; font-size: 0.9rem; display: block; margin: 14px 0 8px; }
@@ -442,3 +445,4 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 }
 .splat-confirm-btn:active { transform: scale(0.97); }
 #profile-color-display { overflow: visible !important; border: none !important; background: transparent !important; }
+
