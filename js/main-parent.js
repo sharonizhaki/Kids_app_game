@@ -291,7 +291,7 @@ function resetNewChildUI() {
   const emojiEl = document.getElementById('new-child-emoji-display');
   emojiEl.textContent = '?'; emojiEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)'; emojiEl.style.borderStyle = 'dashed';
   const colorEl = document.getElementById('new-child-color-display');
-  colorEl.innerHTML = ''; colorEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)'; colorEl.style.borderStyle = 'dashed';
+  colorEl.innerHTML = SPLAT_SVG('#94A3B8', 75, true); colorEl.style.background = 'transparent'; colorEl.style.border = 'none'; colorEl.style.borderRadius = '0';
 }
 
 document.getElementById('btn-invite-parent').onclick = async () => {
@@ -358,17 +358,34 @@ function showNewChildEmojiModal() {
 function showNewChildColorModal() {
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
-  sh.innerHTML = `<div class="modal-handle"></div><div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div><div class="modal-body"><div class="splat-color-grid">${CHILD_COLORS.map(c => `<div class="splat-color-opt${c === newChildColor ? ' splat-selected' : ''}" data-color="${c}">${SPLAT_SVG(c, 44)}</div>`).join('')}</div></div>`;
+  let tempColor = newChildColor;
+  sh.innerHTML = `<div class="modal-handle"></div><div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div><div class="modal-body">
+    <div class="splat-modal-preview" id="modal-color-preview">
+      ${newChildColor ? SPLAT_SVG(newChildColor, 115) : SPLAT_SVG('#94A3B8', 115, true)}
+    </div>
+    <div class="splat-color-grid">${CHILD_COLORS.map(c => `<div class="splat-color-opt${c === newChildColor ? ' splat-selected' : ''}" data-color="${c}">${SPLAT_SVG(c, 70)}</div>`).join('')}</div>
+    <button class="splat-confirm-btn" id="modal-color-confirm">אישור ✓</button>
+  </div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
   sh.querySelectorAll('.splat-color-opt').forEach(el => {
     el.onclick = () => {
-      newChildColor = el.dataset.color;
-      const cd = document.getElementById('new-child-color-display');
-      cd.innerHTML = SPLAT_SVG(newChildColor, 44); cd.style.background = 'transparent'; cd.style.borderStyle = 'solid';
-      ov.remove();
+      tempColor = el.dataset.color;
+      sh.querySelectorAll('.splat-color-opt').forEach(x => x.classList.remove('splat-selected'));
+      el.classList.add('splat-selected');
+      const prev = sh.querySelector('#modal-color-preview');
+      prev.style.transition = 'transform 0.25s cubic-bezier(.34,1.5,.64,1), opacity 0.15s';
+      prev.style.opacity = '0'; prev.style.transform = 'scale(0.7)';
+      setTimeout(() => { prev.innerHTML = SPLAT_SVG(tempColor, 115); prev.style.opacity = '1'; prev.style.transform = 'scale(1)'; }, 150);
     };
   });
+  sh.querySelector('#modal-color-confirm').onclick = () => {
+    if (!tempColor) { ov.remove(); return; }
+    newChildColor = tempColor;
+    const cd = document.getElementById('new-child-color-display');
+    cd.innerHTML = SPLAT_SVG(newChildColor, 75); cd.style.background = 'transparent'; cd.style.border = 'none'; cd.style.borderRadius = '0';
+    ov.remove();
+  };
   ov.appendChild(sh); document.body.appendChild(ov);
 }
 
@@ -393,11 +410,8 @@ function openEditChild(childId) {
   document.getElementById('edit-gender-female').classList.toggle('selected', child.gender === 'female');
   editColor = child.color || '';
   const colorEl = document.getElementById('edit-child-color-display');
-  if (child.color) {
-    colorEl.innerHTML = SPLAT_SVG(child.color, 44); colorEl.style.background = 'transparent'; colorEl.style.borderStyle = 'solid';
-  } else {
-    colorEl.innerHTML = ''; colorEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)'; colorEl.style.borderStyle = 'dashed';
-  }
+  colorEl.innerHTML = child.color ? SPLAT_SVG(child.color, 75) : SPLAT_SVG('#94A3B8', 75, true);
+  colorEl.style.background = 'transparent'; colorEl.style.border = 'none'; colorEl.style.borderRadius = '0';
   colorEl.onclick = () => showEditColorModal(child.color);
   editEmoji = child.emoji || '';
   const emojiEl = document.getElementById('edit-child-emoji-display');
@@ -507,17 +521,34 @@ function showEditEmojiModal(current) {
 function showEditColorModal(current) {
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
-  sh.innerHTML = `<div class="modal-handle"></div><div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div><div class="modal-body"><div class="splat-color-grid">${CHILD_COLORS.map(c => `<div class="splat-color-opt${c === current ? ' splat-selected' : ''}" data-color="${c}">${SPLAT_SVG(c, 44)}</div>`).join('')}</div></div>`;
+  let tempColor = current || '';
+  sh.innerHTML = `<div class="modal-handle"></div><div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div><div class="modal-body">
+    <div class="splat-modal-preview" id="modal-color-preview">
+      ${current ? SPLAT_SVG(current, 115) : SPLAT_SVG('#94A3B8', 115, true)}
+    </div>
+    <div class="splat-color-grid">${CHILD_COLORS.map(c => `<div class="splat-color-opt${c === current ? ' splat-selected' : ''}" data-color="${c}">${SPLAT_SVG(c, 70)}</div>`).join('')}</div>
+    <button class="splat-confirm-btn" id="modal-color-confirm">אישור ✓</button>
+  </div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
   sh.querySelectorAll('.splat-color-opt').forEach(el => {
     el.onclick = () => {
-      editColor = el.dataset.color;
-      const cd = document.getElementById('edit-child-color-display');
-      cd.innerHTML = SPLAT_SVG(editColor, 44); cd.style.background = 'transparent'; cd.style.borderStyle = 'solid';
-      ov.remove();
+      tempColor = el.dataset.color;
+      sh.querySelectorAll('.splat-color-opt').forEach(x => x.classList.remove('splat-selected'));
+      el.classList.add('splat-selected');
+      const prev = sh.querySelector('#modal-color-preview');
+      prev.style.transition = 'transform 0.25s cubic-bezier(.34,1.5,.64,1), opacity 0.15s';
+      prev.style.opacity = '0'; prev.style.transform = 'scale(0.7)';
+      setTimeout(() => { prev.innerHTML = SPLAT_SVG(tempColor, 115); prev.style.opacity = '1'; prev.style.transform = 'scale(1)'; }, 150);
     };
   });
+  sh.querySelector('#modal-color-confirm').onclick = () => {
+    if (!tempColor) { ov.remove(); return; }
+    editColor = tempColor;
+    const cd = document.getElementById('edit-child-color-display');
+    cd.innerHTML = SPLAT_SVG(editColor, 75); cd.style.background = 'transparent'; cd.style.border = 'none'; cd.style.borderRadius = '0';
+    ov.remove();
+  };
   ov.appendChild(sh); document.body.appendChild(ov);
 }
 

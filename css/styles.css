@@ -511,3 +511,34 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
 }
 .toggle-switch input:checked + .toggle-slider { background: #6366F1; }
 .toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); }
+
+/* ===== SPLAT COLOR SYSTEM ===== */
+.splat-color-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 12px; justify-items: center; align-items: center;
+  margin: 8px 0 16px;
+}
+.splat-color-opt {
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  border-radius: 12px; padding: 4px;
+  transition: transform 0.22s cubic-bezier(.34,1.5,.64,1), filter 0.18s;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.18));
+}
+.splat-color-opt:hover { transform: scale(1.15) rotate(-5deg); filter: drop-shadow(0 5px 14px rgba(0,0,0,0.28)); }
+.splat-color-opt.splat-selected { transform: scale(1.2) rotate(-3deg); filter: drop-shadow(0 5px 18px rgba(0,0,0,0.32)); }
+.splat-modal-preview {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 120px; margin-bottom: 12px;
+  filter: drop-shadow(0 4px 14px rgba(0,0,0,0.2));
+}
+.splat-confirm-btn {
+  display: block; margin: 4px auto 0;
+  padding: 12px 36px;
+  background: linear-gradient(135deg, #6366F1, #4F46E5);
+  color: white; border: none; border-radius: 16px;
+  font-size: 1rem; font-weight: 800; font-family: 'Heebo', sans-serif;
+  cursor: pointer; box-shadow: 0 4px 16px rgba(99,102,241,0.35);
+  transition: transform 0.1s;
+}
+.splat-confirm-btn:active { transform: scale(0.97); }
+#edit-child-color-display, #new-child-color-display { overflow: visible !important; }

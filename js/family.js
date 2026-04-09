@@ -8,7 +8,7 @@ import { generateCode } from './auth.js';
 
 // =========== CONSTANTS ===========
 export const CHILD_EMOJIS = ["🦁","🐱","🦄","🐶","🐸","🦊","🐼","🦋","🌟","🎈","🐯","🐰","🦜","🐻","🎀","🚀","⚽","🎸","🌈","🧸","🐬","🦕","🐝","🍀"];
-export const CHILD_COLORS = ["#8B5CF6","#3B82F6","#06B6D4","#10B981","#EF4444","#F59E0B","#EC4899","#F97316","#84CC16","#6366F1"];
+export const CHILD_COLORS = ["#10B981","#3B82F6","#06B6D4","#8B5CF6","#EC4899","#EF4444","#F97316","#F59E0B"];
 export function colorGradient(hex) {
   const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
   const lr = Math.round(r+(255-r)*0.52), lg = Math.round(g+(255-g)*0.52), lb = Math.round(b+(255-b)*0.52);

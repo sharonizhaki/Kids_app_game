@@ -14,8 +14,7 @@ const ONBOARD_EMOJIS = [
   '🐬','🦕','🐝','🍀',
 ];
 const ONBOARD_COLORS = [
-  '#EF4444','#F59E0B','#10B981','#3B82F6','#8B5CF6',
-  '#EC4899','#06B6D4','#F97316','#84CC16','#6366F1',
+  '#10B981','#3B82F6','#06B6D4','#8B5CF6','#EC4899','#EF4444','#F97316','#F59E0B',
 ];
 
 // -------- LOCAL STATE --------
@@ -249,20 +248,19 @@ function showColorStep() {
         <h2 class="ob-step-title">הצבע שלך 🎨</h2>
         <p class="ob-step-sub">${_obColor ? 'הצבע שנבחר עבורך — אפשר לשנות' : 'בחר צבע שמייצג אותך'}</p>
 
-        <div class="ob-color-preview-row">
-          <div class="ob-color-preview-splat" id="ob-color-preview">
-            ${_obColor ? SPLAT_SVG(_obColor, 56) : SPLAT_SVG('#E2E8F0', 56)}
+        <div class="ob-color-preview-wrap">
+          <div id="ob-color-preview" class="ob-color-preview-splat">
+            ${_obColor ? SPLAT_SVG(_obColor, 115) : SPLAT_SVG('#94A3B8', 115, true)}
           </div>
           <span class="ob-color-preview-label" id="ob-color-preview-label">
             ${_obColor ? 'הצבע שלי ✓' : 'לא נבחר עדיין'}
           </span>
         </div>
 
-        <div class="ob-color-grid splat-color-grid">
+        <div class="ob-color-grid splat-color-grid-ob">
           ${ONBOARD_COLORS.map(c => `
-            <div class="ob-color-opt splat-color-opt${c === _obColor ? ' ob-color-selected splat-selected' : ''}"
-              data-color="${c}">
-              ${SPLAT_SVG(c, 44)}
+            <div class="ob-color-opt splat-color-opt${c === _obColor ? ' splat-selected' : ''}" data-color="${c}">
+              ${SPLAT_SVG(c, 70)}
             </div>`).join('')}
         </div>
 
@@ -273,15 +271,20 @@ function showColorStep() {
 
   animateIn(overlay.querySelector('#ob-card'));
 
-      overlay.querySelectorAll('.ob-color-opt').forEach(el => {
+  overlay.querySelectorAll('.ob-color-opt').forEach(el => {
     el.onclick = () => {
       const prev = _obColor;
       _obColor = el.dataset.color;
-      overlay.querySelectorAll('.ob-color-opt').forEach(x => { x.classList.remove('ob-color-selected'); x.classList.remove('splat-selected'); });
-      el.classList.add('ob-color-selected'); el.classList.add('splat-selected');
-      overlay.querySelector('#ob-color-preview').innerHTML = SPLAT_SVG(_obColor, 56);
+      overlay.querySelectorAll('.ob-color-opt').forEach(x => x.classList.remove('splat-selected'));
+      el.classList.add('splat-selected');
+      const preview = overlay.querySelector('#ob-color-preview');
+      preview.style.transition = 'transform 0.25s cubic-bezier(.34,1.5,.64,1), opacity 0.15s';
+      preview.style.opacity = '0'; preview.style.transform = 'scale(0.7)';
+      setTimeout(() => {
+        preview.innerHTML = SPLAT_SVG(_obColor, 115);
+        preview.style.opacity = '1'; preview.style.transform = 'scale(1)';
+      }, 150);
       overlay.querySelector('#ob-color-preview-label').textContent = 'הצבע שלי ✓';
-      // פופאפ רק אם שינה
       if (_obColor !== prev) showPopup('🎨', 'צבע נבחר!', 1200);
     };
   });
@@ -289,10 +292,7 @@ function showColorStep() {
   const nextBtn = overlay.querySelector('#ob-next');
   if (nextBtn) {
     nextBtn.onclick = () => {
-      if (!_obColor) {
-        overlay.querySelector('#ob-color-error').textContent = 'חובה לבחור צבע 🎨';
-        return;
-      }
+      if (!_obColor) { overlay.querySelector('#ob-color-error').textContent = 'חובה לבחור צבע 🎨'; return; }
       goToStep(3);
     };
   }
@@ -362,12 +362,14 @@ async function finishOnboarding() {
 
   // פופאפ סיום
   const card = overlay.querySelector('#ob-card');
+  const name = state.childData?.name || '';
+  const isFem = state.childData?.gender === 'female';
   if (card) {
     card.innerHTML = `
       <div class="ob-finish-body">
         <div class="ob-finish-emoji">${_obEmoji || '🎉'}</div>
-        <h2 class="ob-finish-title">מוכן${state.childData?.gender === 'female' ? 'ה' : ''}! 🎉</h2>
-        <p class="ob-finish-sub">הפרופיל שלך מוכן<br>בוא${state.childData?.gender === 'female' ? 'י' : ''} נתחיל לאסוף כוכבים ⭐</p>
+        <h2 class="ob-finish-title">${name ? `${name}, ` : ''}מוכן${isFem ? 'ה' : ''}! 🎉</h2>
+        <p class="ob-finish-sub">הפרופיל שלך מוכן<br>בוא${isFem ? 'י' : ''} נתחיל לאסוף כוכבים ⭐</p>
         <div class="ob-spinner"></div>
       </div>`;
     animateIn(card);

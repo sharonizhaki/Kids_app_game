@@ -15,8 +15,7 @@ const PROFILE_EMOJIS = [
   '🐬','🦕','🐝','🍀',
 ];
 const PROFILE_COLORS = [
-  '#EF4444','#F59E0B','#10B981','#3B82F6','#8B5CF6',
-  '#EC4899','#06B6D4','#F97316','#84CC16','#6366F1',
+  '#10B981','#3B82F6','#06B6D4','#8B5CF6','#EC4899','#EF4444','#F97316','#F59E0B',
 ];
 
 // -------- LOCAL STATE --------
@@ -76,10 +75,11 @@ export function openChildProfile() {
   document.getElementById('profile-child-gender').textContent =
     childData.gender === 'female' ? '👧 נקבה' : '👦 זכר';
 
-  // כפתור צבע — splat בצבע הנוכחי
+  // כפתור צבע — splat בצבע הנוכחי או ריק
   const colorEl = document.getElementById('profile-color-display');
-  colorEl.innerHTML = SPLAT_SVG(childData.color || '#94A3B8', 48);
+  colorEl.innerHTML = childData.color ? SPLAT_SVG(childData.color, 75) : SPLAT_SVG('#94A3B8', 75, true);
   colorEl.style.background = 'transparent';
+  colorEl.style.border = 'none';
   colorEl.onclick = () => showProfileColorModal();
 
   const emojiEl = document.getElementById('profile-emoji-display');
@@ -161,32 +161,39 @@ function showProfileEmojiModal() {
 function showProfileColorModal() {
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
+  let tempColor = profileColor;
   sh.innerHTML = `
     <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h2>בחר צבע 🎨</h2>
-      <button class="modal-close">✕</button>
-    </div>
+    <div class="modal-header"><h2>בחר צבע 🎨</h2><button class="modal-close">✕</button></div>
     <div class="modal-body">
-      <div class="splat-color-grid">
-        ${PROFILE_COLORS.map(c => `
-          <div class="splat-color-opt${c === profileColor ? ' splat-selected' : ''}" data-color="${c}">
-            ${SPLAT_SVG(c, 52)}
-          </div>`
-        ).join('')}
+      <div class="splat-modal-preview" id="modal-color-preview">
+        ${profileColor ? SPLAT_SVG(profileColor, 115) : SPLAT_SVG('#94A3B8', 115, true)}
       </div>
+      <div class="splat-color-grid">
+        ${PROFILE_COLORS.map(c => `<div class="splat-color-opt${c === profileColor ? ' splat-selected' : ''}" data-color="${c}">${SPLAT_SVG(c, 70)}</div>`).join('')}
+      </div>
+      <button class="splat-confirm-btn" id="modal-color-confirm">אישור ✓</button>
     </div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
   sh.querySelectorAll('.splat-color-opt').forEach(el => {
     el.onclick = () => {
-      profileColor = el.dataset.color;
-      // עדכן כפתור הפתיחה
-      const colorEl = document.getElementById('profile-color-display');
-      colorEl.innerHTML = SPLAT_SVG(profileColor, 48);
-      ov.remove();
+      tempColor = el.dataset.color;
+      sh.querySelectorAll('.splat-color-opt').forEach(x => x.classList.remove('splat-selected'));
+      el.classList.add('splat-selected');
+      const prev = sh.querySelector('#modal-color-preview');
+      prev.style.transition = 'transform 0.25s cubic-bezier(.34,1.5,.64,1), opacity 0.15s';
+      prev.style.opacity = '0'; prev.style.transform = 'scale(0.7)';
+      setTimeout(() => { prev.innerHTML = SPLAT_SVG(tempColor, 115); prev.style.opacity = '1'; prev.style.transform = 'scale(1)'; }, 150);
     };
   });
-  ov.appendChild(sh);
-  document.body.appendChild(ov);
+  sh.querySelector('#modal-color-confirm').onclick = () => {
+    if (!tempColor) { ov.remove(); return; }
+    profileColor = tempColor;
+    const colorEl = document.getElementById('profile-color-display');
+    colorEl.innerHTML = SPLAT_SVG(profileColor, 75);
+    colorEl.style.background = 'transparent'; colorEl.style.border = 'none';
+    ov.remove();
+  };
+  ov.appendChild(sh); document.body.appendChild(ov);
 }
