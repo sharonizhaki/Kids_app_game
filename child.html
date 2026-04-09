@@ -132,24 +132,36 @@
   </div>
   <div class="profile-card">
     <div class="profile-header">
-      <div class="profile-name"   id="profile-child-name"></div>
+      <div class="profile-name" id="profile-child-name"></div>
       <div class="profile-gender" id="profile-child-gender"></div>
     </div>
-    <label class="profile-label">צבע 🎨</label>
-    <div id="profile-color-display" class="profile-color-circle" title="לחץ לעריכה"></div>
-    <label class="profile-label">אימוג'י</label>
-    <div id="profile-emoji-display" class="profile-emoji-btn" title="לחץ לעריכה"></div>
-    <label class="profile-label">תמונה</label>
-    <div class="profile-photo-row">
-      <div class="profile-photo-upload" id="profile-photo-upload">
-        <div id="profile-photo-placeholder" class="profile-photo-placeholder">
-          <span>📷</span><small>בחר תמונה</small>
-        </div>
-        <img id="profile-photo-preview" class="profile-photo-preview" alt="">
-        <input type="file" accept="image/*" id="profile-photo-input" class="profile-photo-input">
+
+    <!-- שורת 3 אלמנטים -->
+    <div class="profile-items-row">
+      <!-- צבע -->
+      <div class="profile-item-col">
+        <div class="profile-item-label">צבע 🎨</div>
+        <div id="profile-color-display" class="profile-color-circle" title="לחץ לעריכה"></div>
       </div>
-      <button id="btn-profile-clear-photo" class="profile-clear-btn">🗑️ נקה</button>
+      <!-- אימוג'י -->
+      <div class="profile-item-col">
+        <div class="profile-item-label">אימוג'י</div>
+        <div id="profile-emoji-display" class="profile-emoji-btn" title="לחץ לעריכה"></div>
+      </div>
+      <!-- תמונה -->
+      <div class="profile-item-col">
+        <div class="profile-item-label">תמונה 📷</div>
+        <div class="profile-photo-upload" id="profile-photo-upload">
+          <div id="profile-photo-placeholder" class="profile-photo-placeholder">
+            <span>📷</span><small>בחר</small>
+          </div>
+          <img id="profile-photo-preview" class="profile-photo-preview" alt="">
+          <input type="file" accept="image/*" id="profile-photo-input" class="profile-photo-input">
+        </div>
+        <button id="btn-profile-clear-photo" class="profile-clear-btn-sm">🗑️</button>
+      </div>
     </div>
+
     <div id="profile-error" class="profile-error"></div>
     <button id="btn-profile-save" class="profile-save-btn">שמור ✅</button>
   </div>

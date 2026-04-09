@@ -1,7 +1,4 @@
 import { auth, db } from './firebase.js';
-import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
 import { showScreen, showToast, showLoading, hideLoading } from './ui.js';
 import { cropAndCompressPhoto } from './ui.js';
 import {
@@ -14,7 +11,6 @@ import {
   createParentInviteCode, verifyChildCode, shareParentCode,
   CHILD_EMOJIS, CHILD_COLORS, colorGradient
 } from './family.js';
-import { SPLAT_SVG } from './icons.js';
 
 window.showScreen = showScreen;
 
@@ -271,89 +267,24 @@ document.getElementById('btn-verify-code').onclick = async () => {
   const result = await verifyChildCode(code);
   hideLoading();
   if (result.error) { err.textContent = result.error; return; }
-  pendingChildData = result;
-  document.getElementById('child-setup-name').textContent = `שלום ${result.name}! 👋`;
-  setupEmojiPicker();
-  setupColorPicker();
-  resetChildPhoto();
-  showScreen('screen-child-setup');
-};
 
-// =========== CHILD SETUP ===========
-let pendingChildData = null;
-let selectedEmoji = '';
-let selectedColor = '';
-let childPhotoData = null;
-
-function setupEmojiPicker() {
-  selectedEmoji = '';
-  const grid = document.getElementById('emoji-picker');
-  grid.innerHTML = CHILD_EMOJIS.map(e => `<div class="emoji-opt" data-emoji="${e}">${e}</div>`).join('');
-  grid.querySelectorAll('.emoji-opt').forEach(el => {
-    el.onclick = () => {
-      grid.querySelectorAll('.emoji-opt').forEach(x => x.classList.remove('selected'));
-      el.classList.add('selected');
-      selectedEmoji = el.dataset.emoji;
-    };
-  });
-}
-
-function setupColorPicker() {
-  selectedColor = '';
-  const grid = document.getElementById('color-picker');
-  grid.innerHTML = CHILD_COLORS.map(c => `<div class="splat-color-opt" data-color="${c}">${SPLAT_SVG(c, 70)}</div>`).join('');
-  grid.querySelectorAll('.splat-color-opt').forEach(el => {
-    el.onclick = () => {
-      grid.querySelectorAll('.splat-color-opt').forEach(x => x.classList.remove('splat-selected'));
-      el.classList.add('splat-selected');
-      selectedColor = el.dataset.color;
-    };
-  });
-}
-
-function resetChildPhoto() {
-  childPhotoData = null;
-  document.getElementById('child-photo-preview').style.display = 'none';
-  document.getElementById('child-photo-placeholder').style.display = '';
-  document.getElementById('child-photo-input').value = '';
-}
-
-document.getElementById('child-photo-input').onchange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+  // שמור נתונים ועבור ישר ל-child.html — האונבורדינג יטפל בהמשך
+  showLoading('מתחבר...');
   try {
-    childPhotoData = await cropAndCompressPhoto(file);
-    document.getElementById('child-photo-preview').src = childPhotoData;
-    document.getElementById('child-photo-preview').style.display = 'block';
-    document.getElementById('child-photo-placeholder').style.display = 'none';
-  } catch(err) { showToast('שגיאה בטעינת התמונה ⚠️'); }
-};
-
-document.getElementById('btn-finish-setup').onclick = async () => {
-  const err = document.getElementById('setup-error');
-  if (!selectedEmoji) { document.getElementById('emoji-error').textContent = "חובה לבחור אימוג'י"; return; }
-  document.getElementById('emoji-error').textContent = '';
-  if (!selectedColor) { document.getElementById('color-error').textContent = 'חובה לבחור צבע'; return; }
-  document.getElementById('color-error').textContent = '';
-  err.textContent = '';
-
-  showLoading('שומר...');
-  try {
+    const { signInAnonymously } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+    const { doc: fsDoc, updateDoc: fsUpdate } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
     const cred = await signInAnonymously(auth);
     const anonUid = cred.user.uid;
-    const updates = { emoji: selectedEmoji, color: selectedColor, status: 'active', anonUid };
-    if (childPhotoData) updates.photo = childPhotoData;
-    await updateDoc(doc(db, 'families', pendingChildData.familyId, 'children', pendingChildData.childId), updates);
-    await updateDoc(doc(db, 'inviteCodes', pendingChildData.code), { used: true });
-    localStorage.setItem('childId', pendingChildData.childId);
-    localStorage.setItem('childFamilyId', pendingChildData.familyId);
+    await fsUpdate(fsDoc(db, 'families', result.familyId, 'children', result.childId), { status: 'active', anonUid });
+    await fsUpdate(fsDoc(db, 'inviteCodes', result.code), { used: true });
+    localStorage.setItem('childId', result.childId);
+    localStorage.setItem('childFamilyId', result.familyId);
     localStorage.setItem('childAnonUid', anonUid);
     hideLoading();
-    showToast('מוכן! 🎉');
-    setTimeout(() => { window.location.href = 'child.html'; }, 800);
+    window.location.href = 'child.html';
   } catch(e) {
     hideLoading();
-    err.textContent = 'שגיאה, נסה שוב';
+    err.textContent = 'שגיאה בהתחברות, נסה שוב';
     console.error(e);
   }
 };
@@ -395,36 +326,19 @@ function showOb1EmojiModal() {
 function showOb1ColorModal() {
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
-  let tempColor = obColor;
   sh.innerHTML = `<div class="modal-handle"></div>
     <div class="modal-header"><h2>🎨 בחר צבע</h2><button class="modal-close">✕</button></div>
-    <div class="modal-body">
-      <div class="splat-modal-preview" id="modal-color-preview">
-        ${obColor ? SPLAT_SVG(obColor, 115) : SPLAT_SVG('#94A3B8', 115, true)}
-      </div>
-      <div class="splat-color-grid">${CHILD_COLORS.map(c => `<div class="splat-color-opt${c === obColor ? ' splat-selected' : ''}" data-color="${c}">${SPLAT_SVG(c, 70)}</div>`).join('')}</div>
-      <button class="splat-confirm-btn" id="modal-color-confirm">אישור ✓</button>
-    </div>`;
+    <div class="modal-body"><div class="color-grid">${CHILD_COLORS.map(c => `<div class="color-opt${c === obColor ? ' selected' : ''}" data-color="${c}" style="background:${colorGradient(c)}"></div>`).join('')}</div></div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
-  sh.querySelectorAll('.splat-color-opt').forEach(el => {
+  sh.querySelectorAll('.color-opt').forEach(el => {
     el.onclick = () => {
-      tempColor = el.dataset.color;
-      sh.querySelectorAll('.splat-color-opt').forEach(x => x.classList.remove('splat-selected'));
-      el.classList.add('splat-selected');
-      const prev = sh.querySelector('#modal-color-preview');
-      prev.style.transition = 'transform 0.25s cubic-bezier(.34,1.5,.64,1), opacity 0.15s';
-      prev.style.opacity = '0'; prev.style.transform = 'scale(0.7)';
-      setTimeout(() => { prev.innerHTML = SPLAT_SVG(tempColor, 115); prev.style.opacity = '1'; prev.style.transform = 'scale(1)'; }, 150);
+      obColor = el.dataset.color;
+      const cd = document.getElementById('ob1-color-display');
+      cd.style.background = colorGradient(obColor); cd.style.borderStyle = 'solid';
+      ov.remove();
     };
   });
-  sh.querySelector('#modal-color-confirm').onclick = () => {
-    if (!tempColor) { ov.remove(); return; }
-    obColor = tempColor;
-    const cd = document.getElementById('ob1-color-display');
-    cd.innerHTML = SPLAT_SVG(obColor, 75); cd.style.background = 'transparent'; cd.style.border = 'none';
-    ov.remove();
-  };
   ov.appendChild(sh); document.body.appendChild(ov);
 }
 
@@ -494,7 +408,7 @@ function resetOb1Form() {
   emojiEl.textContent = '?'; emojiEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
   emojiEl.style.borderStyle = 'dashed'; emojiEl.style.color = '#818CF8';
   const colorEl = document.getElementById('ob1-color-display');
-  colorEl.innerHTML = SPLAT_SVG('#94A3B8', 75, true); colorEl.style.background = 'transparent'; colorEl.style.border = 'none';
+  colorEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)'; colorEl.style.borderStyle = 'dashed';
 }
 
 async function goToOnboard2() {

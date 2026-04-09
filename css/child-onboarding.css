@@ -256,5 +256,5 @@
 .ob-color-preview-splat {
   display: flex; align-items: center; justify-content: center;
   filter: drop-shadow(0 4px 14px rgba(0,0,0,0.2));
-  min-height: 115px;
+  min-height: 115px; width: 100%;
 }

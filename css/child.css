@@ -300,25 +300,64 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 
 /* ===== PROFILE SCREEN ===== */
 .profile-card   { background: var(--card); border-radius: var(--radius); padding: 22px 20px; box-shadow: var(--shadow); max-width: 480px; margin: 0 auto; width: 100%; }
-.profile-header { text-align: center; margin-bottom: 16px; }
+.profile-header { text-align: center; margin-bottom: 20px; }
 .profile-name   { font-weight: 700; font-size: 1.2rem; }
 .profile-gender { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
-.profile-label  { font-weight: 700; font-size: 0.9rem; display: block; margin: 14px 0 8px; }
-.profile-color-circle { width: 75px; height: 75px; border-radius: 0; margin: 0 auto 4px; border: none; cursor: pointer; transition: transform 0.15s; overflow: visible; display: flex; align-items: center; justify-content: center; background: transparent; }
+
+/* שורת 3 אלמנטים */
+.profile-items-row {
+  display: flex; justify-content: space-around; align-items: flex-start;
+  background: #F8FAFC; border-radius: 16px; padding: 16px 8px;
+  margin-bottom: 16px;
+}
+.profile-item-col {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  flex: 1;
+}
+.profile-item-label {
+  font-size: 0.75rem; font-weight: 700; color: #64748B;
+}
+
+/* כפתור צבע */
+.profile-color-circle {
+  width: 75px; height: 75px; border-radius: 0; margin: 0 auto;
+  border: none; cursor: pointer; transition: transform 0.15s;
+  overflow: visible; display: flex; align-items: center; justify-content: center;
+  background: transparent;
+}
 .profile-color-circle:hover { transform: scale(1.08); }
-.profile-emoji-btn  { font-size: 2.4rem; text-align: center; min-height: 48px; cursor: pointer; display: block; transition: transform 0.15s; }
+
+/* אימוג'י */
+.profile-emoji-btn {
+  width: 75px; height: 75px; border-radius: 50%;
+  border: 3px dashed var(--border); background: var(--card);
+  font-size: 2.4rem; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: transform 0.15s;
+}
 .profile-emoji-btn:hover { transform: scale(1.1); }
-.profile-photo-row  { display: flex; align-items: center; gap: 12px; justify-content: center; }
-.profile-photo-upload { width: 100px; height: 100px; border-radius: 50%; border: 3px dashed var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; background: var(--card); }
+
+/* תמונה */
+.profile-photo-upload {
+  width: 75px; height: 75px; border-radius: 50%;
+  border: 3px dashed var(--border); display: flex; align-items: center;
+  justify-content: center; cursor: pointer; overflow: hidden;
+  position: relative; background: var(--card);
+}
 .profile-photo-placeholder { text-align: center; color: var(--muted); }
-.profile-photo-placeholder span  { font-size: 1.6rem; display: block; }
-.profile-photo-placeholder small { font-size: 0.7rem; }
+.profile-photo-placeholder span  { font-size: 1.4rem; display: block; }
+.profile-photo-placeholder small { font-size: 0.65rem; }
 .profile-photo-preview { display: none; width: 100%; height: 100%; object-fit: cover; }
 .profile-photo-input   { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.profile-clear-btn  { padding: 10px 14px; font-size: 0.8rem; background: var(--card); border: 2px solid var(--border); border-radius: 12px; font-family: 'Heebo',sans-serif; font-weight: 700; cursor: pointer; transition: background 0.15s; }
-.profile-clear-btn:hover { background: #F8FAFC; }
-.profile-error      { color: var(--danger); font-size: 0.85rem; font-weight: 600; text-align: center; min-height: 20px; margin: 10px 0 4px; }
-.profile-save-btn   { width: 100%; padding: 16px; background: linear-gradient(135deg,#10B981,#059669); color: white; border: none; border-radius: 16px; font-size: 1.05rem; font-weight: 800; cursor: pointer; font-family: 'Heebo',sans-serif; box-shadow: 0 4px 16px rgba(16,185,129,0.35); transition: transform 0.1s; margin-top: 8px; }
+
+/* כפתור נקה קטן */
+.profile-clear-btn-sm {
+  background: none; border: none; font-size: 1rem;
+  cursor: pointer; color: var(--muted); padding: 2px;
+}
+
+.profile-label  { font-weight: 700; font-size: 0.9rem; display: block; margin: 14px 0 8px; }
+.profile-error  { color: var(--danger); font-size: 0.85rem; font-weight: 600; text-align: center; min-height: 20px; margin: 10px 0 4px; }
+.profile-save-btn { width: 100%; padding: 16px; background: linear-gradient(135deg,#10B981,#059669); color: white; border: none; border-radius: 16px; font-size: 1.05rem; font-weight: 800; cursor: pointer; font-family: 'Heebo',sans-serif; box-shadow: 0 4px 16px rgba(16,185,129,0.35); transition: transform 0.1s; margin-top: 8px; }
 .profile-save-btn:active { transform: scale(0.97); }
 
 /* ===== PROGRESS (נשמר לתאימות) ===== */

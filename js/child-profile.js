@@ -31,7 +31,6 @@ export function initProfile(db, renderChildFn) {
   _db            = db;
   _renderChildFn = renderChildFn;
 
-  // פתיחת פרופיל מהקליק על תמונת הראש
   document.getElementById('child-header-photo').onclick = () => {
     if (state.childData) openChildProfile();
   };
@@ -75,7 +74,6 @@ export function openChildProfile() {
   document.getElementById('profile-child-gender').textContent =
     childData.gender === 'female' ? '👧 נקבה' : '👦 זכר';
 
-  // כפתור צבע — splat בצבע הנוכחי או ריק
   const colorEl = document.getElementById('profile-color-display');
   colorEl.innerHTML = childData.color ? SPLAT_SVG(childData.color, 75) : SPLAT_SVG('#94A3B8', 75, true);
   colorEl.style.background = 'transparent';
