@@ -377,22 +377,43 @@ document.getElementById('new-child-photo-input').onchange = async (e) => {
 };
 
 function showNewChildEmojiModal() {
+  let tempEmoji = newChildEmoji;
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
-  sh.innerHTML = `<div class="modal-handle"></div><div class="modal-header"><h2>🙂 בחר אימוג'י</h2><button class="modal-close">✕</button></div><div class="modal-body"><div class="emoji-grid">${CHILD_EMOJIS.map(e => `<div class="emoji-opt${e === newChildEmoji ? ' selected' : ''}" data-emoji="${e}">${e}</div>`).join('')}</div></div>`;
+  sh.innerHTML = `<div class="modal-handle"></div>
+    <div class="modal-header"><h2>🙂 בחר אימוג'י</h2><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div id="emoji-preview-display" style="font-size:4rem;text-align:center;min-height:64px;margin-bottom:12px;transition:transform 0.2s cubic-bezier(.34,1.28,.64,1);">${tempEmoji || '?'}</div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:16px;">
+        ${CHILD_EMOJIS.map(e => `<div class="emoji-opt${e === tempEmoji ? ' selected' : ''}" data-emoji="${e}" style="font-size:1.6rem;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;">${e}</div>`).join('')}
+      </div>
+      <button id="emoji-confirm-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366F1,#4F46E5);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;">אישור ✓</button>
+    </div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  const preview = sh.querySelector('#emoji-preview-display');
   sh.querySelectorAll('.emoji-opt').forEach(el => {
     el.onclick = () => {
-      newChildEmoji = el.dataset.emoji;
-      const ed = document.getElementById('new-child-emoji-display');
-      ed.textContent = newChildEmoji;
-      ed.style.background = 'none';
-      ed.style.border = 'none';
-      ed.style.fontSize = '80px';
-      ov.remove();
+      const prev = tempEmoji;
+      tempEmoji = el.dataset.emoji;
+      sh.querySelectorAll('.emoji-opt').forEach(x => x.classList.remove('selected'));
+      el.classList.add('selected');
+      if (tempEmoji !== prev) {
+        preview.style.transform = 'scale(0.6)';
+        setTimeout(() => { preview.textContent = tempEmoji; preview.style.transform = 'scale(1)'; }, 120);
+      }
     };
   });
+  sh.querySelector('#emoji-confirm-btn').onclick = () => {
+    if (!tempEmoji) { ov.remove(); return; }
+    newChildEmoji = tempEmoji;
+    const ed = document.getElementById('new-child-emoji-display');
+    ed.textContent = newChildEmoji;
+    ed.style.background = 'none';
+    ed.style.border = 'none';
+    ed.style.fontSize = '80px';
+    ov.remove();
+  };
   ov.appendChild(sh); document.body.appendChild(ov);
 }
 
@@ -561,22 +582,43 @@ document.getElementById('btn-share-child-code-edit').onclick = () => {
 };
 
 function showEditEmojiModal(current) {
+  let tempEmoji = current || editEmoji;
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
-  sh.innerHTML = `<div class="modal-handle"></div><div class="modal-header"><h2>🙂 בחר אימוג'י</h2><button class="modal-close">✕</button></div><div class="modal-body"><div class="emoji-grid">${CHILD_EMOJIS.map(e => `<div class="emoji-opt${e === current ? ' selected' : ''}" data-emoji="${e}">${e}</div>`).join('')}</div></div>`;
+  sh.innerHTML = `<div class="modal-handle"></div>
+    <div class="modal-header"><h2>🙂 בחר אימוג'י</h2><button class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div id="emoji-preview-display" style="font-size:4rem;text-align:center;min-height:64px;margin-bottom:12px;transition:transform 0.2s cubic-bezier(.34,1.28,.64,1);">${tempEmoji || '?'}</div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:16px;">
+        ${CHILD_EMOJIS.map(e => `<div class="emoji-opt${e === tempEmoji ? ' selected' : ''}" data-emoji="${e}" style="font-size:1.6rem;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;">${e}</div>`).join('')}
+      </div>
+      <button id="emoji-confirm-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366F1,#4F46E5);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;">אישור ✓</button>
+    </div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  const preview = sh.querySelector('#emoji-preview-display');
   sh.querySelectorAll('.emoji-opt').forEach(el => {
     el.onclick = () => {
-      editEmoji = el.dataset.emoji;
-      const ed = document.getElementById('edit-child-emoji-display');
-      ed.textContent = editEmoji;
-      ed.style.background = 'none';
-      ed.style.border = 'none';
-      ed.style.fontSize = '80px';
-      ov.remove();
+      const prev = tempEmoji;
+      tempEmoji = el.dataset.emoji;
+      sh.querySelectorAll('.emoji-opt').forEach(x => x.classList.remove('selected'));
+      el.classList.add('selected');
+      if (tempEmoji !== prev) {
+        preview.style.transform = 'scale(0.6)';
+        setTimeout(() => { preview.textContent = tempEmoji; preview.style.transform = 'scale(1)'; }, 120);
+      }
     };
   });
+  sh.querySelector('#emoji-confirm-btn').onclick = () => {
+    if (!tempEmoji) { ov.remove(); return; }
+    editEmoji = tempEmoji;
+    const ed = document.getElementById('edit-child-emoji-display');
+    ed.textContent = editEmoji;
+    ed.style.background = 'none';
+    ed.style.border = 'none';
+    ed.style.fontSize = '80px';
+    ov.remove();
+  };
   ov.appendChild(sh); document.body.appendChild(ov);
 }
 

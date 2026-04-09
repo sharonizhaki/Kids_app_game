@@ -307,12 +307,25 @@ function showOb1EmojiModal() {
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
   sh.innerHTML = `<div class="modal-handle"></div>
     <div class="modal-header"><h2>🙂 בחר אימוג'י</h2><button class="modal-close">✕</button></div>
-    <div class="modal-body"><div class="emoji-grid">${CHILD_EMOJIS.map(e => `<div class="emoji-opt${e === obEmoji ? ' selected' : ''}" data-emoji="${e}">${e}</div>`).join('')}</div></div>`;
+    <div class="modal-body">
+      <div id="emoji-preview-display" style="font-size:4rem;text-align:center;min-height:64px;margin-bottom:12px;transition:transform 0.2s cubic-bezier(.34,1.28,.64,1);">${obEmoji || '?'}</div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;">
+        ${CHILD_EMOJIS.map(e => `<div class="emoji-opt${e === obEmoji ? ' selected' : ''}" data-emoji="${e}" style="font-size:1.6rem;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;">${e}</div>`).join('')}
+      </div>
+    </div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  const preview = sh.querySelector('#emoji-preview-display');
   sh.querySelectorAll('.emoji-opt').forEach(el => {
     el.onclick = () => {
+      const prev = obEmoji;
       obEmoji = el.dataset.emoji;
+      sh.querySelectorAll('.emoji-opt').forEach(x => x.classList.remove('selected'));
+      el.classList.add('selected');
+      if (obEmoji !== prev) {
+        preview.style.transform = 'scale(0.6)';
+        setTimeout(() => { preview.textContent = obEmoji; preview.style.transform = 'scale(1)'; }, 120);
+      }
       const ed = document.getElementById('ob1-emoji-display');
       ed.textContent = obEmoji;
       ed.style.background = 'none';
@@ -611,4 +624,3 @@ document.getElementById('ob3-later').onclick = () => { window.location.href = 'p
 
   startAuto();
 })();
-

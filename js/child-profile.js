@@ -85,7 +85,7 @@ export function openChildProfile() {
     childData.gender === 'female' ? '👧 נקבה' : '👦 זכר';
 
   const colorEl = document.getElementById('profile-color-display');
-  colorEl.innerHTML = childData.color ? SPLAT_SVG(childData.color, 75) : SPLAT_SVG('#94A3B8', 75, true);
+  colorEl.innerHTML = childData.color ? SPLAT_SVG(childData.color, 118) : SPLAT_SVG('#94A3B8', 118, true);
   colorEl.style.background = 'transparent';
   colorEl.style.border = 'none';
   colorEl.onclick = () => showProfileColorModal();
@@ -153,6 +153,7 @@ async function saveProfile() {
 
 // -------- EMOJI PICKER MODAL --------
 function showProfileEmojiModal() {
+  let tempEmoji = profileEmoji;
   const ov = document.createElement('div'); ov.className = 'modal-overlay';
   const sh = document.createElement('div'); sh.className = 'modal-sheet';
   sh.innerHTML = `
@@ -162,25 +163,46 @@ function showProfileEmojiModal() {
       <button class="modal-close">✕</button>
     </div>
     <div class="modal-body">
-      <div class="emoji-grid">
+      <div id="emoji-preview-display" style="font-size:4rem;text-align:center;min-height:64px;margin-bottom:12px;transition:transform 0.2s cubic-bezier(.34,1.28,.64,1);">${tempEmoji || '?'}</div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:16px;">
         ${PROFILE_EMOJIS.map(e =>
-          `<div class="emoji-opt${e === profileEmoji ? ' selected' : ''}" data-emoji="${e}">${e}</div>`
+          `<div class="emoji-opt${e === tempEmoji ? ' selected' : ''}" data-emoji="${e}" style="font-size:1.6rem;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;">${e}</div>`
         ).join('')}
       </div>
+      <button id="emoji-confirm-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--child-color,#6366F1),#8B5CF6);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;">אישור ✓</button>
     </div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
+
+  const preview = sh.querySelector('#emoji-preview-display');
+
   sh.querySelectorAll('.emoji-opt').forEach(el => {
     el.onclick = () => {
-      profileEmoji = el.dataset.emoji;
-      const ed = document.getElementById('profile-emoji-display');
-      ed.textContent = profileEmoji;
-      ed.style.background = 'none';
-      ed.style.border = 'none';
-      ed.style.fontSize = '80px';
-      ov.remove();
+      const prev = tempEmoji;
+      tempEmoji = el.dataset.emoji;
+      sh.querySelectorAll('.emoji-opt').forEach(x => x.classList.remove('selected'));
+      el.classList.add('selected');
+      if (tempEmoji !== prev) {
+        preview.style.transform = 'scale(0.6)';
+        setTimeout(() => {
+          preview.textContent = tempEmoji;
+          preview.style.transform = 'scale(1)';
+        }, 120);
+      }
     };
   });
+
+  sh.querySelector('#emoji-confirm-btn').onclick = () => {
+    if (!tempEmoji) { ov.remove(); return; }
+    profileEmoji = tempEmoji;
+    const ed = document.getElementById('profile-emoji-display');
+    ed.textContent = profileEmoji;
+    ed.style.background = 'none';
+    ed.style.border = 'none';
+    ed.style.fontSize = '80px';
+    ov.remove();
+  };
+
   ov.appendChild(sh);
   document.body.appendChild(ov);
 }
@@ -219,10 +241,9 @@ function showProfileColorModal() {
     if (!tempColor) { ov.remove(); return; }
     profileColor = tempColor;
     const colorEl = document.getElementById('profile-color-display');
-    colorEl.innerHTML = SPLAT_SVG(profileColor, 75);
+    colorEl.innerHTML = SPLAT_SVG(profileColor, 118);
     colorEl.style.background = 'transparent'; colorEl.style.border = 'none';
     ov.remove();
   };
   ov.appendChild(sh); document.body.appendChild(ov);
 }
-
