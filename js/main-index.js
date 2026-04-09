@@ -510,20 +510,20 @@ document.getElementById('ob1-next').onclick = async () => {
   const genderPicker = document.getElementById('ob1-gender-picker');
 
   if (!name && !obGender) {
-    err.textContent = 'חובה להזין שם ולבחור בן/בת';
+    err.textContent = 'נא להזין שם ולבחור מין';
     nameInput.classList.remove('input-error'); void nameInput.offsetWidth; nameInput.classList.add('input-error');
     if (genderPicker) { genderPicker.classList.remove('gender-error'); void genderPicker.offsetWidth; genderPicker.classList.add('gender-error'); }
     setTimeout(() => { nameInput.classList.remove('input-error'); if (genderPicker) genderPicker.classList.remove('gender-error'); }, 1200);
     return;
   }
   if (!name) {
-    err.textContent = 'חובה להזין שם ילד/ה';
+    err.textContent = 'נא להזין שם';
     nameInput.classList.remove('input-error'); void nameInput.offsetWidth; nameInput.classList.add('input-error');
     setTimeout(() => nameInput.classList.remove('input-error'), 1200);
     return;
   }
   if (!obGender) {
-    err.textContent = 'חובה לבחור בן או בת';
+    err.textContent = 'נא לבחור מין';
     if (genderPicker) { genderPicker.classList.remove('gender-error'); void genderPicker.offsetWidth; genderPicker.classList.add('gender-error'); setTimeout(() => genderPicker.classList.remove('gender-error'), 1200); }
     return;
   }
@@ -611,3 +611,4 @@ document.getElementById('ob3-later').onclick = () => { window.location.href = 'p
 
   startAuto();
 })();
+

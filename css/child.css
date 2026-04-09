@@ -326,7 +326,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
   background: transparent;
 }
 .profile-color-circle:hover { transform: scale(1.08); }
-.profile-color-circle svg { width:118px; height:118px; margin-right:-23px; margin-top:-12px; }
+.profile-color-circle svg { width:118px !important; height:118px !important; margin-right:-23px; margin-top:-12px; }
 
 /* אימוג'י */
 .profile-emoji-btn {
@@ -445,4 +445,3 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 }
 .splat-confirm-btn:active { transform: scale(0.97); }
 #profile-color-display { overflow: visible !important; border: none !important; background: transparent !important; }
-

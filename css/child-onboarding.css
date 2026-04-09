@@ -11,7 +11,7 @@
 .ob-backdrop {
   position: absolute; inset: 0;
   background: linear-gradient(160deg, #667eea 0%, #764ba2 100%);
-  display: flex; align-items: flex-start; justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   padding: 24px 16px;
   overflow-y: auto;
 }
@@ -178,15 +178,14 @@
 
 /* ---- EMOJI STEP ---- */
 .ob-emoji-preview {
-  font-size: 4.5rem; text-align: center;
-  margin-bottom: 14px; min-height: 64px;
+  font-size: 3.5rem; text-align: center;
+  margin-bottom: 10px; min-height: 50px;
   transition: transform 0.2s cubic-bezier(.34,1.28,.64,1);
   display: block;
 }
 .ob-emoji-grid {
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;
   margin-bottom: 16px;
-  padding: 4px;
 }
 .ob-emoji-opt {
   width: 100%; aspect-ratio: 1; border-radius: 12px;
@@ -201,7 +200,6 @@
   transform: scale(1.12);
   background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15));
   box-shadow: 0 0 0 2.5px rgba(99,102,241,0.5);
-  padding: 3px;
 }
 
 /* ---- FINISH SCREEN ---- */
@@ -261,3 +259,4 @@
   filter: drop-shadow(0 4px 14px rgba(0,0,0,0.2));
   min-height: 115px; width: 100%;
 }
+

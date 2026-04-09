@@ -280,7 +280,6 @@ document.getElementById('btn-create-child').onclick = () => {
   document.querySelectorAll('#create-gender-picker .gender-opt').forEach(g => g.classList.remove('selected'));
   resetNewChildUI();
   showScreen('screen-create-child');
-  setTimeout(() => document.getElementById('child-name-input').focus(), 350);
 };
 
 function resetNewChildUI() {
@@ -312,19 +311,55 @@ document.getElementById('btn-do-create-child').onclick = async () => {
   const name = document.getElementById('child-name-input').value.trim();
   const errEl = document.getElementById('create-child-error');
   errEl.textContent = '';
-  if (!name) { errEl.textContent = 'חובה להכניס שם ילד/ה'; return; }
-  if (!selectedGender) { errEl.textContent = 'חובה לבחור בן או בת'; return; }
+  if (!name) { errEl.textContent = 'נא להזין שם'; return; }
+  if (!selectedGender) { errEl.textContent = 'נא לבחור מין'; return; }
   const nameLC = name.toLowerCase();
   const duplicate = childrenCache.find(c => c.name && c.name.toLowerCase() === nameLC);
-  if (duplicate) { errEl.textContent = `ילד/ה בשם "${name}" כבר קיים/ת`; return; }
+  if (duplicate) { errEl.textContent = `"${name}" כבר קיים/ת במשפחה`; return; }
 
   const result = await createChild(getFamilyId(), name, selectedGender, {
     emoji: newChildEmoji, color: newChildColor, photo: newChildPhotoData || ''
   });
   if (result.error) { errEl.textContent = result.error; return; }
-  childrenCache.push({ id: result.childId, name, gender: selectedGender });
-  document.getElementById('invite-code-value').textContent = result.code;
-  showScreen('screen-invite-code');
+  childrenCache.push({ id: result.childId, name, gender: selectedGender, status: 'waiting', inviteCode: result.code });
+
+  const isBoy = selectedGender === 'male';
+  const inviteCode = result.code;
+  const backdrop = document.createElement('div');
+  backdrop.style.cssText = 'position:fixed;inset:0;z-index:7000;background:rgba(15,23,42,0.55);display:flex;align-items:center;justify-content:center;padding:24px;';
+  const card = document.createElement('div');
+  card.style.cssText = 'background:white;border-radius:28px;padding:30px 24px 24px;width:100%;max-width:340px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.28);direction:rtl;font-family:Heebo,sans-serif;';
+
+  const codeBlock = inviteCode ? `
+    <div style="background:linear-gradient(135deg,#EEF2FF,#E0E7FF);border-radius:18px;padding:14px 16px;margin-bottom:16px;">
+      <div style="font-size:0.72rem;font-weight:700;color:#6366F1;margin-bottom:6px;">קוד כניסה לילד/ה</div>
+      <div style="font-size:2rem;font-weight:900;color:#4338CA;letter-spacing:8px;direction:ltr;font-variant-numeric:tabular-nums;">${inviteCode}</div>
+      <div style="font-size:0.7rem;color:#818CF8;margin-top:6px;font-weight:600;">⏰ תקף ל-24 שעות</div>
+    </div>` : '';
+
+  card.innerHTML = `
+    <div style="font-size:3.2rem;margin-bottom:10px;">🎉</div>
+    <div style="font-size:1.25rem;font-weight:900;color:#1E293B;margin-bottom:6px;">${name} ${isBoy ? 'נוסף' : 'נוספה'} בהצלחה!</div>
+    <div style="font-size:0.86rem;color:#64748B;margin-bottom:20px;">${isBoy ? 'הוא' : 'היא'} כבר חלק מהמשפחה ✨</div>
+    ${codeBlock}
+    <div style="display:flex;gap:8px;">
+      ${inviteCode ? `<button id="pop-share-code" style="flex:1;padding:13px 8px;background:linear-gradient(135deg,#10B981,#059669);border:none;border-radius:16px;font-size:0.88rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;">📤 שתף קוד</button>` : ''}
+      <button id="pop-back" style="flex:1;padding:13px;background:linear-gradient(135deg,#6366F1,#4F46E5);border:none;border-radius:16px;font-size:0.88rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;">חזור</button>
+    </div>`;
+
+  backdrop.appendChild(card);
+  document.body.appendChild(backdrop);
+
+  if (inviteCode) {
+    card.querySelector('#pop-share-code').onclick = () => {
+      shareCode(inviteCode, name);
+    };
+  }
+  card.querySelector('#pop-back').onclick = () => {
+    backdrop.remove();
+    showScreen('screen-manage-family');
+    renderFamily(getFamilyId());
+  };
 };
 
 document.getElementById('btn-share-code').onclick = () => {
@@ -486,7 +521,7 @@ document.getElementById('btn-clear-photo').onclick = () => {
 
 document.getElementById('btn-save-child').onclick = async () => {
   const name = document.getElementById('edit-child-name').value.trim();
-  if (!name) { document.getElementById('edit-child-error').textContent = 'חובה להכניס שם'; return; }
+  if (!name) { document.getElementById('edit-child-error').textContent = 'נא להזין שם'; return; }
   const child = childrenCache.find(c => c.id === editingChildId);
   const updates = { name, gender: editGender || child.gender };
   if (editEmoji) updates.emoji = editEmoji;
