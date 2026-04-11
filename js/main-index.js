@@ -309,32 +309,38 @@ function showOb1EmojiModal() {
     <div class="modal-header"><h2>🙂 בחר אימוג'י</h2><button class="modal-close">✕</button></div>
     <div class="modal-body">
       <div id="emoji-preview-display" style="font-size:4rem;text-align:center;min-height:64px;margin-bottom:12px;transition:transform 0.2s cubic-bezier(.34,1.28,.64,1);">${obEmoji || '?'}</div>
-      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;">
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:16px;">
         ${CHILD_EMOJIS.map(e => `<div class="emoji-opt${e === obEmoji ? ' selected' : ''}" data-emoji="${e}" style="font-size:1.6rem;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;">${e}</div>`).join('')}
       </div>
+      <button id="emoji-confirm-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366F1,#4F46E5);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;">אישור ✓</button>
     </div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
   const preview = sh.querySelector('#emoji-preview-display');
+  let tempEmoji = obEmoji;
   sh.querySelectorAll('.emoji-opt').forEach(el => {
     el.onclick = () => {
-      const prev = obEmoji;
-      obEmoji = el.dataset.emoji;
+      const prev = tempEmoji;
+      tempEmoji = el.dataset.emoji;
       sh.querySelectorAll('.emoji-opt').forEach(x => x.classList.remove('selected'));
       el.classList.add('selected');
-      if (obEmoji !== prev) {
+      if (tempEmoji !== prev) {
         preview.style.transform = 'scale(0.6)';
-        setTimeout(() => { preview.textContent = obEmoji; preview.style.transform = 'scale(1)'; }, 120);
+        setTimeout(() => { preview.textContent = tempEmoji; preview.style.transform = 'scale(1)'; }, 120);
       }
-      const ed = document.getElementById('ob1-emoji-display');
-      ed.textContent = obEmoji;
-      ed.style.background = 'none';
-      ed.style.border = 'none';
-      ed.style.fontSize = '80px';
-      ed.style.color = '';
-      ov.remove();
     };
   });
+  sh.querySelector('#emoji-confirm-btn').onclick = () => {
+    if (!tempEmoji) { ov.remove(); return; }
+    obEmoji = tempEmoji;
+    const ed = document.getElementById('ob1-emoji-display');
+    ed.textContent = obEmoji;
+    ed.style.background = 'none';
+    ed.style.border = 'none';
+    ed.style.fontSize = '80px';
+    ed.style.color = '';
+    ov.remove();
+  };
   ov.appendChild(sh); document.body.appendChild(ov);
 }
 
@@ -386,6 +392,8 @@ document.getElementById('ob1-photo-input').onchange = async (e) => {
     const ob1pc = document.getElementById('ob1-photo-circle');
     ob1pc.innerHTML = `<img src="${obChildPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     ob1pc.style.border = 'none';
+    ob1pc.style.width = '95px';
+    ob1pc.style.height = '95px';
     const clearBtn = document.getElementById('ob1-clear-photo');
     clearBtn.innerHTML = '🗑️ מחק';
     clearBtn.style.display = 'block';
@@ -397,6 +405,8 @@ document.getElementById('ob1-clear-photo').onclick = () => {
   const ob1pc = document.getElementById('ob1-photo-circle');
   ob1pc.innerHTML = _ob1SvgPlaceholder;
   ob1pc.style.border = '3px dashed #818CF8';
+  ob1pc.style.width = '95px';
+  ob1pc.style.height = '95px';
   const clearBtn = document.getElementById('ob1-clear-photo');
   clearBtn.style.display = 'none';
   clearBtn.innerHTML = '🗑️ מחק';
@@ -437,7 +447,9 @@ function resetOb1Form() {
   document.querySelectorAll('.ob1-gender').forEach(b => b.classList.remove('selected'));
   const ob1pc = document.getElementById('ob1-photo-circle');
   ob1pc.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
-  ob1pc.style.borderStyle = 'dashed';
+  ob1pc.style.border = '3px dashed #818CF8';
+  ob1pc.style.width = '95px';
+  ob1pc.style.height = '95px';
   document.getElementById('ob1-photo-input').value = '';
   document.getElementById('ob1-clear-photo').style.display = 'none';
   const emojiEl = document.getElementById('ob1-emoji-display');
