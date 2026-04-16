@@ -299,30 +299,37 @@ export async function renderDashboardChildren(familyId) {
   }
 
   const count = children.length;
-  // כיוון ורוחב של גריד הדשבורד
-  const gap = count <= 2 ? 14 : 10;
-  grid.style.gap = `${gap}px`;
+  grid.style.gap = count <= 2 ? '14px' : '10px';
   grid.style.justifyContent = count <= 2 ? 'center' : 'flex-start';
   grid.style.overflowX = count > 3 ? 'auto' : 'hidden';
   grid.style.paddingBottom = count > 3 ? '10px' : '0';
   if (count > 3) grid.style.scrollSnapType = 'x mandatory';
 
-  // סגנון כרטיס: 1 ילד — רחב, 2-3 ילדים — גמיש (ממלא שורה), 4+ — קבוע לגלילה
   let cardFlexStyle;
-  if (count === 1) cardFlexStyle = 'width:min(200px,80vw);flex-shrink:0;';
+  if (count === 1) cardFlexStyle = 'width:min(180px,75vw);flex-shrink:0;';
   else if (count <= 3) cardFlexStyle = 'flex:1;min-width:0;';
-  else cardFlexStyle = 'width:110px;flex-shrink:0;';
+  else cardFlexStyle = 'width:120px;flex-shrink:0;';
 
-  const startOfWeek = (() => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - d.getDay()); return d.getTime(); })();
-  const startOfMonth = (() => { const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); return d.getTime(); })();
-  const todayStart = (() => { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); })();
-  const dayOfWeek = new Date().getDay();
+  const startOfWeek  = (() => { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - d.getDay()); return d.getTime(); })();
+  const todayStart   = (() => { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); })();
+  const dayOfWeek    = new Date().getDay();
 
-  // Load all tasks once
   let allFamilyTasks = [];
   try {
     const tSnap = await getDocs(collection(db, 'families', familyId, 'tasks'));
     allFamilyTasks = tSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(t => !t.hidden);
+  } catch(e) {}
+
+  // טען בקשות פרסים ממתינות
+  let pendingPrizeRequests = {};
+  try {
+    const reqSnap = await getDocs(collection(db, 'families', familyId, 'prizeRequests'));
+    reqSnap.forEach(d => {
+      const r = d.data();
+      if (r.status === 'pending') {
+        pendingPrizeRequests[r.childId] = (pendingPrizeRequests[r.childId] || 0) + 1;
+      }
+    });
   } catch(e) {}
 
   const statsPromises = children.map(async (child) => {
@@ -331,43 +338,75 @@ export async function renderDashboardChildren(familyId) {
     );
     try {
       const stateSnap = await getDoc(doc(db, 'families', familyId, 'children', child.id, 'state', 'current'));
-      if (!stateSnap.exists()) return { weekly: 0, monthly: 0, remaining: childTasks.length };
+      if (!stateSnap.exists()) return { weekly: 0, total: childTasks.length, done: 0 };
       const hist = stateSnap.data().hist || [];
-      const weekly  = hist.filter(h => (h.ts||0) >= startOfWeek).reduce((s,h) => s+(h.pts||0), 0);
-      const monthly = hist.filter(h => (h.ts||0) >= startOfMonth).reduce((s,h) => s+(h.pts||0), 0);
+      const weekly = hist.filter(h => (h.ts||0) >= startOfWeek).reduce((s,h) => s+(h.pts||0), 0);
       const completedTodayIds = new Set(hist.filter(h => (h.ts||0) >= todayStart).map(h => h.taskId));
-      const remaining = Math.max(0, childTasks.filter(t => !completedTodayIds.has(t.id)).length);
-      return { weekly, monthly, remaining };
-    } catch(e) { return { weekly: 0, monthly: 0, remaining: childTasks.length }; }
+      const done = childTasks.filter(t => completedTodayIds.has(t.id)).length;
+      return { weekly, total: childTasks.length, done };
+    } catch(e) { return { weekly: 0, total: childTasks.length, done: 0 }; }
   });
 
   const stats = await Promise.all(statsPromises);
 
   grid.innerHTML = children.map((child, i) => {
-    const genderEmoji = child.gender === 'female' ? '👧' : '👦';
-    const displayEmoji = child.emoji || genderEmoji;
     const hasPhoto = child.photo && child.photo.length > 10;
-    const { weekly, monthly, remaining } = stats[i];
-    const color = child.color || CHILD_COLORS[i % CHILD_COLORS.length];
+    const color    = child.color || CHILD_COLORS[i % CHILD_COLORS.length];
+    const { weekly, total, done } = stats[i];
+    const pending  = pendingPrizeRequests[child.id] || 0;
+    const isWaiting = child.status === 'waiting';
 
+    // תמונה או עיגול צבעוני
     const photoHTML = hasPhoto
-      ? `<img src="${child.photo}" alt="${child.name}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">`
-      : `<div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#E0E7FF,#C7D2FE);display:flex;align-items:center;justify-content:center;font-size:1.8rem;">${displayEmoji}</div>`;
+      ? `<img src="${child.photo}" alt="${child.name}" style="width:68px;height:68px;border-radius:50%;object-fit:cover;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.15);">`
+      : `<div style="width:68px;height:68px;border-radius:50%;background:${colorGradient(color)};display:flex;align-items:center;justify-content:center;font-size:2rem;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+           ${child.gender === 'female' ? '👧' : '👦'}
+         </div>`;
 
-    const remainingHTML = remaining > 0
-      ? `<div style="background:#FEE2E2;border-radius:8px;padding:4px 6px;font-size:0.72rem;font-weight:700;color:#991B1B;">✅ נותרו ${remaining} מטלות</div>`
-      : `<div style="background:#DCFCE7;border-radius:8px;padding:4px 6px;font-size:0.72rem;font-weight:700;color:#14532D;">✅ הכל בוצע!</div>`;
+    // פס התקדמות
+    const pct = total > 0 ? Math.round((done / total) * 100) : 100;
+    const allDone = total === 0 || done >= total;
+    const barColor = allDone ? '#10B981' : (pct >= 50 ? '#F59E0B' : '#EF4444');
+    const progressBar = `
+      <div style="width:100%;background:#F1F5F9;border-radius:99px;height:7px;margin-top:8px;overflow:hidden;">
+        <div style="height:100%;border-radius:99px;background:${barColor};width:${pct}%;transition:width 0.6s ease;"></div>
+      </div>
+      <div style="font-size:0.68rem;font-weight:700;color:${barColor};margin-top:3px;">
+        ${allDone ? '✅ הכל בוצע!' : `${done}/${total} מטלות`}
+      </div>`;
+
+    // badge פרסים ממתינים
+    const prizeBadge = pending > 0
+      ? `<div style="background:#EF4444;color:white;border-radius:20px;padding:3px 8px;font-size:0.68rem;font-weight:800;margin-top:4px;display:inline-flex;align-items:center;gap:3px;">
+           🎁 ${pending} ממתין${pending > 1 ? 'ות' : 'ת'}
+         </div>`
+      : '';
+
+    // badge ממתין לכניסה
+    const waitingBadge = isWaiting
+      ? `<div style="background:#FEF3C7;color:#92400E;border-radius:20px;padding:3px 8px;font-size:0.68rem;font-weight:800;margin-top:4px;">⏳ ממתין</div>`
+      : '';
+
+    const onclick = isWaiting
+      ? `showChildInviteModal('${child.id}')`
+      : `openEditChild('${child.id}')`;
 
     return `
-      <div style="${cardFlexStyle}background:white;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.08),inset -4px 0 0 ${color},inset 0 -3px 0 ${color}70;padding:16px 10px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px;">
-        ${photoHTML}
-        <div style="font-weight:800;font-size:0.9rem;color:var(--text);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;">${child.name}</div>
-        <div style="font-size:1.3rem;">${displayEmoji}</div>
-        <div style="display:flex;flex-direction:column;gap:3px;width:100%;margin-top:2px;">
-          <div style="background:#FEF9C3;border-radius:8px;padding:4px 6px;font-size:0.72rem;font-weight:700;color:#713F12;">⭐ כוכבים השבוע: ${weekly}</div>
-          <div style="background:#DCFCE7;border-radius:8px;padding:4px 6px;font-size:0.72rem;font-weight:700;color:#14532D;">🗓️ כוכבים החודש: ${monthly}</div>
-          ${remainingHTML}
+      <div onclick="${onclick}" style="${cardFlexStyle}background:white;border-radius:20px;
+           box-shadow:0 2px 12px rgba(0,0,0,0.08),inset 0 -4px 0 ${color};
+           padding:16px 10px 14px;text-align:center;display:flex;flex-direction:column;
+           align-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent;
+           transition:transform 0.15s;active:transform:scale(0.97);">
+        <div style="position:relative;margin-bottom:6px;">
+          ${photoHTML}
+          ${pending > 0 ? `<div style="position:absolute;top:-2px;left:-2px;width:16px;height:16px;background:#EF4444;border-radius:50%;border:2px solid white;"></div>` : ''}
         </div>
+        <div style="font-weight:800;font-size:0.88rem;color:var(--text);white-space:nowrap;
+                    overflow:hidden;text-overflow:ellipsis;width:100%;">${child.name}</div>
+        <div style="font-size:0.75rem;font-weight:700;color:#F59E0B;margin-top:4px;">⭐ ${weekly} השבוע</div>
+        ${progressBar}
+        ${prizeBadge}
+        ${waitingBadge}
       </div>`;
   }).join('');
 }

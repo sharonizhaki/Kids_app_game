@@ -10,6 +10,7 @@
     #new-child-color-display svg,
     #edit-child-color-display svg { width:118px !important; height:118px !important; margin-right:-23px; margin-top:-12px; }
   </style>
+  <link rel="stylesheet" href="./css/bg-floaters.css">
 </head>
 <body>
 
@@ -58,6 +59,24 @@
         <button class="quick-cat-btn" data-cat="study" style="background:white;border:2px solid #A5B4FC;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">📚</div><div style="font-size:0.78rem;font-weight:800;color:#4338CA;">לימודים</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">5 משימות</div></button>
       </div>
       <div dir="rtl" style="margin-top:11px;font-size:0.71rem;color:#94A3B8;line-height:1.45;">ניתן לערוך ולמחוק מטלות במסך <strong style="color:#6366F1;">עריכת מטלות</strong> בתפריט <strong style="color:#6366F1;">הגדרות</strong> ⚙️</div>
+    </div>
+  </div>
+
+  <!-- Quick prizes banner -->
+  <div id="quick-prizes-banner" style="display:none;width:100%;max-width:480px;margin-top:12px;padding:0 4px;">
+    <div id="quick-prizes-inner" style="background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:2px dashed #FDE68A;border-radius:20px;padding:18px 16px;text-align:center;position:relative;">
+      <button id="btn-quick-prizes-close" style="position:absolute;top:8px;left:8px;background:rgba(245,158,11,0.13);border:none;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:0.8rem;display:flex;align-items:center;justify-content:center;color:#D97706;font-weight:900;font-family:'Heebo',sans-serif;">✕</button>
+      <div style="display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:3px;">
+        <span style="font-size:1.1rem;">🎁</span>
+        <div style="font-weight:900;font-size:1rem;color:#1E293B;">הוסף פרסים מהר!</div>
+      </div>
+      <div style="font-size:0.82rem;color:#64748B;margin-bottom:14px;line-height:1.5;">בחר קטגוריה — 5 פרסים יתווספו אוטומטית</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <button class="quick-prize-dash-btn" data-cat="treats" style="background:white;border:2px solid #FDE68A;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">🍦</div><div style="font-size:0.78rem;font-weight:800;color:#92400E;">פינוקים</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">5 פרסים</div></button>
+        <button class="quick-prize-dash-btn" data-cat="fun" style="background:white;border:2px solid #FDE68A;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">🎮</div><div style="font-size:0.78rem;font-weight:800;color:#92400E;">פנאי</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">5 פרסים</div></button>
+        <button class="quick-prize-dash-btn" data-cat="gifts" style="background:white;border:2px solid #FDE68A;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">🎁</div><div style="font-size:0.78rem;font-weight:800;color:#92400E;">מתנות</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">5 פרסים</div></button>
+      </div>
+      <div dir="rtl" style="margin-top:11px;font-size:0.71rem;color:#94A3B8;line-height:1.45;">ניתן לערוך ולמחוק פרסים במסך <strong style="color:#D97706;">ניהול פרסים</strong> בתפריט <strong style="color:#D97706;">הגדרות</strong> ⚙️</div>
     </div>
   </div>
 
@@ -235,5 +254,6 @@
 <div class="toast" id="toast"></div>
 
 <script type="module" src="./js/main-parent.js"></script>
+<script src="./js/bg-floaters.js"></script>
 </body>
 </html>

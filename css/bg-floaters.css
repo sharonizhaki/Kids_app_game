@@ -1,0 +1,47 @@
+
+/* ===== MESH + FLOATING BACKGROUND ===== */
+html { background: #EEF2FF; }
+body { background: transparent !important; position: relative; }
+
+.bg-mesh {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 65% at 15%  5%,  rgba(165,180,252,0.40) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 55% at 85% 15%,  rgba(196,181,253,0.34) 0%, transparent 55%),
+    radial-gradient(ellipse 75% 60% at 5%  85%,  rgba(147,197,253,0.29) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 80%,  rgba(253,186,116,0.20) 0%, transparent 55%);
+  animation: bgMeshDrift 14s ease-in-out infinite alternate;
+}
+@keyframes bgMeshDrift {
+  0%   { transform: scale(1)    translate(0, 0); }
+  100% { transform: scale(1.05) translate(-5px, 7px); }
+}
+
+.bg-floater {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  line-height: 1;
+  user-select: none;
+  font-size: 80px;
+  opacity: 0.15;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+/* כל מסך מעל שכבת הרקע */
+.screen {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+}
+
+/* מסכים ב-index שיש להם gradient inline — נשמור אותם */
+#screen-who,
+#screen-parent-login,
+#screen-child-login {
+  background: linear-gradient(170deg, #EEF2FF 0%, #E0E7FF 60%, #C7D2FE 100%) !important;
+}

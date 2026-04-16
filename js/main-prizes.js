@@ -1,6 +1,6 @@
 import { db } from './firebase.js';
 
-import { showScreen, showToast, showLoading, hideLoading, showConfirm } from './ui.js';
+import { showScreen, showToast, showLoading, hideLoading, showConfirm, highlightField } from './ui.js';
 import { currentFamilyId, setCurrentFamilyId } from './auth.js';
 import { loadChildren, childrenCache } from './family.js';
 import {
@@ -9,7 +9,7 @@ import {
   approvePrizeRequest, declinePrizeRequest, reversePrizeRequest,
   renderPrizeEmojiGrid, renderPrizeAssignGrid, renderPrizeSuggestions,
   DECLINE_REASONS, startPrizeTour,
-  setPrizeEmoji, setPrizePts, setPrizeChildren, resetPrizeState, getPrizeState
+  setPrizeEmoji, setPrizePts, setPrizeChildren, resetPrizeState, setPrizeRepeat
 } from './prizes.js';
 
 function getFamilyId() { return currentFamilyId; }
@@ -36,8 +36,8 @@ document.getElementById('btn-back-edit-prize')?.addEventListener('click', () => 
 });
 
 // =========== QUICK PRIZES SECTION ===========
-function quickBannerKey() { return `prizesQuickDismissed_${getFamilyId() || 'none'}`; }
-function quickClickedKey() { return `prizesQuickClicked_${getFamilyId() || 'none'}`; }
+function quickBannerKey() { return `quickPrizesBannerDismissed_${getFamilyId() || 'none'}`; }
+function quickClickedKey() { return `quickPrizesClicked_${getFamilyId() || 'none'}`; }
 
 function getQuickClicked() {
   try { return JSON.parse(localStorage.getItem(quickClickedKey()) || '[]'); } catch(e) { return []; }
@@ -49,10 +49,12 @@ function saveQuickClicked(cat) {
 
 function markQuickBtnDone(btn) {
   const labels = { treats: 'פינוקים', fun: 'פנאי', gifts: 'מתנות' };
+  const cat = btn.dataset.cat;
+  btn.style.opacity = '1';
   btn.style.background = 'rgba(22,163,74,0.10)';
   btn.style.borderColor = '#16A34A';
   btn.style.color = '#15803D';
-  btn.textContent = `✅ ${labels[btn.dataset.cat] || ''}`;
+  btn.textContent = `✅ ${labels[cat] || ''}`;
   btn.style.cursor = 'default';
   btn.disabled = true;
 }
@@ -60,18 +62,10 @@ function markQuickBtnDone(btn) {
 function animateQuickAway() {
   const section = document.getElementById('prize-quick-section');
   if (!section || section.style.display === 'none') return;
-  const h = section.offsetHeight;
-  section.style.overflow = 'hidden';
-  section.style.maxHeight = h + 'px';
-  section.style.transition = 'transform 0.12s ease-out';
-  section.style.transform = 'scale(1.03)';
-  setTimeout(() => {
-    section.style.transition = 'max-height 0.38s cubic-bezier(.4,0,.2,1),opacity 0.28s ease,transform 0.28s ease';
-    section.style.maxHeight = '0';
-    section.style.opacity = '0';
-    section.style.transform = 'scale(0.88)';
-    setTimeout(() => { section.style.display = 'none'; }, 400);
-  }, 120);
+  section.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+  section.style.opacity = '0';
+  section.style.transform = 'scale(0.88)';
+  setTimeout(() => { section.style.display = 'none'; }, 270);
 }
 
 function refreshQuickSection() {
@@ -82,6 +76,8 @@ function refreshQuickSection() {
   document.querySelectorAll('.quick-prize-cat-btn').forEach(btn => {
     if (clicked.includes(btn.dataset.cat)) markQuickBtnDone(btn);
   });
+  const allDone = [...document.querySelectorAll('.quick-prize-cat-btn')].every(b => b.disabled);
+  if (allDone) { localStorage.setItem(quickBannerKey(), '1'); animateQuickAway(); }
 }
 
 async function handleQuickPrizes(triggerEl, category) {
@@ -92,7 +88,7 @@ async function handleQuickPrizes(triggerEl, category) {
     if (ok && triggerEl) {
       saveQuickClicked(category);
       markQuickBtnDone(triggerEl);
-      const allDone = [...document.querySelectorAll('.quick-prize-cat-btn')].every(b => b.disabled);
+      const allDone = [...document.querySelectorAll('.quick-prize-cat-btn')].every(b => b.disabled || b.textContent.includes('✅'));
       if (allDone) {
         localStorage.setItem(quickBannerKey(), '1');
         setTimeout(animateQuickAway, 950);
@@ -118,42 +114,49 @@ function initPrizeSuggestions() {
     if (!isVisible) {
       renderPrizeSuggestions(({ name, emoji, pts }) => {
         document.getElementById('prize-name-input').value = name;
-        setPrizeEmoji(emoji);
-        setPrizePts(pts);
+        setPrizeEmoji(emoji); setPrizePts(pts);
         renderPrizeEmojiGrid('prize-emoji-grid', emoji, (e) => setPrizeEmoji(e));
-        document.getElementById('prize-pts-input').value = pts;
-        highlightShortcut('prize-pts-shortcut', pts);
+        const sl = document.getElementById('prize-pts-slider');
+        const dp = document.getElementById('prize-pts-display');
+        if (sl && dp) { sl.value = pts; dp.textContent = pts; sl.dispatchEvent(new Event('input')); }
         wrap.style.display = 'none';
       });
     }
   });
 }
 
-// =========== PTS SHORTCUTS ===========
-function initPtsShortcuts(inputId, btnClass, onSelect) {
-  document.getElementById(inputId)?.addEventListener('input', (e) => {
-    const val = parseInt(e.target.value) || 0;
-    onSelect(val);
-    highlightShortcut(btnClass, val);
+// =========== PTS SLIDER ===========
+function initPtsSlider(sliderId, displayId, presetClass, onSelect) {
+  const slider = document.getElementById(sliderId);
+  const display = document.getElementById(displayId);
+  if (!slider || !display) return;
+
+  function updateBg(val) {
+    const pct = ((val - 10) / (500 - 10)) * 100;
+    slider.style.background = `linear-gradient(to right, #6366F1 ${pct}%, #E2E8F0 ${pct}%)`;
+  }
+  function syncPresets(val) {
+    document.querySelectorAll(`.${presetClass}`).forEach(b => {
+      const isActive = parseInt(b.dataset.val) === val;
+      b.style.borderColor = isActive ? '#6366F1' : '#E2E8F0';
+      b.style.background  = isActive ? '#EEF2FF' : '#F8FAFC';
+      b.style.color       = isActive ? '#4F46E5' : '#64748B';
+    });
+  }
+  slider.addEventListener('input', () => {
+    const v = parseInt(slider.value);
+    display.textContent = v;
+    updateBg(v); syncPresets(v); onSelect(v);
   });
-  document.querySelectorAll(`.${btnClass}`).forEach(btn => {
+  document.querySelectorAll(`.${presetClass}`).forEach(btn => {
     btn.addEventListener('click', () => {
-      const val = parseInt(btn.dataset.val);
-      document.getElementById(inputId).value = val;
-      onSelect(val);
-      highlightShortcut(btnClass, val);
+      const v = parseInt(btn.dataset.val);
+      slider.value = v; display.textContent = v;
+      updateBg(v); syncPresets(v); onSelect(v);
     });
   });
-}
-
-function highlightShortcut(btnClass, val) {
-  document.querySelectorAll(`.${btnClass}`).forEach(btn => {
-    const isActive = parseInt(btn.dataset.val) === val;
-    btn.style.background    = isActive ? '#FDE68A' : '#FEF3C7';
-    btn.style.borderColor   = isActive ? '#F59E0B' : '#FDE68A';
-    btn.style.color         = isActive ? '#78350F' : '#92400E';
-    btn.style.fontWeight    = isActive ? '900' : '800';
-  });
+  const initVal = parseInt(slider.value) || 100;
+  updateBg(initVal); syncPresets(initVal); onSelect(initVal);
 }
 
 // =========== OPEN ADD PRIZE ===========
@@ -162,9 +165,14 @@ async function openAddPrize(familyId) {
 
   document.getElementById('prize-name-input').value  = '';
   document.getElementById('prize-desc-input').value  = '';
-  document.getElementById('prize-pts-input').value   = '';
   document.getElementById('add-prize-error').textContent = '';
   document.getElementById('prize-suggestions-wrap').style.display = 'none';
+  const addSlider = document.getElementById('prize-pts-slider');
+  if (addSlider) { addSlider.value = 100; addSlider.dispatchEvent(new Event('input')); }
+  const addDisplay = document.getElementById('prize-pts-display');
+  if (addDisplay) addDisplay.textContent = '100';
+  const repeatToggle = document.getElementById('prize-repeat-toggle');
+  if (repeatToggle) { repeatToggle.checked = true; setPrizeRepeat(true); }
 
   await loadChildren(familyId);
 
@@ -256,26 +264,39 @@ async function renderPrizesList() {
 
 // =========== OPEN EDIT PRIZE ===========
 async function openEditPrize(prize) {
-  editingPrize      = prize;
-  epSelectedEmoji   = prize.emoji || '';
-  epSelectedPts     = prize.pts   || 0;
+  editingPrize       = prize;
+  epSelectedEmoji    = prize.emoji || '';
+  epSelectedPts      = prize.pts   || 100;
   epAssignedChildren = prize.assignedChildren || [];
 
   document.getElementById('ep-name').value = prize.name || '';
   document.getElementById('ep-desc').value = prize.desc || '';
-  document.getElementById('ep-pts').value  = prize.pts  || '';
   document.getElementById('ep-error').textContent = '';
 
-  highlightShortcut('ep-pts-shortcut', prize.pts);
+  // טוגל חזרה לאחר מימוש
+  const epRepeat = document.getElementById('ep-repeat-toggle');
+  if (epRepeat) {
+    epRepeat.checked = prize.repeatAfterClaim !== false; // ברירת מחדל: true
+    epRepeat.onchange = null;
+    epRepeat.addEventListener('change', (e) => { editingPrize._repeat = e.target.checked; }, { once: false });
+  }
+
+  // init slider
+  const epSlider = document.getElementById('ep-pts-slider');
+  if (epSlider) { epSlider.value = epSelectedPts; epSlider.dispatchEvent(new Event('input')); }
+  const epDisplay = document.getElementById('ep-pts-display');
+  if (epDisplay) epDisplay.textContent = epSelectedPts;
 
   await loadChildren(getFamilyId());
   renderPrizeEmojiGrid('ep-emoji-grid', epSelectedEmoji, (e) => { epSelectedEmoji = e; });
   renderPrizeAssignGrid('ep-assign-grid', epAssignedChildren, (children) => { epAssignedChildren = children; });
 
-  // כפתור הסתר — טקסט דינמי
   document.getElementById('btn-ep-hide').textContent = prize.hidden ? '👁️ הצג' : '👁️ הסתר';
 
   showScreen('screen-edit-prize');
+
+  // init slider listeners
+  initPtsSlider('ep-pts-slider', 'ep-pts-display', 'ep-pts-preset', (val) => { epSelectedPts = val; });
 }
 
 // =========== SAVE EDITED PRIZE ===========
@@ -285,16 +306,17 @@ document.getElementById('btn-ep-save')?.addEventListener('click', async () => {
   const desc = document.getElementById('ep-desc').value.trim();
   const err  = document.getElementById('ep-error');
 
-  if (!name) { err.textContent = 'חובה להכניס שם פרס'; return; }
-  if (!epSelectedEmoji) { err.textContent = 'חובה לבחור אייקון'; return; }
-  if (!epSelectedPts || epSelectedPts < 1) { err.textContent = 'חובה להזין מחיר'; return; }
-  if (epAssignedChildren.length === 0) { err.textContent = 'חובה לשייך לפחות ילד אחד'; return; }
+  if (!name) { err.textContent = 'נא להכניס שם פרס'; highlightField(document.getElementById('ep-name')); return; }
+  if (!epSelectedEmoji) { err.textContent = 'נא לבחור אייקון'; return; }
+  if (!epSelectedPts || epSelectedPts < 1) { err.textContent = 'נא להזין מחיר'; return; }
+  if (epAssignedChildren.length === 0) { err.textContent = 'נא לשייך לפחות ילד אחד'; return; }
   err.textContent = '';
 
   showLoading('שומר...');
+  const repeatVal = document.getElementById('ep-repeat-toggle')?.checked ?? (editingPrize.repeatAfterClaim !== false);
   const ok = await updatePrize(getFamilyId(), editingPrize.id, {
     name, emoji: epSelectedEmoji, pts: epSelectedPts,
-    desc, assignedChildren: epAssignedChildren
+    desc, assignedChildren: epAssignedChildren, repeatAfterClaim: repeatVal
   });
   hideLoading();
   if (ok) {
@@ -321,14 +343,14 @@ document.getElementById('btn-ep-hide')?.addEventListener('click', async () => {
 // =========== DELETE PRIZE ===========
 document.getElementById('btn-ep-delete')?.addEventListener('click', () => {
   if (!editingPrize) return;
-  showConfirm('מחיקת פרס', `האם למחוק את הפרס "${editingPrize.name}"? הפעולה אינה הפיכה.`, async () => {
+  showConfirm({ icon: '🗑️', title: 'מחיקת פרס', message: `האם למחוק את הפרס "${editingPrize.name}"? הפעולה אינה הפיכה.`, confirmText: 'מחק', onConfirm: async () => {
     const ok = await deletePrize(getFamilyId(), editingPrize.id);
     if (ok) {
       editingPrize = null;
       showScreen('screen-manage-prizes');
       renderPrizesList();
     }
-  });
+  }});
 });
 
 // =========== TABS ===========
@@ -447,10 +469,10 @@ async function renderRequestsList() {
   // אירועי reverse
   list.querySelectorAll('.btn-reverse').forEach(btn => {
     btn.addEventListener('click', async () => {
-      showConfirm('החזרת פרס', 'הכוכבים יוחזרו לילד והפרס יסומן כלא מומש.', async () => {
+      showConfirm({ icon: '↩️', title: 'החזרת פרס', message: 'הכוכבים יוחזרו לילד והפרס יסומן כלא מומש.', confirmText: 'החזר', confirmColor: 'linear-gradient(135deg,#6366F1,#4338CA)', onConfirm: async () => {
         const ok = await reversePrizeRequest(getFamilyId(), btn.dataset.reqId);
         if (ok) renderRequestsList();
-      });
+      }});
     });
   });
 }
@@ -631,19 +653,6 @@ document.getElementById('btn-add-new-prize')?.addEventListener('click', () => {
   openAddPrize(getFamilyId());
 });
 
-// =========== EDIT PRIZE — pts shortcuts ===========
-document.getElementById('ep-pts')?.addEventListener('input', (e) => {
-  epSelectedPts = parseInt(e.target.value) || 0;
-  highlightShortcut('ep-pts-shortcut', epSelectedPts);
-});
-document.querySelectorAll('.ep-pts-shortcut').forEach(btn => {
-  btn.addEventListener('click', () => {
-    epSelectedPts = parseInt(btn.dataset.val);
-    document.getElementById('ep-pts').value = epSelectedPts;
-    highlightShortcut('ep-pts-shortcut', epSelectedPts);
-  });
-});
-
 // =========== EXPORTED INIT (called by prizes.html after auth) ===========
 export async function initPrizesPage(familyId) {
   setCurrentFamilyId(familyId);
@@ -665,8 +674,8 @@ export async function initPrizesPage(familyId) {
     // ברירת מחדל: הוספת פרס
     await openAddPrize(familyId);
     initPrizeSuggestions();
-    initPtsShortcuts('prize-pts-input', 'prize-pts-shortcut', (val) => setPrizePts(val));
-    // quick prizes
+    initPtsSlider('prize-pts-slider', 'prize-pts-display', 'prize-pts-preset', (val) => setPrizePts(val));
+    document.getElementById('prize-repeat-toggle')?.addEventListener('change', (e) => setPrizeRepeat(e.target.checked));
     document.getElementById('btn-prize-quick-close')?.addEventListener('click', () => {
       localStorage.setItem(quickBannerKey(), '1');
       animateQuickAway();

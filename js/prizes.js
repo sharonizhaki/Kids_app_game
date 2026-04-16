@@ -3,7 +3,7 @@ import {
   doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
   collection, serverTimestamp, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { showToast, showLoading, hideLoading, showConfirm } from './ui.js';
+import { showToast, showLoading, hideLoading, showConfirm, highlightField } from './ui.js';
 import { childrenCache, loadChildren } from './family.js';
 
 // =========== CONSTANTS ===========
@@ -71,14 +71,17 @@ export const DECLINE_REASONS = [
 let prizeSelectedEmoji = '';
 let prizeSelectedPts   = 0;
 let prizeAssignedChildren = [];
+let prizeRepeatAfterClaim = true;
 
 export function setPrizeEmoji(e)    { prizeSelectedEmoji = e; }
 export function setPrizePts(p)      { prizeSelectedPts = p; }
 export function setPrizeChildren(c) { prizeAssignedChildren = c; }
+export function setPrizeRepeat(v)   { prizeRepeatAfterClaim = v; }
 export function resetPrizeState()   {
   prizeSelectedEmoji = '';
   prizeSelectedPts   = 0;
   prizeAssignedChildren = [];
+  prizeRepeatAfterClaim = true;
 }
 
 // =========== FIREBASE: PRIZES ===========
@@ -90,21 +93,23 @@ export async function savePrize(familyId) {
   const err  = document.getElementById('add-prize-error');
 
   if (!name) {
-    err.textContent = 'חובה להכניס שם פרס';
-    document.getElementById('prize-name-input').classList.add('input-error');
+    err.textContent = 'נא להכניס שם פרס';
+    highlightField(document.getElementById('prize-name-input'));
     return false;
   }
   if (!prizeSelectedEmoji) {
-    err.textContent = 'חובה לבחור אייקון';
+    err.textContent = 'נא לבחור אייקון';
+    highlightField(document.getElementById('prize-emoji-grid'));
     return false;
   }
   if (!prizeSelectedPts || prizeSelectedPts < 1) {
-    err.textContent = 'חובה להזין מחיר בכוכבים';
-    document.getElementById('prize-pts-input').classList.add('input-error');
+    err.textContent = 'נא לקבוע מחיר בכוכבים';
+    highlightField(document.getElementById('prize-pts-slider'));
     return false;
   }
   if (prizeAssignedChildren.length === 0) {
-    err.textContent = 'חובה לשייך לפחות ילד אחד';
+    err.textContent = 'נא לשייך לפחות ילד אחד';
+    highlightField(document.getElementById('prize-assign-grid'));
     return false;
   }
   err.textContent = '';
@@ -119,6 +124,7 @@ export async function savePrize(familyId) {
       desc,
       hidden: false,
       assignedChildren: prizeAssignedChildren,
+      repeatAfterClaim: prizeRepeatAfterClaim,
       createdAt: serverTimestamp()
     });
     hideLoading();
@@ -369,16 +375,33 @@ export async function reversePrizeRequest(familyId, requestId) {
 export function renderPrizeEmojiGrid(containerId, selectedEmoji, onChange) {
   const grid = document.getElementById(containerId);
   if (!grid) return;
-  grid.innerHTML = PRIZE_EMOJIS.map(e =>
-    `<div class="task-emoji-opt${e === selectedEmoji ? ' selected' : ''}" data-emoji="${e}">${e}</div>`
-  ).join('');
-  grid.querySelectorAll('.task-emoji-opt').forEach(el => {
-    el.onclick = () => {
-      grid.querySelectorAll('.task-emoji-opt').forEach(x => x.classList.remove('selected'));
-      el.classList.add('selected');
-      onChange(el.dataset.emoji);
-    };
-  });
+  const SHOW_INITIAL = 11;
+
+  function buildGrid(showAll) {
+    const visible = showAll ? PRIZE_EMOJIS : PRIZE_EMOJIS.slice(0, SHOW_INITIAL);
+    const remaining = PRIZE_EMOJIS.length - SHOW_INITIAL;
+    grid.innerHTML = visible.map(e =>
+      `<div class="task-emoji-opt${e === selectedEmoji ? ' selected' : ''}" data-emoji="${e}">${e}</div>`
+    ).join('') + (!showAll && remaining > 0
+      ? `<div class="task-emoji-opt" id="${containerId}-show-more" style="font-size:0.72rem;font-weight:800;color:var(--primary);background:#EEF2FF;border:1.5px dashed var(--primary);">+${remaining}</div>`
+      : '');
+
+    grid.querySelectorAll('.task-emoji-opt').forEach(el => {
+      if (el.id === `${containerId}-show-more`) {
+        el.onclick = () => buildGrid(true);
+      } else {
+        el.onclick = () => {
+          grid.querySelectorAll('.task-emoji-opt').forEach(x => x.classList.remove('selected'));
+          el.classList.add('selected');
+          selectedEmoji = el.dataset.emoji;
+          onChange(el.dataset.emoji);
+        };
+      }
+    });
+  }
+
+  const currentIdx = PRIZE_EMOJIS.indexOf(selectedEmoji);
+  buildGrid(currentIdx >= SHOW_INITIAL);
 }
 
 /** רינדור assign grid (זהה למטלות) */
@@ -436,11 +459,11 @@ export function startPrizeTour(familyId) {
     : 'הכנס שם לפרס ולחץ "💡 רעיונות לדוגמא" לקבל השראה';
 
   const steps = [
-    { el: '#prize-name-input',  title: 'שם הפרס',         text: step1Text },
-    { el: '#prize-emoji-grid',  title: 'אייקון',           text: 'בחר אייקון שמייצג את הפרס — יופיע לילד במסך הפרסים שלו' },
-    { el: '#prize-pts-input',   title: 'מחיר בכוכבים ⭐',  text: 'כמה כוכבים עולה הפרס? הקלד מספר או בחר מהקיצורים המהירים למטה' },
-    { el: '#prize-assign-grid', title: 'שיוך לילד/ים',    text: 'בחר לאיזה ילד/ים הפרס זמין — ניתן לשייך לכמה ילדים בו-זמנית' },
-    { el: '#prize-desc-input',  title: 'תיאור (לא חובה)', text: 'הוסף הסבר קצר — למשל "עד 22:00" או "פעם בחודש"' },
+    { el: '#prize-name-input',      title: 'שם הפרס',         text: step1Text },
+    { el: '#prize-assign-grid',     title: 'שיוך לילד/ים',    text: 'בחר לאיזה ילד/ים הפרס זמין — ניתן לשייך לכמה ילדים בו-זמנית' },
+    { el: '#prize-emoji-grid',      title: 'אייקון',           text: 'בחר אייקון שמייצג את הפרס — יופיע לילד במסך הפרסים שלו' },
+    { el: '#prize-pts-slider',      title: 'מחיר בכוכבים ⭐',  text: 'גרור את הסליידר כדי לקבוע כמה כוכבים עולה הפרס' },
+    { el: '#prize-repeat-toggle',   title: 'תיאור ואפשרויות', text: 'הוסף תיאור קצר, ובחר אם הפרס יחזור להיות זמין לאחר מימוש' },
   ];
 
   let currentStep = 0;

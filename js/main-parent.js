@@ -14,6 +14,7 @@ import {
 } from './family.js';
 import { SPLAT_SVG } from './icons.js';
 import { createQuickTasks } from './tasks.js';
+import { createQuickPrizes } from './prizes.js';
 
 // =========== GUARD: הורה חייב להיות מחובר ===========
 function checkAuth() {
@@ -109,6 +110,7 @@ async function handleQuickTasks(triggerEl, category) {
   try {
     const ok = await createQuickTasks(fid, category);
     if (ok && triggerEl) {
+      showToast('5 מטלות נוספו! ✅');
       saveClickedCategory(category);
       markButtonDone(triggerEl);
       const allDone = [...document.querySelectorAll('#quick-tasks-inner .quick-cat-btn')].every(b => b.disabled || b.innerHTML.includes('✅'));
@@ -122,7 +124,88 @@ async function handleQuickTasks(triggerEl, category) {
   }
 }
 
-// =========== INIT ===========
+// =========== QUICK PRIZES BANNER ===========
+function quickPrizesBannerKey() { return `quickPrizesBannerDismissed_${currentFamilyId || 'none'}`; }
+function quickPrizesClickedKey() { return `quickPrizesClicked_${currentFamilyId || 'none'}`; }
+
+function getPrizesClickedCategories() {
+  try { return JSON.parse(localStorage.getItem(quickPrizesClickedKey()) || '[]'); } catch(e) { return []; }
+}
+function savePrizesClickedCategory(cat) {
+  const clicked = getPrizesClickedCategories();
+  if (!clicked.includes(cat)) { clicked.push(cat); localStorage.setItem(quickPrizesClickedKey(), JSON.stringify(clicked)); }
+}
+
+function markPrizeButtonDone(btn) {
+  const cat = btn.dataset.cat;
+  const labels = { treats: 'פינוקים', fun: 'פנאי', gifts: 'מתנות' };
+  btn.style.opacity = '1';
+  btn.style.background = 'rgba(22,163,74,0.10)';
+  btn.style.borderColor = '#16A34A';
+  btn.innerHTML = `<div style="font-size:1.5rem;margin-bottom:4px;">✅</div><div style="font-size:0.78rem;font-weight:800;color:#15803D;">${labels[cat] || ''}</div><div style="font-size:0.65rem;color:#15803D;margin-top:2px;">נוסף!</div>`;
+  btn.style.cursor = 'default';
+  btn.disabled = true;
+}
+
+function refreshQuickPrizesBanner() {
+  const banner = document.getElementById('quick-prizes-banner');
+  if (!banner) return;
+  if (localStorage.getItem(quickPrizesBannerKey()) === '1') { banner.style.display = 'none'; return; }
+  banner.style.display = 'block';
+  const clicked = getPrizesClickedCategories();
+  document.querySelectorAll('#quick-prizes-inner .quick-prize-dash-btn').forEach(btn => {
+    if (clicked.includes(btn.dataset.cat)) markPrizeButtonDone(btn);
+  });
+  const allDone = [...document.querySelectorAll('#quick-prizes-inner .quick-prize-dash-btn')].every(b => b.disabled);
+  if (allDone) { localStorage.setItem(quickPrizesBannerKey(), '1'); banner.style.display = 'none'; }
+}
+
+function animatePrizesBannerAway() {
+  const inner = document.getElementById('quick-prizes-inner');
+  const banner = document.getElementById('quick-prizes-banner');
+  if (!inner || !banner) return;
+  inner.style.transition = 'transform 0.1s ease-out,opacity 0.1s ease';
+  inner.style.transform = 'scale(1.05)';
+  setTimeout(() => {
+    inner.style.transition = 'transform 0.5s cubic-bezier(.55,1.8,.65,.8),opacity 0.38s ease';
+    inner.style.transformOrigin = 'top left';
+    inner.style.transform = 'scale(0) rotate(-20deg)';
+    inner.style.opacity = '0';
+    setTimeout(() => {
+      const h = banner.offsetHeight;
+      banner.style.overflow = 'hidden';
+      banner.style.maxHeight = h + 'px';
+      banner.style.transition = 'max-height 0.36s cubic-bezier(.4,0,.2,1),margin-top 0.36s ease';
+      requestAnimationFrame(() => { banner.style.maxHeight = '0'; banner.style.marginTop = '0'; });
+      setTimeout(() => { banner.style.display = 'none'; }, 380);
+    }, 440);
+  }, 90);
+}
+
+function dismissQuickPrizesBanner() {
+  localStorage.setItem(quickPrizesBannerKey(), '1');
+  animatePrizesBannerAway();
+}
+
+async function handleQuickPrizes(triggerEl, category) {
+  const fid = getFamilyId();
+  if (!fid) return;
+  if (triggerEl) { triggerEl.disabled = true; triggerEl.style.opacity = '0.55'; }
+  try {
+    const ok = await createQuickPrizes(fid, category);
+    if (ok && triggerEl) {
+      savePrizesClickedCategory(category);
+      markPrizeButtonDone(triggerEl);
+      const allDone = [...document.querySelectorAll('#quick-prizes-inner .quick-prize-dash-btn')].every(b => b.disabled || b.innerHTML.includes('✅'));
+      if (allDone) {
+        localStorage.setItem(quickPrizesBannerKey(), '1');
+        setTimeout(animatePrizesBannerAway, 950);
+      }
+    }
+  } finally {
+    if (triggerEl && !triggerEl.innerHTML.includes('✅')) { triggerEl.disabled = false; triggerEl.style.opacity = ''; }
+  }
+}
 (async () => {
   const user = await checkAuth();
 
@@ -152,6 +235,7 @@ async function handleQuickTasks(triggerEl, category) {
   showScreen('screen-dashboard');
   renderDashboardChildren(currentFamilyId);
   refreshQuickTasksBanner();
+  refreshQuickPrizesBanner();
   renderDashTaskRows(currentFamilyId);
   saveWeeklySnapshot(currentFamilyId).catch(() => {});
 
@@ -159,6 +243,11 @@ async function handleQuickTasks(triggerEl, category) {
   document.getElementById('btn-quick-banner-close').addEventListener('click', dismissQuickBanner);
   document.querySelectorAll('.quick-cat-btn').forEach(btn => {
     btn.addEventListener('click', function() { handleQuickTasks(this, this.dataset.cat); });
+  });
+
+  document.getElementById('btn-quick-prizes-close').addEventListener('click', dismissQuickPrizesBanner);
+  document.querySelectorAll('.quick-prize-dash-btn').forEach(btn => {
+    btn.addEventListener('click', function() { handleQuickPrizes(this, this.dataset.cat); });
   });
 
   // הפעל טוטוריאל חד-פעמי לדשבורד
@@ -675,6 +764,11 @@ async function startDashTour(familyId, uid) {
       el: '#quick-tasks-banner',
       title: 'יצירת משימות מהירה ⚡',
       text: 'בחר קטגוריה ו-5 מטלות מוכנות יתווספו אוטומטית לכל הילדים — חסוך זמן!'
+    },
+    {
+      el: '#quick-prizes-banner',
+      title: 'יצירת פרסים מהירה 🎁',
+      text: 'בחר קטגוריה ו-5 פרסים יתווספו אוטומטית — תגמל את הילדים על המטלות שלהם!'
     },
     {
       el: '#btn-open-menu',
