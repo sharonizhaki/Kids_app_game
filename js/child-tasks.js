@@ -46,7 +46,6 @@ export function isDone(t) {
 }
 
 // -------- IS PENDING --------
-// האם המשימה כבר שלוחה לאישור ועדיין ממתינה
 export function isPending(t) {
   return (state.childState?.pending || []).some(
     p => p.taskId === t.id && p.status === 'pending'
@@ -62,7 +61,7 @@ export function completeTask(t, saveStateFn) {
   }
 }
 
-// -------- FINALIZE (ביצוע סופי — ישיר או לאחר אישור הורה) --------
+// -------- FINALIZE --------
 export function _finalizeTask(t, saveStateFn) {
   const d       = new Date();
   const time    = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
@@ -95,7 +94,7 @@ export function _finalizeTask(t, saveStateFn) {
   saveStateFn();
 }
 
-// -------- SUBMIT PENDING (שליחה לאישור הורה) --------
+// -------- SUBMIT PENDING --------
 async function _submitPending(t, saveStateFn) {
   const d    = new Date();
   const time = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
@@ -103,7 +102,6 @@ async function _submitPending(t, saveStateFn) {
   const cs   = state.childState;
   const ts   = Date.now();
 
-  // עדכון מקומי מיידי
   if (!cs.pending) cs.pending = [];
   cs.pending.push({
     taskId: t.id,
@@ -115,7 +113,6 @@ async function _submitPending(t, saveStateFn) {
   });
   saveStateFn();
 
-  // כתיבה ל-Firestore (שההורה יראה)
   if (_db && state.familyId && state.childId) {
     try {
       await addDoc(
@@ -137,7 +134,7 @@ async function _submitPending(t, saveStateFn) {
   }
 }
 
-// -------- RENDER PENDING SECTION (home screen) --------
+// -------- RENDER PENDING SECTION --------
 export function renderPendingSection() {
   const section = document.getElementById('pending-section');
   if (!section) return;
@@ -225,6 +222,59 @@ export function renderHistory() {
     : '<div class="empty-state">עדיין לא ביצעת משימות</div>';
 }
 
+// -------- SWIPE HELPER --------
+// מחבר סווייפ שמאלה (≥80px) ל-task card — פותח מודל פרטים
+function attachSwipe(cardEl, onSwipe) {
+  let startX = 0;
+  let startY = 0;
+  let dragging = false;
+  const THRESHOLD = 80; // px לסווייפ
+  const MAX_VERTICAL = 30; // px מקסימום אנכי לפני ביטול
+
+  cardEl.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    dragging = true;
+  }, { passive: true });
+
+  cardEl.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    const dx = startX - e.touches[0].clientX; // חיובי = שמאלה (RTL: פעולה)
+    const dy = Math.abs(e.touches[0].clientY - startY);
+
+    // אם גלילה אנכית — מבטל
+    if (dy > MAX_VERTICAL) { dragging = false; cardEl.style.transform = ''; cardEl.classList.remove('swiping','swipe-ready'); return; }
+
+    if (dx > 0) {
+      cardEl.classList.add('swiping');
+      const clamped = Math.min(dx, THRESHOLD * 1.2);
+      cardEl.style.transform = `translateX(-${clamped}px)`;
+      if (dx >= THRESHOLD) {
+        cardEl.classList.add('swipe-ready');
+      } else {
+        cardEl.classList.remove('swipe-ready');
+      }
+    }
+  }, { passive: true });
+
+  const onEnd = (e) => {
+    if (!dragging) return;
+    dragging = false;
+    const dx = startX - (e.changedTouches?.[0]?.clientX ?? startX);
+    // animate back
+    cardEl.classList.remove('swiping');
+    cardEl.style.transform = '';
+    cardEl.classList.remove('swipe-ready');
+
+    if (dx >= THRESHOLD) {
+      onSwipe();
+    }
+  };
+
+  cardEl.addEventListener('touchend',    onEnd, { passive: true });
+  cardEl.addEventListener('touchcancel', onEnd, { passive: true });
+}
+
 // -------- CATEGORY MODAL --------
 function showCatModal(cat, saveStateFn, renderChildFn) {
   const tasks = state.tasksData.filter(t => (t.cat || 'כללי') === cat && !t.hidden);
@@ -233,9 +283,21 @@ function showCatModal(cat, saveStateFn, renderChildFn) {
   tasks.forEach(t => {
     const done    = isDone(t);
     const pending = !done && isPending(t);
-    const d       = document.createElement('div');
-    d.className   = `task-card${done ? ' done' : pending ? ' task-pending' : ''}`;
-    d.innerHTML   = `
+
+    // wrapper — רקע צבעוני + clipping לסווייפ
+    const wrap = document.createElement('div');
+    wrap.className = 'task-card-wrap';
+
+    // שכבת reveal מתחת (נראית בסווייפ)
+    const reveal = document.createElement('div');
+    reveal.className = 'task-card-reveal';
+    reveal.innerHTML = done ? '' : pending ? '' : '👈 החלק לפרטים';
+    wrap.appendChild(reveal);
+
+    // הכרטיס עצמו
+    const d = document.createElement('div');
+    d.className = `task-card${done ? ' done' : pending ? ' task-pending' : ''}`;
+    d.innerHTML = `
       <div class="tc-left">
         <span class="tc-emoji">${t.emoji || '⭐'}</span>
         <div class="tc-info">
@@ -244,9 +306,18 @@ function showCatModal(cat, saveStateFn, renderChildFn) {
           ${t.requireApproval ? '<span class="approval-tag">👁️ דורש אישור</span>' : ''}
         </div>
       </div>
-      <span class="tc-pts">${done ? '✅' : pending ? '⏳' : starsText(t.pts)}</span>`;
-    if (!done && !pending) d.onclick = () => showTaskDetail(t, saveStateFn, renderChildFn);
-    body.appendChild(d);
+      <span class="tc-pts">${done ? '✅' : pending ? '⏳' : starsText(t.pts)}</span>
+      ${!done && !pending ? '<span class="task-card-hint">←</span>' : ''}`;
+
+    // סווייפ — רק לכרטיסים פעילים
+    if (!done && !pending) {
+      attachSwipe(d, () => {
+        showTaskDetail(t, saveStateFn, renderChildFn);
+      });
+    }
+
+    wrap.appendChild(d);
+    body.appendChild(wrap);
   });
 }
 

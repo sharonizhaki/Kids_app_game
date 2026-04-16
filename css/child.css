@@ -1,13 +1,13 @@
 /* =========== child.css =========== */
 :root {
   --child-color: #6366F1;
-  --bg:     #F0F4FF;
+  --bg:     #ECEEFF;
   --card:   #FFFFFF;
   --text:   #1E293B;
   --muted:  #94A3B8;
-  --border: #E2E8F0;
+  --border: #DDD6FE;
   --danger: #EF4444;
-  --shadow: 0 4px 24px rgba(0,0,0,0.08);
+  --shadow: 0 4px 24px rgba(99,102,241,0.10);
   --radius: 18px;
   --nav-h:  68px;
 }
@@ -36,42 +36,136 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 .logout-btn:active { transform: scale(0.93); }
 
 /* ===== BACK BUTTON ===== */
-.back-btn { background: var(--card); border: 2px solid var(--border); border-radius: 50%; width: 44px; height: 44px; font-size: 1.3rem; cursor: pointer; box-shadow: 0 2px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text); transition: transform 0.15s; }
+.back-btn { background: var(--card); border: 2px solid var(--border); border-radius: 50%; width: 44px; height: 44px; font-size: 1.3rem; cursor: pointer; box-shadow: 0 2px 12px rgba(99,102,241,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text); transition: transform 0.15s; }
 .back-btn:active { transform: scale(0.93); }
 
-/* ===== CHILD PROFILE CARD (top of home) ===== */
-.child-profile-card {
-  display: flex; align-items: center; gap: 14px;
-  background: var(--card); border-radius: var(--radius);
-  padding: 14px 18px; max-width: 480px; margin: 0 auto 16px;
-  box-shadow: var(--shadow);
+/* ===== HERO BANNER ===== */
+.child-hero {
+  position: relative;
+  background: linear-gradient(145deg, var(--child-color), color-mix(in srgb, var(--child-color) 60%, #1E293B));
+  border-radius: 26px;
+  padding: 28px 20px 24px;
+  max-width: 480px;
+  margin: 0 auto 16px;
+  text-align: center;
+  overflow: hidden;
+  box-shadow: 0 8px 32px color-mix(in srgb, var(--child-color) 40%, transparent);
+  animation: heroIn 0.5s cubic-bezier(.25,.8,.25,1) both;
 }
-.cpc-photo {
-  width: 54px; height: 54px; border-radius: 50%;
-  overflow: hidden; display: flex; align-items: center;
-  justify-content: center; font-size: 2rem; flex-shrink: 0;
-  border: 3px solid var(--child-color);
-  background: var(--bg);
+@keyframes heroIn {
+  from { opacity: 0; transform: translateY(-18px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-.cpc-photo img { width: 100%; height: 100%; object-fit: cover; }
-.cpc-info { flex: 1; min-width: 0; }
-.cpc-name  { font-size: 1.1rem; font-weight: 900; }
-.cpc-tasks { font-size: 0.78rem; color: var(--muted); margin-top: 2px; font-weight: 600; }
-.cpc-total { text-align: center; flex-shrink: 0; }
-.cpc-total-val   { font-size: 1.6rem; font-weight: 900; color: var(--child-color); line-height: 1; }
-.cpc-total-label { font-size: 0.7rem; color: var(--muted); font-weight: 700; margin-top: 2px; }
 
-/* ===== GREETING CARD ===== */
-.greeting-card { border-radius: var(--radius); padding: 18px 20px; max-width: 480px; margin: 0 auto 16px; color: white; }
-.greeting-text { font-size: 1.1rem; font-weight: 700; }
-.greeting-sub  { font-size: 0.85rem; opacity: 0.85; margin-top: 3px; }
+/* רקע דקורטיבי */
+.child-hero::before {
+  content: '';
+  position: absolute;
+  top: -40px; left: -40px;
+  width: 180px; height: 180px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.child-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -30px; right: -30px;
+  width: 140px; height: 140px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* אווטאר */
+.child-hero-avatar {
+  width: 86px; height: 86px;
+  border-radius: 50%;
+  border: 4px solid rgba(255,255,255,0.55);
+  background: rgba(255,255,255,0.18);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3.2rem;
+  margin: 0 auto 12px;
+  cursor: pointer;
+  position: relative; z-index: 1;
+  transition: transform 0.2s cubic-bezier(.34,1.5,.64,1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+  overflow: hidden;
+}
+.child-hero-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.child-hero-avatar:active { transform: scale(0.93); }
+
+/* שם */
+.child-hero-name {
+  font-size: 1.55rem;
+  font-weight: 900;
+  color: white;
+  position: relative; z-index: 1;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  margin-bottom: 6px;
+}
+
+/* כוכבים */
+.child-hero-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 40px;
+  padding: 5px 16px;
+  margin-bottom: 14px;
+  position: relative; z-index: 1;
+  animation: starsPulse 3s ease infinite;
+}
+@keyframes starsPulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.04); }
+}
+.hero-stars-num {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: white;
+}
+.hero-stars-icon {
+  font-size: 1.1rem;
+}
+
+/* greeting */
+.child-hero-greeting {
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  position: relative; z-index: 1;
+  margin-bottom: 3px;
+}
+.child-hero-sub {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.8);
+  position: relative; z-index: 1;
+  margin-bottom: 10px;
+}
+
+/* כמה משימות היום */
+.child-hero-tasks {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  border-radius: 30px;
+  padding: 4px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.92);
+  position: relative; z-index: 1;
+}
+
+/* ===== GREETING CARD (kept for JS compatibility, hidden) ===== */
+.greeting-card { display: none; }
 
 /* ===== STATS ROW ===== */
 .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 480px; margin: 0 auto 16px; }
-.stat-card  { background: var(--card); border-radius: var(--radius); padding: 14px 10px; box-shadow: var(--shadow); text-align: center; }
+.stat-card  { background: var(--card); border-radius: var(--radius); padding: 14px 10px; box-shadow: var(--shadow); text-align: center; border: 1.5px solid #EDE9FE; }
 .stat-val   { font-size: 1.5rem; font-weight: 900; }
 .stat-label { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
-.stat-streak { border: 2px solid transparent; transition: border-color 0.3s; }
+.stat-streak { border: 1.5px solid #EDE9FE; transition: border-color 0.3s; }
 .stat-streak.active { border-color: #FB923C; }
 .streak-val { color: #F97316; }
 
@@ -180,7 +274,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 .hi-pts             { font-weight: 700; color: #10B981; }
 
 /* ===== BOTTOM NAV ===== */
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h); background: var(--card); border-top: 1px solid var(--border); display: flex; align-items: stretch; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); z-index: 500; padding-bottom: env(safe-area-inset-bottom); }
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h); background: var(--card); border-top: 1.5px solid #DDD6FE; display: flex; align-items: stretch; box-shadow: 0 -4px 20px rgba(99,102,241,0.10); z-index: 500; padding-bottom: env(safe-area-inset-bottom); }
 .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: none; border: none; cursor: pointer; position: relative; padding: 8px 4px; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
 .nav-btn:active  { background: #F8FAFC; }
 .nav-icon  { font-size: 1.4rem; line-height: 1; transition: transform 0.2s cubic-bezier(.34,1.5,.64,1); }
@@ -253,11 +347,78 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 .confirm-btn-danger  { background: linear-gradient(135deg, #EF4444, #DC2626); color: white; }
 .confirm-btn-success { background: linear-gradient(135deg, #10B981, #059669); color: white; }
 
-/* ===== TASK CARDS (in modal) ===== */
-.task-card { background: #F8FAFC; border-radius: 14px; padding: 14px; margin-bottom: 10px; cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s, background 0.15s; display: flex; align-items: center; gap: 12px; }
-.task-card:active  { border-color: #CBD5E1; background: #F0F4FF; }
-.task-card.done    { opacity: 0.38; pointer-events: none; }
-.task-card.task-pending { border-color: #FCD34D; background: #FFFBEB; pointer-events: none; }
+/* ===== TASK CARDS — SWIPE TO OPEN ===== */
+
+/* wrapper — clips the sliding content */
+.task-card-wrap {
+  position: relative;
+  border-radius: 14px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  /* reveal layer behind */
+  background: linear-gradient(135deg, var(--child-color, #6366F1), #10B981);
+}
+
+/* the actual card that slides */
+.task-card {
+  position: relative;
+  background: #FAFAFF;
+  border-radius: 14px;
+  padding: 14px;
+  border: 2px solid transparent;
+  transition: transform 0.22s cubic-bezier(.25,.8,.25,1), border-color 0.15s, background 0.15s;
+  display: flex; align-items: center; gap: 12px;
+  /* no pointer cursor — swipe, not tap */
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+  will-change: transform;
+}
+
+/* hint arrow shown on the right edge */
+.task-card-hint {
+  position: absolute;
+  top: 50%; right: 14px;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  color: rgba(255,255,255,0.85);
+  pointer-events: none;
+  animation: hintPulse 2s ease infinite;
+  z-index: 0;
+}
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.5; transform: translateY(-50%) translateX(0); }
+  50%       { opacity: 1;   transform: translateY(-50%) translateX(-5px); }
+}
+
+/* done / pending states */
+.task-card.done    { opacity: 0.38; pointer-events: none; touch-action: none; }
+.task-card.task-pending { border-color: #FCD34D; background: #FFFBEB; pointer-events: none; touch-action: none; }
+
+/* reveal text under card */
+.task-card-reveal {
+  position: absolute;
+  top: 50%; left: 18px;
+  transform: translateY(-50%);
+  color: white;
+  font-size: 0.88rem;
+  font-weight: 800;
+  display: flex; align-items: center; gap: 8px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* dragging state */
+.task-card.swiping {
+  transition: none;
+}
+/* when swiped far enough — light green tint */
+.task-card.swipe-ready {
+  border-color: #10B981;
+  background: #F0FDF4;
+}
+
 .tc-left    { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
 .tc-emoji   { font-size: 1.9rem; flex-shrink: 0; }
 .tc-info    { flex: 1; min-width: 0; }
@@ -307,8 +468,9 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 /* שורת 3 אלמנטים */
 .profile-items-row {
   display: flex; justify-content: space-around; align-items: flex-start;
-  background: #F8FAFC; border-radius: 16px; padding: 16px 8px;
+  background: #F5F3FF; border-radius: 16px; padding: 16px 8px;
   margin-bottom: 16px;
+  border: 1.5px solid #EDE9FE;
 }
 .profile-item-col {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -378,7 +540,8 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
   font-size: 1.4rem; line-height: 1;
   transition: transform 0.2s cubic-bezier(.34,1.5,.64,1);
 }
-   ========================================================= */
+
+/* ========================================================= */
 
 /* כפתור פתיחת בורר צבע — palette icon */
 #profile-color-display {
@@ -394,28 +557,6 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 #profile-color-display:hover { transform: scale(1.12); }
 
 /* רשת splat במודל עריכת פרופיל */
-.splat-color-grid {
-  display: grid; grid-template-columns: repeat(5, 1fr);
-  gap: 8px; justify-items: center; align-items: center;
-  margin: 8px 0 16px;
-}
-.splat-color-opt {
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 12px; padding: 4px;
-  transition: transform 0.22s cubic-bezier(.34,1.5,.64,1), filter 0.18s;
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2));
-}
-.splat-color-opt:hover {
-  transform: scale(1.18) rotate(-5deg);
-  filter: drop-shadow(0 5px 14px rgba(0,0,0,0.28));
-}
-.splat-color-opt.splat-selected {
-  transform: scale(1.22) rotate(-3deg);
-  filter: drop-shadow(0 5px 18px rgba(0,0,0,0.32));
-}
-
-/* ===== SPLAT COLOR SYSTEM ===== */
 .splat-color-grid {
   display: grid; grid-template-columns: repeat(4, 1fr);
   gap: 12px; justify-items: center; align-items: center;

@@ -31,6 +31,7 @@ export function initProfile(db, renderChildFn) {
   _db            = db;
   _renderChildFn = renderChildFn;
 
+  // לחיצה על אווטאר ב-Hero Banner פותחת עריכת פרופיל
   document.getElementById('child-header-photo').onclick = () => {
     if (state.childData) openChildProfile();
   };
