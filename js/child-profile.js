@@ -47,7 +47,7 @@ export function initProfile(db, renderChildFn) {
       document.getElementById('profile-photo-preview').style.display = 'block';
       document.getElementById('profile-photo-placeholder').style.display = 'none';
       const upload = document.getElementById('profile-photo-upload');
-      upload.style.border = 'none';
+      upload.style.border = 'none'; upload.style.width = '85px'; upload.style.height = '85px';
       const clearBtn = document.getElementById('btn-profile-clear-photo');
       clearBtn.innerHTML = '🗑️ מחק';
       clearBtn.style.display = 'block';
@@ -63,7 +63,7 @@ export function initProfile(db, renderChildFn) {
     document.getElementById('profile-photo-placeholder').style.display = '';
     document.getElementById('profile-photo-input').value = '';
     const upload = document.getElementById('profile-photo-upload');
-    upload.style.border = '3px dashed var(--border)';
+    upload.style.border = '3px dashed var(--border)'; upload.style.width = '95px'; upload.style.height = '95px';
     const clearBtn = document.getElementById('btn-profile-clear-photo');
     clearBtn.style.display = 'none';
     clearBtn.innerHTML = '🗑️ מחק';
@@ -111,13 +111,13 @@ export function openChildProfile() {
     preview.src            = childData.photo;
     preview.style.display  = 'block';
     placeholder.style.display = 'none';
-    upload.style.border = 'none';
+    upload.style.border = 'none'; upload.style.width = '85px'; upload.style.height = '85px';
     clearBtn.innerHTML = '🗑️ מחק';
     clearBtn.style.display = 'block';
   } else {
     preview.style.display     = 'none';
     placeholder.style.display = '';
-    upload.style.border = '3px dashed var(--border)';
+    upload.style.border = '3px dashed var(--border)'; upload.style.width = '95px'; upload.style.height = '95px';
     clearBtn.style.display = 'none';
   }
 

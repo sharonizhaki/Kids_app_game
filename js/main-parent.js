@@ -285,7 +285,7 @@ document.getElementById('btn-create-child').onclick = () => {
 function resetNewChildUI() {
   const ncpc = document.getElementById('new-child-photo-circle');
   ncpc.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
-  ncpc.style.border = '3px dashed #818CF8';
+  ncpc.style.border = '3px dashed #818CF8'; ncpc.style.width = '95px'; ncpc.style.height = '95px';
   document.getElementById('new-child-photo-input').value = '';
   const emojiEl = document.getElementById('new-child-emoji-display');
   emojiEl.textContent = '?';
@@ -372,7 +372,7 @@ document.getElementById('new-child-photo-input').onchange = async (e) => {
     newChildPhotoData = await cropAndCompressPhoto(file);
     const ncpc = document.getElementById('new-child-photo-circle');
     ncpc.innerHTML = `<img src="${newChildPhotoData}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    ncpc.style.border = 'none';
+    ncpc.style.border = 'none'; ncpc.style.width = '85px'; ncpc.style.height = '85px';
   } catch(err) { showToast('שגיאה ⚠️'); }
 };
 
@@ -493,12 +493,12 @@ function openEditChild(childId) {
   const svgPlaceholder = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
   if (child.photo && child.photo.length > 10) {
     photoCircle.innerHTML = `<img src="${child.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    photoCircle.style.border = 'none';
+    photoCircle.style.border = 'none'; photoCircle.style.width = '85px'; photoCircle.style.height = '85px';
     clearBtn.innerHTML = '🗑️ מחק';
     clearBtn.style.display = 'block';
   } else {
     photoCircle.innerHTML = svgPlaceholder;
-    photoCircle.style.border = '3px dashed #818CF8';
+    photoCircle.style.border = '3px dashed #818CF8'; photoCircle.style.width = '95px'; photoCircle.style.height = '95px';
     clearBtn.style.display = 'none';
   }
   const inviteSection = document.getElementById('edit-child-invite-section');
@@ -522,7 +522,7 @@ document.getElementById('edit-photo-input').onchange = async (e) => {
     editPhotoData = await cropAndCompressPhoto(file);
     const pc = document.getElementById('edit-child-photo-circle');
     pc.innerHTML = `<img src="${editPhotoData}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    pc.style.border = 'none';
+    pc.style.border = 'none'; pc.style.width = '85px'; pc.style.height = '85px';
     const clearBtn = document.getElementById('btn-clear-photo');
     clearBtn.innerHTML = '🗑️ מחק';
     clearBtn.style.display = 'block';
@@ -533,7 +533,7 @@ document.getElementById('btn-clear-photo').onclick = () => {
   editPhotoData = null; editPhotoCleared = true;
   const pc = document.getElementById('edit-child-photo-circle');
   pc.innerHTML = _editSvgPlaceholder;
-  pc.style.border = '3px dashed #818CF8';
+  pc.style.border = '3px dashed #818CF8'; pc.style.width = '95px'; pc.style.height = '95px';
   const clearBtn = document.getElementById('btn-clear-photo');
   clearBtn.style.display = 'none';
   clearBtn.innerHTML = '🗑️ מחק';

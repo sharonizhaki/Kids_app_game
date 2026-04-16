@@ -391,9 +391,7 @@ document.getElementById('ob1-photo-input').onchange = async (e) => {
     obChildPhoto = await cropAndCompressPhoto(file);
     const ob1pc = document.getElementById('ob1-photo-circle');
     ob1pc.innerHTML = `<img src="${obChildPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    ob1pc.style.border = 'none';
-    ob1pc.style.width = '95px';
-    ob1pc.style.height = '95px';
+    ob1pc.style.border = 'none'; ob1pc.style.width = '85px'; ob1pc.style.height = '85px';
     const clearBtn = document.getElementById('ob1-clear-photo');
     clearBtn.innerHTML = '🗑️ מחק';
     clearBtn.style.display = 'block';
@@ -404,9 +402,7 @@ document.getElementById('ob1-clear-photo').onclick = () => {
   obChildPhoto = null;
   const ob1pc = document.getElementById('ob1-photo-circle');
   ob1pc.innerHTML = _ob1SvgPlaceholder;
-  ob1pc.style.border = '3px dashed #818CF8';
-  ob1pc.style.width = '95px';
-  ob1pc.style.height = '95px';
+  ob1pc.style.border = '3px dashed #818CF8'; ob1pc.style.width = '95px'; ob1pc.style.height = '95px';
   const clearBtn = document.getElementById('ob1-clear-photo');
   clearBtn.style.display = 'none';
   clearBtn.innerHTML = '🗑️ מחק';
@@ -447,9 +443,7 @@ function resetOb1Form() {
   document.querySelectorAll('.ob1-gender').forEach(b => b.classList.remove('selected'));
   const ob1pc = document.getElementById('ob1-photo-circle');
   ob1pc.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
-  ob1pc.style.border = '3px dashed #818CF8';
-  ob1pc.style.width = '95px';
-  ob1pc.style.height = '95px';
+  ob1pc.style.border = '3px dashed #818CF8'; ob1pc.style.width = '95px'; ob1pc.style.height = '95px';
   document.getElementById('ob1-photo-input').value = '';
   document.getElementById('ob1-clear-photo').style.display = 'none';
   const emojiEl = document.getElementById('ob1-emoji-display');
