@@ -26,30 +26,35 @@
 <!-- ==================== SCREEN: HOME ==================== -->
 <div id="screen-child" class="screen has-nav">
 
-  <!-- HERO BANNER -->
-  <div class="child-hero" id="child-hero">
-    <div class="child-hero-avatar" id="child-header-photo">
+  <!-- TOP BAR: אמוג'י + שם + ברכה -->
+  <div class="child-topbar" id="child-hero">
+    <div class="child-topbar-avatar" id="child-header-photo">
       <span id="child-header-emoji">⭐</span>
     </div>
-    <div class="child-hero-name" id="child-title"></div>
-    <div class="child-hero-stars" id="cpc-total-val">
-      <span class="hero-stars-num">0</span>
-      <span class="hero-stars-icon">⭐</span>
+    <div class="child-topbar-text">
+      <div class="child-topbar-name" id="child-title"></div>
+      <div class="child-topbar-greeting" id="greeting-text"></div>
     </div>
-    <div class="child-hero-greeting" id="greeting-text"></div>
-    <div class="child-hero-sub" id="greeting-sub"></div>
-    <div class="child-hero-tasks" id="cpc-tasks-today"></div>
+    <div class="child-topbar-total">
+      <span class="child-topbar-total-num" id="cpc-total-val">0</span>
+      <span class="child-topbar-total-icon">⭐</span>
+    </div>
   </div>
 
-  <!-- stats row: שבוע · streak -->
-  <div class="stats-row">
+  <!-- greeting-sub (hidden, kept for JS) -->
+  <div id="greeting-sub" style="display:none;"></div>
+  <!-- cpc-tasks-today (hidden, kept for JS) -->
+  <div id="cpc-tasks-today" style="display:none;"></div>
+
+  <!-- STATS ROW: שבוע · סה"כ · streak -->
+  <div class="stats-row stats-row-3">
     <div class="stat-card">
       <div class="stat-val" id="pb-val" style="color:var(--child-color);">0</div>
-      <div class="stat-label">כוכבים השבוע ⭐</div>
+      <div class="stat-label">השבוע ⭐</div>
     </div>
     <div class="stat-card stat-streak" id="streak-card">
       <div class="stat-val streak-val" id="streak-val">0</div>
-      <div class="stat-label">ימים ברצף 🔥</div>
+      <div class="stat-label">ברצף 🔥</div>
     </div>
   </div>
 
