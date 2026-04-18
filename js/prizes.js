@@ -15,43 +15,34 @@ export const PRIZE_EMOJIS = [
 ];
 
 export const PRIZE_SUGGESTIONS = [
-  { name:'ערב קולנוע',       emoji:'🎬', pts:150 },
-  { name:'פיצה משפחתית',     emoji:'🍕', pts:80  },
-  { name:'שעת משחק וידאו',   emoji:'🎮', pts:50  },
-  { name:'גלידה',             emoji:'🍦', pts:30  },
-  { name:'ממתקים',            emoji:'🍭', pts:20  },
-  { name:'ספר חדש',          emoji:'📚', pts:60  },
-  { name:'בחירת ארוחת ערב',  emoji:'🍽️', pts:100 },
-  { name:'טיול לפארק שעשועים',emoji:'🎡', pts:300 },
-  { name:'ליל חברים',        emoji:'🎉', pts:200 },
-  { name:'צעצוע חדש',        emoji:'🎁', pts:400 },
-  { name:'בגד חדש',          emoji:'👕', pts:250 },
-  { name:'טיול משפחתי',      emoji:'✈️', pts:500 },
+  { name:'צעצוע קטן',              emoji:'🧸', pts:50  },
+  { name:'שעת מסך נוספת',          emoji:'📱', pts:50  },
+  { name:'ארוחת בוקר מפנקת',       emoji:'🥞', pts:50  },
+  { name:'בגד חדש',                emoji:'👕', pts:250 },
+  { name:'ליל חברים',              emoji:'🎉', pts:250 },
+  { name:'נעליים חדשות',           emoji:'👟', pts:250 },
+  { name:'ציוד חדש לתחביב',        emoji:'🎨', pts:400 },
+  { name:'לונה פארק',              emoji:'🎡', pts:500 },
+  { name:'משחק כדורגל',            emoji:'⚽', pts:500 },
 ];
 
-// 5 פרסים מהירים לכל קטגוריה
+// 3 פרסים מהירים לכל קטגוריה
 export const QUICK_PRIZES_TREATS = [
-  { name:'גלידה',           emoji:'🍦', pts:30  },
-  { name:'ממתקים',          emoji:'🍭', pts:20  },
-  { name:'פיצה',            emoji:'🍕', pts:80  },
-  { name:'שוקולד',          emoji:'🍫', pts:25  },
-  { name:'בחירת ארוחת ערב',emoji:'🍽️', pts:100 },
+  { name:'גלידה מפנקת',    emoji:'🍨', pts:50 },
+  { name:'20 ש"ח לקיוסק',  emoji:'💵', pts:50 },
+  { name:'מגש פיצה',       emoji:'🍕', pts:50 },
 ];
 
 export const QUICK_PRIZES_FUN = [
-  { name:'שעת מסך נוספת',   emoji:'📱', pts:50  },
-  { name:'בחירת סרט',       emoji:'🎬', pts:60  },
-  { name:'שעת משחק וידאו',  emoji:'🎮', pts:50  },
-  { name:'ליל חברים',       emoji:'🎉', pts:200 },
-  { name:'טיול לפארק',      emoji:'🎡', pts:150 },
+  { name:'סרט בקולנוע',  emoji:'🎦', pts:150 },
+  { name:'באולינג',      emoji:'🎳', pts:150 },
+  { name:'חדר בריחה',    emoji:'🔐', pts:150 },
 ];
 
 export const QUICK_PRIZES_GIFTS = [
-  { name:'ספר חדש',         emoji:'📚', pts:80  },
-  { name:'צעצוע קטן',       emoji:'🎁', pts:150 },
-  { name:'בגד חדש',         emoji:'👕', pts:250 },
-  { name:'משחק קופסא',      emoji:'🎲', pts:200 },
-  { name:'ציוד לתחביב',     emoji:'🎨', pts:300 },
+  { name:'ספר חדש',          emoji:'📚', pts:250 },
+  { name:'משחק חדש לסוני',   emoji:'🎮', pts:250 },
+  { name:'משחק קופסא',       emoji:'🎲', pts:250 },
 ];
 
 export const QUICK_PRIZE_SETS = {
@@ -142,13 +133,13 @@ export async function savePrize(familyId) {
   }
 }
 
-/** יצירת 5 פרסים מהירים לפי קטגוריה */
+/** יצירת 3 פרסים מהירים לפי קטגוריה */
 export async function createQuickPrizes(familyId, category) {
   await loadChildren(familyId);
   const childIds = childrenCache.map(c => c.id);
   if (!childIds.length) { showToast('יש להוסיף ילד תחילה'); return false; }
 
-  const prizes = QUICK_PRIZE_SETS[category] || QUICK_PRIZES_TREATS;
+  const prizes = (QUICK_PRIZE_SETS[category] || QUICK_PRIZES_TREATS).slice(0, 3);
   showLoading('יוצר פרסים...');
   try {
     await Promise.all(prizes.map(p =>
@@ -163,7 +154,7 @@ export async function createQuickPrizes(familyId, category) {
       })
     ));
     hideLoading();
-    showToast(`3 פרסים נוצרו! 🎁`);
+    showToast('3 פרסים נוצרו! 🎁');
     return true;
   } catch(e) {
     hideLoading();
@@ -260,14 +251,12 @@ export async function approvePrizeRequest(familyId, requestId) {
     const currentPts = childSnap.data().pts || 0;
     const newPts = Math.max(0, currentPts - req.pts);
 
-    // גרע כוכבים + עדכן סטטוס הבקשה + הוסף הודעה לילד
     await Promise.all([
       updateDoc(childRef, { pts: newPts }),
       updateDoc(reqRef, {
         status: 'approved',
         resolvedAt: serverTimestamp()
       }),
-      // הודעה לילד
       setDoc(doc(collection(db, 'families', familyId, 'children', req.childId, 'notifications')), {
         type: 'prize_approved',
         prizeId:   req.prizeId,
@@ -306,7 +295,6 @@ export async function declinePrizeRequest(familyId, requestId, reason = '') {
         declineReason: reason || '',
         resolvedAt: serverTimestamp()
       }),
-      // הודעה לילד
       setDoc(doc(collection(db, 'families', familyId, 'children', req.childId, 'notifications')), {
         type: 'prize_declined',
         prizeId:    req.prizeId,
@@ -436,7 +424,7 @@ export function renderPrizeAssignGrid(containerId, selectedIds, onChange) {
   });
 }
 
-/** רינדור רשימת הצעות פרסים (כמו suggestions במטלות) */
+/** רינדור רשימת הצעות פרסים */
 export function renderPrizeSuggestions(onSelect) {
   const wrap = document.getElementById('prize-suggestions-wrap');
   if (!wrap) return;
@@ -452,6 +440,7 @@ export function renderPrizeSuggestions(onSelect) {
     };
   });
 }
+
 // =========== GUIDED TOUR ===========
 export function startPrizeTour(familyId) {
   const quickVisible = getComputedStyle(
