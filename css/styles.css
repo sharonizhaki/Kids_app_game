@@ -259,7 +259,7 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
 .etask-action.act-show{background:#10B981;}
 .etask-action span{font-size:1.2rem;}
 .etask-card{background:var(--card);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;cursor:pointer;position:relative;z-index:2;transition:transform 0.2s ease;}
-.etask-card.hidden-task{background:#F1F5F9;border:2px dashed #CBD5E1;}
+.etask-card.hidden-task{background:#F1F5F9;border:2px dashed #CBD5E1;opacity:0.6;}
 .etask-emoji{font-size:1.5rem;flex-shrink:0;}
 .etask-info{flex:1;min-width:0;}
 .etask-info strong{display:block;font-weight:700;font-size:0.88rem;}
@@ -272,7 +272,7 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
 .etask-tag.stars-tag{background:#FEF9C3;color:#92400E;}
 .etask-stars{flex-shrink:0;font-size:0.85rem;}
 /* inline action buttons for edit-tasks list */
-.etask-btns{display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+.etask-btns{display:flex;flex-direction:row;gap:5px;flex-shrink:0;align-items:center;}
 .etask-btn{width:30px;height:30px;border:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;padding:0;transition:transform 0.12s,opacity 0.12s;}
 .etask-btn:active{transform:scale(0.88);opacity:0.8;}
 .etask-btn.btn-edit{background:#6366F1;}

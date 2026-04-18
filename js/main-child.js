@@ -311,6 +311,7 @@ async function loadChild() {
       const prizes = prizesSnap.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .filter(p => p.active !== false)
+        .filter(p => !p.hidden)
         .filter(p => !p.assignedChildren || p.assignedChildren.length === 0 || p.assignedChildren.includes(state.childId))
         .sort((a, b) => (a.cost || 0) - (b.cost || 0));
       setPrizesForBar(prizes);
@@ -351,6 +352,7 @@ async function loadChild() {
       const prizes = snap.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .filter(p => p.active !== false)
+        .filter(p => !p.hidden)
         .filter(p => !p.assignedChildren || p.assignedChildren.length === 0 || p.assignedChildren.includes(state.childId))
         .sort((a, b) => (a.cost || 0) - (b.cost || 0));
       setPrizesForBar(prizes);

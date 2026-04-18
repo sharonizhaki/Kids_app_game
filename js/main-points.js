@@ -2,23 +2,20 @@
 import { auth, db } from './firebase.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getDocs, collection, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
 import { showScreen, hideLoading } from './ui.js';
 import { currentFamilyId, setCurrentFamilyId } from './auth.js';
 import {
-  loadCompletedTasks, loadPendingApprovals,
-  renderMPFilters, renderMPList, renderPendingList,
-  renderMPTabs, initPendingListener,
+  loadCompletedTasks, loadPendingApprovals, loadAllPrizeRequests,
+  renderMPTabs, renderMPFilters, renderMPList, renderPendingTab, showActiveTab,
+  initPendingListener, initPrizeRequestsListener,
   resetMPState,
 } from './points.js';
 
-// =========== GUARD ===========
 async function checkAuth() {
   return new Promise((resolve) => {
     let timeoutId = setTimeout(() => { window.location.href = 'index.html'; }, 5000);
     const unsub = onAuthStateChanged(auth, (user) => {
-      clearTimeout(timeoutId);
-      unsub();
+      clearTimeout(timeoutId); unsub();
       if (!user || user.isAnonymous) window.location.href = 'index.html';
       else resolve(user);
     });
@@ -27,15 +24,12 @@ async function checkAuth() {
 
 function getFamilyId() { return currentFamilyId; }
 
-// =========== BACK ===========
 document.getElementById('btn-back-to-parent')?.addEventListener('click', () => {
   window.location.href = 'parent.html';
 });
 
-// =========== INIT ===========
 (async () => {
   const user = await checkAuth();
-
   try {
     let famSnap = await getDocs(query(collection(db, 'families'), where('parentUid', '==', user.uid)));
     if (famSnap.empty)
@@ -45,28 +39,29 @@ document.getElementById('btn-back-to-parent')?.addEventListener('click', () => {
   } catch(e) { window.location.href = 'parent.html'; return; }
 
   const familyId = getFamilyId();
-
   hideLoading();
   resetMPState();
   showScreen('screen-manage-points');
 
-  // טעינה מקבילית
   await Promise.all([
     loadCompletedTasks(familyId),
     loadPendingApprovals(familyId),
+    loadAllPrizeRequests(familyId),
   ]);
 
-  // render tabs (כולל badge count) + רשימה ראשונית
   renderMPTabs(familyId);
-  renderMPFilters();
-  renderMPList(familyId);
+  showActiveTab(familyId); // מציג tab ממתינים ראשון
 
-  // listener חי על pendingApprovals — מעדכן tabs + list בזמן אמת
-  initPendingListener(familyId, async () => {
+  // listeners חיים
+  initPendingListener(familyId, () => {
     renderMPTabs(familyId);
     const activeTab = document.querySelector('.mp-tab.active');
-    if (activeTab?.dataset?.tab === 'pending') {
-      renderPendingList(familyId);
-    }
+    if (activeTab?.dataset?.tab === 'pending') renderPendingTab(familyId);
+  });
+
+  initPrizeRequestsListener(familyId, () => {
+    renderMPTabs(familyId);
+    const activeTab = document.querySelector('.mp-tab.active');
+    if (activeTab?.dataset?.tab === 'pending') renderPendingTab(familyId);
   });
 })();

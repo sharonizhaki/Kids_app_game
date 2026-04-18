@@ -35,7 +35,7 @@
         <button class="btn btn-sm" id="btn-task-suggestions" style="padding:5px 12px;font-size:0.73rem;background:#FCE7F3;color:#BE185D;border:none;border-radius:16px;width:auto;max-width:none;display:inline-flex;box-shadow:none;justify-content:center;align-items:center;white-space:nowrap;flex-shrink:0;">💡 רעיונות לדוגמא</button>
         <div id="form-quick-cats-section" style="flex:1;background:linear-gradient(135deg,#F5F3FF,#EEF2FF);border:1.5px solid #C7D2FE;border-radius:14px;padding:5px 8px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-            <div style="font-size:0.65rem;font-weight:800;color:#4338CA;">⚡ יצירת 5 משימות מהירות</div>
+            <div style="font-size:0.65rem;font-weight:800;color:#4338CA;">⚡ יצירת 3 משימות מהירות</div>
             <button id="btn-form-quick-close" style="background:rgba(99,102,241,0.1);border:none;color:#6366F1;font-size:0.65rem;font-weight:900;cursor:pointer;padding:0;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1;font-family:'Heebo',sans-serif;">✕</button>
           </div>
           <div id="form-quick-cats-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;">
@@ -136,6 +136,7 @@
     <button class="back-btn" id="btn-back-edit-list">→</button>
     <h2>עריכת מטלות ✏️</h2>
   </div>
+  <button id="btn-add-task-from-edit" class="btn btn-primary" style="max-width:480px;width:100%;margin-bottom:12px;">+ הוסף מטלה חדשה</button>
   <div class="filter-scroll" id="edit-tasks-filter">
     <span class="filter-chip active" data-filter="all">📋 לפי סדר הוספה</span>
     <span class="filter-chip" data-filter="child">👧👦 לפי ילד</span>
@@ -238,6 +239,19 @@
       <button class="btn btn-sm" id="btn-et-hide" style="flex:1;background:#FEF3C7;color:#92400E;border:none;">👁️ הסתר</button>
     </div>
     <button class="btn btn-danger btn-sm" id="btn-et-delete" style="margin-top:8px;">🗑️ מחק מטלה</button>
+  </div>
+</div>
+
+<!-- TASK SAVED MODAL -->
+<div id="modal-task-saved" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:24px;">
+  <div style="background:#fff;border-radius:24px;padding:28px 24px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.18);">
+    <div style="font-size:3rem;margin-bottom:10px;">✅</div>
+    <h3 style="font-size:1.15rem;font-weight:900;color:#111;margin:0 0 8px;">המטלה נוצרה בהצלחה!</h3>
+    <p style="font-size:0.85rem;color:#666;margin:0 0 22px;" id="modal-task-saved-name"></p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button id="btn-task-saved-another" class="btn btn-success" style="width:100%;">➕ יצירת משימה נוספת</button>
+      <button id="btn-task-saved-dashboard" class="btn" style="width:100%;background:#F3F4F6;color:#374151;border:none;">🏠 חזרה לדשבורד</button>
+    </div>
   </div>
 </div>
 

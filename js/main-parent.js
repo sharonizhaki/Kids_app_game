@@ -103,6 +103,51 @@ function dismissQuickBanner() {
   animateBannerAway();
 }
 
+function _showQuickConfirm({ modalId, emoji, accentFrom, accentTo, title, body, btnId, onConfirm }) {
+  const existing = document.getElementById(modalId);
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = modalId;
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;';
+  modal.innerHTML = `
+    <div class="qc-bg" style="position:absolute;inset:0;background:rgba(15,23,42,0.55);backdrop-filter:blur(3px);opacity:0;transition:opacity 0.22s ease;"></div>
+    <div class="qc-card" style="position:relative;background:#fff;border-radius:28px;padding:32px 24px 24px;max-width:300px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.22);transform:scale(0.75) translateY(24px);opacity:0;transition:transform 0.32s cubic-bezier(.34,1.56,.64,1),opacity 0.24s ease;">
+      <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,${accentFrom},${accentTo});display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 16px;box-shadow:0 6px 20px ${accentFrom}55;">${emoji}</div>
+      <div style="font-size:1.15rem;font-weight:900;color:#0F172A;margin-bottom:6px;">${title}</div>
+      <div style="font-size:0.84rem;color:#64748B;line-height:1.55;margin-bottom:24px;">${body}</div>
+      <button id="${btnId}" style="width:100%;padding:14px;background:linear-gradient(135deg,${accentFrom},${accentTo});color:#fff;border:none;border-radius:16px;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 14px ${accentFrom}66;">אישור ✓</button>
+    </div>`;
+  document.body.appendChild(modal);
+  requestAnimationFrame(() => {
+    modal.querySelector('.qc-bg').style.opacity = '1';
+    const card = modal.querySelector('.qc-card');
+    card.style.transform = 'scale(1) translateY(0)';
+    card.style.opacity = '1';
+  });
+  const close = (runCallback) => {
+    modal.querySelector('.qc-bg').style.opacity = '0';
+    const card = modal.querySelector('.qc-card');
+    card.style.transform = 'scale(0.88) translateY(10px)';
+    card.style.opacity = '0';
+    setTimeout(() => { modal.remove(); if (runCallback && onConfirm) onConfirm(); }, 260);
+  };
+  document.getElementById(btnId).onclick = () => close(true);
+  modal.querySelector('.qc-bg').addEventListener('click', () => close(false));
+}
+
+function showQuickTasksConfirm(catName, onConfirm) {
+  _showQuickConfirm({
+    modalId: 'quick-tasks-confirm-modal',
+    emoji: '⚡',
+    accentFrom: '#6366F1',
+    accentTo: '#8B5CF6',
+    title: '3 משימות נוצרו!',
+    body: `משימות ${catName} נוספו לכל הילדים בהצלחה<br><span style="font-size:0.78rem;color:#94A3B8;margin-top:10px;display:block;">ניתן לערוך ולמחוק במסך <strong style="color:#6366F1;">עריכת מטלות</strong> בתפריט <strong style="color:#6366F1;">הגדרות</strong> ⚙️</span>`,
+    btnId: 'btn-quick-confirm-close',
+    onConfirm
+  });
+}
+
 async function handleQuickTasks(triggerEl, category) {
   const fid = getFamilyId();
   if (!fid) return;
@@ -110,13 +155,16 @@ async function handleQuickTasks(triggerEl, category) {
   try {
     const ok = await createQuickTasks(fid, category);
     if (ok && triggerEl) {
-      showToast('5 מטלות נוספו! ✅');
+      const catLabels = { hygiene: 'היגיינה 🧼', chores: 'מטלות בית 🏠', study: 'לימודים 📚' };
+      const catName = catLabels[category] || category;
       saveClickedCategory(category);
       markButtonDone(triggerEl);
       const allDone = [...document.querySelectorAll('#quick-tasks-inner .quick-cat-btn')].every(b => b.disabled || b.innerHTML.includes('✅'));
       if (allDone) {
         localStorage.setItem(quickBannerKey(), '1');
-        setTimeout(animateBannerAway, 950);
+        showQuickTasksConfirm(catName, () => animateBannerAway());
+      } else {
+        showQuickTasksConfirm(catName);
       }
     }
   } finally {
@@ -187,6 +235,19 @@ function dismissQuickPrizesBanner() {
   animatePrizesBannerAway();
 }
 
+function showQuickPrizesConfirm(catName, onConfirm) {
+  _showQuickConfirm({
+    modalId: 'quick-prizes-confirm-modal',
+    emoji: '🎁',
+    accentFrom: '#F59E0B',
+    accentTo: '#D97706',
+    title: '3 פרסים נוצרו!',
+    body: `פרסים ${catName} נוספו לרשימה בהצלחה<br><span style="font-size:0.78rem;color:#94A3B8;margin-top:10px;display:block;">ניתן לערוך ולמחוק במסך <strong style="color:#D97706;">עריכת פרסים</strong> בתפריט <strong style="color:#D97706;">הגדרות</strong> ⚙️</span>`,
+    btnId: 'btn-quick-prizes-confirm-close',
+    onConfirm
+  });
+}
+
 async function handleQuickPrizes(triggerEl, category) {
   const fid = getFamilyId();
   if (!fid) return;
@@ -194,12 +255,16 @@ async function handleQuickPrizes(triggerEl, category) {
   try {
     const ok = await createQuickPrizes(fid, category);
     if (ok && triggerEl) {
+      const catLabels = { treats: 'פינוקים 🍦', fun: 'פנאי 🎮', gifts: 'מתנות 🎁' };
+      const catName = catLabels[category] || category;
       savePrizesClickedCategory(category);
       markPrizeButtonDone(triggerEl);
       const allDone = [...document.querySelectorAll('#quick-prizes-inner .quick-prize-dash-btn')].every(b => b.disabled || b.innerHTML.includes('✅'));
       if (allDone) {
         localStorage.setItem(quickPrizesBannerKey(), '1');
-        setTimeout(animatePrizesBannerAway, 950);
+        showQuickPrizesConfirm(catName, () => animatePrizesBannerAway());
+      } else {
+        showQuickPrizesConfirm(catName);
       }
     }
   } finally {
@@ -219,7 +284,7 @@ async function handleQuickPrizes(triggerEl, category) {
   } catch(e) { window.location.href = 'index.html'; return; }
 
   const name = user.displayName ? user.displayName.split(' ')[0] : 'הורה';
-  document.getElementById('dash-greeting').textContent = `שלום ${name}! 👋`;
+  document.getElementById('dash-greeting').textContent = `שלום, ${name}`;
 
   // Check if no children → redirect to onboarding (לא לשני הורים)
   await loadChildren(currentFamilyId);
@@ -337,12 +402,6 @@ document.getElementById('btn-open-menu').onclick = () => {
       else if (action === 'replay-tour') startDashTour(currentFamilyId, auth.currentUser?.uid);
     }
   });
-};
-
-document.getElementById('btn-replay-tour').onclick = () => {
-  const uid = auth.currentUser?.uid;
-  if (uid) localStorage.removeItem('dashTourDone_' + uid);
-  startDashTour(currentFamilyId, uid);
 };
 
 // =========== MANAGE FAMILY ===========
@@ -763,7 +822,7 @@ async function startDashTour(familyId, uid) {
     {
       el: '#quick-tasks-banner',
       title: 'יצירת משימות מהירה ⚡',
-      text: 'בחר קטגוריה ו-5 מטלות מוכנות יתווספו אוטומטית לכל הילדים — חסוך זמן!'
+      text: 'בחר קטגוריה ו-3 מטלות מוכנות יתווספו אוטומטית לכל הילדים — חסוך זמן!'
     },
     {
       el: '#quick-prizes-banner',

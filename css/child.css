@@ -264,18 +264,73 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 .psb-val   { font-size: 1.4rem; font-weight: 900; }
 .section-title { font-size: 0.88rem; font-weight: 800; color: var(--muted); max-width: 480px; margin: 0 auto 10px; text-transform: uppercase; letter-spacing: 0.5px; }
 .prizes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 480px; margin: 0 auto 20px; }
-.prize-card { background: var(--card); border-radius: var(--radius); padding: 18px 12px; text-align: center; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; overflow: hidden; transition: transform 0.15s; }
+
+/* prize card */
+.prize-card { background: var(--card); border-radius: var(--radius); padding: 18px 12px 14px; text-align: center; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; gap: 7px; position: relative; overflow: hidden; transition: transform 0.15s; }
 .prize-card:active:not(.prize-locked) { transform: scale(0.96); }
-.prize-card.prize-locked { opacity: 0.7; }
-.prize-lock-overlay { position: absolute; inset: 0; background: rgba(248,250,252,0.55); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: var(--radius); }
-.prize-lock-icon   { font-size: 1.6rem; }
-.prize-lock-needed { font-size: 0.72rem; font-weight: 800; color: var(--muted); }
+
+/* כרטיס נעול — כהה */
+.prize-card.prize-locked { background: #E8EAF0; box-shadow: none; }
+.prize-card.prize-locked .prize-emoji  { filter: grayscale(0.4); opacity: 0.7; }
+.prize-card.prize-locked .prize-title  { color: #94A3B8; }
+.prize-card.prize-locked .prize-cost   { background: #DDE1EA; color: #94A3B8; }
+
+/* lock overlay */
+.prize-lock-overlay {
+  position: absolute; inset: 0;
+  background: rgba(30,41,59,0.45);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 5px; border-radius: var(--radius);
+  backdrop-filter: blur(1px);
+}
+.prize-lock-icon   { font-size: 1.4rem; }
+.prize-lock-needed { font-size: 0.72rem; font-weight: 800; color: rgba(255,255,255,0.9); }
+.prize-lock-bar-wrap { width: 70%; }
+.prize-lock-bar {
+  height: 6px; background: rgba(255,255,255,0.25);
+  border-radius: 3px; overflow: hidden; margin-top: 2px;
+}
+.prize-lock-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, #818CF8, #6366F1);
+  transition: width 0.5s cubic-bezier(.4,0,.2,1);
+}
+
 .prize-emoji { font-size: 2.4rem; }
 .prize-title { font-size: 0.88rem; font-weight: 700; line-height: 1.2; }
 .prize-cost  { font-size: 0.8rem; font-weight: 800; color: var(--child-color); background: #EEF2FF; border-radius: 8px; padding: 3px 10px; }
-.prize-request-btn { width: 100%; padding: 10px; background: linear-gradient(135deg, var(--child-color), #818CF8); color: white; border: none; border-radius: 12px; font-size: 0.88rem; font-weight: 800; cursor: pointer; font-family: 'Heebo', sans-serif; transition: transform 0.1s; }
+
+/* כפתור בקשה — סגול מזמין */
+.prize-request-btn {
+  width: 100%; padding: 10px;
+  background: linear-gradient(135deg, #6366F1, #818CF8);
+  color: white; border: none; border-radius: 12px;
+  font-size: 0.88rem; font-weight: 800;
+  cursor: pointer; font-family: 'Heebo', sans-serif;
+  transition: transform 0.1s, opacity 0.2s;
+  box-shadow: 0 3px 10px rgba(99,102,241,0.28);
+}
 .prize-request-btn:active { transform: scale(0.97); }
-.prize-pending-tag { font-size: 0.72rem; font-weight: 800; background: #FEF3C7; color: #92400E; border-radius: 8px; padding: 3px 8px; }
+
+/* כפתור ממתין — מושתק */
+.prize-btn-pending {
+  background: #C7D2FE;
+  color: #4F46E5;
+  box-shadow: none;
+  cursor: default;
+  opacity: 0.8;
+}
+
+/* סטטוס בר תחתון */
+.prize-status-tag {
+  width: 100%;
+  font-size: 0.72rem; font-weight: 800;
+  border-radius: 8px; padding: 4px 8px;
+  text-align: center;
+}
+.prize-status-pending  { background: #EEF2FF; color: #4F46E5; }
+.prize-status-approved { background: #DCFCE7; color: #15803D; }
 .pending-req-card  { background: var(--card); border-radius: 14px; padding: 14px 16px; margin: 0 auto 10px; max-width: 480px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); }
 .pending-req-emoji { font-size: 1.8rem; }
 .pending-req-info  { flex: 1; }

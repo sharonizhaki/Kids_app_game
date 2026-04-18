@@ -6,14 +6,13 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 import { state }                    from './child-state.js';
-import { showConfirm, showToast }   from './child-ui.js';
+import { showToast }                from './child-ui.js';
 
 let _db = null;
 
 // -------- INIT --------
 export function initPrizes(db) {
   _db = db;
-  // listener חי על הבקשות של הילד
   const reqRef = query(
     collection(_db, 'families', state.familyId, 'prizeRequests'),
     where('childId', '==', state.childId),
@@ -25,12 +24,11 @@ export function initPrizes(db) {
 export async function renderPrizesScreen() {
   if (!_db) return;
 
-  // סה"כ מצטבר (שבועי + מצטבר)
   const totalPts = (state.childState?.monthlyPts || 0) + (state.childState?.pts || 0);
   const el = document.getElementById('prizes-stars-val');
   if (el) el.textContent = `${totalPts} ⭐`;
 
-  // טען פרסים
+  // טען פרסים — ממוינים מהזול ליקר
   let prizes = [];
   try {
     const snap = await getDocs(collection(_db, 'families', state.familyId, 'prizes'));
@@ -74,20 +72,32 @@ export async function renderPrizesScreen() {
     const myRequest  = pendingByPrize[prize.id];
     const isPending  = myRequest?.status === 'pending';
     const isApproved = myRequest?.status === 'approved';
+    const missing    = (prize.cost || 0) - totalPts;
+    const pct        = canAfford ? 100 : Math.round((totalPts / (prize.cost || 1)) * 100);
 
+    // כרטיס נעול — overlay כהה + progress bar
     const lockHTML = !canAfford ? `
       <div class="prize-lock-overlay">
         <span class="prize-lock-icon">🔒</span>
-        <span class="prize-lock-needed">עוד ${(prize.cost || 0) - totalPts} ⭐</span>
+        <span class="prize-lock-needed">עוד ${missing} ⭐</span>
+        <div class="prize-lock-bar-wrap">
+          <div class="prize-lock-bar">
+            <div class="prize-lock-bar-fill" style="width:${pct}%"></div>
+          </div>
+        </div>
       </div>` : '';
 
-    const actionHTML = isApproved
-      ? `<div class="prize-pending-tag">✅ אושר!</div>`
-      : isPending
-        ? `<div class="prize-pending-tag">⏳ ממתין לאישור</div>`
-        : canAfford
-          ? `<button class="prize-request-btn" data-prize-id="${prize.id}">אני רוצה! 🎁</button>`
-          : '';
+    // כפתור / סטטוס
+    let actionHTML = '';
+    if (isApproved) {
+      actionHTML = `<div class="prize-status-tag prize-status-approved">✅ אושר!</div>`;
+    } else if (isPending) {
+      actionHTML = `
+        <button class="prize-request-btn prize-btn-pending" disabled>אני רוצה! 🎁</button>
+        <div class="prize-status-tag prize-status-pending">⏳ ממתין לאישור הורה</div>`;
+    } else if (canAfford) {
+      actionHTML = `<button class="prize-request-btn" data-prize-id="${prize.id}">אני רוצה! 🎁</button>`;
+    }
 
     return `
       <div class="prize-card${!canAfford ? ' prize-locked' : ''}" data-prize-id="${prize.id}">
@@ -99,10 +109,10 @@ export async function renderPrizesScreen() {
       </div>`;
   }).join('');
 
-  grid.querySelectorAll('.prize-request-btn').forEach(btn => {
+  grid.querySelectorAll('.prize-request-btn:not([disabled])').forEach(btn => {
     const prizeId = btn.dataset.prizeId;
     const prize   = prizes.find(p => p.id === prizeId);
-    btn.onclick = () => confirmPrizeRequest(prize);
+    btn.onclick = () => showPrizeConfirmModal(prize, totalPts);
   });
 
   // badge על nav
@@ -138,19 +148,43 @@ function renderPendingSection(requests) {
     </div>`).join('');
 }
 
-// -------- CONFIRM & SEND REQUEST --------
-function confirmPrizeRequest(prize) {
-  const totalPts = (state.childState?.monthlyPts || 0) + (state.childState?.pts || 0);
-  showConfirm({
-    icon:         prize.emoji || '🎁',
-    title:        `לבקש: ${prize.title}?`,
-    message:      `עולה ${prize.cost} ⭐ — יש לך ${totalPts} ⭐. ההורים יאשרו את הבקשה.`,
-    confirmText:  'שלח בקשה! 🎁',
-    confirmClass: 'confirm-btn-success',
-    onConfirm:    () => sendPrizeRequest(prize),
-  });
+// -------- PRIZE CONFIRM MODAL (מותאם) --------
+function showPrizeConfirmModal(prize, totalPts) {
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay';
+
+  const descHTML = prize.desc
+    ? `<div style="font-size:0.88rem;color:#64748B;line-height:1.6;margin-bottom:6px;background:#F8FAFC;border-radius:12px;padding:10px 14px;text-align:right;">${prize.desc}</div>`
+    : '';
+
+  ov.innerHTML = `
+    <div style="background:#fff;border-radius:24px;width:88%;max-width:380px;animation:modalPop 0.25s cubic-bezier(.4,0,.2,1);">
+      <div style="width:44px;height:5px;background:#E2E8F0;border-radius:3px;margin:14px auto 0;"></div>
+      <div style="padding:24px 24px 28px;">
+        <div style="font-size:2.8rem;text-align:center;margin-bottom:10px;">${prize.emoji || '🎁'}</div>
+        <div style="font-size:1.05rem;font-weight:800;margin-bottom:8px;color:#1E293B;text-align:center;">${prize.title}</div>
+        ${descHTML}
+        <div style="font-size:0.85rem;color:#94A3B8;font-weight:600;text-align:center;margin-bottom:20px;">
+          עולה ${prize.cost} ⭐ — יש לך ${totalPts} ⭐
+        </div>
+        <div style="display:flex;gap:10px;flex-direction:row-reverse;">
+          <button id="prize-confirm-send" style="flex:1;padding:14px;background:linear-gradient(135deg,#6366F1,#818CF8);color:white;border:none;border-radius:14px;font-size:1rem;font-weight:800;cursor:pointer;font-family:'Heebo',sans-serif;box-shadow:0 4px 14px rgba(99,102,241,0.3);">שלח בקשה 🎁</button>
+          <button id="prize-confirm-cancel" style="flex:1;padding:14px;background:#F1F5F9;color:#1E293B;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;">ביטול</button>
+        </div>
+      </div>
+    </div>`;
+
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  ov.querySelector('#prize-confirm-cancel').onclick = () => ov.remove();
+  ov.querySelector('#prize-confirm-send').onclick = () => {
+    ov.remove();
+    sendPrizeRequest(prize);
+  };
+
+  document.body.appendChild(ov);
 }
 
+// -------- SEND REQUEST --------
 async function sendPrizeRequest(prize) {
   try {
     await addDoc(collection(_db, 'families', state.familyId, 'prizeRequests'), {

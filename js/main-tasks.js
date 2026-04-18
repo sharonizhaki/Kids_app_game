@@ -37,6 +37,9 @@ document.getElementById('btn-back-to-parent')?.addEventListener('click', () => {
 document.getElementById('btn-back-edit-list')?.addEventListener('click', () => {
   window.location.href = 'parent.html';
 });
+document.getElementById('btn-add-task-from-edit')?.addEventListener('click', () => {
+  openAddTask(getFamilyId());
+});
 document.getElementById('btn-back-edit-task')?.addEventListener('click', () => {
   showScreen('screen-edit-tasks');
   renderEditTasksList(getFamilyId());
@@ -98,6 +101,9 @@ async function handleQuickTasksForm(triggerEl, category) {
   try {
     const ok = await createQuickTasks(fid, category);
     if (ok && triggerEl) {
+      const catLabels = { hygiene: 'היגיינה 🧼', chores: 'מטלות בית 🏠', study: 'לימודים 📚' };
+      const catName = catLabels[category] || category;
+      showQuickTasksConfirm(catName);
       formSaveClicked(category);
       markFormBtnDone(triggerEl);
       const allDone = [...document.querySelectorAll('.quick-cat-btn-form')].every(b => b.disabled || b.textContent.includes('✅'));
@@ -109,6 +115,24 @@ async function handleQuickTasksForm(triggerEl, category) {
   } finally {
     if (triggerEl && !triggerEl.textContent.includes('✅')) { triggerEl.disabled = false; triggerEl.style.opacity = ''; }
   }
+}
+
+function showQuickTasksConfirm(catName) {
+  const existing = document.getElementById('quick-tasks-confirm-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'quick-tasks-confirm-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:24px;';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:24px;padding:28px 24px 24px;max-width:320px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.18);">
+      <div style="font-size:2.8rem;margin-bottom:10px;">✅</div>
+      <h3 style="font-size:1.1rem;font-weight:900;color:#111;margin:0 0 8px;">3 משימות נוצרו בהצלחה!</h3>
+      <p style="font-size:0.85rem;color:#666;margin:0 0 22px;">משימות בקטגורית ${catName} נוספו לכל הילדים</p>
+      <button id="btn-quick-confirm-close" style="width:100%;padding:12px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;border:none;border-radius:14px;font-size:0.95rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">סגור</button>
+    </div>`;
+  document.body.appendChild(modal);
+  document.getElementById('btn-quick-confirm-close').onclick = () => modal.remove();
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 }
 
 // =========== INIT ===========
@@ -152,10 +176,7 @@ async function handleQuickTasksForm(triggerEl, category) {
 // =========== SAVE TASK ===========
 document.getElementById('btn-save-task')?.addEventListener('click', async () => {
   await saveTask(getFamilyId());
-  // אחרי שמירה — חזרה לדשבורד
-  if (!document.getElementById('add-task-error').textContent) {
-    window.location.href = 'parent.html';
-  }
+  // הניווט מטופל על ידי הפופ-אפ בתוך saveTask
 });
 
 // =========== EDIT TASK BUTTONS ===========

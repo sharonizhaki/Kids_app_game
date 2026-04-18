@@ -12,21 +12,24 @@ export const DEFAULT_CATS = ['🧼 היגיינה','🏠 מטלות בית','�
 export const FREQ_LABELS = { daily:'📆 כל יום', weekly:'📋 פעם בשבוע', once:'☝️ חד פעמית', specific:'🗓️ ימים ספציפיים', '2week':'🔁 פעמיים בשבוע' };
 const FREQ_ORDER = { daily:0, '2week':1, weekly:2, specific:3, once:4 };
 export const TASK_SUGGESTIONS = [
-  {name:'צחצוח שיניים בוקר', emoji:'🪥', cat:'🧼 היגיינה', pts:1, freq:'daily'},
-  {name:'צחצוח שיניים ערב', emoji:'🪥', cat:'🧼 היגיינה', pts:1, freq:'daily'},
-  {name:'סידור המיטה', emoji:'🛏️', cat:'🏠 מטלות בית', pts:1, freq:'daily'},
-  {name:'מקלחת', emoji:'🚿', cat:'🧼 היגיינה', pts:2, freq:'daily'},
-  {name:'קריאה 15 דקות', emoji:'📖', cat:'📚 לימודים', pts:3, freq:'daily'},
-  {name:'תרגול חשבון', emoji:'🧮', cat:'📚 לימודים', pts:3, freq:'daily'},
-  {name:'סידור חדר', emoji:'🧹', cat:'🏠 מטלות בית', pts:2, freq:'weekly'},
-  {name:'לקפל כביסה', emoji:'👕', cat:'🏠 מטלות בית', pts:3, freq:'weekly'},
-  {name:'להכין תיק', emoji:'🎒', cat:'🎯 אחריות', pts:2, freq:'daily'},
-  {name:'לערוך שולחן', emoji:'🍽️', cat:'🏠 מטלות בית', pts:1, freq:'daily'},
-  {name:'לזרוק זבל', emoji:'🗑️', cat:'🏠 מטלות בית', pts:1, freq:'daily'},
-  {name:'תרגול אנגלית', emoji:'📚', cat:'📚 לימודים', pts:3, freq:'daily'},
-  {name:'יום בלי מסכים', emoji:'⭐', cat:'⭐ מיוחדות', pts:5, freq:'weekly'},
-  {name:'לעזור לבשל', emoji:'🍳', cat:'⭐ מיוחדות', pts:4, freq:'weekly'},
-  {name:'לצייר ציור למישהו', emoji:'🎨', cat:'⭐ מיוחדות', pts:3, freq:'weekly'},
+  // יומי
+  {name:'שטיפת כלים',          emoji:'🍽️', cat:'🏠 מטלות בית', pts:2, freq:'daily'},
+  {name:'תרגול חשבון',         emoji:'🧮', cat:'📚 לימודים',   pts:3, freq:'daily'},
+  {name:'תרגול אנגלית',        emoji:'📚', cat:'📚 לימודים',   pts:3, freq:'daily'},
+  {name:'סידור צעצועים',       emoji:'🧸', cat:'🏠 מטלות בית', pts:2, freq:'daily'},
+  {name:'לטפל בחיית המחמד',    emoji:'🐕', cat:'🎯 אחריות',    pts:4, freq:'daily'},
+  {name:'לנגן על כלי נגינה',   emoji:'🎹', cat:'⭐ מיוחדות',   pts:4, freq:'daily'},
+  {name:'פעילות גופנית',       emoji:'🏃', cat:'🎯 אחריות',    pts:3, freq:'daily'},
+  {name:'לסדר את הסלון',       emoji:'🛋️', cat:'🏠 מטלות בית', pts:2, freq:'daily'},
+  {name:'לצאת לטיול עם הכלב', emoji:'🦮', cat:'🎯 אחריות',    pts:3, freq:'daily'},
+  // שבועי
+  {name:'סידור חדר',           emoji:'🧹', cat:'🏠 מטלות בית', pts:3, freq:'weekly'},
+  {name:'לקפל כביסה',          emoji:'👕', cat:'🏠 מטלות בית', pts:3, freq:'weekly'},
+  {name:'יום בלי מסכים',       emoji:'⭐', cat:'⭐ מיוחדות',   pts:5, freq:'weekly'},
+  {name:'לעזור לבשל',          emoji:'🍳', cat:'⭐ מיוחדות',   pts:4, freq:'weekly'},
+  {name:'לצייר ציור למישהו',   emoji:'🎨', cat:'⭐ מיוחדות',   pts:3, freq:'weekly'},
+  // חד פעמי
+  {name:'לקרוא ספר שלם',       emoji:'📗', cat:'📚 לימודים',   pts:5, freq:'once'},
 ];
 
 // =========== ADD TASK STATE ===========
@@ -48,6 +51,7 @@ let etSelectedFreq = '';
 let etSelectedDays = [];
 let etFilter = 'all';
 let etSubFilter = '';
+let _editFamilyId = '';
 let etRequireApproval = false;  // ← חדש: שלב 5
 
 // =========== OPEN ADD TASK ===========
@@ -110,11 +114,9 @@ export async function openAddTask(familyId) {
       const tourDone = famDoc.exists() && famDoc.data().taskTourDone;
       if (!tourDone) {
         startTaskTour(familyId);
-      } else {
-        document.getElementById('task-name-input').focus();
       }
     } catch(e) {
-      document.getElementById('task-name-input').focus();
+      // no focus
     }
   }, 400);
 }
@@ -127,10 +129,10 @@ export async function saveTask(familyId) {
   const reminder = document.getElementById('task-reminder-input').value;
   const err = document.getElementById('add-task-error');
 
-  if (!name) { err.textContent = 'חובה להכניס שם מטלה'; highlightField(document.getElementById('task-name-input')); return; }
-  if (!cat) { err.textContent = 'חובה לבחור קטגוריה'; highlightField(document.getElementById('task-cat-scroll')); return; }
+  if (!name) { err.textContent = 'נא להכניס שם מטלה'; highlightField(document.getElementById('task-name-input')); return; }
+  if (!cat) { err.textContent = 'נא לבחור קטגוריה'; highlightField(document.getElementById('task-cat-scroll')); return; }
   if (taskAssignedChildren.length === 0) {
-    err.textContent = 'חובה לשייך לפחות ילד אחד';
+    err.textContent = 'נא לשייך לפחות ילד אחד';
     const grid = document.getElementById('task-assign-grid');
     grid.scrollIntoView({ behavior: 'smooth', block: 'center' });
     navigator.vibrate && navigator.vibrate([80, 40, 80]);
@@ -141,9 +143,9 @@ export async function saveTask(familyId) {
     });
     return;
   }
-  if (!taskSelectedEmoji) { err.textContent = 'חובה לבחור אייקון'; highlightField(document.getElementById('task-emoji-grid')); return; }
-  if (!taskSelectedStars || taskSelectedStars < 1) { err.textContent = 'חובה לבחור כוכבים'; highlightField(document.getElementById('task-stars-picker')); return; }
-  if (!taskSelectedFreq) { err.textContent = 'חובה לבחור תדירות'; highlightField(document.getElementById('task-freq-grid')); return; }
+  if (!taskSelectedEmoji) { err.textContent = 'נא לבחור אייקון'; highlightField(document.getElementById('task-emoji-grid')); return; }
+  if (!taskSelectedStars || taskSelectedStars < 1) { err.textContent = 'נא לבחור כוכבים'; highlightField(document.getElementById('task-stars-picker')); return; }
+  if (!taskSelectedFreq) { err.textContent = 'נא לבחור תדירות'; highlightField(document.getElementById('task-freq-grid')); return; }
   err.textContent = '';
 
   showLoading('שומר מטלה...');
@@ -165,7 +167,21 @@ export async function saveTask(familyId) {
       createdAt: serverTimestamp()
     });
     hideLoading();
-    showToast('מטלה נוספה! ✅');
+    // הצג מודל אישור
+    const taskName = name;
+    const modal = document.getElementById('modal-task-saved');
+    const nameEl = document.getElementById('modal-task-saved-name');
+    if (nameEl) nameEl.textContent = `"${taskName}" שויכה לילד/ים בהצלחה`;
+    if (modal) {
+      modal.style.display = 'flex';
+      document.getElementById('btn-task-saved-another').onclick = () => {
+        modal.style.display = 'none';
+        openAddTask(familyId);
+      };
+      document.getElementById('btn-task-saved-dashboard').onclick = () => {
+        window.location.href = 'parent.html';
+      };
+    }
   } catch(e) {
     hideLoading();
     document.getElementById('add-task-error').textContent = 'שגיאה בשמירה, נסה שוב';
@@ -250,34 +266,30 @@ const SVG_TRASH = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14
 
 function buildMetaTags(t) {
   const childLabel = t.childNames ? t.childNames.join(' · ') : t.childName;
-  const childTag  = `<span class="etask-tag child-tag">${childLabel}</span>`;
-  const catTag    = t.cat ? `<span class="etask-tag cat-tag">${t.cat}</span>` : '';
-  const freqTag   = `<span class="etask-tag freq-tag">${FREQ_LABELS[t.freq] || t.freq || ''}</span>`;
-  const starsTag  = t.pts > 0 ? `<span class="etask-tag stars-tag">${'⭐'.repeat(Math.min(t.pts,5))}</span>` : '';
-  const hiddenTag = t.hidden ? '<span class="etask-tag hidden-tag">מוסתר</span>' : '';
-  const approvalTag = t.requireApproval ? '<span class="etask-tag approval-tag-list">👁️ דורש אישור</span>' : '';  // ← חדש
+  const childTag  = etFilter === 'child'  ? '' : `<span class="etask-tag child-tag">${childLabel}</span>`;
+  const catTag    = etFilter === 'cat'    ? '' : (t.cat ? `<span class="etask-tag cat-tag">${t.cat}</span>` : '');
+  const freqTag   = etFilter === 'freq'   ? '' : `<span class="etask-tag freq-tag">${FREQ_LABELS[t.freq] || t.freq || ''}</span>`;
+  const starsTag  = etFilter === 'stars'  ? '' : (t.pts > 0 ? `<span class="etask-tag stars-tag">${'⭐'.repeat(Math.min(t.pts,5))}</span>` : '');
+  const hiddenTag   = t.hidden ? '<span class="etask-tag hidden-tag">מוסתר</span>' : '';
+  const approvalTag = t.requireApproval ? '<span class="etask-tag approval-tag-list">👁️ דורש אישור</span>' : '';
   const tags = { child: childTag, cat: catTag, freq: freqTag, stars: starsTag };
   let order;
-  if      (etFilter === 'child') order = ['child','cat','freq','stars'];
-  else if (etFilter === 'cat')   order = ['cat','child','freq','stars'];
-  else if (etFilter === 'stars') order = ['stars','child','cat','freq'];
-  else if (etFilter === 'freq')  order = ['freq','child','cat','stars'];
-  else                           order = ['child','cat','freq','stars'];
+  if      (etFilter === 'child') order = ['cat','stars','freq'];
+  else if (etFilter === 'cat')   order = ['child','stars','freq'];
+  else if (etFilter === 'stars') order = ['child','cat','freq'];
+  else if (etFilter === 'freq')  order = ['child','cat','stars'];
+  else                           order = ['child','cat','stars','freq'];
   return order.map(k => tags[k]).filter(Boolean).join('') + hiddenTag + approvalTag;
 }
 
 // =========== RENDER EDIT TASKS LIST ===========
 export function renderEditTasksList(familyId) {
+  if (familyId) _editFamilyId = familyId;
+  else familyId = _editFamilyId;
   const list = document.getElementById('edit-tasks-list');
   let tasks = [...allTasksFlat];
 
-  // filter
-  if (etFilter === 'child'  && etSubFilter) tasks = tasks.filter(t => t.childName === etSubFilter);
-  if (etFilter === 'cat'    && etSubFilter) tasks = tasks.filter(t => (t.cat || '') === etSubFilter);
-  if (etFilter === 'stars'  && etSubFilter) tasks = tasks.filter(t => t.pts === parseInt(etSubFilter));
-  if (etFilter === 'freq'   && etSubFilter) tasks = tasks.filter(t => t.freq === etSubFilter);
-
-  // כשאין פילטר ילד — מציגים כל מטלה פעם אחת עם כל הילדים המשויכים
+  // dedup תחילה — לפני כל סינון, כדי לאחד ילדים לכרטיס אחד
   if (etFilter !== 'child') {
     const seen = new Map();
     tasks.forEach(t => {
@@ -290,26 +302,43 @@ export function renderEditTasksList(familyId) {
     tasks = Array.from(seen.values());
   }
 
-  if (etFilter === 'child' && !etSubFilter) {
-    list.innerHTML = '<div class="empty-state">👆 בחר ילד מהרשימה למעלה</div>';
+  // filter (אחרי dedup)
+  if (etFilter === 'child'  && etSubFilter) tasks = tasks.filter(t => t.childName === etSubFilter);
+  if (etFilter === 'cat'    && etSubFilter) tasks = tasks.filter(t => (t.cat || '') === etSubFilter);
+  if (etFilter === 'stars'  && etSubFilter) tasks = tasks.filter(t => t.pts === parseInt(etSubFilter));
+  if (etFilter === 'freq'   && etSubFilter) tasks = tasks.filter(t => t.freq === etSubFilter);
+
+  const subFilterLabels = { cat: 'קטגוריה', stars: 'כוכבים', freq: 'תדירות' };
+  if (etFilter !== 'all' && etFilter !== 'child' && !etSubFilter) {
+    list.innerHTML = `<div class="empty-state">👆 בחר ${subFilterLabels[etFilter] || ''} מהרשימה למעלה</div>`;
     return;
   }
 
   const byName = (a,b) => (a.task||'').localeCompare(b.task||'', 'he');
+  const byCreated = (a,b) => {
+    const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+    const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+    return ta - tb;
+  };
   if (etFilter === 'stars') tasks.sort((a,b) => (b.pts||0) - (a.pts||0) || byName(a,b));
   else if (etFilter === 'cat')   tasks.sort((a,b) => (a.cat||'').localeCompare(b.cat||'','he') || byName(a,b));
-  else if (etFilter === 'child') tasks.sort((a,b) => (a.childName||'').localeCompare(b.childName||'','he') || byName(a,b));
+  else if (etFilter === 'child') tasks.sort((a,b) => (a.childName||'').localeCompare(b.childName||'','he') || byCreated(a,b));
   else if (etFilter === 'freq')  tasks.sort((a,b) => (FREQ_ORDER[a.freq]??99) - (FREQ_ORDER[b.freq]??99) || byName(a,b));
-  else tasks.sort((a,b) => b.taskId.localeCompare(a.taskId));
+  else tasks.sort((a,b) => {
+    const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+    const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+    return tb - ta;
+  });
 
   if (tasks.length === 0) { list.innerHTML = '<div class="empty-state">אין מטלות להצגה</div>'; return; }
 
-  list.innerHTML = tasks.map(t => `
+  function buildCard(t) {
+    return `
     <div class="etask-wrap" data-child-id="${t.childId}" data-task-id="${t.taskId}" data-hidden="${t.hidden?'1':'0'}">
       <div class="etask-card${t.hidden?' hidden-task':''}">
-        <span class="etask-emoji">${t.emoji || '📋'}</span>
+        <span class="etask-emoji" style="${t.hidden?'opacity:0.35;filter:grayscale(1);':''}">${t.emoji || '📋'}</span>
         <div class="etask-info">
-          <strong>${t.task}</strong>
+          <strong style="${t.hidden?'text-decoration:line-through;color:#94A3B8;':''}">${t.task}</strong>
           <div class="etask-meta">${buildMetaTags(t)}</div>
         </div>
         <div class="etask-btns">
@@ -318,7 +347,26 @@ export function renderEditTasksList(familyId) {
           <button class="etask-btn btn-del" title="מחק">${SVG_TRASH}</button>
         </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }
+
+  // groupBy child — show all children with headers
+  if (etFilter === 'child' && !etSubFilter) {
+    const groups = new Map();
+    tasks.forEach(t => {
+      if (!groups.has(t.childName)) groups.set(t.childName, []);
+      groups.get(t.childName).push(t);
+    });
+    list.innerHTML = [...groups.entries()].map(([name, groupTasks]) => {
+      const child = childrenCache.find(c => c.name === name);
+      const emoji = child?.emoji || (child?.gender === 'female' ? '👧' : '👦');
+      return `<div style="font-size:0.82rem;font-weight:800;color:#64748B;padding:10px 4px 4px;display:flex;align-items:center;gap:5px;">
+        <span>${emoji}</span><span>${name}</span>
+      </div>` + groupTasks.map(buildCard).join('');
+    }).join('');
+  } else {
+    list.innerHTML = tasks.map(buildCard).join('');
+  }
 
   list.querySelectorAll('.etask-wrap').forEach(wrap => {
     const taskId  = wrap.dataset.taskId;
@@ -328,7 +376,6 @@ export function renderEditTasksList(familyId) {
       e.stopPropagation();
       openEditTask(childId, taskId, familyId);
     };
-    wrap.querySelector('.etask-card').onclick = () => openEditTask(childId, taskId, familyId);
 
     wrap.querySelector('.btn-vis-hide, .btn-vis-show')?.addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -432,12 +479,12 @@ export async function saveEditedTask(familyId) {
   if (!editingTask) return;
   const name = document.getElementById('et-name').value.trim();
   const err = document.getElementById('et-error');
-  if (!name) { err.textContent = 'חובה להכניס שם'; highlightField(document.getElementById('et-name')); return; }
+  if (!name) { err.textContent = 'נא להכניס שם'; highlightField(document.getElementById('et-name')); return; }
   const cat = etSelectedCat || document.getElementById('et-new-cat')?.value?.trim() || '';
-  if (!cat) { err.textContent = 'חובה לבחור קטגוריה'; highlightField(document.getElementById('et-cat-scroll')); return; }
+  if (!cat) { err.textContent = 'נא לבחור קטגוריה'; highlightField(document.getElementById('et-cat-scroll')); return; }
   const assigned = editingTask.getAssigned();
   if (!assigned || assigned.length === 0) {
-    err.textContent = 'חובה לשייך לפחות ילד אחד';
+    err.textContent = 'נא לשייך לפחות ילד אחד';
     const grid = document.getElementById('et-assign-grid');
     grid.scrollIntoView({ behavior: 'smooth', block: 'center' });
     navigator.vibrate && navigator.vibrate([80, 40, 80]);
@@ -448,8 +495,8 @@ export async function saveEditedTask(familyId) {
     });
     return;
   }
-  if (!etSelectedEmoji) { err.textContent = 'חובה לבחור אייקון'; highlightField(document.getElementById('et-emoji-grid')); return; }
-  if (!etSelectedStars) { err.textContent = 'חובה לבחור כוכבים'; highlightField(document.getElementById('et-stars-picker')); return; }
+  if (!etSelectedEmoji) { err.textContent = 'נא לבחור אייקון'; highlightField(document.getElementById('et-emoji-grid')); return; }
+  if (!etSelectedStars) { err.textContent = 'נא לבחור כוכבים'; highlightField(document.getElementById('et-stars-picker')); return; }
   err.textContent = '';
 
   showLoading('שומר...');
@@ -465,9 +512,39 @@ export async function saveEditedTask(familyId) {
     });
     await loadAllTasks(familyId);
     hideLoading();
-    showToast('נשמר! ✅');
-    showScreen('screen-edit-tasks');
-    renderEditTasksList(familyId);
+    await loadAllTasks(familyId);
+    // פופ-אפ אישור
+    const existing = document.getElementById('edit-task-saved-modal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'edit-task-saved-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;';
+    modal.innerHTML = `
+      <div class="qc-bg" style="position:absolute;inset:0;background:rgba(15,23,42,0.55);backdrop-filter:blur(3px);opacity:0;transition:opacity 0.22s ease;"></div>
+      <div class="qc-card" style="position:relative;background:#fff;border-radius:28px;padding:32px 24px 24px;max-width:300px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.22);transform:scale(0.75) translateY(24px);opacity:0;transition:transform 0.32s cubic-bezier(.34,1.56,.64,1),opacity 0.24s ease;">
+        <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 16px;box-shadow:0 6px 20px #6366F155;">✏️</div>
+        <div style="font-size:1.15rem;font-weight:900;color:#0F172A;margin-bottom:6px;">המטלה עודכנה!</div>
+        <div style="font-size:0.84rem;color:#64748B;line-height:1.55;margin-bottom:24px;">השינויים נשמרו בהצלחה</div>
+        <button id="btn-edit-task-saved-ok" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;border:none;border-radius:16px;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 14px #6366F166;">אישור ✓</button>
+      </div>`;
+    document.body.appendChild(modal);
+    requestAnimationFrame(() => {
+      modal.querySelector('.qc-bg').style.opacity = '1';
+      const card = modal.querySelector('.qc-card');
+      card.style.transform = 'scale(1) translateY(0)';
+      card.style.opacity = '1';
+    });
+    document.getElementById('btn-edit-task-saved-ok').onclick = () => {
+      modal.querySelector('.qc-bg').style.opacity = '0';
+      const card = modal.querySelector('.qc-card');
+      card.style.transform = 'scale(0.88) translateY(10px)';
+      card.style.opacity = '0';
+      setTimeout(() => {
+        modal.remove();
+        showScreen('screen-edit-tasks');
+        renderEditTasksList(familyId);
+      }, 260);
+    };
   } catch(e) { hideLoading(); document.getElementById('et-error').textContent = 'שגיאה בשמירה'; console.error(e); }
 }
 
@@ -679,23 +756,17 @@ export function renderAssignGrid(gridId, selectedIds, onChange) {
 const QUICK_TASKS_HYGIENE = [
   { task:'צחצוח שיניים בוקר', emoji:'🪥', cat:'🧼 היגיינה', pts:1, freq:'daily' },
   { task:'צחצוח שיניים ערב',  emoji:'🪥', cat:'🧼 היגיינה', pts:1, freq:'daily' },
-  { task:'מקלחת',              emoji:'🚿', cat:'🧼 היגיינה', pts:2, freq:'daily' },
-  { task:'סידור שיער',         emoji:'💇', cat:'🧼 היגיינה', pts:1, freq:'daily' },
-  { task:'שטיפת ידיים',        emoji:'🧼', cat:'🧼 היגיינה', pts:1, freq:'daily' },
+  { task:'מקלחת',              emoji:'🚿', cat:'🧼 היגיינה', pts:1, freq:'daily' },
 ];
 const QUICK_TASKS_CHORES = [
-  { task:'סידור מיטה',    emoji:'🛏️', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
-  { task:'לזרוק זבל',     emoji:'🗑️', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
-  { task:'ניקוי שולחן',   emoji:'🧹', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
-  { task:'שטיפת כלים',    emoji:'🍽️', cat:'🏠 מטלות בית', pts:2, freq:'daily' },
-  { task:'סידור צעצועים', emoji:'🧸', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
+  { task:'סידור מיטה',         emoji:'🛏️', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
+  { task:'לזרוק זבל',          emoji:'🗑️', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
+  { task:'ניקוי שולחן אחרי אוכל', emoji:'🧹', cat:'🏠 מטלות בית', pts:1, freq:'daily' },
 ];
 const QUICK_TASKS_STUDY = [
-  { task:'שיעורי בית',          emoji:'✏️', cat:'📚 לימודים', pts:3, freq:'daily' },
-  { task:'קריאה',               emoji:'📚', cat:'📚 לימודים', pts:2, freq:'daily' },
-  { task:'חזרה על חומר',        emoji:'📖', cat:'📚 לימודים', pts:2, freq:'daily' },
-  { task:'סדר בתיק',            emoji:'🎒', cat:'📚 לימודים', pts:1, freq:'daily' },
-  { task:'הכנת ציוד ליום המחר', emoji:'📐', cat:'📚 לימודים', pts:1, freq:'daily' },
+  { task:'שיעורי בית',          emoji:'✏️', cat:'📚 לימודים', pts:1, freq:'daily' },
+  { task:'15 דקות קריאה',       emoji:'📖', cat:'📚 לימודים', pts:1, freq:'daily' },
+  { task:'הכנת תיק לבית ספר',   emoji:'🎒', cat:'📚 לימודים', pts:1, freq:'daily' },
 ];
 const QUICK_TASK_SETS = { hygiene: QUICK_TASKS_HYGIENE, chores: QUICK_TASKS_CHORES, study: QUICK_TASKS_STUDY };
 
@@ -728,7 +799,7 @@ document.getElementById('et-require-approval')?.addEventListener('change', (e) =
 export function startTaskTour(familyId) {
   const quickCatsVisible = getComputedStyle(document.getElementById('form-quick-cats-section') || document.createElement('div')).display !== 'none';
   const step1Text = quickCatsVisible
-    ? 'הכנס שם למטלה — לחץ "💡 רעיונות לדוגמא" לרשימת רעיונות, או בחר קטגוריה משמאל ליצירת 5 משימות מהירות אוטומטית'
+    ? 'הכנס שם למטלה — לחץ "💡 רעיונות לדוגמא" לרשימת רעיונות, או בחר קטגוריה משמאל ליצירת 3 משימות מהירות אוטומטית'
     : 'הכנס שם למטלה, לחץ "💡 רעיונות לדוגמא" לרעיונות מוכנים';
   const steps = [
     { el: '#task-name-input',         title: 'שם המטלה',      text: step1Text },

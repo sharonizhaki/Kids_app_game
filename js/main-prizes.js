@@ -80,18 +80,55 @@ function refreshQuickSection() {
   if (allDone) { localStorage.setItem(quickBannerKey(), '1'); animateQuickAway(); }
 }
 
+function showQuickPrizesConfirm(catName, onConfirm) {
+  const existing = document.getElementById('quick-prizes-confirm-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'quick-prizes-confirm-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;';
+  modal.innerHTML = `
+    <div class="qc-bg" style="position:absolute;inset:0;background:rgba(15,23,42,0.55);backdrop-filter:blur(3px);opacity:0;transition:opacity 0.22s ease;"></div>
+    <div class="qc-card" style="position:relative;background:#fff;border-radius:28px;padding:32px 24px 24px;max-width:300px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.22);transform:scale(0.75) translateY(24px);opacity:0;transition:transform 0.32s cubic-bezier(.34,1.56,.64,1),opacity 0.24s ease;">
+      <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#F59E0B,#D97706);display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 16px;box-shadow:0 6px 20px #F59E0B55;">🎁</div>
+      <div style="font-size:1.15rem;font-weight:900;color:#0F172A;margin-bottom:6px;">3 פרסים נוצרו!</div>
+      <div style="font-size:0.84rem;color:#64748B;line-height:1.55;margin-bottom:8px;">פרסים ${catName} נוספו לרשימה בהצלחה</div>
+      <div style="font-size:0.78rem;color:#94A3B8;margin-bottom:24px;">ניתן לערוך ולמחוק במסך <strong style="color:#D97706;">עריכת פרסים</strong> בתפריט <strong style="color:#D97706;">הגדרות</strong> ⚙️</div>
+      <button id="btn-quick-prizes-confirm-close" style="width:100%;padding:14px;background:linear-gradient(135deg,#F59E0B,#D97706);color:#fff;border:none;border-radius:16px;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 14px #F59E0B66;">אישור ✓</button>
+    </div>`;
+  document.body.appendChild(modal);
+  requestAnimationFrame(() => {
+    modal.querySelector('.qc-bg').style.opacity = '1';
+    const card = modal.querySelector('.qc-card');
+    card.style.transform = 'scale(1) translateY(0)';
+    card.style.opacity = '1';
+  });
+  const close = (runCallback) => {
+    modal.querySelector('.qc-bg').style.opacity = '0';
+    const card = modal.querySelector('.qc-card');
+    card.style.transform = 'scale(0.88) translateY(10px)';
+    card.style.opacity = '0';
+    setTimeout(() => { modal.remove(); if (runCallback && onConfirm) onConfirm(); }, 260);
+  };
+  document.getElementById('btn-quick-prizes-confirm-close').onclick = () => close(true);
+  modal.querySelector('.qc-bg').addEventListener('click', () => close(false));
+}
+
 async function handleQuickPrizes(triggerEl, category) {
   const fid = getFamilyId(); if (!fid) return;
   if (triggerEl) { triggerEl.disabled = true; triggerEl.style.opacity = '0.55'; }
   try {
     const ok = await createQuickPrizes(fid, category);
     if (ok && triggerEl) {
+      const catLabels = { treats: 'פינוקים 🍦', fun: 'פנאי 🎮', gifts: 'מתנות 🎁' };
+      const catName = catLabels[category] || category;
       saveQuickClicked(category);
       markQuickBtnDone(triggerEl);
       const allDone = [...document.querySelectorAll('.quick-prize-cat-btn')].every(b => b.disabled || b.textContent.includes('✅'));
       if (allDone) {
         localStorage.setItem(quickBannerKey(), '1');
-        setTimeout(animateQuickAway, 950);
+        showQuickPrizesConfirm(catName, () => animateQuickAway());
+      } else {
+        showQuickPrizesConfirm(catName);
       }
     }
   } finally {
@@ -197,31 +234,224 @@ async function openAddPrize(familyId) {
       const tourDone = famDoc.exists() && famDoc.data().prizeTourDone;
       if (!tourDone) {
         startPrizeTour(familyId);
-      } else {
-        document.getElementById('prize-name-input').focus();
       }
     } catch(e) {
-      document.getElementById('prize-name-input').focus();
+      // no focus
     }
   }, 400);
 }
 
 // =========== SAVE PRIZE ===========
 document.getElementById('btn-save-prize')?.addEventListener('click', async () => {
+  const prizeName = document.getElementById('prize-name-input')?.value.trim() || '';
   const ok = await savePrize(getFamilyId());
-  if (ok) window.location.href = 'parent.html';
+  if (ok) {
+    const modal = document.getElementById('modal-prize-saved');
+    const nameEl = document.getElementById('modal-prize-saved-name');
+    if (nameEl) nameEl.textContent = `"${prizeName}" נוספה בהצלחה`;
+    if (modal) {
+      modal.style.display = 'flex';
+      requestAnimationFrame(() => {
+        const card = document.getElementById('modal-prize-saved-card');
+        if (card) { card.style.transform = 'scale(1) translateY(0)'; card.style.opacity = '1'; }
+      });
+      document.getElementById('btn-prize-saved-another').onclick = () => {
+        modal.style.display = 'none';
+        const card = document.getElementById('modal-prize-saved-card');
+        if (card) { card.style.transform = 'scale(0.75) translateY(24px)'; card.style.opacity = '0'; }
+        openAddPrize(getFamilyId());
+      };
+      document.getElementById('btn-prize-saved-dashboard').onclick = () => {
+        window.location.href = 'parent.html';
+      };
+    }
+  }
 });
 
 // =========== PRIZES LIST (manage tab) ===========
+let _prFilter = 'all';
+let _prSubFilter = '';
+let _allPrizes = [];
+let _prizeFamilyId = '';
+
+function renderPrizesFilter() {
+  document.querySelectorAll('#prizes-filter .filter-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.filter === _prFilter);
+    chip.onclick = () => {
+      _prFilter = chip.dataset.filter;
+      _prSubFilter = '';
+      renderPrizesFilter();
+      renderPrizesSubFilter();
+      renderPrizesListUI();
+    };
+  });
+  renderPrizesSubFilter();
+}
+
+function renderPrizesSubFilter() {
+  const sub = document.getElementById('prizes-sub-filter');
+  if (!sub) return;
+  if (_prFilter === 'all') { sub.style.display = 'none'; return; }
+  let options = [];
+  if (_prFilter === 'child') {
+    const ids = [...new Set(_allPrizes.flatMap(p => p.assignedChildren || []))];
+    options = ids.map(id => {
+      const child = childrenCache.find(c => c.id === id);
+      const emoji = child?.emoji || (child?.gender === 'female' ? '👧' : '👦');
+      return { key: id, label: `${emoji} ${child?.name || id}` };
+    });
+  } else if (_prFilter === 'stars') {
+    const ranges = [[1,100],[101,200],[201,300],[301,400],[401,500]];
+    options = ranges
+      .filter(([lo,hi]) => _allPrizes.some(p => p.pts >= lo && p.pts <= hi))
+      .map(([lo,hi]) => ({ key: `${lo}-${hi}`, label: `${lo}–${hi} ⭐` }));
+  }
+  sub.style.display = 'flex';
+  sub.innerHTML = options.map(o =>
+    `<span class="sub-chip${_prSubFilter === o.key ? ' active' : ''}" data-key="${o.key}">${o.label}</span>`
+  ).join('');
+  sub.querySelectorAll('.sub-chip').forEach(chip => {
+    chip.onclick = () => {
+      _prSubFilter = _prSubFilter === chip.dataset.key ? '' : chip.dataset.key;
+      renderPrizesSubFilter();
+      renderPrizesListUI();
+    };
+  });
+}
+
+function renderPrizesListUI() {
+  const list = document.getElementById('prizes-list');
+  if (!list) return;
+
+  const subLabels = { child: 'ילד', stars: 'כוכבים' };
+  if (_prFilter !== 'all' && !_prSubFilter) {
+    list.innerHTML = `<div class="empty-state">👆 בחר ${subLabels[_prFilter] || ''} מהרשימה למעלה</div>`;
+    return;
+  }
+
+  let prizes = [..._allPrizes];
+
+  // filter
+  if (_prFilter === 'child' && _prSubFilter)
+    prizes = prizes.filter(p => (p.assignedChildren || []).includes(_prSubFilter));
+  if (_prFilter === 'stars' && _prSubFilter) {
+    const [lo, hi] = _prSubFilter.split('-').map(Number);
+    prizes = prizes.filter(p => p.pts >= lo && p.pts <= hi);
+  }
+
+  // sort
+  if (_prFilter === 'stars') prizes.sort((a,b) => (a.pts||0) - (b.pts||0));
+  else if (_prFilter === 'child') prizes.sort((a,b) => {
+    const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+    const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+    return ta - tb;
+  });
+  else prizes.sort((a,b) => {
+    const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+    const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+    return tb - ta;
+  });
+
+  if (prizes.length === 0) { list.innerHTML = '<div class="empty-state">אין פרסים להצגה</div>'; return; }
+
+  const SVG_EDIT  = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+  const SVG_EYE   = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  const SVG_EYEOFF= `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+  const SVG_TRASH = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
+
+  function buildPrizeCard(prize) {
+    const childNames = (prize.assignedChildren || [])
+      .map(cid => childrenCache.find(c => c.id === cid)?.name || '').filter(Boolean).join(' · ');
+    const hiddenTag  = prize.hidden ? '<span class="etask-tag hidden-tag">מוסתר</span>' : '';
+    const childTag   = _prFilter === 'child' ? '' : (childNames ? `<span class="etask-tag child-tag">${childNames}</span>` : '');
+    const starsTag   = `<span style="font-size:0.82rem;font-weight:900;color:#D97706;background:#FEF3C7;border-radius:8px;padding:2px 8px;">${prize.pts} ⭐</span>`;
+    const repeatTag  = prize.repeatAfterClaim === false
+      ? '<span class="etask-tag" style="background:#FEE2E2;color:#B91C1C;">1️⃣ חד פעמי</span>'
+      : '<span class="etask-tag" style="background:#D1FAE5;color:#065F46;">🔁 חוזר</span>';
+    return `
+      <div class="etask-wrap" data-prize-id="${prize.id}" data-hidden="${prize.hidden?'1':'0'}">
+        <div class="etask-card${prize.hidden?' hidden-task':''}">
+          <span class="etask-emoji" style="${prize.hidden?'opacity:0.35;filter:grayscale(1);':''}">${prize.emoji || '🎁'}</span>
+          <div class="etask-info">
+            <strong style="${prize.hidden?'text-decoration:line-through;color:#94A3B8;':''}">${prize.name}</strong>
+            <div class="etask-meta">${starsTag}${repeatTag}${childTag}${hiddenTag}</div>
+          </div>
+          <div class="etask-btns">
+            <button class="etask-btn btn-edit" title="ערוך">${SVG_EDIT}</button>
+            <button class="etask-btn ${prize.hidden?'btn-vis-show':'btn-vis-hide'}" title="${prize.hidden?'הצג':'הסתר'}">${prize.hidden?SVG_EYE:SVG_EYEOFF}</button>
+            <button class="etask-btn btn-del" title="מחק">${SVG_TRASH}</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // groupBy child — show all with headers when no subfilter
+  if (_prFilter === 'child' && !_prSubFilter) {
+    const groups = new Map();
+    prizes.forEach(prize => {
+      (prize.assignedChildren || []).forEach(cid => {
+        if (!groups.has(cid)) groups.set(cid, []);
+        if (!groups.get(cid).find(p => p.id === prize.id)) groups.get(cid).push(prize);
+      });
+    });
+    list.innerHTML = [...groups.entries()].map(([cid, groupPrizes]) => {
+      const child = childrenCache.find(c => c.id === cid);
+      const emoji = child?.emoji || (child?.gender === 'female' ? '👧' : '👦');
+      const name = child?.name || cid;
+      return `<div style="font-size:0.82rem;font-weight:800;color:#64748B;padding:10px 4px 4px;display:flex;align-items:center;gap:5px;">
+        <span>${emoji}</span><span>${name}</span>
+      </div>` + groupPrizes.map(buildPrizeCard).join('');
+    }).join('');
+  } else {
+    list.innerHTML = prizes.map(buildPrizeCard).join('');
+  }
+
+  list.querySelectorAll('.etask-wrap').forEach(wrap => {
+    const prizeId = wrap.dataset.prizeId;
+    const prize = prizes.find(p => p.id === prizeId);
+
+    wrap.querySelector('.btn-edit').onclick = (e) => {
+      e.stopPropagation();
+      if (prize) openEditPrize(prize);
+    };
+
+    wrap.querySelector('.btn-vis-hide, .btn-vis-show')?.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const isHidden = wrap.dataset.hidden === '1';
+      showLoading(isHidden ? 'מציג...' : 'מסתיר...');
+      const ok = await updatePrize(_prizeFamilyId, prizeId, { hidden: !isHidden });
+      hideLoading();
+      if (ok) {
+        showToast(isHidden ? '👁️ מוצג' : '🙈 מוסתר');
+        await _reloadPrizes();
+      }
+    });
+
+    wrap.querySelector('.btn-del').onclick = (e) => {
+      e.stopPropagation();
+      showConfirm({ icon: '🗑️', title: 'מחיקת פרס', message: `האם למחוק את הפרס "${prize?.name}"? הפעולה אינה הפיכה.`, confirmText: 'מחק', onConfirm: async () => {
+        const ok = await deletePrize(_prizeFamilyId, prizeId);
+        if (ok) { showToast('🗑️ נמחק'); await _reloadPrizes(); }
+      }});
+    };
+  });
+}
+
+async function _reloadPrizes() {
+  _allPrizes = await loadPrizes(_prizeFamilyId);
+  await loadChildren(_prizeFamilyId);
+  renderPrizesListUI();
+}
+
 async function renderPrizesList() {
   const list = document.getElementById('prizes-list');
   if (!list) return;
   list.innerHTML = '<div class="empty-state">טוען...</div>';
+  _prizeFamilyId = getFamilyId();
+  _allPrizes = await loadPrizes(_prizeFamilyId);
+  await loadChildren(_prizeFamilyId);
 
-  const prizes = await loadPrizes(getFamilyId());
-  await loadChildren(getFamilyId());
-
-  if (prizes.length === 0) {
+  if (_allPrizes.length === 0) {
     list.innerHTML = `
       <div class="empty-state" style="padding:32px 0;">
         <div style="font-size:3rem;margin-bottom:12px;">🎁</div>
@@ -230,36 +460,8 @@ async function renderPrizesList() {
       </div>`;
     return;
   }
-
-  list.innerHTML = prizes.map(prize => {
-    const childNames = (prize.assignedChildren || [])
-      .map(cid => childrenCache.find(c => c.id === cid)?.name || '')
-      .filter(Boolean).join(' · ');
-    const hiddenTag = prize.hidden
-      ? '<span style="font-size:0.7rem;background:#FEF3C7;color:#92400E;padding:2px 7px;border-radius:8px;font-weight:800;">מוסתר</span>'
-      : '';
-    return `
-      <div class="etask-item" data-prize-id="${prize.id}" style="cursor:pointer;">
-        <div class="etask-emoji">${prize.emoji || '🎁'}</div>
-        <div class="etask-info">
-          <div class="etask-name">${prize.name}</div>
-          <div class="etask-tags">
-            <span class="etask-tag stars-tag">${prize.pts} ⭐</span>
-            ${childNames ? `<span class="etask-tag child-tag">${childNames}</span>` : ''}
-            ${hiddenTag}
-          </div>
-        </div>
-        <div style="font-size:1.2rem;color:var(--muted);padding-right:4px;">←</div>
-      </div>`;
-  }).join('');
-
-  list.querySelectorAll('.etask-item').forEach(el => {
-    el.addEventListener('click', () => {
-      const prizeId = el.dataset.prizeId;
-      const prize = prizes.find(p => p.id === prizeId);
-      if (prize) openEditPrize(prize);
-    });
-  });
+  renderPrizesFilter();
+  renderPrizesListUI();
 }
 
 // =========== OPEN EDIT PRIZE ===========
@@ -320,13 +522,39 @@ document.getElementById('btn-ep-save')?.addEventListener('click', async () => {
   });
   hideLoading();
   if (ok) {
-    showToast('פרס עודכן ✅');
-    showScreen('screen-manage-prizes');
-    renderPrizesList();
+    await _reloadPrizes();
+    // פופ-אפ אישור
+    const existing = document.getElementById('edit-prize-saved-modal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'edit-prize-saved-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;';
+    modal.innerHTML = `
+      <div class="qc-bg" style="position:absolute;inset:0;background:rgba(15,23,42,0.55);backdrop-filter:blur(3px);opacity:0;transition:opacity 0.22s ease;"></div>
+      <div class="qc-card" style="position:relative;background:#fff;border-radius:28px;padding:32px 24px 24px;max-width:300px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.22);transform:scale(0.75) translateY(24px);opacity:0;transition:transform 0.32s cubic-bezier(.34,1.56,.64,1),opacity 0.24s ease;">
+        <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#F59E0B,#D97706);display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 16px;box-shadow:0 6px 20px #F59E0B55;">✏️</div>
+        <div style="font-size:1.15rem;font-weight:900;color:#0F172A;margin-bottom:6px;">הפרס עודכן!</div>
+        <div style="font-size:0.84rem;color:#64748B;line-height:1.55;margin-bottom:24px;">השינויים נשמרו בהצלחה</div>
+        <button id="btn-edit-prize-saved-ok" style="width:100%;padding:14px;background:linear-gradient(135deg,#F59E0B,#D97706);color:#fff;border:none;border-radius:16px;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 14px #F59E0B55;">אישור ✓</button>
+      </div>`;
+    document.body.appendChild(modal);
+    requestAnimationFrame(() => {
+      modal.querySelector('.qc-bg').style.opacity = '1';
+      const card = modal.querySelector('.qc-card');
+      card.style.transform = 'scale(1) translateY(0)';
+      card.style.opacity = '1';
+    });
+    document.getElementById('btn-edit-prize-saved-ok').onclick = () => {
+      modal.querySelector('.qc-bg').style.opacity = '0';
+      const card = modal.querySelector('.qc-card');
+      card.style.transform = 'scale(0.88) translateY(10px)';
+      card.style.opacity = '0';
+      setTimeout(() => { modal.remove(); showScreen('screen-manage-prizes'); renderPrizesList(); }, 260);
+    };
   }
 });
 
-// =========== HIDE / SHOW PRIZE ===========
+// =========== HIDE / SHOW PRIZE (from edit screen) ===========
 document.getElementById('btn-ep-hide')?.addEventListener('click', async () => {
   if (!editingPrize) return;
   const newHidden = !editingPrize.hidden;
@@ -337,10 +565,11 @@ document.getElementById('btn-ep-hide')?.addEventListener('click', async () => {
     editingPrize.hidden = newHidden;
     document.getElementById('btn-ep-hide').textContent = newHidden ? '👁️ הצג' : '👁️ הסתר';
     showToast(newHidden ? 'פרס הוסתר' : 'פרס מוצג');
+    _allPrizes = await loadPrizes(getFamilyId());
   }
 });
 
-// =========== DELETE PRIZE ===========
+// =========== DELETE PRIZE (from edit screen) ===========
 document.getElementById('btn-ep-delete')?.addEventListener('click', () => {
   if (!editingPrize) return;
   showConfirm({ icon: '🗑️', title: 'מחיקת פרס', message: `האם למחוק את הפרס "${editingPrize.name}"? הפעולה אינה הפיכה.`, confirmText: 'מחק', onConfirm: async () => {
@@ -348,7 +577,7 @@ document.getElementById('btn-ep-delete')?.addEventListener('click', () => {
     if (ok) {
       editingPrize = null;
       showScreen('screen-manage-prizes');
-      renderPrizesList();
+      await _reloadPrizes();
     }
   }});
 });

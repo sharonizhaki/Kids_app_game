@@ -103,13 +103,17 @@ export async function savePrize(familyId) {
     return false;
   }
   if (!prizeSelectedPts || prizeSelectedPts < 1) {
-    err.textContent = 'נא לקבוע מחיר בכוכבים';
+    err.textContent = 'נא לבחור כוכבים';
     highlightField(document.getElementById('prize-pts-slider'));
     return false;
   }
   if (prizeAssignedChildren.length === 0) {
     err.textContent = 'נא לשייך לפחות ילד אחד';
-    highlightField(document.getElementById('prize-assign-grid'));
+    document.querySelectorAll('#prize-assign-grid .assign-opt').forEach(el => {
+      el.classList.add('assign-error');
+      el.addEventListener('click', () => el.classList.remove('assign-error'), { once: true });
+      setTimeout(() => el.classList.remove('assign-error'), 1600);
+    });
     return false;
   }
   err.textContent = '';
@@ -159,7 +163,7 @@ export async function createQuickPrizes(familyId, category) {
       })
     ));
     hideLoading();
-    showToast(`5 פרסים נוצרו! 🎁`);
+    showToast(`3 פרסים נוצרו! 🎁`);
     return true;
   } catch(e) {
     hideLoading();
@@ -455,7 +459,7 @@ export function startPrizeTour(familyId) {
   ).display !== 'none';
 
   const step1Text = quickVisible
-    ? 'הכנס שם לפרס, לחץ "💡 רעיונות לדוגמא" לרשימה מוכנה — או צור 5 פרסים אוטומטיים בלחיצה על הקטגוריה'
+    ? 'הכנס שם לפרס, לחץ "💡 רעיונות לדוגמא" לרשימה מוכנה — או צור 3 פרסים אוטומטיים בלחיצה על הקטגוריה'
     : 'הכנס שם לפרס ולחץ "💡 רעיונות לדוגמא" לקבל השראה';
 
   const steps = [
@@ -463,7 +467,7 @@ export function startPrizeTour(familyId) {
     { el: '#prize-assign-grid',     title: 'שיוך לילד/ים',    text: 'בחר לאיזה ילד/ים הפרס זמין — ניתן לשייך לכמה ילדים בו-זמנית' },
     { el: '#prize-emoji-grid',      title: 'אייקון',           text: 'בחר אייקון שמייצג את הפרס — יופיע לילד במסך הפרסים שלו' },
     { el: '#prize-pts-slider',      title: 'מחיר בכוכבים ⭐',  text: 'גרור את הסליידר כדי לקבוע כמה כוכבים עולה הפרס' },
-    { el: '#prize-repeat-toggle',   title: 'תיאור ואפשרויות', text: 'הוסף תיאור קצר, ובחר אם הפרס יחזור להיות זמין לאחר מימוש' },
+    { el: '#prize-repeat-toggle',   title: 'תיאור ואפשרויות', text: 'הוסף תיאור קצר, ובחר אם הפרס יחזור להיות זמין לאחר מימוש', exact: false },
   ];
 
   let currentStep = 0;
@@ -506,7 +510,8 @@ export function startPrizeTour(familyId) {
     void card.offsetWidth;
     shutterTop.style.height = '0px';
     shutterBottom.style.height = '0px';
-    rawEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const isLastStep = idx === steps.length - 1;
+    rawEl.scrollIntoView({ behavior: 'smooth', block: isLastStep ? 'start' : 'center' });
 
     setTimeout(() => {
       const rect = el.getBoundingClientRect();
