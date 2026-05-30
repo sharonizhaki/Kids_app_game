@@ -6,7 +6,7 @@ import {
 import { showToast, showLoading, hideLoading, showConfirm } from './ui.js';
 import { childrenCache, loadChildren } from './family.js';
 import { FREQ_LABELS } from './tasks.js';
-import { loadPrizeRequests, approvePrizeRequest, declinePrizeRequest } from './prizes.js';
+import { loadPrizeRequests, approvePrizeRequest, declinePrizeRequest, reversePrizeRequest } from './prizes.js';
 
 // =========== STATE ===========
 let allCompletedTasks  = [];
@@ -37,7 +37,6 @@ export function renderMPTabs(familyId) {
   const tabs = [
     { key: 'pending',  label: '⏳ ממתינים', badge: totalPending },
     { key: 'history',  label: '📋 היסטוריה', badge: 0 },
-    { key: 'summary',  label: '📊 סיכום',    badge: 0 },
     { key: 'manual',   label: '✏️ ניקוד',    badge: 0 },
   ];
 
@@ -64,7 +63,6 @@ export function showActiveTab(familyId) {
 
   if (mpTab === 'pending')  renderPendingTab(familyId);
   if (mpTab === 'history')  { renderMPFilters(); renderMPList(familyId); }
-  if (mpTab === 'summary')  renderSummaryTab(familyId);
   if (mpTab === 'manual')   renderManualTab(familyId);
 }
 
@@ -134,10 +132,14 @@ export function renderPendingTab(familyId) {
   const list = document.getElementById('mp-pending-list');
   if (!list) return;
 
-  const pendingTasks  = allPendingApprovals.filter(p => p.status === 'pending');
-  const pendingPrizes = allPrizeRequests.filter(r => r.status === 'pending');
+  const pendingTasks    = allPendingApprovals.filter(p => p.status === 'pending');
+  const pendingPrizes   = allPrizeRequests.filter(r => r.status === 'pending');
+  const approvedPrizes  = allPrizeRequests.filter(r => r.status === 'approved')
+                            .sort((a, b) => (b.requestedAt?.toMillis?.() || b.requestedAt || 0)
+                                          - (a.requestedAt?.toMillis?.() || a.requestedAt || 0))
+                            .slice(0, 10);
 
-  if (pendingTasks.length === 0 && pendingPrizes.length === 0) {
+  if (pendingTasks.length === 0 && pendingPrizes.length === 0 && approvedPrizes.length === 0) {
     list.innerHTML = '<div class="empty-state" style="padding:40px 0;">🎉<br><br>אין בקשות ממתינות</div>';
     return;
   }
@@ -212,6 +214,54 @@ export function renderPendingTab(familyId) {
         await declinePrizeRequest(familyId, r.id);
         await loadAllPrizeRequests(familyId);
         renderMPTabs(familyId); renderPendingTab(familyId);
+      };
+      sec.appendChild(card);
+    });
+    list.appendChild(sec);
+  }
+
+  // פרסים שכבר אושרו — אפשר לבטל
+  if (approvedPrizes.length > 0) {
+    const sec = document.createElement('div');
+    sec.style.marginTop = (pendingTasks.length > 0 || pendingPrizes.length > 0) ? '20px' : '0';
+    sec.innerHTML = `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:0.82rem;font-weight:800;color:#64748B;">
+      <span>🎁</span><span>פרסים שמומשו</span>
+      <span style="font-size:0.7rem;color:#94A3B8;font-weight:600;">(אפשר לבטל)</span>
+    </div>`;
+    approvedPrizes.forEach(r => {
+      const child = childrenCache.find(c => c.id === r.childId);
+      const childDisplay = child ? `${child.emoji || '👦'} ${child.name}` : r.childName || 'ילד';
+      const dateStr = r.requestedAt?.toDate
+        ? r.requestedAt.toDate().toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' })
+        : r.requestedAt
+          ? new Date(r.requestedAt).toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' })
+          : '';
+      const card = document.createElement('div');
+      card.style.cssText = 'background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:16px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;';
+      card.innerHTML = `
+        <span style="font-size:1.6rem;">${r.prizeEmoji || '🎁'}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:800;font-size:0.9rem;color:#0F172A;margin-bottom:2px;">${r.prizeName || r.name || ''}</div>
+          <div style="font-size:0.75rem;color:#92400E;">${childDisplay} · ${r.pts || r.cost || 0} ⭐ · ${dateStr}</div>
+        </div>
+        <button class="btn-prize-reverse"
+          style="background:#FEF3C7;color:#92400E;border:1.5px solid #FDE68A;border-radius:10px;padding:6px 10px;
+                 font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;">
+          ↩️ בטל
+        </button>`;
+      card.querySelector('.btn-prize-reverse').onclick = () => {
+        showConfirm({
+          icon: r.prizeEmoji || '🎁',
+          title: `לבטל: ${r.prizeName || r.name}?`,
+          message: `${child?.name || ''} יקבל בחזרה ${r.pts || r.cost || 0} ⭐`,
+          confirmText: '↩️ בטל מימוש',
+          confirmColor: 'linear-gradient(135deg,#F59E0B,#D97706)',
+          onConfirm: async () => {
+            await reversePrizeRequest(familyId, r.id);
+            await loadAllPrizeRequests(familyId);
+            renderMPTabs(familyId); renderPendingTab(familyId);
+          }
+        });
       };
       sec.appendChild(card);
     });
@@ -294,73 +344,6 @@ export function renderMPList(familyId) {
       </div>
     </div>`).join('');
   attachMPSwipeHandlers(list, familyId || _familyId);
-}
-
-// =========== TAB: סיכום (פיד כרונולוגי) ===========
-function renderSummaryTab(familyId) {
-  const list = document.getElementById('mp-summary-list');
-  if (!list) return;
-
-  // מיזוג משימות + פרסים ממומשים לפיד אחד
-  const feed = [];
-  allCompletedTasks.forEach(t => {
-    feed.push({ type: 'task', ts: t.ts, emoji: t.emoji, title: t.task,
-      childName: t.childName, childEmoji: t.childEmoji, childColor: t.childColor || '#6366F1', pts: t.pts });
-  });
-  allPrizeRequests.filter(r => r.status === 'approved').forEach(r => {
-    const child = childrenCache.find(c => c.id === r.childId);
-    feed.push({ type: 'prize', ts: r.requestedAt?.toMillis?.() || r.requestedAt || 0,
-      emoji: r.prizeEmoji || '🎁', title: r.prizeName || r.name || 'פרס',
-      childName: child?.name || r.childName || '', childEmoji: child?.emoji || '👦',
-      childColor: child?.color || '#F59E0B', pts: -(r.pts || r.cost || 0) });
-  });
-  feed.sort((a, b) => (b.ts || 0) - (a.ts || 0));
-
-  if (feed.length === 0) { list.innerHTML = '<div class="empty-state">אין פעילות להצגה</div>'; return; }
-
-  // כוכבים שבועיים לכל ילד
-  const weeklyStars = {};
-  childrenCache.forEach(c => { weeklyStars[c.name] = 0; });
-  allCompletedTasks.forEach(t => {
-    if (!weeklyStars[t.childName]) weeklyStars[t.childName] = 0;
-    weeklyStars[t.childName] += t.pts || 0;
-  });
-
-  const summaryCards = childrenCache.map(child => {
-    const stars = weeklyStars[child.name] || 0;
-    return `<div style="background:white;border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:8px;">
-      <span style="font-size:1.6rem;">${child.emoji || '👦'}</span>
-      <div style="flex:1;">
-        <div style="font-weight:800;font-size:0.9rem;color:#0F172A;">${child.name}</div>
-        <div style="font-size:0.78rem;color:#64748B;">השבוע</div>
-      </div>
-      <div style="font-size:1rem;font-weight:900;color:#D97706;background:#FEF3C7;border-radius:10px;padding:4px 10px;">${stars} ⭐</div>
-    </div>`;
-  }).join('');
-
-  const feedHTML = feed.slice(0, 50).map(item => {
-    const time = item.ts ? new Date(item.ts).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }) : '';
-    const date = item.ts ? new Date(item.ts).toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' }) : '';
-    const isTask = item.type === 'task';
-    const ptsLabel = isTask
-      ? `<span style="font-size:0.78rem;font-weight:900;color:#D97706;background:#FEF3C7;border-radius:8px;padding:1px 7px;">+${item.pts} ⭐</span>`
-      : `<span style="font-size:0.78rem;font-weight:900;color:#B91C1C;background:#FEE2E2;border-radius:8px;padding:1px 7px;">${item.pts} ⭐</span>`;
-    return `
-      <div style="background:white;border-radius:14px;padding:11px 14px;margin-bottom:7px;box-shadow:0 2px 6px rgba(0,0,0,0.05);display:flex;align-items:center;gap:10px;">
-        <div style="width:38px;height:38px;border-radius:50%;background:${item.childColor}22;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">${item.emoji}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:800;font-size:0.88rem;color:#0F172A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title}</div>
-          <div style="font-size:0.74rem;color:#94A3B8;">${item.childEmoji} ${item.childName} · ${date} ${time}</div>
-        </div>
-        ${ptsLabel}
-      </div>`;
-  }).join('');
-
-  list.innerHTML = `
-    <div style="font-size:0.82rem;font-weight:800;color:#64748B;margin-bottom:8px;">כוכבים השבוע</div>
-    ${summaryCards}
-    <div style="font-size:0.82rem;font-weight:800;color:#64748B;margin:16px 0 8px;">פעילות אחרונה</div>
-    ${feedHTML}`;
 }
 
 // =========== TAB: ניקוד ידני ===========
