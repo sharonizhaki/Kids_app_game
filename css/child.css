@@ -545,6 +545,60 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 .done-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, #10B981, #059669); color: white; border: none; border-radius: 16px; font-size: 1.15rem; font-weight: 800; cursor: pointer; font-family: 'Heebo', sans-serif; box-shadow: 0 4px 16px rgba(16,185,129,0.35); transition: transform 0.1s; }
 .done-btn:active { transform: scale(0.97); }
 
+/* ===== TASK SUCCESS POPUP ===== */
+.task-success-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.7);
+  background: linear-gradient(135deg, #6366F1, #8B5CF6);
+  color: white;
+  border-radius: 28px;
+  padding: 28px 36px;
+  text-align: center;
+  z-index: 4000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.3s cubic-bezier(.34,1.28,.64,1);
+  box-shadow: 0 12px 48px rgba(99,102,241,0.45);
+  min-width: 220px;
+}
+.task-success-popup.tsp-show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+.tsp-icon {
+  font-size: 3rem;
+  margin-bottom: 8px;
+  animation: tspBounce 0.5s cubic-bezier(.34,1.5,.64,1) both;
+}
+@keyframes tspBounce {
+  from { transform: scale(0.4); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.tsp-msg {
+  font-size: 1.15rem;
+  font-weight: 900;
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+.tsp-pts {
+  font-size: 1.6rem;
+  font-weight: 900;
+  background: rgba(255,255,255,0.2);
+  border-radius: 16px;
+  padding: 6px 20px;
+  display: inline-block;
+}
+
+/* ===== FLYING STAR ===== */
+.flying-star {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  line-height: 1;
+}
+
 /* ===== TOAST ===== */
 .success-toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.8); background: linear-gradient(135deg,#10B981,#059669); color: white; padding: 22px 44px; border-radius: 22px; font-size: 1.5rem; font-weight: 800; z-index: 3000; opacity: 0; transition: opacity 0.25s, transform 0.25s; pointer-events: none; text-align: center; box-shadow: 0 8px 40px rgba(16,185,129,0.4); }
 .success-toast.show { opacity: 1; transform: translate(-50%,-50%) scale(1); }

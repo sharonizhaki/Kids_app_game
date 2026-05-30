@@ -317,14 +317,127 @@ function showCatModal(cat, saveStateFn, renderChildFn) {
   document.body.appendChild(ov);
 }
 
+// -------- ENCOURAGEMENT MESSAGES --------
+const ENCOURAGE = [
+  { msg: 'כל הכבוד! אלוף אמיתי!', icon: '🏆' },
+  { msg: 'מדהים! המשך כך!', icon: '🌟' },
+  { msg: 'וואו, עשית את זה!', icon: '🔥' },
+  { msg: 'ענק! אתה סופר-גיבור!', icon: '🦸' },
+  { msg: 'יש! אתה הכי טוב!', icon: '💪' },
+  { msg: 'בום! משימה הושלמה!', icon: '🎉' },
+  { msg: 'אחלה עבודה, מלך!', icon: '👑' },
+  { msg: 'פנטסטי! אין עליך!', icon: '✨' },
+];
+
+function getEncourage() {
+  return ENCOURAGE[Math.floor(Math.random() * ENCOURAGE.length)];
+}
+
+// -------- FLYING STAR ANIMATION --------
+function flyStarToCounter(pts) {
+  const counterEl = document.getElementById('cpc-total-val');
+  if (!counterEl) return;
+
+  const targetRect = counterEl.getBoundingClientRect();
+  const targetX    = targetRect.left + targetRect.width / 2;
+  const targetY    = targetRect.top  + targetRect.height / 2;
+
+  // נקודת מוצא — מרכז המסך (איפה שהמודאל היה)
+  const startX = window.innerWidth  / 2;
+  const startY = window.innerHeight / 2;
+
+  const star = document.createElement('div');
+  star.className = 'flying-star';
+  star.textContent = '⭐';
+  star.style.cssText = `
+    position: fixed;
+    left: ${startX}px;
+    top: ${startY}px;
+    font-size: 2rem;
+    z-index: 9999;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: none;
+  `;
+  document.body.appendChild(star);
+
+  // force reflow
+  star.getBoundingClientRect();
+
+  star.style.transition = 'left 0.7s cubic-bezier(.4,0,.2,1), top 0.7s cubic-bezier(.4,0,.2,1), opacity 0.3s ease 0.5s, font-size 0.7s ease';
+  star.style.left       = `${targetX}px`;
+  star.style.top        = `${targetY}px`;
+  star.style.fontSize   = '0.8rem';
+  star.style.opacity    = '0';
+
+  setTimeout(() => {
+    star.remove();
+    // flash על מספר הכוכבים
+    counterEl.style.transition = 'transform 0.2s cubic-bezier(.34,1.5,.64,1)';
+    counterEl.style.transform  = 'scale(1.4)';
+    setTimeout(() => { counterEl.style.transform = 'scale(1)'; }, 220);
+  }, 750);
+}
+
+// -------- TASK SUCCESS POPUP --------
+function showTaskSuccessPopup(pts) {
+  const enc = getEncourage();
+
+  // הסר popup קודם אם יש
+  document.querySelectorAll('.task-success-popup').forEach(el => el.remove());
+
+  const popup = document.createElement('div');
+  popup.className = 'task-success-popup';
+  popup.innerHTML = `
+    <div class="tsp-icon">${enc.icon}</div>
+    <div class="tsp-msg">${enc.msg}</div>
+    <div class="tsp-pts">+${pts} ⭐</div>
+  `;
+  document.body.appendChild(popup);
+
+  // אנימציה
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { popup.classList.add('tsp-show'); });
+  });
+
+  setTimeout(() => {
+    popup.classList.remove('tsp-show');
+    setTimeout(() => popup.remove(), 350);
+  }, 1800);
+
+  // כוכב עף
+  flyStarToCounter(pts);
+}
+
 // -------- HANDLE COMPLETE --------
 function _handleComplete(t, withPhoto, saveStateFn, renderChildFn, ov) {
+  if (withPhoto) {
+    // פותח מצלמה — לא מסמן עדיין
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment';
+    input.onchange = () => {
+      // אחרי בחירת תמונה — מסמן כבוצע
+      completeTask(t, saveStateFn);
+      ov.remove();
+      if (t.requireApproval) {
+        showToast({ message: 'נשלח לאישור הורה! ⏳', color: state.childData?.color });
+      } else {
+        showTaskSuccessPopup(t.pts);
+      }
+      renderChildFn();
+    };
+    input.click();
+    return;
+  }
+
   completeTask(t, saveStateFn);
   ov.remove();
   if (t.requireApproval) {
     showToast({ message: 'נשלח לאישור הורה! ⏳', color: state.childData?.color });
   } else {
-    showToast({ pts: t.pts, color: state.childData?.color });
+    showTaskSuccessPopup(t.pts);
   }
   renderChildFn();
 }
