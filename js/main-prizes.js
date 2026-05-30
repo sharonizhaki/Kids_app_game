@@ -897,8 +897,7 @@ export async function initPrizesPage(familyId) {
 
   if (mode === 'manage') {
     showScreen('screen-manage-prizes');
-    switchTab('prizes');
-    await updateRequestsBadge();
+    renderPrizesList();
   } else {
     // ברירת מחדל: הוספת פרס
     await openAddPrize(familyId);

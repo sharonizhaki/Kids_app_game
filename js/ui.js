@@ -155,8 +155,12 @@ export async function openSideMenu({ auth, onAction }) {
       <span id="side-prizes-badge" style="display:none;background:#EF4444;color:white;font-size:0.65rem;font-weight:900;border-radius:999px;padding:2px 7px;min-width:18px;text-align:center;margin-right:auto;"></span>
     </div>
     <div class="side-item" data-action="manage-points">
-      <div class="side-icon" style="background:linear-gradient(135deg,#CCFBF1,#99F6E4);">⭐</div>
-      <span class="side-item-text">ניהול ניקוד ומטלות</span>
+      <div class="side-icon" style="background:linear-gradient(135deg,#CCFBF1,#99F6E4);">📋</div>
+      <span class="side-item-text">מרכז פעילות</span>
+    </div>
+    <div class="side-item" data-action="stats">
+      <div class="side-icon" style="background:linear-gradient(135deg,#E0E7FF,#C7D2FE);">📊</div>
+      <span class="side-item-text">סטטיסטיקות</span>
     </div>
     <div class="side-item" data-action="replay-tour">
       <div class="side-icon" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);">🧭</div>

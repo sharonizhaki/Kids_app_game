@@ -135,26 +135,7 @@
     + הוסף פרס חדש
   </button>
 
-  <div style="max-width:480px;width:100%;display:flex;gap:8px;margin-bottom:16px;
-              border:2px solid var(--border);border-radius:14px;padding:4px;background:var(--bg);">
-    <button class="manage-tab btn" data-tab="prizes"
-      style="flex:1;padding:9px 6px;font-size:0.85rem;font-weight:800;font-family:'Heebo',sans-serif;
-             border:none;border-radius:10px;cursor:pointer;transition:all 0.2s;">פרסים</button>
-    <button class="manage-tab btn" data-tab="requests"
-      style="flex:1;padding:9px 6px;font-size:0.85rem;font-weight:800;font-family:'Heebo',sans-serif;
-             border:none;border-radius:10px;cursor:pointer;transition:all 0.2s;position:relative;">
-      בקשות
-      <span id="requests-badge"
-        style="display:none;position:absolute;top:4px;right:6px;min-width:18px;height:18px;
-               background:#EF4444;color:white;border-radius:50%;font-size:0.65rem;font-weight:900;
-               line-height:18px;text-align:center;padding:0 3px;">0</span>
-    </button>
-    <button class="manage-tab btn" data-tab="stats"
-      style="flex:1;padding:9px 6px;font-size:0.85rem;font-weight:800;font-family:'Heebo',sans-serif;
-             border:none;border-radius:10px;cursor:pointer;transition:all 0.2s;">סטטיסטיקה</button>
-  </div>
-
-  <div id="tab-prizes" class="tab-content" style="display:none;max-width:480px;width:100%;">
+  <div style="max-width:480px;width:100%;">
     <div class="filter-scroll" id="prizes-filter">
       <span class="filter-chip active" data-filter="all">📋 לפי סדר הוספה</span>
       <span class="filter-chip" data-filter="child">👧👦 לפי ילד</span>
@@ -162,20 +143,6 @@
     </div>
     <div class="sub-filter-scroll" id="prizes-sub-filter" style="display:none;"></div>
     <div id="prizes-list"></div>
-  </div>
-  <div id="tab-requests" class="tab-content" style="display:none;max-width:480px;width:100%;">
-    <div style="display:flex;gap:8px;margin-bottom:12px;">
-      <button class="req-filter-btn btn" data-filter="pending"
-        style="flex:1;padding:8px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
-               border:2px solid var(--border);border-radius:10px;background:var(--primary);color:white;cursor:pointer;">⏳ ממתינות</button>
-      <button class="req-filter-btn btn" data-filter="history"
-        style="flex:1;padding:8px;font-size:0.82rem;font-weight:800;font-family:'Heebo',sans-serif;
-               border:2px solid var(--border);border-radius:10px;background:var(--card);color:var(--muted);cursor:pointer;">📜 היסטוריה</button>
-    </div>
-    <div id="requests-list"></div>
-  </div>
-  <div id="tab-stats" class="tab-content" style="display:none;max-width:480px;width:100%;">
-    <div id="stats-content"></div>
   </div>
 </div>
 
