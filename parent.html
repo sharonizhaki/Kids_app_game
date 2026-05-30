@@ -94,6 +94,31 @@
     <div id="approval-list" style="display:flex;flex-direction:column;gap:10px;"></div>
   </div>
 
+  <!-- ==================== QUICK ACTIONS ==================== -->
+  <div style="width:100%;max-width:480px;margin-top:20px;padding:0 4px;">
+    <div style="font-size:0.82rem;font-weight:800;color:#64748B;margin-bottom:10px;padding:0 2px;display:flex;align-items:center;gap:6px;">
+      <span>⚡</span><span>פעולות מהירות</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <button class="dash-action-btn" onclick="document.getElementById('btn-add-tasks').click()">
+        <span class="dash-action-icon" style="background:linear-gradient(135deg,#D1FAE5,#6EE7B7);">➕</span>
+        <span class="dash-action-label">הוספת מטלה</span>
+      </button>
+      <button class="dash-action-btn" onclick="document.getElementById('btn-edit-tasks').click()">
+        <span class="dash-action-icon" style="background:linear-gradient(135deg,#E0E7FF,#C7D2FE);">✏️</span>
+        <span class="dash-action-label">עריכת מטלות</span>
+      </button>
+      <button class="dash-action-btn" onclick="document.getElementById('btn-add-prizes').click()">
+        <span class="dash-action-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);">🎁</span>
+        <span class="dash-action-label">הוספת פרס</span>
+      </button>
+      <button class="dash-action-btn" onclick="document.getElementById('btn-manage-family').click()">
+        <span class="dash-action-icon" style="background:linear-gradient(135deg,#FCE7F3,#FBCFE8);">👨‍👩‍👧‍👦</span>
+        <span class="dash-action-label">ניהול משפחה</span>
+      </button>
+    </div>
+  </div>
+
   <!-- Hidden trigger buttons -->
   <button style="display:none;" id="btn-manage-family"></button>
   <button style="display:none;" id="btn-add-tasks"></button>
