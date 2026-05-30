@@ -76,30 +76,6 @@ function _showCarouselPrize(idx) {
   dots.forEach((d, i) => d.classList.toggle('active', i === idx));
 }
 
-// -------- RENDER HOME PRIZE CARD --------
-export async function renderHomePrizeCard(db, familyId, childId, totalPts) {
-  if (!db) return;
-  try {
-    const snap = await getDocs(collection(db, 'families', familyId, 'prizes'));
-    const prizes = snap.docs
-      .map(d => ({ id: d.id, ...d.data() }))
-      .filter(p => p.active !== false)
-      .filter(p => !p.assignedChildren || p.assignedChildren.length === 0 || p.assignedChildren.includes(childId))
-      .sort((a, b) => (a.cost || 0) - (b.cost || 0));
-
-    if (prizes.length === 0) {
-      const nameEl = document.getElementById('ppcard-name');
-      if (nameEl) nameEl.textContent = 'ממתין שההורים יצרו מתנות';
-      const dotsEl = document.getElementById('ppcard-dots');
-      if (dotsEl) dotsEl.innerHTML = '';
-      return;
-    }
-
-    startPrizeCarousel(prizes, totalPts);
-  } catch(e) {
-    console.error('renderHomePrizeCard error:', e);
-  }
-}
 // -------- INIT --------
 export function initPrizes(db) {
   _db = db;
