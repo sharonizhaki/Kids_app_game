@@ -10,8 +10,96 @@ import { showToast }                from './child-ui.js';
 
 let _db = null;
 
-// -------- INIT --------
-export function initPrizes(db) {
+// -------- PRIZE CAROUSEL --------
+let _carouselPrizes  = [];
+let _carouselIndex   = 0;
+let _carouselTimer   = null;
+let _totalPtsCache   = 0;
+
+function startPrizeCarousel(prizes, totalPts) {
+  _carouselPrizes = prizes;
+  _totalPtsCache  = totalPts;
+  _carouselIndex  = 0;
+
+  // ניקוי טיימר קודם
+  if (_carouselTimer) clearInterval(_carouselTimer);
+
+  _renderCarouselDots();
+  _showCarouselPrize(_carouselIndex);
+
+  if (prizes.length > 1) {
+    _carouselTimer = setInterval(() => {
+      _carouselIndex = (_carouselIndex + 1) % _carouselPrizes.length;
+      _animateCarousel(_carouselIndex);
+    }, 2000);
+  }
+}
+
+function _renderCarouselDots() {
+  const dotsEl = document.getElementById('ppcard-dots');
+  if (!dotsEl) return;
+  dotsEl.innerHTML = _carouselPrizes.map((_, i) =>
+    `<span class="ppcard-dot${i === 0 ? ' active' : ''}"></span>`
+  ).join('');
+}
+
+function _animateCarousel(idx) {
+  const row = document.getElementById('ppcard-prize-row');
+  if (!row) return;
+
+  row.classList.add('fade-out');
+  setTimeout(() => {
+    _showCarouselPrize(idx);
+    row.classList.remove('fade-out');
+  }, 220);
+}
+
+function _showCarouselPrize(idx) {
+  const prize   = _carouselPrizes[idx];
+  const missing = Math.max(0, (prize.cost || 0) - _totalPtsCache);
+  const pct     = Math.min(100, Math.round((_totalPtsCache / (prize.cost || 1)) * 100));
+
+  const emojiEl     = document.getElementById('ppcard-emoji');
+  const nameEl      = document.getElementById('ppcard-name');
+  const remainEl    = document.getElementById('ppcard-remaining');
+  const fillEl      = document.getElementById('ppcard-bar-fill');
+  const labelEl     = document.getElementById('ppcard-bar-label');
+
+  if (emojiEl)  emojiEl.textContent  = prize.emoji || '🎁';
+  if (nameEl)   nameEl.textContent   = prize.title || '';
+  if (remainEl) remainEl.textContent = missing > 0 ? `עוד ${missing} ⭐ להשגה` : '✅ אפשר לבקש!';
+  if (fillEl)   fillEl.style.width   = `${pct}%`;
+  if (labelEl)  labelEl.textContent  = `${_totalPtsCache}/${prize.cost || 0} ⭐`;
+
+  // עדכון נקודות
+  const dots = document.querySelectorAll('.ppcard-dot');
+  dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+}
+
+// -------- RENDER HOME PRIZE CARD --------
+export async function renderHomePrizeCard(db, familyId, childId, totalPts) {
+  if (!db) return;
+  try {
+    const snap = await getDocs(collection(db, 'families', familyId, 'prizes'));
+    const prizes = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(p => p.active !== false)
+      .filter(p => !p.assignedChildren || p.assignedChildren.length === 0 || p.assignedChildren.includes(childId))
+      .sort((a, b) => (a.cost || 0) - (b.cost || 0));
+
+    if (prizes.length === 0) {
+      const nameEl = document.getElementById('ppcard-name');
+      if (nameEl) nameEl.textContent = 'ממתין שההורים יצרו מתנות';
+      const dotsEl = document.getElementById('ppcard-dots');
+      if (dotsEl) dotsEl.innerHTML = '';
+      return;
+    }
+
+    startPrizeCarousel(prizes, totalPts);
+  } catch(e) {
+    console.error('renderHomePrizeCard error:', e);
+  }
+}
   _db = db;
   const reqRef = query(
     collection(_db, 'families', state.familyId, 'prizeRequests'),

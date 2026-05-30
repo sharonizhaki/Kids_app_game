@@ -46,22 +46,16 @@
   <!-- cpc-tasks-today (hidden, kept for JS) -->
   <div id="cpc-tasks-today" style="display:none;"></div>
 
-  <!-- STATS ROW: שבוע · סה"כ · streak -->
-  <div class="stats-row stats-row-3">
-    <div class="stat-card">
-      <div class="stat-val" id="pb-val" style="color:var(--child-color);">0</div>
-      <div class="stat-label">השבוע ⭐</div>
-    </div>
-    <div class="stat-card stat-streak" id="streak-card">
-      <div class="stat-val streak-val" id="streak-val">0</div>
-      <div class="stat-label">ברצף 🔥</div>
-    </div>
-  </div>
+  <!-- hidden stats kept for JS compatibility -->
+  <div id="pb-val" style="display:none;">0</div>
+  <div id="streak-val" style="display:none;">0</div>
+  <div id="streak-card" style="display:none;"></div>
 
-  <!-- בר מתנה מסתובב -->
+  <!-- בר פרס קרוסל -->
   <div class="prize-progress-card" id="prize-progress-card">
     <div class="ppcard-header">
-      <span class="ppcard-label">המטרה הבאה שלי 🎯</span>
+      <span class="ppcard-label">הפרס הבא שלי 🎁</span>
+      <span class="ppcard-carousel-dots" id="ppcard-dots"></span>
     </div>
     <div class="ppcard-prize-row" id="ppcard-prize-row">
       <div class="ppcard-prize-emoji" id="ppcard-emoji">🎁</div>

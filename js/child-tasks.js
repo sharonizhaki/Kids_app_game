@@ -161,6 +161,32 @@ export function renderPendingSection() {
     </div>`).join('');
 }
 
+// -------- CATEGORY COLORS (dynamic palette) --------
+const CAT_PALETTES = [
+  { bg: '#fff3e0', text: '#b45309' }, // כתום
+  { bg: '#e8f5e9', text: '#166534' }, // ירוק
+  { bg: '#e3f2fd', text: '#1e40af' }, // כחול
+  { bg: '#fce4ec', text: '#9d174d' }, // ורוד
+  { bg: '#f3e8ff', text: '#6b21a8' }, // סגול
+  { bg: '#e0f7fa', text: '#0e7490' }, // טורקיז
+  { bg: '#fef9c3', text: '#854d0e' }, // צהוב
+  { bg: '#ffe4e6', text: '#9f1239' }, // אדום בהיר
+  { bg: '#ecfdf5', text: '#065f46' }, // מנטה
+  { bg: '#fdf4ff', text: '#7e22ce' }, // לילך
+];
+
+// מיפוי שם קטגוריה → palette index (נשמר בזיכרון בריצה)
+const _catColorMap = {};
+let _catColorCounter = 0;
+
+function getCatPalette(catName) {
+  if (_catColorMap[catName] === undefined) {
+    _catColorMap[catName] = _catColorCounter % CAT_PALETTES.length;
+    _catColorCounter++;
+  }
+  return CAT_PALETTES[_catColorMap[catName]];
+}
+
 // -------- RENDER CATEGORIES GRID --------
 export function renderCategories(saveStateFn, renderChildFn) {
   const grid = document.getElementById('cats-grid');
@@ -188,9 +214,11 @@ export function renderCategories(saveStateFn, renderChildFn) {
     const pn      = tasks.filter(t => !isDone(t) && isPending(t)).length;
     const allDone = dn === tasks.length;
     const icon    = tasks[0]?.catIcon || '📋';
+    const pal     = getCatPalette(cat);
 
     return `
-      <button class="cat-btn${allDone ? ' cat-btn-done' : ''}" data-cat="${cat}">
+      <button class="cat-btn${allDone ? ' cat-btn-done' : ''}" data-cat="${cat}"
+        style="--cat-bg:${pal.bg};--cat-text:${pal.text};background:${pal.bg};">
         <span class="cat-icon">${icon}</span>
         <span class="cat-name">${cat}</span>
         ${allDone
@@ -204,6 +232,102 @@ export function renderCategories(saveStateFn, renderChildFn) {
   });
 }
 
+// -------- CATEGORY MODAL — NEW --------
+function showCatModal(cat, saveStateFn, renderChildFn) {
+  const tasks = state.tasksData.filter(t => (t.cat || 'כללי') === cat && !t.hidden);
+  const pal   = getCatPalette(cat);
+  const icon  = tasks[0]?.catIcon || '📋';
+
+  // overlay
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay';
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+
+  // sheet
+  const sh = document.createElement('div');
+  sh.className = 'modal-sheet';
+  sh.style.cssText = 'overflow:hidden;';
+
+  // header צבעוני
+  const header = document.createElement('div');
+  header.className = 'task-modal-header';
+  header.style.cssText = `background:${pal.bg};`;
+  header.innerHTML = `
+    <span class="task-modal-header-emoji">${icon}</span>
+    <span class="task-modal-header-title" style="color:${pal.text};">${cat}</span>
+    <button class="task-modal-close" style="color:${pal.text};">✕</button>`;
+  header.querySelector('.task-modal-close').onclick = () => ov.remove();
+
+  const body = document.createElement('div');
+  body.style.cssText = 'overflow-y:auto;max-height:65vh;';
+
+  tasks.forEach(t => {
+    const done    = isDone(t);
+    const pending = !done && isPending(t);
+
+    const row = document.createElement('div');
+    row.className = `task-row-item${done ? ' task-row-done' : pending ? ' task-row-pending' : ''}`;
+
+    // תוכן שורה
+    const freqCls = FREQ_CLS[t.freq] || '';
+    row.innerHTML = `
+      <span class="task-row-emoji">${t.emoji || '⭐'}</span>
+      <div class="task-row-info">
+        <strong>${t.task}</strong>
+        <span class="freq-tag ${freqCls}">${FREQ_LABEL[t.freq] || ''}</span>
+      </div>
+      <div class="task-row-actions"></div>`;
+
+    const actions = row.querySelector('.task-row-actions');
+
+    if (done) {
+      actions.innerHTML = `<span style="font-size:1.3rem;">✅</span>`;
+    } else if (pending) {
+      actions.innerHTML = `<span style="font-size:1.1rem;">⏳</span>`;
+    } else if (t.requireApproval) {
+      // חובה לצלם
+      const btnPhoto = document.createElement('button');
+      btnPhoto.className = 'task-btn-photo-required';
+      btnPhoto.textContent = '📸 צלם';
+      btnPhoto.onclick = () => _handleComplete(t, true, saveStateFn, renderChildFn, ov);
+      actions.appendChild(btnPhoto);
+    } else {
+      // ✅ + 📸 אופציונלי
+      const btnDone = document.createElement('button');
+      btnDone.className = 'task-btn-done';
+      btnDone.textContent = '✅ סיימתי';
+      btnDone.onclick = () => _handleComplete(t, false, saveStateFn, renderChildFn, ov);
+
+      const btnPhoto = document.createElement('button');
+      btnPhoto.className = 'task-btn-photo';
+      btnPhoto.textContent = '📸';
+      btnPhoto.title = 'צלם תמונה (אופציונלי)';
+      btnPhoto.onclick = () => _handleComplete(t, false, saveStateFn, renderChildFn, ov);
+
+      actions.appendChild(btnDone);
+      actions.appendChild(btnPhoto);
+    }
+
+    body.appendChild(row);
+  });
+
+  sh.appendChild(header);
+  sh.appendChild(body);
+  ov.appendChild(sh);
+  document.body.appendChild(ov);
+}
+
+// -------- HANDLE COMPLETE --------
+function _handleComplete(t, withPhoto, saveStateFn, renderChildFn, ov) {
+  completeTask(t, saveStateFn);
+  ov.remove();
+  if (t.requireApproval) {
+    showToast({ message: 'נשלח לאישור הורה! ⏳', color: state.childData?.color });
+  } else {
+    showToast({ pts: t.pts, color: state.childData?.color });
+  }
+  renderChildFn();
+}
 // -------- RENDER HISTORY --------
 export function renderHistory() {
   const hl = document.getElementById('user-hist');
@@ -220,143 +344,4 @@ export function renderHistory() {
           <span class="hi-pts">${starsText(h.pts)}</span>
         </div>`).join('')
     : '<div class="empty-state">עדיין לא ביצעת משימות</div>';
-}
-
-// -------- SWIPE HELPER --------
-// מחבר סווייפ שמאלה (≥80px) ל-task card — פותח מודל פרטים
-function attachSwipe(cardEl, onSwipe) {
-  let startX = 0;
-  let startY = 0;
-  let dragging = false;
-  const THRESHOLD = 80; // px לסווייפ
-  const MAX_VERTICAL = 30; // px מקסימום אנכי לפני ביטול
-
-  cardEl.addEventListener('touchstart', (e) => {
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-    dragging = true;
-  }, { passive: true });
-
-  cardEl.addEventListener('touchmove', (e) => {
-    if (!dragging) return;
-    const dx = startX - e.touches[0].clientX; // חיובי = שמאלה (RTL: פעולה)
-    const dy = Math.abs(e.touches[0].clientY - startY);
-
-    // אם גלילה אנכית — מבטל
-    if (dy > MAX_VERTICAL) { dragging = false; cardEl.style.transform = ''; cardEl.classList.remove('swiping','swipe-ready'); return; }
-
-    if (dx > 0) {
-      cardEl.classList.add('swiping');
-      const clamped = Math.min(dx, THRESHOLD * 1.2);
-      cardEl.style.transform = `translateX(-${clamped}px)`;
-      if (dx >= THRESHOLD) {
-        cardEl.classList.add('swipe-ready');
-      } else {
-        cardEl.classList.remove('swipe-ready');
-      }
-    }
-  }, { passive: true });
-
-  const onEnd = (e) => {
-    if (!dragging) return;
-    dragging = false;
-    const dx = startX - (e.changedTouches?.[0]?.clientX ?? startX);
-    // animate back
-    cardEl.classList.remove('swiping');
-    cardEl.style.transform = '';
-    cardEl.classList.remove('swipe-ready');
-
-    if (dx >= THRESHOLD) {
-      onSwipe();
-    }
-  };
-
-  cardEl.addEventListener('touchend',    onEnd, { passive: true });
-  cardEl.addEventListener('touchcancel', onEnd, { passive: true });
-}
-
-// -------- CATEGORY MODAL --------
-function showCatModal(cat, saveStateFn, renderChildFn) {
-  const tasks = state.tasksData.filter(t => (t.cat || 'כללי') === cat && !t.hidden);
-  const body  = makeModal(`${tasks[0]?.catIcon || '📋'} ${cat}`);
-
-  tasks.forEach(t => {
-    const done    = isDone(t);
-    const pending = !done && isPending(t);
-
-    // wrapper — רקע צבעוני + clipping לסווייפ
-    const wrap = document.createElement('div');
-    wrap.className = 'task-card-wrap';
-
-    // שכבת reveal מתחת (נראית בסווייפ)
-    const reveal = document.createElement('div');
-    reveal.className = 'task-card-reveal';
-    reveal.innerHTML = done ? '' : pending ? '' : '👈 החלק לפרטים';
-    wrap.appendChild(reveal);
-
-    // הכרטיס עצמו
-    const d = document.createElement('div');
-    d.className = `task-card${done ? ' done' : pending ? ' task-pending' : ''}`;
-    d.innerHTML = `
-      <div class="tc-left">
-        <span class="tc-emoji">${t.emoji || '⭐'}</span>
-        <div class="tc-info">
-          <strong>${t.task}</strong>
-          <span class="freq-tag ${FREQ_CLS[t.freq] || ''}">${FREQ_LABEL[t.freq] || ''}</span>
-          ${t.requireApproval ? '<span class="approval-tag">👁️ דורש אישור</span>' : ''}
-        </div>
-      </div>
-      <span class="tc-pts">${done ? '✅' : pending ? '⏳' : starsText(t.pts)}</span>
-      ${!done && !pending ? '<span class="task-card-hint">←</span>' : ''}`;
-
-    // סווייפ — רק לכרטיסים פעילים
-    if (!done && !pending) {
-      attachSwipe(d, () => {
-        showTaskDetail(t, saveStateFn, renderChildFn);
-      });
-    }
-
-    wrap.appendChild(d);
-    body.appendChild(wrap);
-  });
-}
-
-// -------- TASK DETAIL MODAL --------
-function showTaskDetail(t, saveStateFn, renderChildFn) {
-  closeModals();
-  const body = makeModal(t.task);
-
-  if (t.emojis || t.emoji) {
-    const emojiDisplay = document.createElement('span');
-    emojiDisplay.className = 'task-emoji-display';
-    emojiDisplay.textContent = t.emojis || t.emoji;
-    body.appendChild(emojiDisplay);
-  }
-
-  const desc = document.createElement('p');
-  desc.className   = 'td-desc';
-  desc.textContent = t.desc || '';
-
-  const meta = document.createElement('div');
-  meta.className = 'td-meta';
-  meta.innerHTML = `
-    <span>${starsText(t.pts)}</span>
-    <span>🔁 ${FREQ_LABEL[t.freq] || ''}</span>
-    ${t.requireApproval ? '<span class="approval-meta-tag">👁️ דורש אישור הורה</span>' : ''}`;
-
-  const btn = document.createElement('button');
-  btn.className   = 'done-btn';
-  btn.textContent = t.requireApproval ? '📤 שלח לאישור הורה' : '✅ בוצע!';
-  btn.onclick = () => {
-    completeTask(t, saveStateFn);
-    closeModals();
-    if (t.requireApproval) {
-      showToast({ message: 'נשלח לאישור הורה! ⏳', color: state.childData?.color });
-    } else {
-      showToast({ pts: t.pts, color: state.childData?.color });
-    }
-    renderChildFn();
-  };
-
-  body.append(desc, meta, btn);
 }

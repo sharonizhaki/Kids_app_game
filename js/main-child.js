@@ -344,7 +344,7 @@ async function loadChild() {
         if (data.assignedChildren?.includes(state.childId))
           state.tasksData.push({ id: d.id, ...data });
       });
-      renderCategories(saveState, renderChild);
+      renderChild();
     });
 
     // listener על prizes — לעדכן את בר המתנות בזמן אמת
@@ -374,7 +374,7 @@ async function loadChild() {
             if (idx !== -1) {
               cs.pending[idx].status = data.status;
               saveState();
-              renderPendingSection();
+              renderChild();
             }
           }
         });
@@ -399,6 +399,8 @@ async function loadChild() {
               cs.monthlyPts = Math.max(0, (cs.monthlyPts || 0) - cost);
               saveState();
               renderChild();
+              const prizesScreen = document.getElementById('screen-prizes-child');
+              if (prizesScreen && prizesScreen.classList.contains('active')) renderPrizesScreen();
               showToast({ message: `${data.prizeEmoji || '🎁'} ${data.prizeTitle} אושר!`, color: state.childData?.color });
             }
           }
