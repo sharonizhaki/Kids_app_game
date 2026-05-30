@@ -100,6 +100,8 @@ export async function renderHomePrizeCard(db, familyId, childId, totalPts) {
     console.error('renderHomePrizeCard error:', e);
   }
 }
+// -------- INIT --------
+export function initPrizes(db) {
   _db = db;
   const reqRef = query(
     collection(_db, 'families', state.familyId, 'prizeRequests'),
