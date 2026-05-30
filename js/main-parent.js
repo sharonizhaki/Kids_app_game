@@ -15,6 +15,7 @@ import {
 import { SPLAT_SVG } from './icons.js';
 import { createQuickTasks } from './tasks.js';
 import { createQuickPrizes } from './prizes.js';
+import { initApprovalQueue } from './approval-queue.js';
 
 // =========== GUARD: הורה חייב להיות מחובר ===========
 function checkAuth() {
@@ -303,6 +304,7 @@ async function handleQuickPrizes(triggerEl, category) {
   refreshQuickPrizesBanner();
   renderDashTaskRows(currentFamilyId);
   saveWeeklySnapshot(currentFamilyId).catch(() => {});
+  initApprovalQueue(currentFamilyId);
 
   // Quick banner buttons
   document.getElementById('btn-quick-banner-close').addEventListener('click', dismissQuickBanner);

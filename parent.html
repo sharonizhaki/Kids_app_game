@@ -81,6 +81,19 @@
     </div>
   </div>
 
+  <!-- ==================== APPROVAL QUEUE ==================== -->
+  <div id="approval-queue" style="display:none;width:100%;max-width:480px;margin-top:20px;padding:0 4px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 2px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:1.05rem;">👆</span>
+        <span style="font-size:0.88rem;font-weight:900;color:#1E293B;">ממתינים לאישורך</span>
+        <span id="approval-count" style="background:#EF4444;color:white;font-size:0.68rem;font-weight:900;border-radius:50%;min-width:20px;height:20px;padding:0 5px;display:inline-flex;align-items:center;justify-content:center;font-family:'Heebo',sans-serif;">0</span>
+      </div>
+      <span style="font-size:0.7rem;color:#94A3B8;font-weight:600;">החלק לאישור או לביטול</span>
+    </div>
+    <div id="approval-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+
   <!-- Hidden trigger buttons -->
   <button style="display:none;" id="btn-manage-family"></button>
   <button style="display:none;" id="btn-add-tasks"></button>
