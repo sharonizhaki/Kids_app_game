@@ -1,13 +1,13 @@
 /* =========== child.css =========== */
 :root {
-  --child-color: #6366F1;
-  --bg:     #ECEEFF;
+  --child-color: #7C3AED;
+  --bg:     #F5F3FF;
   --card:   #FFFFFF;
   --text:   #1E293B;
   --muted:  #94A3B8;
   --border: #DDD6FE;
   --danger: #EF4444;
-  --shadow: 0 4px 24px rgba(99,102,241,0.10);
+  --shadow: 0 4px 24px rgba(124,58,237,0.10);
   --radius: 18px;
   --nav-h:  68px;
 }
@@ -36,7 +36,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 .logout-btn:active { transform: scale(0.93); }
 
 /* ===== BACK BUTTON ===== */
-.back-btn { background: var(--card); border: 2px solid var(--border); border-radius: 50%; width: 44px; height: 44px; font-size: 1.3rem; cursor: pointer; box-shadow: 0 2px 12px rgba(99,102,241,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text); transition: transform 0.15s; }
+.back-btn { background: var(--card); border: 2px solid var(--border); border-radius: 50%; width: 44px; height: 44px; font-size: 1.3rem; cursor: pointer; box-shadow: 0 2px 12px rgba(124,58,237,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text); transition: transform 0.15s; }
 .back-btn:active { transform: scale(0.93); }
 
 /* ===== TOP BAR (replaces hero) ===== */
@@ -341,7 +341,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 .hi-pts             { font-weight: 700; color: #10B981; }
 
 /* ===== BOTTOM NAV ===== */
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h); background: var(--card); border-top: 1.5px solid #DDD6FE; display: flex; align-items: stretch; box-shadow: 0 -4px 20px rgba(99,102,241,0.10); z-index: 500; padding-bottom: env(safe-area-inset-bottom); }
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h); background: var(--card); border-top: 1.5px solid #DDD6FE; display: flex; align-items: stretch; box-shadow: 0 -4px 20px rgba(124,58,237,0.10); z-index: 500; padding-bottom: env(safe-area-inset-bottom); }
 .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: none; border: none; cursor: pointer; position: relative; padding: 8px 4px; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
 .nav-btn:active  { background: #F8FAFC; }
 .nav-icon  { font-size: 1.4rem; line-height: 1; transition: transform 0.2s cubic-bezier(.34,1.5,.64,1); }
@@ -352,7 +352,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 .nav-badge { position: absolute; top: 6px; right: calc(50% - 18px); min-width: 18px; height: 18px; background: var(--danger); color: white; border-radius: 9px; font-size: 0.65rem; font-weight: 800; display: flex; align-items: center; justify-content: center; padding: 0 4px; font-family: 'Heebo', sans-serif; border: 2px solid var(--card); }
 
 /* ===== PRIZES SCREEN ===== */
-.prizes-stars-banner { background: linear-gradient(135deg, var(--child-color), #818CF8); border-radius: var(--radius); padding: 16px 20px; max-width: 480px; margin: 0 auto 18px; display: flex; align-items: center; justify-content: space-between; color: white; }
+.prizes-stars-banner { background: linear-gradient(135deg, var(--child-color), #A78BFA); border-radius: var(--radius); padding: 16px 20px; max-width: 480px; margin: 0 auto 18px; display: flex; align-items: center; justify-content: space-between; color: white; }
 .psb-label { font-size: 0.9rem; font-weight: 700; }
 .psb-val   { font-size: 1.4rem; font-weight: 900; }
 .section-title { font-size: 0.88rem; font-weight: 800; color: var(--muted); max-width: 480px; margin: 0 auto 10px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -386,30 +386,30 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 }
 .prize-lock-bar-fill {
   height: 100%; border-radius: 3px;
-  background: linear-gradient(90deg, #818CF8, #6366F1);
+  background: linear-gradient(90deg, #A78BFA, #7C3AED);
   transition: width 0.5s cubic-bezier(.4,0,.2,1);
 }
 
 .prize-emoji { font-size: 2.4rem; }
 .prize-title { font-size: 0.88rem; font-weight: 700; line-height: 1.2; }
-.prize-cost  { font-size: 0.8rem; font-weight: 800; color: var(--child-color); background: #EEF2FF; border-radius: 8px; padding: 3px 10px; }
+.prize-cost  { font-size: 0.8rem; font-weight: 800; color: var(--child-color); background: #EDE9FE; border-radius: 8px; padding: 3px 10px; }
 
 /* כפתור בקשה — סגול מזמין */
 .prize-request-btn {
   width: 100%; padding: 10px;
-  background: linear-gradient(135deg, #6366F1, #818CF8);
+  background: linear-gradient(135deg, #7C3AED, #A78BFA);
   color: white; border: none; border-radius: 12px;
   font-size: 0.88rem; font-weight: 800;
   cursor: pointer; font-family: 'Heebo', sans-serif;
   transition: transform 0.1s, opacity 0.2s;
-  box-shadow: 0 3px 10px rgba(99,102,241,0.28);
+  box-shadow: 0 3px 10px rgba(124,58,237,0.28);
 }
 .prize-request-btn:active { transform: scale(0.97); }
 
 /* כפתור ממתין — מושתק */
 .prize-btn-pending {
   background: #C7D2FE;
-  color: #4F46E5;
+  color: #6D28D9;
   box-shadow: none;
   cursor: default;
   opacity: 0.8;
@@ -422,7 +422,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
   border-radius: 8px; padding: 4px 8px;
   text-align: center;
 }
-.prize-status-pending  { background: #EEF2FF; color: #4F46E5; }
+.prize-status-pending  { background: #EDE9FE; color: #6D28D9; }
 .prize-status-approved { background: #DCFCE7; color: #15803D; }
 .pending-req-card  { background: var(--card); border-radius: 14px; padding: 14px 16px; margin: 0 auto 10px; max-width: 480px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); }
 .pending-req-emoji { font-size: 1.8rem; }
@@ -475,7 +475,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
   border-radius: 14px;
   margin-bottom: 10px;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--child-color, #6366F1), #10B981);
+  background: linear-gradient(135deg, var(--child-color, #7C3AED), #10B981);
 }
 .task-card {
   position: relative;
@@ -551,7 +551,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0.7);
-  background: linear-gradient(135deg, #6366F1, #8B5CF6);
+  background: linear-gradient(135deg, #7C3AED, #8B5CF6);
   color: white;
   border-radius: 28px;
   padding: 28px 36px;
@@ -560,7 +560,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.25s ease, transform 0.3s cubic-bezier(.34,1.28,.64,1);
-  box-shadow: 0 12px 48px rgba(99,102,241,0.45);
+  box-shadow: 0 12px 48px rgba(124,58,237,0.45);
   min-width: 220px;
 }
 .task-success-popup.tsp-show {
@@ -609,9 +609,9 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 /* ===== EMOJI & COLOR PICKERS ===== */
 .emoji-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; margin: 12px 0; }
 .emoji-opt  { width: 100%; aspect-ratio: 1; border-radius: 14px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; font-size: 1.65rem; cursor: pointer; transition: transform 0.15s, background 0.15s; }
-.emoji-opt:hover   { transform: scale(1.15); background: rgba(99,102,241,0.08); }
+.emoji-opt:hover   { transform: scale(1.15); background: rgba(124,58,237,0.08); }
 .emoji-opt:active  { transform: scale(0.9); }
-.emoji-opt.selected { transform: scale(1.12); background: linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.15)); box-shadow: 0 0 0 2.5px rgba(99,102,241,0.5); }
+.emoji-opt.selected { transform: scale(1.12); background: linear-gradient(135deg,rgba(124,58,237,0.15),rgba(139,92,246,0.15)); box-shadow: 0 0 0 2.5px rgba(124,58,237,0.5); }
 .color-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin: 12px 0; }
 .color-opt  { width: 100%; aspect-ratio: 1; border-radius: 50%; border: none; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
 .color-opt:hover   { transform: scale(1.12); }
@@ -737,10 +737,10 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 .splat-confirm-btn {
   display: block; margin: 4px auto 0;
   padding: 12px 36px;
-  background: linear-gradient(135deg, #6366F1, #4F46E5);
+  background: linear-gradient(135deg, #7C3AED, #6D28D9);
   color: white; border: none; border-radius: 16px;
   font-size: 1rem; font-weight: 800; font-family: 'Heebo', sans-serif;
-  cursor: pointer; box-shadow: 0 4px 16px rgba(99,102,241,0.35);
+  cursor: pointer; box-shadow: 0 4px 16px rgba(124,58,237,0.35);
   transition: transform 0.1s;
 }
 .splat-confirm-btn:active { transform: scale(0.97); }
