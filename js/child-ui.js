@@ -14,6 +14,10 @@ export function show(id) {
   if (!next) return;
   next.classList.add('active');
   requestAnimationFrame(() => requestAnimationFrame(() => next.classList.add('visible')));
+  const lock = next.classList.contains('screen-no-scroll');
+  document.documentElement.style.overflowY = lock ? 'hidden' : '';
+  document.body.style.overflowY = lock ? 'hidden' : '';
+  window.scrollTo(0, 0);
 }
 
 

@@ -22,7 +22,16 @@
     function _go(id) {
       document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active','visible'); });
       var el = document.getElementById(id);
-      if (el) { el.classList.add('active'); requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.classList.add('visible'); }); }); }
+      if (el) {
+        el.classList.add('active');
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.classList.add('visible'); }); });
+        var lock = el.classList.contains('screen-no-scroll');
+        document.documentElement.style.overflowY = lock ? 'hidden' : '';
+        document.body.style.overflowY = lock ? 'hidden' : '';
+      } else {
+        document.documentElement.style.overflowY = '';
+        document.body.style.overflowY = '';
+      }
       window.scrollTo(0, 0);
     }
   </script>
@@ -32,7 +41,7 @@
 
 
 <!-- ==================== SCREEN: WHO ARE YOU ==================== -->
-<div id="screen-who" class="screen active visible" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-start;height:100svh;max-height:100svh;overflow:hidden;">
+<div id="screen-who" class="screen screen-no-scroll active visible" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-start;">
   <div id="who-slider" dir="ltr" style="flex:1;width:100%;overflow:hidden;position:relative;min-height:0;touch-action:none;overscroll-behavior:none;">
     <div id="who-track" style="display:flex;width:300%;height:100%;will-change:transform;transition:transform 0.38s cubic-bezier(0.4,0,0.2,1);">
       <!-- SLIDE 1 -->
@@ -113,7 +122,7 @@
 </div>
 
 <!-- ==================== SCREEN: PARENT LOGIN ==================== -->
-<div id="screen-parent-login" class="screen" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-end;height:100svh;max-height:100svh;overflow:hidden;position:relative;">
+<div id="screen-parent-login" class="screen screen-no-scroll" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-end;position:relative;">
   <button onclick="_go('screen-who')" style="position:absolute;top:max(16px,env(safe-area-inset-top,16px));right:20px;background:rgba(255,255,255,0.2);border:none;color:white;font-size:0.88rem;font-weight:800;font-family:'Heebo',sans-serif;padding:7px 16px;border-radius:20px;cursor:pointer;z-index:10;">חזור</button>
   <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:16px;gap:10px;text-align:center;">
     <div style="width:88px;height:88px;border-radius:28px;background:rgba(255,255,255,0.18);border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:3rem;">👨‍👩‍👧‍👦</div>
@@ -139,7 +148,7 @@
 </div>
 
 <!-- ==================== SCREEN: JOIN FAMILY ==================== -->
-<div id="screen-join-family" class="screen" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-end;height:100svh;max-height:100svh;overflow:hidden;position:relative;">
+<div id="screen-join-family" class="screen screen-no-scroll" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-end;position:relative;">
   <button id="btn-join-back" style="position:absolute;top:max(16px,env(safe-area-inset-top,16px));right:20px;background:rgba(255,255,255,0.2);border:none;color:white;font-size:0.88rem;font-weight:800;font-family:'Heebo',sans-serif;padding:7px 16px;border-radius:20px;cursor:pointer;z-index:10;">חזור</button>
   <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 0 8px;gap:8px;text-align:center;">
     <div style="width:64px;height:64px;border-radius:20px;background:rgba(255,255,255,0.18);border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:2rem;">🏠</div>
@@ -163,7 +172,7 @@
 </div>
 
 <!-- ==================== ONBOARDING 1 ==================== -->
-<div id="screen-onboard-1" class="screen" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-start;height:100svh;max-height:100svh;overflow:hidden;">
+<div id="screen-onboard-1" class="screen screen-no-scroll" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-start;">
   <div style="width:100%;padding-top:env(safe-area-inset-top,0px);">
     <div style="width:100%;max-width:480px;margin:0 auto;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 20px 0;">
@@ -219,7 +228,7 @@
 </div>
 
 <!-- ==================== ONBOARDING 2 ==================== -->
-<div id="screen-onboard-2" class="screen" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-start;height:100svh;max-height:100svh;overflow:hidden;">
+<div id="screen-onboard-2" class="screen screen-no-scroll" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-start;">
   <div style="width:100%;padding-top:env(safe-area-inset-top,0px);">
     <div style="width:100%;max-width:480px;margin:0 auto;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 20px 0;">
@@ -249,7 +258,7 @@
 </div>
 
 <!-- ==================== ONBOARDING 3 ==================== -->
-<div id="screen-onboard-3" class="screen" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-start;height:100svh;max-height:100svh;overflow:hidden;">
+<div id="screen-onboard-3" class="screen screen-no-scroll" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-start;">
   <div style="width:100%;padding-top:env(safe-area-inset-top,0px);">
     <div style="width:100%;max-width:480px;margin:0 auto;">
       <div style="display:flex;justify-content:flex-start;align-items:center;padding:18px 20px 0;">
@@ -285,7 +294,7 @@
 </div>
 
 <!-- ==================== SCREEN: CHILD CODE ENTRY ==================== -->
-<div id="screen-child-code" class="screen" style="overflow:hidden;">
+<div id="screen-child-code" class="screen screen-no-scroll">
   <div class="screen-header">
     <button class="back-btn" onclick="_go('screen-who')">→</button>
     <h2>כניסת ילד/ה 🎮</h2>

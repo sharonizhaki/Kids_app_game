@@ -6,6 +6,8 @@
 #onboarding-overlay {
   position: fixed; inset: 0; z-index: 5000;
   display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .ob-backdrop {
@@ -13,7 +15,8 @@
   background: linear-gradient(160deg, #7C3AED 0%, #6D28D9 100%);
   display: flex; align-items: center; justify-content: center;
   padding: 24px 16px;
-  overflow-y: auto;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 /* ---- CARD ---- */

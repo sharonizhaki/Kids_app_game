@@ -39,6 +39,8 @@ export function startOnboarding(db, renderChildFn) {
   const overlay = document.createElement('div');
   overlay.id = 'onboarding-overlay';
   document.body.appendChild(overlay);
+  document.documentElement.style.overflowY = 'hidden';
+  document.body.style.overflowY = 'hidden';
 
   // הצג שלב פתיחה
   showWelcome();
@@ -401,6 +403,8 @@ async function finishOnboarding() {
     overlay.style.opacity = '0';
     setTimeout(() => {
       overlay.remove();
+      document.documentElement.style.overflowY = '';
+      document.body.style.overflowY = '';
       _renderChildFn();
       // show dashboard
       const { show } = window._childShowFn || {};

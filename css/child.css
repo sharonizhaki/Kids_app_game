@@ -21,6 +21,10 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 .screen.has-nav { padding-bottom: calc(var(--nav-h) + 24px); }
 .screen.active  { display: block; }
 .screen.visible { opacity: 1; transform: translateY(0); }
+.screen-no-scroll {
+  height: 100svh; max-height: 100svh; min-height: 100svh;
+  overflow: hidden; overscroll-behavior: none;
+}
 
 /* ===== LOADING ===== */
 .splash { display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }

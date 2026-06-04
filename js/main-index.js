@@ -1,5 +1,5 @@
 import { auth, db } from './firebase.js';
-import { showScreen, showToast, showLoading, hideLoading } from './ui.js';
+import { showScreen, showToast, showLoading, hideLoading, syncPageScroll } from './ui.js';
 import { cropAndCompressPhoto } from './ui.js';
 import {
   initAuth, loginWithGoogle, loginWithFacebook,
@@ -14,6 +14,11 @@ import {
 import { SPLAT_SVG } from './icons.js';
 
 window.showScreen = showScreen;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const active = document.querySelector('.screen.active');
+  if (active?.id) syncPageScroll(active.id);
+});
 
 // =========== MAGIC LINK ===========
 completeMagicLinkSignIn();

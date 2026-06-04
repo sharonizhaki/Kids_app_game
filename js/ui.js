@@ -24,11 +24,19 @@ export function cropAndCompressPhoto(file, size = 300, quality = 0.75) {
 }
 
 // =========== SCREEN NAVIGATION ===========
+export function syncPageScroll(id) {
+  const el = document.getElementById(id);
+  const lock = !!el?.classList.contains('screen-no-scroll');
+  document.documentElement.style.overflowY = lock ? 'hidden' : '';
+  document.body.style.overflowY = lock ? 'hidden' : '';
+}
+
 export function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active','visible'); });
   const next = document.getElementById(id);
   next.classList.add('active');
   requestAnimationFrame(() => requestAnimationFrame(() => next.classList.add('visible')));
+  syncPageScroll(id);
   window.scrollTo(0, 0);
 }
 
