@@ -362,13 +362,13 @@ document.getElementById('btn-logout').onclick = () => {
   });
 };
 
-document.getElementById('btn-delete-account').onclick = () => {
-  confirmDeleteAccount(() => {
+document.getElementById('btn-delete-account').onclick = async () => {
+  await confirmDeleteAccount(() => {
     deleteAccount(getFamilyId(), () => {
       clearChildrenCache();
       window.location.href = 'index.html';
     });
-  });
+  }, getFamilyId());
 };
 
 document.getElementById('btn-delete-account-dev').onclick = () => {

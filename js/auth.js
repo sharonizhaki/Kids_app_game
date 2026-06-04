@@ -14,7 +14,7 @@ import {
   signInWithEmailLink
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
+  doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, deleteField,
   collection, query, where, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { showToast, showLoading, hideLoading, showConnectionError } from './ui.js';
@@ -278,7 +278,23 @@ export function generateCode() {
 }
 
 // =========== DELETE ACCOUNT ===========
-export function confirmDeleteAccount(onConfirmed) {
+async function isPrimaryParentForFamily(familyId, uid) {
+  if (!familyId || !uid) return false;
+  const famSnap = await getDoc(doc(db, 'families', familyId));
+  if (!famSnap.exists()) return false;
+  return famSnap.data().parentUid === uid;
+}
+
+export async function confirmDeleteAccount(onConfirmed, familyId = currentFamilyId) {
+  const user = auth.currentUser;
+  const isPrimary = user ? await isPrimaryParentForFamily(familyId, user.uid) : true;
+
+  const bodyText = isPrimary
+    ? 'פעולה זו תמחק לצמיתות את חשבונך, את כל הילדים, המטלות וכל נתוני המשפחה. <strong>לא ניתן לשחזר.</strong>'
+    : 'פעולה זו תמחק לצמיתות רק את <strong>חשבונך</strong> ותסיר אותך מהמשפחה. הילדים, המטלות ושאר נתוני המשפחה <strong>יישארו ללא שינוי</strong>. לא ניתן לשחזר את חשבונך.';
+
+  const confirmLabel = isPrimary ? '🗑️ כן, מחק הכל' : '🗑️ כן, מחק את החשבון שלי';
+
   const ov = document.createElement('div');
   ov.className = 'modal-overlay';
   const sh = document.createElement('div');
@@ -291,9 +307,9 @@ export function confirmDeleteAccount(onConfirmed) {
     </div>
     <div class="modal-body">
       <p style="font-size:0.95rem;font-weight:600;margin-bottom:8px;">האם אתה בטוח שברצונך למחוק את החשבון?</p>
-      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:20px;">פעולה זו תמחק לצמיתות את חשבונך, את כל הילדים, המטלות וכל נתוני המשפחה. <strong>לא ניתן לשחזר.</strong></p>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:20px;">${bodyText}</p>
       <div style="display:flex;gap:10px;">
-        <button class="btn btn-danger btn-sm" id="confirm-delete-btn" style="flex:1;">🗑️ כן, מחק הכל</button>
+        <button class="btn btn-danger btn-sm" id="confirm-delete-btn" style="flex:1;">${confirmLabel}</button>
         <button class="btn btn-secondary btn-sm" id="cancel-delete-btn" style="flex:1;">ביטול</button>
       </div>
     </div>`;
@@ -324,19 +340,20 @@ async function deleteFamilyData(familyId) {
         const stateSnap = await getDocs(collection(db, 'families', familyId, 'children', childDoc.id, 'state'));
         await safeDeleteCollection(stateSnap);
       } catch(e) {}
+      try {
+        const notifSnap = await getDocs(collection(db, 'families', familyId, 'children', childDoc.id, 'notifications'));
+        await safeDeleteCollection(notifSnap);
+      } catch(e) {}
       try { await deleteDoc(childDoc.ref); } catch(e) { console.error('child delete failed:', childDoc.id, e); }
     }
   } catch(e) { console.error('children fetch failed:', e); }
 
-  try {
-    const tasksSnap = await getDocs(collection(db, 'families', familyId, 'tasks'));
-    await safeDeleteCollection(tasksSnap);
-  } catch(e) {}
-
-  try {
-    const histSnap = await getDocs(collection(db, 'families', familyId, 'weeklyHistory'));
-    await safeDeleteCollection(histSnap);
-  } catch(e) {}
+  for (const sub of ['tasks', 'weeklyHistory', 'prizes', 'prizeRequests', 'pendingApprovals']) {
+    try {
+      const snap = await getDocs(collection(db, 'families', familyId, sub));
+      await safeDeleteCollection(snap);
+    } catch(e) {}
+  }
 
   try {
     const parentCodesSnap = await getDocs(query(collection(db, 'parentInviteCodes'), where('familyId', '==', familyId)));
@@ -346,16 +363,46 @@ async function deleteFamilyData(familyId) {
   try { await deleteDoc(doc(db, 'families', familyId)); } catch(e) {}
 }
 
+async function removeSecondaryParentFromFamily(familyId, uid) {
+  console.log('[deleteAccount] מסיר הורה משני מהמשפחה:', familyId);
+  const famRef = doc(db, 'families', familyId);
+  const famSnap = await getDoc(famRef);
+  if (!famSnap.exists()) return;
+  const fam = famSnap.data();
+  if (fam.secondaryParentUid !== uid) return;
+  await updateDoc(famRef, {
+    secondaryParentUid: deleteField(),
+    secondaryParentName: deleteField(),
+    secondaryParentEmail: deleteField(),
+  });
+}
+
+async function deleteAccountData(familyId, user) {
+  if (!familyId || !user) return;
+  const famSnap = await getDoc(doc(db, 'families', familyId));
+  if (!famSnap.exists()) return;
+  const fam = famSnap.data();
+  if (fam.parentUid === user.uid) {
+    await deleteFamilyData(familyId);
+  } else if (fam.secondaryParentUid === user.uid) {
+    await removeSecondaryParentFromFamily(familyId, user.uid);
+  }
+}
+
+async function finishDeleteAccount(user, onDone) {
+  if (user) await deleteUser(user);
+  hideLoading();
+  currentParentUid = null;
+  currentFamilyId = null;
+  onDone();
+}
+
 export async function deleteAccount(familyId, onDone) {
   showLoading('מוחק חשבון...');
   const user = auth.currentUser;
   try {
-    if (familyId) await deleteFamilyData(familyId);
-    if (user) await deleteUser(user);
-    hideLoading();
-    currentParentUid = null;
-    currentFamilyId = null;
-    onDone();
+    await deleteAccountData(familyId, user);
+    await finishDeleteAccount(user, onDone);
   } catch(e) {
     hideLoading();
     if (e.code === 'auth/requires-recent-login') {
@@ -364,10 +411,9 @@ export async function deleteAccount(familyId, onDone) {
         try {
           showToast('מאמת זהות... 🔒');
           await reauthenticateWithPopup(user, new GoogleAuthProvider());
-          await deleteUser(user);
-          currentParentUid = null;
-          currentFamilyId = null;
-          onDone();
+          showLoading('מוחק חשבון...');
+          await deleteAccountData(familyId, user);
+          await finishDeleteAccount(user, onDone);
           return;
         } catch(reAuthErr) {
           showToast('אימות נכשל ⚠️');
