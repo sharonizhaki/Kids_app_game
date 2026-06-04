@@ -32,7 +32,7 @@
 
 
 <!-- ==================== SCREEN: WHO ARE YOU ==================== -->
-<div id="screen-who" class="screen active visible" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-start;height:100dvh;max-height:100vh;overflow:hidden;">
+<div id="screen-who" class="screen active visible" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-start;height:100svh;max-height:100svh;overflow:hidden;">
   <div id="who-slider" dir="ltr" style="flex:1;width:100%;overflow:hidden;position:relative;min-height:0;touch-action:none;overscroll-behavior:none;">
     <div id="who-track" style="display:flex;width:300%;height:100%;will-change:transform;transition:transform 0.38s cubic-bezier(0.4,0,0.2,1);">
       <!-- SLIDE 1 -->
@@ -106,21 +106,21 @@
     <div id="who-dot-1" style="width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,0.3);transition:all 0.3s ease;"></div>
     <div id="who-dot-2" style="width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,0.3);transition:all 0.3s ease;"></div>
   </div>
-  <div style="width:100%;padding:16px 20px max(32px,env(safe-area-inset-bottom,32px));background:#F8FAFF;border-radius:28px 28px 0 0;display:flex;gap:12px;box-shadow:0 -6px 24px rgba(109,40,217,0.10);">
+  <div style="width:100%;padding:16px 20px max(32px,env(safe-area-inset-bottom,32px));background:#F8FAFF;border-radius:28px 28px 0 0;display:flex;gap:12px;box-shadow:0 -6px 24px rgba(109,40,217,0.10);overflow-y:auto;">
     <button id="btn-who-parent" onclick="_go('screen-parent-login')" style="flex:1;padding:17px;border-radius:16px;font-size:1.05rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">👨‍👩‍👧 אני הורה</button>
     <button id="btn-who-child" onclick="_go('screen-child-code')" style="flex:1;padding:17px;border-radius:16px;font-size:1.05rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">👧👦 אני ילד/ה</button>
   </div>
 </div>
 
 <!-- ==================== SCREEN: PARENT LOGIN ==================== -->
-<div id="screen-parent-login" class="screen" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-end;height:100dvh;overflow:hidden;position:relative;">
+<div id="screen-parent-login" class="screen" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-end;height:100svh;overflow:hidden;position:relative;">
   <button onclick="_go('screen-who')" style="position:absolute;top:max(16px,env(safe-area-inset-top,16px));right:20px;background:rgba(255,255,255,0.2);border:none;color:white;font-size:0.88rem;font-weight:800;font-family:'Heebo',sans-serif;padding:7px 16px;border-radius:20px;cursor:pointer;z-index:10;">חזור</button>
   <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:16px;gap:10px;text-align:center;">
     <div style="width:88px;height:88px;border-radius:28px;background:rgba(255,255,255,0.18);border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:3rem;">👨‍👩‍👧‍👦</div>
     <h2 style="font-size:1.7rem;font-weight:900;color:white;margin:0;">ברוך הבא!</h2>
     <p style="color:rgba(255,255,255,0.75);font-size:0.92rem;margin:0;">התחבר כדי להמשיך</p>
   </div>
-  <div style="width:100%;background:#F8FAFF;border-radius:32px 32px 0 0;padding:24px 22px max(24px,env(safe-area-inset-bottom,24px));box-shadow:0 -6px 24px rgba(109,40,217,0.10);">
+  <div style="width:100%;background:#F8FAFF;border-radius:32px 32px 0 0;padding:24px 22px max(24px,env(safe-area-inset-bottom,24px));box-shadow:0 -6px 24px rgba(109,40,217,0.10);overflow-y:auto;">
     <button id="btn-google-login" style="width:100%;display:flex;align-items:center;justify-content:center;gap:14px;padding:15px 24px;border:2px solid #E2E8F0;border-radius:50px;background:white;color:#1E293B;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;margin-bottom:10px;position:relative;">
       <span style="position:absolute;right:18px;width:36px;height:36px;background:#F8FAFC;border-radius:50%;display:flex;align-items:center;justify-content:center;"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:20px;height:20px;"></span>
       התחבר עם Google
@@ -139,14 +139,14 @@
 </div>
 
 <!-- ==================== SCREEN: JOIN FAMILY ==================== -->
-<div id="screen-join-family" class="screen" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-end;height:100dvh;overflow:hidden;position:relative;">
+<div id="screen-join-family" class="screen" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-end;height:100svh;overflow:hidden;position:relative;">
   <button id="btn-join-back" style="position:absolute;top:max(16px,env(safe-area-inset-top,16px));right:20px;background:rgba(255,255,255,0.2);border:none;color:white;font-size:0.88rem;font-weight:800;font-family:'Heebo',sans-serif;padding:7px 16px;border-radius:20px;cursor:pointer;z-index:10;">חזור</button>
   <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 0 8px;gap:8px;text-align:center;">
     <div style="width:64px;height:64px;border-radius:20px;background:rgba(255,255,255,0.18);border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:2rem;">🏠</div>
     <h2 style="font-size:1.45rem;font-weight:900;color:white;margin:0;">ברוכים הבאים!</h2>
     <p style="color:rgba(255,255,255,0.75);font-size:0.82rem;margin:0;font-weight:600;">הצטרפות למשפחה 👨‍👩‍👧‍👦</p>
   </div>
-  <div style="width:100%;background:#F8FAFF;border-radius:32px 32px 0 0;padding:18px 20px max(16px,env(safe-area-inset-bottom,16px));display:flex;flex-direction:column;gap:8px;box-shadow:0 -6px 24px rgba(109,40,217,0.10);">
+  <div style="width:100%;background:#F8FAFF;border-radius:32px 32px 0 0;padding:18px 20px max(16px,env(safe-area-inset-bottom,16px));display:flex;flex-direction:column;gap:8px;box-shadow:0 -6px 24px rgba(109,40,217,0.10);overflow-y:auto;">
     <button class="btn btn-primary btn-sm" id="btn-create-new-family" style="width:100%;padding:13px;background:linear-gradient(135deg,#7C3AED,#5B21B6);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;color:white;cursor:pointer;">✨ צור משפחה חדשה</button>
     <p style="color:#94A3B8;font-size:0.82rem;font-weight:700;text-align:center;margin:0;">— או הצטרף עם קוד —</p>
     <div class="code-input-wrap" id="parent-code-input-wrap" style="margin:0;">
@@ -163,7 +163,7 @@
 </div>
 
 <!-- ==================== ONBOARDING 1 ==================== -->
-<div id="screen-onboard-1" class="screen" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-start;height:100dvh;max-height:100dvh;overflow:hidden;">
+<div id="screen-onboard-1" class="screen" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-start;height:100svh;max-height:100svh;overflow:hidden;">
   <div style="width:100%;padding-top:env(safe-area-inset-top,0px);">
     <div style="width:100%;max-width:480px;margin:0 auto;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 20px 0;">
@@ -219,7 +219,7 @@
 </div>
 
 <!-- ==================== ONBOARDING 2 ==================== -->
-<div id="screen-onboard-2" class="screen" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-start;height:100dvh;max-height:100dvh;overflow:hidden;">
+<div id="screen-onboard-2" class="screen" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-start;height:100svh;max-height:100svh;overflow:hidden;">
   <div style="width:100%;padding-top:env(safe-area-inset-top,0px);">
     <div style="width:100%;max-width:480px;margin:0 auto;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 20px 0;">
@@ -249,7 +249,7 @@
 </div>
 
 <!-- ==================== ONBOARDING 3 ==================== -->
-<div id="screen-onboard-3" class="screen" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-start;height:100dvh;max-height:100dvh;overflow:hidden;">
+<div id="screen-onboard-3" class="screen" style="padding:0;background:linear-gradient(160deg,#7C3AED 0%,#6D28D9 100%);justify-content:flex-start;height:100svh;max-height:100svh;overflow:hidden;">
   <div style="width:100%;padding-top:env(safe-area-inset-top,0px);">
     <div style="width:100%;max-width:480px;margin:0 auto;">
       <div style="display:flex;justify-content:flex-start;align-items:center;padding:18px 20px 0;">
