@@ -149,7 +149,7 @@
   <div style="width:100%;background:#F8FAFF;border-radius:32px 32px 0 0;padding:18px 20px max(16px,env(safe-area-inset-bottom,16px));display:flex;flex-direction:column;gap:8px;box-shadow:0 -6px 24px rgba(109,40,217,0.10);">
     <button class="btn btn-primary btn-sm" id="btn-create-new-family" style="width:100%;padding:13px;background:linear-gradient(135deg,#7C3AED,#5B21B6);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;color:white;cursor:pointer;">✨ צור משפחה חדשה</button>
     <p style="color:#94A3B8;font-size:0.82rem;font-weight:700;text-align:center;margin:0;">— או הצטרף עם קוד —</p>
-    <div class="code-input-wrap" id="parent-code-input-wrap">
+    <div class="code-input-wrap" id="parent-code-input-wrap" style="margin:0;">
       <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="0" inputmode="numeric">
       <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="1" inputmode="numeric">
       <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="2" inputmode="numeric">
@@ -157,7 +157,7 @@
       <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="4" inputmode="numeric">
       <input class="code-digit parent-code-digit" type="tel" maxlength="1" data-idx="5" inputmode="numeric">
     </div>
-    <div class="error-msg" id="join-family-error"></div>
+    <div class="error-msg" id="join-family-error" style="margin:0;min-height:0;"></div>
     <button class="btn btn-success btn-sm" id="btn-join-family" style="width:100%;padding:13px;background:#F1F5F9;border:none;border-radius:16px;font-size:0.95rem;font-weight:900;font-family:'Heebo',sans-serif;color:#475569;cursor:pointer;">הצטרף למשפחה</button>
   </div>
 </div>
