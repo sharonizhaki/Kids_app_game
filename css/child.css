@@ -19,7 +19,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 /* ===== SCREENS ===== */
 .screen { display: none; min-height: 100vh; padding: 20px 16px 100px; opacity: 0; transform: translateY(14px); transition: opacity 0.28s ease-out, transform 0.28s cubic-bezier(.25,.8,.25,1); touch-action: pan-y; }
 .screen.has-nav { padding-bottom: calc(var(--nav-h) + 24px); }
-.screen.active  { display: block; }
+.screen.active  { display: block; height: 100svh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
 .screen.visible { opacity: 1; transform: translateY(0); }
 .screen-no-scroll {
   height: 100svh; max-height: 100svh; min-height: 100svh;
