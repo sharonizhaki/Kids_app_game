@@ -14,7 +14,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; }
-body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; touch-action: pan-y; }
 
 /* ===== SCREENS ===== */
 .screen { display: none; min-height: 100vh; padding: 20px 16px 100px; opacity: 0; transform: translateY(14px); transition: opacity 0.28s ease-out, transform 0.28s cubic-bezier(.25,.8,.25,1); }
