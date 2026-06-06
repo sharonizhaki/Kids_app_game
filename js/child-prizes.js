@@ -24,7 +24,7 @@ export function initPrizes(db) {
 export async function renderPrizesScreen() {
   if (!_db) return;
 
-  const totalPts = (state.childState?.monthlyPts || 0) + (state.childState?.pts || 0);
+  const totalPts = state.childState?.pts || 0;
   const el = document.getElementById('prizes-stars-val');
   if (el) el.textContent = `${totalPts} ⭐`;
 
