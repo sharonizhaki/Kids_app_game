@@ -121,6 +121,7 @@ export function showConfirm({ icon = '⚠️', title, message, confirmText = 'א
 // =========== SIDE MENU ===========
 export async function openSideMenu({ auth, onAction, isPrimary = true }) {
   closeSideMenu();
+  document.getElementById('btn-open-menu')?.classList.add('settings-btn--active');
 
   const overlay = document.createElement('div');
   overlay.className = 'side-overlay';
@@ -260,4 +261,5 @@ export async function openSideMenu({ auth, onAction, isPrimary = true }) {
 export function closeSideMenu() {
   document.getElementById('side-overlay')?.remove();
   document.getElementById('side-menu')?.remove();
+  document.getElementById('btn-open-menu')?.classList.remove('settings-btn--active');
 }
