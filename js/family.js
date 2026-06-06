@@ -50,7 +50,7 @@ export function renderFamily(familyId) {
       const isWaiting = c.status === 'waiting';
       const color = c.color || CHILD_COLORS[ci % CHILD_COLORS.length];
       return `
-        <div class="child-card" onclick="${isWaiting ? `showChildInviteModal('${c.id}')` : `openEditChild('${c.id}')`}" style="box-shadow:0 2px 10px rgba(0,0,0,0.07),inset -4px 0 0 ${color},inset 0 -3px 0 ${color}70;">
+        <div class="child-card" onclick="${isWaiting ? `showChildInviteModal('${c.id}')` : `location.href='points.html?childName=${encodeURIComponent(c.name)}'`}" style="box-shadow:0 2px 10px rgba(0,0,0,0.07),inset -4px 0 0 ${color},inset 0 -3px 0 ${color}70;">
           <div class="cc-photo">${photoHTML}</div>
           <div class="cc-name">${c.name}</div>
           <div class="cc-gender">${genderEmoji} ${c.gender === 'male' ? 'זכר' : 'נקבה'}</div>

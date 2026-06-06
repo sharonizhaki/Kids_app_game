@@ -17,6 +17,13 @@ let mpSubFilter = '';
 let mpTab       = 'pending';
 let _familyId   = '';
 
+// =========== SET STATE (from URL params) ===========
+export function setMPState(tab, filter, subFilter) {
+  if (tab)                   mpTab       = tab;
+  if (filter)                mpFilter    = filter;
+  if (subFilter !== undefined) mpSubFilter = subFilter;
+}
+
 // =========== RESET ===========
 export function resetMPState() {
   mpFilter    = 'all';
@@ -35,8 +42,8 @@ export function renderMPTabs(familyId) {
   const totalPending = pendingTaskCount + pendingPrizeCount;
 
   const tabs = [
-    { key: 'pending',  label: '⏳ ממתינים', badge: totalPending },
     { key: 'history',  label: '📋 היסטוריה', badge: 0 },
+    { key: 'pending',  label: '⏳ ממתינים', badge: totalPending },
     { key: 'manual',   label: '✏️ ניקוד',    badge: 0 },
   ];
 

@@ -8,7 +8,7 @@ import {
   loadCompletedTasks, loadPendingApprovals, loadAllPrizeRequests,
   renderMPTabs, renderMPFilters, renderMPList, renderPendingTab, showActiveTab,
   initPendingListener, initPrizeRequestsListener,
-  resetMPState,
+  resetMPState, setMPState,
 } from './points.js';
 
 async function checkAuth() {
@@ -41,6 +41,12 @@ document.getElementById('btn-back-to-parent')?.addEventListener('click', () => {
   const familyId = getFamilyId();
   hideLoading();
   resetMPState();
+
+  // ניווט מכרטיס ילד בדשבורד → פתח היסטוריה מסוננת לאותו ילד
+  const urlParams  = new URLSearchParams(window.location.search);
+  const childName  = urlParams.get('childName');
+  if (childName) setMPState('history', 'child', childName);
+
   showScreen('screen-manage-points');
 
   await Promise.all([
@@ -50,7 +56,7 @@ document.getElementById('btn-back-to-parent')?.addEventListener('click', () => {
   ]);
 
   renderMPTabs(familyId);
-  showActiveTab(familyId); // מציג tab ממתינים ראשון
+  showActiveTab(familyId);
 
   // listeners חיים
   initPendingListener(familyId, () => {
