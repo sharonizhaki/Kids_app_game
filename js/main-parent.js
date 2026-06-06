@@ -17,6 +17,8 @@ import { createQuickTasks } from './tasks.js';
 import { createQuickPrizes } from './prizes.js';
 import { initApprovalQueue } from './approval-queue.js';
 
+let isPrimaryParent = true;
+
 // =========== GUARD: הורה חייב להיות מחובר ===========
 function checkAuth() {
   return new Promise((resolve) => {
@@ -279,6 +281,7 @@ async function handleQuickPrizes(triggerEl, category) {
   const { getDocs, collection, query, where } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
   try {
     let famSnap = await getDocs(query(collection(db, 'families'), where('parentUid', '==', user.uid)));
+    isPrimaryParent = !famSnap.empty;
     if (famSnap.empty) famSnap = await getDocs(query(collection(db, 'families'), where('secondaryParentUid', '==', user.uid)));
     if (!famSnap.empty) setCurrentFamilyId(famSnap.docs[0].id);
     else { window.location.href = 'index.html'; return; }
@@ -390,6 +393,7 @@ document.getElementById('btn-open-menu').onclick = () => {
   if (existing) { existing.remove(); document.getElementById('side-overlay')?.remove(); return; }
   openSideMenu({
     auth,
+    isPrimary: isPrimaryParent,
     onAction: (action) => {
       if (action === 'manage-family') document.getElementById('btn-manage-family').click();
       else if (action === 'add-tasks') document.getElementById('btn-add-tasks').click();
@@ -397,7 +401,6 @@ document.getElementById('btn-open-menu').onclick = () => {
       else if (action === 'add-prizes') document.getElementById('btn-add-prizes').click();
       else if (action === 'manage-prizes') document.getElementById('btn-manage-prizes').click();
       else if (action === 'manage-points') document.getElementById('btn-manage-points').click();
-      else if (action === 'logout') document.getElementById('btn-logout').click();
       else if (action === 'contact') window.open('mailto:support@example.com', '_blank');
       else if (action === 'terms') window.open('terms.html', '_blank');
       else if (action === 'delete-account') document.getElementById('btn-delete-account').click();

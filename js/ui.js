@@ -119,7 +119,7 @@ export function showConfirm({ icon = '⚠️', title, message, confirmText = 'א
 }
 
 // =========== SIDE MENU ===========
-export async function openSideMenu({ auth, onAction }) {
+export async function openSideMenu({ auth, onAction, isPrimary = true }) {
   closeSideMenu();
 
   const overlay = document.createElement('div');
@@ -182,9 +182,9 @@ export async function openSideMenu({ auth, onAction }) {
       <div class="side-icon" style="background:linear-gradient(135deg,#F0FDF4,#DCFCE7);">📄</div>
       <span class="side-item-text">תנאי שימוש</span>
     </div>
-    <div class="side-item danger" data-action="logout">
-      <div class="side-icon" style="background:linear-gradient(135deg,#FEE2E2,#FECACA);">🚪</div>
-      <span class="side-item-text">התנתק</span>
+    <div class="side-item danger" data-action="delete-account">
+      <div class="side-icon" style="background:linear-gradient(135deg,#FEE2E2,#FECACA);">${isPrimary ? '🗑️' : '🚪'}</div>
+      <span class="side-item-text">${isPrimary ? 'מחק חשבון' : 'התנתק'}</span>
     </div>
   `;
 
