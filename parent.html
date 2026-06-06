@@ -34,14 +34,14 @@
   </div>
   <div id="dash-children-grid" style="width:100%;max-width:480px;display:flex;flex-wrap:nowrap;overflow-x:hidden;margin-top:8px;padding:0 4px;"></div>
 
-  <!-- כותרת מטלות להיום -->
+  <!-- כותרת משימות להיום -->
   <div id="dash-task-section" style="width:100%;max-width:480px;">
     <div style="padding:0 4px;margin-top:14px;margin-bottom:4px;font-size:0.82rem;font-weight:800;color:#64748B;display:flex;align-items:center;gap:6px;">
-      <span>📋</span><span>מטלות להיום</span>
+      <span>📋</span><span>משימות להיום</span>
     </div>
     <div id="dash-task-rows" style="width:100%;padding:0 4px;display:flex;flex-direction:column;gap:0;">
       <!-- placeholder נטען בהתחלה, יוחלף ע"י renderDashTaskRows -->
-      <div class="dash-task-placeholder" style="background:white;border-radius:14px;padding:14px 16px;text-align:center;color:#CBD5E1;font-size:0.82rem;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.05);border:2px dashed #E2E8F0;">כאן יוצגו המטלות להיום</div>
+      <div class="dash-task-placeholder" style="background:white;border-radius:14px;padding:14px 16px;text-align:center;color:#CBD5E1;font-size:0.82rem;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.05);border:2px dashed #E2E8F0;">כאן יוצגו המשימות להיום</div>
     </div>
   </div>
 
@@ -59,7 +59,7 @@
         <button class="quick-cat-btn" data-cat="chores" style="background:white;border:2px solid #C4B5FD;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">🏠</div><div style="font-size:0.78rem;font-weight:800;color:#5B21B6;">מטלות בית</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">3 משימות</div></button>
         <button class="quick-cat-btn" data-cat="study" style="background:white;border:2px solid #C4B5FD;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">📚</div><div style="font-size:0.78rem;font-weight:800;color:#5B21B6;">לימודים</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">3 משימות</div></button>
       </div>
-      <div dir="rtl" style="margin-top:11px;font-size:0.71rem;color:#94A3B8;line-height:1.45;">ניתן לערוך ולמחוק מטלות במסך <strong style="color:#7C3AED;">עריכת מטלות</strong> בתפריט <strong style="color:#7C3AED;">הגדרות</strong> ⚙️</div>
+      <div dir="rtl" style="margin-top:11px;font-size:0.71rem;color:#94A3B8;line-height:1.45;">ניתן לערוך ולמחוק משימות במסך <strong style="color:#7C3AED;">עריכת משימות</strong> בתפריט <strong style="color:#7C3AED;">הגדרות</strong> ⚙️</div>
     </div>
   </div>
 
@@ -106,7 +106,7 @@
       </button>
       <button class="dash-action-btn" onclick="document.getElementById('btn-edit-tasks').click()">
         <span class="dash-action-icon" style="background:linear-gradient(135deg,#DDD6FE,#C7D2FE);">✏️</span>
-        <span class="dash-action-label">עריכת מטלות</span>
+        <span class="dash-action-label">עריכת משימות</span>
       </button>
       <button class="dash-action-btn" onclick="document.getElementById('btn-add-prizes').click()">
         <span class="dash-action-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);">🎁</span>

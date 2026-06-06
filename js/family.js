@@ -470,7 +470,7 @@ function buildChildPlaceholders(children) {
         <span style="font-weight:800;font-size:0.8rem;color:var(--text);white-space:nowrap;">${child.name}</span>
       </div>
       <div style="width:1px;height:22px;background:#E2E8F0;flex-shrink:0;"></div>
-      <div style="flex:1;font-size:0.8rem;color:#CBD5E1;font-weight:600;">אין מטלות להיום ✓</div>
+      <div style="flex:1;font-size:0.8rem;color:#CBD5E1;font-weight:600;">אין משימות להיום ✓</div>
     </div>`;
   }).join('');
 }

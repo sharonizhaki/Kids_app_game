@@ -147,11 +147,11 @@ export async function openSideMenu({ auth, onAction }) {
     </div>
     <div class="side-item" data-action="add-tasks">
       <div class="side-icon" style="background:linear-gradient(135deg,#D1FAE5,#A7F3D0);">📋</div>
-      <span class="side-item-text">הוספת מטלות</span>
+      <span class="side-item-text">הוספת משימות</span>
     </div>
     <div class="side-item" data-action="edit-tasks">
       <div class="side-icon" style="background:linear-gradient(135deg,#E0E7FF,#C7D2FE);">✏️</div>
-      <span class="side-item-text">עריכת מטלות</span>
+      <span class="side-item-text">עריכת משימות</span>
     </div>
     <div class="side-item" data-action="add-prizes">
       <div class="side-icon" style="background:linear-gradient(135deg,#FCE7F3,#FBCFE8);">🎁</div>
@@ -159,7 +159,7 @@ export async function openSideMenu({ auth, onAction }) {
     </div>
     <div class="side-item" data-action="manage-prizes" style="position:relative;">
       <div class="side-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);">🏆</div>
-      <span class="side-item-text">ניהול פרסים</span>
+      <span class="side-item-text">עריכת פרסים</span>
       <span id="side-prizes-badge" style="display:none;background:#EF4444;color:white;font-size:0.65rem;font-weight:900;border-radius:999px;padding:2px 7px;min-width:18px;text-align:center;margin-right:auto;"></span>
     </div>
     <div class="side-item" data-action="manage-points">

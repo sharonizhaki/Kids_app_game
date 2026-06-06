@@ -396,7 +396,7 @@ export function renderPrizeEmojiGrid(containerId, selectedEmoji, onChange) {
   buildGrid(currentIdx >= SHOW_INITIAL);
 }
 
-/** רינדור assign grid (זהה למטלות) */
+/** רינדור assign grid (זהה למשימות) */
 export function renderPrizeAssignGrid(containerId, selectedIds, onChange) {
   const grid = document.getElementById(containerId);
   if (!grid) return;

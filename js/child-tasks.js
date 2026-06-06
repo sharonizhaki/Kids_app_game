@@ -196,8 +196,8 @@ export function renderCategories(saveStateFn, renderChildFn) {
   if (visibleTasks.length === 0) {
     grid.innerHTML = `
       <div class="empty-state" style="grid-column:1/-1;">
-        עדיין לא הוגדרו מטלות 📋
-        <br><small style="color:var(--muted);">ההורים צריכים להוסיף מטלות</small>
+        עדיין לא הוגדרו משימות 📋
+        <br><small style="color:var(--muted);">ההורים צריכים להוסיף משימות</small>
       </div>`;
     return;
   }

@@ -91,7 +91,7 @@ function _renderStatsContent() {
 
       <div style="margin-bottom:${d.topTask ? '9px' : '0'};">
         <div style="display:flex;justify-content:space-between;font-size:0.72rem;font-weight:700;color:#64748B;margin-bottom:4px;">
-          <span>✅ מטלות שבוצעו</span><span>${d.tasksCompleted}</span>
+          <span>✅ משימות שבוצעו</span><span>${d.tasksCompleted}</span>
         </div>
         <div style="background:#F1F5F9;border-radius:8px;height:9px;overflow:hidden;">
           <div style="height:100%;border-radius:8px;background:linear-gradient(90deg,#6366F1,#4F46E5);width:${maxTasks > 0 ? Math.round((d.tasksCompleted/maxTasks)*100) : 0}%;transition:width 0.4s;"></div>

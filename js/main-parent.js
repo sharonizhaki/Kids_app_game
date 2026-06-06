@@ -711,7 +711,7 @@ document.getElementById('btn-delete-child').onclick = () => {
   showConfirm({
     icon: child?.emoji || '👦',
     title: `למחוק את ${child?.name || 'הילד/ה'}?`,
-    message: 'כל המטלות, הנקודות וההיסטוריה יימחקו לצמיתות',
+    message: 'כל המשימות, הנקודות וההיסטוריה יימחקו לצמיתות',
     confirmText: '🗑️ מחק',
     onConfirm: async () => {
       const result = await deleteChild(getFamilyId(), editingChildId);
@@ -817,8 +817,8 @@ async function startDashTour(familyId, uid) {
     },
     {
       el: '#dash-task-section',
-      title: 'מטלות להיום 📋',
-      text: 'כאן מוצגות המטלות שנותרו לביצוע היום לכל ילד — מתחלפות אוטומטית אם יש כמה'
+      title: 'משימות להיום 📋',
+      text: 'כאן מוצגות המשימות שנותרו לביצוע היום לכל ילד — מתחלפות אוטומטית אם יש כמה'
     },
     {
       el: '#quick-tasks-banner',

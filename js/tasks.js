@@ -330,7 +330,7 @@ export function renderEditTasksList(familyId) {
     return tb - ta;
   });
 
-  if (tasks.length === 0) { list.innerHTML = '<div class="empty-state">אין מטלות להצגה</div>'; return; }
+  if (tasks.length === 0) { list.innerHTML = '<div class="empty-state">אין משימות להצגה</div>'; return; }
 
   function buildCard(t) {
     return `
