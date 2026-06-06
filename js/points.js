@@ -611,6 +611,17 @@ async function undoTask(familyId, childId, histIdx) {
           }
         });
         await updateDoc(stateRef, st);
+
+        // התראה לילד על ביטול המשימה
+        await addDoc(collection(db, 'families', familyId, 'children', childId, 'notifications'), {
+          type:     'task_cancelled',
+          taskName: histItem.task  || '',
+          emoji:    histItem.emoji || '↩️',
+          pts:      histItem.pts   || 0,
+          message:  `המשימה "${histItem.task}" בוטלה על ידי ההורה↩️${histItem.pts ? ` נגרעו ${histItem.pts} ⭐` : ''}`,
+          read:     false,
+          ts:       Date.now(),
+        });
       }
     }
     await loadCompletedTasks(familyId);

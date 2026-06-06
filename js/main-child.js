@@ -20,6 +20,10 @@ import {
   renderBadgesScreen,
 } from './child-badges.js';
 import { startOnboarding }                                    from './child-onboarding.js';
+import {
+  initNotifications, processNotificationPopups,
+  renderNotificationsScreen, updateNotificationBadge,
+} from './child-notifications.js';
 
 // -------- GREETINGS --------
 const GREETINGS_M = ['יאללה נתחיל! 💪','בוא נעשה את זה! 🚀','היום תהיה מדהים! ✨','מוכן לאסוף כוכבים? 🔥','הגיבור שלנו הגיע! 🦸‍♂️'];
@@ -222,6 +226,11 @@ function initNav() {
         if (state.childData) openChildProfile();
         return;
       }
+      if (tab === 'notifs') {
+        show('screen-child-notifs');
+        renderNotificationsScreen();
+        return;
+      }
       show(btn.dataset.screen);
       if (tab === 'prizes') renderPrizesScreen();
       if (tab === 'badges') {
@@ -230,6 +239,16 @@ function initNav() {
         if (nb) nb.style.display = 'none';
       }
     };
+  });
+
+  // כפתורי חזרה ופרופיל ממסך התראות
+  document.getElementById('btn-notifs-back')?.addEventListener('click', () => {
+    show('screen-child');
+    navBtns.forEach(b => b.classList.remove('active'));
+    document.querySelector('.nav-btn[data-tab="home"]')?.classList.add('active');
+  });
+  document.getElementById('btn-notifs-to-profile')?.addEventListener('click', () => {
+    if (state.childData) openChildProfile();
   });
 }
 
@@ -323,6 +342,10 @@ async function loadChild() {
     initPrizes(db);
     initNav();
 
+    // טען התראות
+    await initNotifications(db, state.familyId, state.childId);
+    updateNotificationBadge();
+
     // -------- ONBOARDING CHECK --------
     if (!state.childData.onboarded) {
       window._childShowFn = { show };
@@ -335,6 +358,9 @@ async function loadChild() {
 
     renderChild();
     show('screen-child');
+
+    // הצג פופאפים על התראות שלא נקראו (אחרי שהממשק נטען)
+    setTimeout(() => processNotificationPopups(), 600);
 
     // listener על tasks
     onSnapshot(collection(db, 'families', state.familyId, 'tasks'), snap => {

@@ -748,3 +748,58 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 }
 .splat-confirm-btn:active { transform: scale(0.97); }
 #profile-color-display { overflow: visible !important; border: none !important; background: transparent !important; }
+
+/* =========== NOTIFICATION POPUPS =========== */
+.notif-popup-ov {
+  position: fixed; inset: 0;
+  background: rgba(15,23,42,0.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+  opacity: 0; transition: opacity 0.28s ease;
+}
+.notif-popup-ov.notif-popup-in  { opacity: 1; }
+.notif-popup-ov.notif-popup-out { opacity: 0; }
+.notif-popup-card {
+  background: #fff; border-radius: 24px;
+  padding: 32px 28px 28px; width: 88%; max-width: 320px;
+  text-align: center;
+  animation: notifPop 0.3s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes notifPop {
+  from { transform: scale(0.82) translateY(20px); opacity: 0; }
+  to   { transform: scale(1)    translateY(0);    opacity: 1; }
+}
+.notif-popup-icon  { font-size: 3.8rem; margin-bottom: 10px; }
+.notif-popup-title { font-size: 1.25rem; font-weight: 900; color: #1E293B; margin-bottom: 8px; }
+.notif-popup-msg   { font-size: 0.95rem; color: #475569; line-height: 1.6; margin-bottom: 24px; }
+.notif-popup-btn   {
+  width: 100%; padding: 14px; border: none; border-radius: 14px;
+  background: linear-gradient(135deg,#7C3AED,#5B21B6);
+  color: #fff; font-size: 1rem; font-weight: 800;
+  cursor: pointer; font-family: 'Heebo', sans-serif;
+  box-shadow: 0 4px 14px rgba(124,58,237,0.3);
+}
+
+/* =========== NOTIFICATION SCREEN =========== */
+.notif-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 14px 16px; background: #fff;
+  border-radius: 16px; margin-bottom: 8px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  position: relative;
+}
+.notif-item.notif-unread { background: #F5F3FF; }
+.notif-item-icon   { font-size: 1.9rem; flex-shrink: 0; }
+.notif-item-body   { flex: 1; text-align: right; }
+.notif-item-title  { font-size: 0.9rem; font-weight: 800; color: #1E293B; }
+.notif-item-msg    { font-size: 0.82rem; color: #64748B; margin-top: 3px; line-height: 1.4; }
+.notif-item-time   { font-size: 0.7rem; color: #94A3B8; margin-top: 5px; }
+.notif-dot {
+  position: absolute; top: 14px; left: 14px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #7C3AED;
+}
+.notifs-empty {
+  text-align: center; padding: 70px 20px;
+  color: #94A3B8; font-size: 1.05rem; font-weight: 700;
+}

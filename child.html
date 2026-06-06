@@ -117,6 +117,18 @@
   <div class="badges-grid"   id="badges-grid"></div>
 </div>
 
+<!-- ==================== SCREEN: NOTIFICATIONS ==================== -->
+<div id="screen-child-notifs" class="screen" style="padding-top:0;">
+  <div class="user-header" style="position:sticky;top:0;z-index:10;background:var(--bg);">
+    <button class="back-btn" id="btn-notifs-back">→</button>
+    <h2>התראות 🔔</h2>
+    <button id="btn-notifs-to-profile" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:6px;" title="ערוך פרופיל">✏️</button>
+  </div>
+  <div style="padding:8px 16px 90px;overflow-y:auto;width:100%;box-sizing:border-box;">
+    <div id="notifs-list"></div>
+  </div>
+</div>
+
 <!-- ==================== SCREEN: PROFILE EDIT ==================== -->
 <div id="screen-child-profile" class="screen screen-no-scroll" style="padding-top:20px;">
   <div class="user-header">
@@ -176,9 +188,10 @@
     <span class="nav-label">הישגים</span>
     <span class="nav-badge" id="nav-badge-badges" style="display:none;"></span>
   </button>
-  <button class="nav-btn" data-screen="screen-child-profile" data-tab="profile">
-    <div class="nav-icon nav-profile-icon-wrap" id="nav-profile-icon">👤</div>
-    <span class="nav-label">פרופיל</span>
+  <button class="nav-btn" data-screen="screen-child-notifs" data-tab="notifs">
+    <span class="nav-icon">🔔</span>
+    <span class="nav-label">התראות</span>
+    <span class="nav-badge" id="nav-badge-notifs" style="display:none;"></span>
   </button>
 </nav>
 
