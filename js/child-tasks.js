@@ -143,7 +143,7 @@ export function renderPendingSection() {
   if (!section) return;
 
   const pending = (state.childState?.pending || []);
-  const active  = pending.filter(p => p.status !== 'rejected');
+  const active  = pending.filter(p => p.status === 'pending');
 
   if (active.length === 0) { section.style.display = 'none'; return; }
   section.style.display = 'block';
