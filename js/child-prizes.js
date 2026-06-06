@@ -75,11 +75,10 @@ export async function renderPrizesScreen() {
     const missing    = (prize.pts || 0) - totalPts;
     const pct        = canAfford ? 100 : Math.round((totalPts / (prize.pts || 1)) * 100);
 
-    // כרטיס נעול — overlay כהה + progress bar
+    // כרטיס נעול — סרגל תחתי בלי overlay כהה
     const lockHTML = !canAfford ? `
-      <div class="prize-lock-overlay">
-        <span class="prize-lock-icon">🔒</span>
-        <span class="prize-lock-needed">עוד ${missing} ⭐</span>
+      <div class="prize-lock-bottom">
+        <span class="prize-lock-needed">🔒 עוד ${missing} ⭐</span>
         <div class="prize-lock-bar-wrap">
           <div class="prize-lock-bar">
             <div class="prize-lock-bar-fill" style="width:${pct}%"></div>

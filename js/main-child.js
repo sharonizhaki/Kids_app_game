@@ -105,7 +105,7 @@ function _renderPrizeBar() {
   }
 
   const prize   = _prizes[_prizeRotIdx];
-  const cost    = prize.cost || 0;
+  const cost    = prize.pts || 0;
   const pct     = cost > 0 ? Math.min(100, Math.round((totalPts / cost) * 100)) : 100;
   const remain  = Math.max(0, cost - totalPts);
 
