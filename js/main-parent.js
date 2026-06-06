@@ -374,10 +374,6 @@ document.getElementById('btn-delete-account').onclick = async () => {
   }, getFamilyId());
 };
 
-document.getElementById('btn-delete-account-dev').onclick = () => {
-  document.getElementById('btn-delete-account').click();
-};
-
 // Modal: no child
 document.getElementById('modal-no-child-back').onclick = () => {
   document.getElementById('modal-no-child').style.display = 'none';
