@@ -84,7 +84,7 @@ function _startPrizeRotation() {
 }
 
 function _renderPrizeBar() {
-  const totalPts = (state.childState?.monthlyPts || 0) + (state.childState?.pts || 0);
+  const totalPts = state.childState?.pts || 0;
   const color    = state.childData?.color || '#6366F1';
 
   const emojiEl     = document.getElementById('ppcard-emoji');

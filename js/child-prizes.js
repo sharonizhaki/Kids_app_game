@@ -68,12 +68,12 @@ export async function renderPrizesScreen() {
   }
 
   grid.innerHTML = prizes.map(prize => {
-    const canAfford  = totalPts >= (prize.cost || 0);
+    const canAfford  = totalPts >= (prize.pts || 0);
     const myRequest  = pendingByPrize[prize.id];
     const isPending  = myRequest?.status === 'pending';
     const isApproved = myRequest?.status === 'approved';
-    const missing    = (prize.cost || 0) - totalPts;
-    const pct        = canAfford ? 100 : Math.round((totalPts / (prize.cost || 1)) * 100);
+    const missing    = (prize.pts || 0) - totalPts;
+    const pct        = canAfford ? 100 : Math.round((totalPts / (prize.pts || 1)) * 100);
 
     // כרטיס נעול — overlay כהה + progress bar
     const lockHTML = !canAfford ? `
@@ -103,7 +103,7 @@ export async function renderPrizesScreen() {
       <div class="prize-card${!canAfford ? ' prize-locked' : ''}" data-prize-id="${prize.id}">
         <span class="prize-emoji">${prize.emoji || '🎁'}</span>
         <span class="prize-title">${prize.title}</span>
-        <span class="prize-cost">${prize.cost || 0} ⭐</span>
+        <span class="prize-cost">${prize.pts || 0} ⭐</span>
         ${actionHTML}
         ${lockHTML}
       </div>`;
@@ -165,7 +165,7 @@ function showPrizeConfirmModal(prize, totalPts) {
         <div style="font-size:1.05rem;font-weight:800;margin-bottom:8px;color:#1E293B;text-align:center;">${prize.title}</div>
         ${descHTML}
         <div style="font-size:0.85rem;color:#94A3B8;font-weight:600;text-align:center;margin-bottom:20px;">
-          עולה ${prize.cost} ⭐ — יש לך ${totalPts} ⭐
+          עולה ${prize.pts} ⭐ — יש לך ${totalPts} ⭐
         </div>
         <div style="display:flex;gap:10px;flex-direction:row-reverse;">
           <button id="prize-confirm-send" style="flex:1;padding:14px;background:linear-gradient(135deg,#6366F1,#818CF8);color:white;border:none;border-radius:14px;font-size:1rem;font-weight:800;cursor:pointer;font-family:'Heebo',sans-serif;box-shadow:0 4px 14px rgba(99,102,241,0.3);">שלח בקשה 🎁</button>
@@ -191,7 +191,7 @@ async function sendPrizeRequest(prize) {
       prizeId:    prize.id,
       prizeTitle: prize.title,
       prizeEmoji: prize.emoji || '🎁',
-      cost:       prize.cost || 0,
+      cost:       prize.pts || 0,
       childId:    state.childId,
       childName:  state.childData?.name || '',
       status:     'pending',
