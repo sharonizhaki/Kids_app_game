@@ -147,7 +147,7 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
 .photo-upload input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;}
 
 /* === TOAST === */
-.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);background:linear-gradient(135deg,var(--success),#059669);color:white;padding:22px 44px;border-radius:22px;font-size:1.3rem;font-weight:800;z-index:3000;opacity:0;transition:opacity 0.25s,transform 0.25s;pointer-events:none;text-align:center;box-shadow:0 8px 40px rgba(16,185,129,0.4);}
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;padding:22px 44px;border-radius:22px;font-size:1.3rem;font-weight:800;z-index:3000;opacity:0;transition:opacity 0.25s,transform 0.25s;pointer-events:none;text-align:center;box-shadow:0 8px 40px rgba(124,58,237,0.4);}
 .toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
 
 /* === MODALS === */

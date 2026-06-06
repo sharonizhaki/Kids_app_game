@@ -53,16 +53,16 @@ export function isPending(t) {
 }
 
 // -------- COMPLETE TASK (entry point) --------
-export function completeTask(t, saveStateFn) {
+export function completeTask(t, saveStateFn, photoUrl = '') {
   if (t.requireApproval) {
-    _submitPending(t, saveStateFn);
+    _submitPending(t, saveStateFn, photoUrl);
   } else {
-    _finalizeTask(t, saveStateFn);
+    _finalizeTask(t, saveStateFn, photoUrl);
   }
 }
 
 // -------- FINALIZE --------
-export function _finalizeTask(t, saveStateFn) {
+export function _finalizeTask(t, saveStateFn, photoUrl = '') {
   const d       = new Date();
   const time    = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   const day     = DAYS[d.getDay()];
@@ -88,6 +88,7 @@ export function _finalizeTask(t, saveStateFn) {
     pts:    t.pts,
     time, day,
     ts:     Date.now(),
+    ...(photoUrl ? { photoUrl } : {}),
   });
   if (cs.hist.length > 50) cs.hist.pop();
 
@@ -95,7 +96,7 @@ export function _finalizeTask(t, saveStateFn) {
 }
 
 // -------- SUBMIT PENDING --------
-async function _submitPending(t, saveStateFn) {
+async function _submitPending(t, saveStateFn, photoUrl = '') {
   const d    = new Date();
   const time = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   const day  = DAYS[d.getDay()];
@@ -110,6 +111,7 @@ async function _submitPending(t, saveStateFn) {
     pts:    t.pts,
     time, day, ts,
     status: 'pending',
+    ...(photoUrl ? { photoUrl } : {}),
   });
   saveStateFn();
 
@@ -128,6 +130,7 @@ async function _submitPending(t, saveStateFn) {
           childEmoji: state.childData?.emoji || '👦',
           status:     'pending',
           createdAt:  serverTimestamp(),
+          ...(photoUrl ? { photoUrl } : {}),
         }
       );
     } catch (e) { console.error('pendingApprovals write error:', e); }
@@ -417,9 +420,11 @@ function _handleComplete(t, withPhoto, saveStateFn, renderChildFn, ov) {
     input.type = 'file';
     input.accept = 'image/*';
     input.capture = 'environment';
-    input.onchange = () => {
+    input.onchange = async () => {
+      const file = input.files[0];
+      const photoUrl = file ? await _compressPhoto(file) : '';
       // אחרי בחירת תמונה — מסמן כבוצע
-      completeTask(t, saveStateFn);
+      completeTask(t, saveStateFn, photoUrl);
       ov.remove();
       if (t.requireApproval) {
         showToast({ message: 'נשלח לאישור הורה! ⏳', color: state.childData?.color });
@@ -441,6 +446,30 @@ function _handleComplete(t, withPhoto, saveStateFn, renderChildFn, ov) {
   }
   renderChildFn();
 }
+// -------- COMPRESS PHOTO --------
+function _compressPhoto(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 800;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+        if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(c.toDataURL('image/jpeg', 0.72));
+      };
+      img.onerror = () => resolve('');
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
+}
+
 // -------- RENDER HISTORY --------
 export function renderHistory() {
   const hl = document.getElementById('user-hist');

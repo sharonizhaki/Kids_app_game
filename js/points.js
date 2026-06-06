@@ -90,6 +90,7 @@ export async function loadCompletedTasks(familyId) {
           task: h.task, emoji: h.emoji || taskInfo.emoji || '⭐',
           pts: h.pts || 0, cat: taskInfo.cat || '',
           time: h.time || '', day: h.day || '', ts: h.ts || 0, histIdx: idx,
+          photoUrl: h.photoUrl || '',
         });
       });
     } catch(e) {}
@@ -164,13 +165,15 @@ export function renderPendingTab(familyId) {
         <div style="flex:1;min-width:0;">
           <div style="font-weight:800;font-size:0.92rem;color:#0F172A;margin-bottom:2px;">${p.task}</div>
           <div style="font-size:0.78rem;color:#64748B;">${childDisplay} · ${p.pts} ⭐ · ${p.day || ''} ${p.time || ''}</div>
+          ${p.photoUrl ? `<button class="btn-photo-view" style="margin-top:5px;background:#EDE9FE;color:#7C3AED;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">📷 צפה בתמונה</button>` : ''}
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;">
-          <button class="btn-approve" style="background:linear-gradient(135deg,#10B981,#059669);color:white;border:none;border-radius:10px;padding:6px 12px;font-size:0.78rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">✅ אשר</button>
+          <button class="btn-approve" style="background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;border:none;border-radius:10px;padding:6px 12px;font-size:0.78rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">✅ אשר</button>
           <button class="btn-reject" style="background:#FEE2E2;color:#B91C1C;border:none;border-radius:10px;padding:6px 12px;font-size:0.78rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">❌ דחה</button>
         </div>`;
       card.querySelector('.btn-approve').onclick = () => resolveApproval(p, 'approved', familyId);
       card.querySelector('.btn-reject').onclick  = () => resolveApproval(p, 'rejected', familyId);
+      if (p.photoUrl) card.querySelector('.btn-photo-view').onclick = () => showPhotoModal(p, familyId);
       sec.appendChild(card);
     });
     list.appendChild(sec);
@@ -340,10 +343,17 @@ export function renderMPList(familyId) {
             <span class="etask-tag freq-tag">${t.day} ${t.time}</span>
           </div>
         </div>
-        <span class="etask-stars">${'⭐'.repeat(Math.min(t.pts||0,5))}</span>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <span class="etask-stars">${'⭐'.repeat(Math.min(t.pts||0,5))}</span>
+          ${t.photoUrl ? `<button class="btn-hist-photo" data-idx="${i}" style="background:#EDE9FE;border:none;border-radius:8px;width:28px;height:28px;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">📷</button>` : ''}
+        </div>
       </div>
     </div>`).join('');
   attachMPSwipeHandlers(list, familyId || _familyId);
+  list.querySelectorAll('.btn-hist-photo').forEach(btn => {
+    const idx = parseInt(btn.dataset.idx);
+    btn.onclick = (e) => { e.stopPropagation(); showPhotoLightbox(tasks[idx].photoUrl); };
+  });
 }
 
 // =========== TAB: ניקוד ידני ===========
@@ -470,7 +480,7 @@ async function resolveApproval(p, status, familyId) {
   if (status === 'approved') {
     showConfirm({ icon: p.emoji || '⭐', title: `לאשר: ${p.task}?`,
       message: `${p.childName} יקבל/תקבל ${p.pts} ⭐`,
-      confirmText: '✅ אשר', confirmColor: 'linear-gradient(135deg,#10B981,#059669)',
+      confirmText: '✅ אשר', confirmColor: 'linear-gradient(135deg,#7C3AED,#5B21B6)',
       onConfirm: () => _doResolve(p, 'approved', familyId),
     });
   } else {
@@ -497,7 +507,8 @@ async function _doResolve(p, status, familyId) {
         cs.dailyPts[dateKey] = (cs.dailyPts[dateKey] || 0) + (p.pts || 0);
         if (!cs.hist) cs.hist = [];
         cs.hist.unshift({ taskId: p.taskId, task: p.task, emoji: p.emoji || '⭐',
-          pts: p.pts || 0, time: p.time || '', day: p.day || '', ts: p.ts || Date.now() });
+          pts: p.pts || 0, time: p.time || '', day: p.day || '', ts: p.ts || Date.now(),
+          ...(p.photoUrl ? { photoUrl: p.photoUrl } : {}) });
         if (cs.hist.length > 50) cs.hist.pop();
         if (cs.pending) {
           cs.pending = cs.pending.map(pp =>
@@ -520,7 +531,8 @@ async function _doResolve(p, status, familyId) {
       }
     }
     hideLoading();
-    showToast(status === 'approved' ? '✅ אושר! כוכבים נוספו' : '❌ הבקשה נדחתה');
+    if (status === 'approved') showStarsAddedPopup(p.childName, p.pts);
+    else showToast('❌ הבקשה נדחתה');
     await loadPendingApprovals(familyId);
     renderMPTabs(familyId);
     renderPendingTab(familyId);
@@ -599,4 +611,68 @@ async function undoTask(familyId, childId, histIdx) {
     showToast('ביצוע בוטל ↩️');
     renderMPList(familyId);
   } catch(e) { hideLoading(); console.error(e); }
+}
+
+// =========== PHOTO MODAL (אישורים) ===========
+function showPhotoModal(p, familyId) {
+  const existing = document.getElementById('photo-modal-overlay');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'photo-modal-overlay';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.92);z-index:4000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;';
+  modal.innerHTML = `
+    <div style="width:100%;max-width:440px;background:#1E293B;border-radius:24px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,0.4);">
+      <div style="padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,0.08);">
+        <span style="font-size:1.6rem;">${p.emoji || '⭐'}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:800;font-size:0.92rem;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.task}</div>
+          <div style="font-size:0.75rem;color:#94A3B8;">${p.childName} · ${p.pts} ⭐ · ${p.day || ''} ${p.time || ''}</div>
+        </div>
+        <button id="pm-close" style="background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:32px;height:32px;color:white;font-size:1rem;cursor:pointer;flex-shrink:0;">✕</button>
+      </div>
+      <img src="${p.photoUrl}" style="width:100%;max-height:52vh;object-fit:contain;background:#0F172A;display:block;" />
+      <div style="padding:12px 14px;display:flex;gap:10px;">
+        <button id="pm-approve" style="flex:2;padding:13px;background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;border:none;border-radius:14px;font-size:0.95rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(124,58,237,0.35);">✅ אשר</button>
+        <button id="pm-reject" style="flex:1;padding:13px;background:#FEE2E2;color:#B91C1C;border:none;border-radius:14px;font-size:0.95rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">❌ דחה</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.querySelector('#pm-close').onclick = () => modal.remove();
+  modal.querySelector('#pm-approve').onclick = () => { modal.remove(); resolveApproval(p, 'approved', familyId); };
+  modal.querySelector('#pm-reject').onclick  = () => { modal.remove(); resolveApproval(p, 'rejected', familyId); };
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+}
+
+// =========== PHOTO LIGHTBOX (היסטוריה) ===========
+function showPhotoLightbox(photoUrl) {
+  const existing = document.getElementById('photo-lightbox-overlay');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'photo-lightbox-overlay';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.95);z-index:4000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML = `
+    <div style="position:relative;width:100%;max-width:440px;">
+      <button id="lb-close" style="position:absolute;top:-14px;left:0;background:rgba(255,255,255,0.15);border:none;border-radius:50%;width:36px;height:36px;color:white;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1;">✕</button>
+      <img src="${photoUrl}" style="width:100%;max-height:72vh;object-fit:contain;border-radius:16px;display:block;" />
+    </div>`;
+  document.body.appendChild(modal);
+  modal.querySelector('#lb-close').onclick = () => modal.remove();
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+}
+
+// =========== STARS ADDED POPUP ===========
+function showStarsAddedPopup(childName, pts) {
+  const existing = document.getElementById('stars-popup-overlay');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'stars-popup-overlay';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.45);z-index:4000;display:flex;align-items:center;justify-content:center;padding:20px;pointer-events:none;';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:24px;padding:28px 32px;text-align:center;box-shadow:0 20px 60px rgba(124,58,237,0.2);animation:fadeIn 0.2s ease;pointer-events:auto;">
+      <div style="font-size:2.8rem;margin-bottom:6px;">⭐</div>
+      <div style="font-size:1.15rem;font-weight:900;color:#0F172A;margin-bottom:4px;">אושר!</div>
+      <div style="font-size:0.88rem;color:#64748B;font-weight:600;">${childName} קיבל/ה ${pts} כוכבים</div>
+    </div>`;
+  document.body.appendChild(modal);
+  setTimeout(() => modal.remove(), 2200);
 }
