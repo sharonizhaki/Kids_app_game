@@ -1,5 +1,6 @@
 import { auth, db } from './firebase.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { onSnapshot, doc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 import { showScreen, showToast, showLoading, hideLoading, openSideMenu, closeSideMenu, showConfirm } from './ui.js';
 import { cropAndCompressPhoto } from './ui.js';
@@ -44,6 +45,61 @@ window.openEditChild = openEditChild;
 window.renderFamily = () => renderFamily(currentFamilyId);
 
 function getFamilyId() { return currentFamilyId; }
+
+// =========== ACTIVITY BADGE (מרכז פעילות) ===========
+function _activitySeenKey(familyId) { return `activityLastSeen_${familyId}`; }
+
+function _getLastSeen(familyId) {
+  try { return parseInt(localStorage.getItem(_activitySeenKey(familyId)) || '0', 10); } catch(e) { return 0; }
+}
+
+function _markActivitySeen(familyId) {
+  try { localStorage.setItem(_activitySeenKey(familyId), String(Date.now())); } catch(e) {}
+}
+
+function _setActivityBadge(count) {
+  const badge = document.getElementById('activity-badge');
+  if (!badge) return;
+  if (count > 0) {
+    badge.textContent = count;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+let _activityUnsubs = [];
+let _activityHistMap = {};
+
+function initActivityBadgeListeners(familyId) {
+  _activityUnsubs.forEach(u => u());
+  _activityUnsubs = [];
+  _activityHistMap = {};
+
+  function recompute() {
+    const since = _getLastSeen(familyId);
+    let total = 0;
+    for (const hist of Object.values(_activityHistMap)) {
+      total += hist.filter(h => (h.ts || 0) > since).length;
+    }
+    _setActivityBadge(total);
+  }
+
+  for (const child of childrenCache) {
+    const stateRef = doc(db, 'families', familyId, 'children', child.id, 'state', 'current');
+    const u = onSnapshot(stateRef, snap => {
+      _activityHistMap[child.id] = snap.exists() ? (snap.data().hist || []) : [];
+      recompute();
+    }, () => {});
+    _activityUnsubs.push(u);
+  }
+}
+
+window.goToActivityCenter = function() {
+  _markActivitySeen(currentFamilyId);
+  _setActivityBadge(0);
+  window.location.href = 'points.html?tab=history';
+};
 
 // =========== QUICK TASKS BANNER ===========
 function quickBannerKey() { return `quickBannerDismissed_${currentFamilyId || 'none'}`; }
@@ -307,6 +363,7 @@ async function handleQuickPrizes(triggerEl, category) {
   saveWeeklySnapshot(currentFamilyId).catch(() => {});
   initApprovalQueue(currentFamilyId);
   initDashboardListeners(currentFamilyId);
+  initActivityBadgeListeners(currentFamilyId);
 
   // Quick banner buttons
   document.getElementById('btn-quick-banner-close').addEventListener('click', dismissQuickBanner);

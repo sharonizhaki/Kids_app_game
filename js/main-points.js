@@ -45,7 +45,9 @@ document.getElementById('btn-back-to-parent')?.addEventListener('click', () => {
   // ניווט מכרטיס ילד בדשבורד → פתח היסטוריה מסוננת לאותו ילד
   const urlParams  = new URLSearchParams(window.location.search);
   const childName  = urlParams.get('childName');
+  const tabParam   = urlParams.get('tab');
   if (childName) setMPState('history', 'child', childName);
+  else if (tabParam) setMPState(tabParam, 'all', '');
 
   showScreen('screen-manage-points');
 
