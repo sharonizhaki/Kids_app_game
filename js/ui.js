@@ -35,6 +35,7 @@ export function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active','visible'); });
   const next = document.getElementById(id);
   next.classList.add('active');
+  next.scrollTop = 0;
   requestAnimationFrame(() => requestAnimationFrame(() => next.classList.add('visible')));
   syncPageScroll(id);
   window.scrollTo(0, 0);
