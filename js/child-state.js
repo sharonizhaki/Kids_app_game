@@ -9,3 +9,8 @@ export const state = {
   tasksData:  [],     // [{ id, task, pts, freq, cat, catIcon, emoji, assignedChildren, ... }]
   childState: null,   // { pts, monthlyPts, comp, hist, lastActive, wk, mk, streak, dailyPts, badges, pending }
 };
+
+// מחזירה צורה זכר (male) או נקבה (female) לפי מין הילד הנוכחי
+export function g(male, female) {
+  return state.childData?.gender === 'female' ? female : male;
+}

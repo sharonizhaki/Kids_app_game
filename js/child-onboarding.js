@@ -3,7 +3,7 @@
 // startOnboarding(db, renderChildFn) — קורא מ-child.js כשchildData.onboarded !== true
 
 import { doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { state } from './child-state.js';
+import { state, g } from './child-state.js';
 import { cropAndCompressPhoto } from './ui.js';
 import { SPLAT_SVG } from './icons.js';
 
@@ -148,7 +148,7 @@ function showPhotoStep() {
         ${dotsHTML(1)}
         <div class="ob-step-label">שלב 1 מתוך 3</div>
         <h2 class="ob-step-title">התמונה שלך 📷</h2>
-        <p class="ob-step-sub">${isFromParent ? 'ההורה בחר תמונה עבורך — אפשר להחליף' : 'בחר תמונה שתייצג אותך'}</p>
+        <p class="ob-step-sub">${isFromParent ? 'ההורה בחר תמונה עבורך — אפשר להחליף' : g('בחר תמונה שתייצג אותך', 'בחרי תמונה שתייצגי אותך')}</p>
 
         <div class="ob-photo-area">
           <div class="ob-photo-circle" id="ob-photo-circle">
@@ -156,7 +156,7 @@ function showPhotoStep() {
               ? `<img id="ob-photo-img" src="${_obPhoto}" alt="תמונה">`
               : `<div class="ob-photo-placeholder">
                   <span>📷</span>
-                  <small>בחר תמונה</small>
+                  <small>${g('בחר תמונה', 'בחרי תמונה')}</small>
                 </div>`
             }
             <input type="file" accept="image/*" id="ob-photo-input" class="ob-photo-file-input">
@@ -206,7 +206,7 @@ function showPhotoStep() {
     _obPhoto = null;
     const circle = overlay.querySelector('#ob-photo-circle');
     circle.innerHTML = `
-      <div class="ob-photo-placeholder"><span>📷</span><small>בחר תמונה</small></div>
+      <div class="ob-photo-placeholder"><span>📷</span><small>${g('בחר תמונה', 'בחרי תמונה')}</small></div>
       <input type="file" accept="image/*" id="ob-photo-input" class="ob-photo-file-input">`;
     overlay.querySelector('#ob-photo-input').onchange = async (e) => {
       const file = e.target.files[0];
@@ -248,14 +248,14 @@ function showColorStep() {
         ${dotsHTML(2)}
         <div class="ob-step-label">שלב 2 מתוך 3</div>
         <h2 class="ob-step-title">הצבע שלך 🎨</h2>
-        <p class="ob-step-sub">${_obColor ? 'הצבע שנבחר עבורך — אפשר לשנות' : 'בחר צבע שמייצג אותך'}</p>
+        <p class="ob-step-sub">${_obColor ? 'הצבע שנבחר עבורך — אפשר לשנות' : g('בחר צבע שמייצג אותך', 'בחרי צבע שמייצג אותך')}</p>
 
         <div class="ob-color-preview-wrap">
           <div id="ob-color-preview" class="ob-color-preview-splat">
             ${_obColor ? SPLAT_SVG(_obColor, 115) : SPLAT_SVG('#94A3B8', 115, true)}
           </div>
           <span class="ob-color-preview-label" id="ob-color-preview-label">
-            ${_obColor ? 'הצבע שלי ✓' : 'לא נבחר עדיין'}
+            ${_obColor ? 'הצבע שלי ' : 'לא נבחר עדיין'}
           </span>
         </div>
 
@@ -286,7 +286,7 @@ function showColorStep() {
         preview.innerHTML = SPLAT_SVG(_obColor, 115);
         preview.style.opacity = '1'; preview.style.transform = 'scale(1)';
       }, 150);
-      overlay.querySelector('#ob-color-preview-label').textContent = 'הצבע שלי ✓';
+      overlay.querySelector('#ob-color-preview-label').textContent = 'הצבע שלי ';
       if (_obColor !== prev) showPopup('🎨', 'צבע נבחר!', 1200);
     };
   });
@@ -313,7 +313,7 @@ function showEmojiStep() {
         ${dotsHTML(3)}
         <div class="ob-step-label">שלב 3 מתוך 3</div>
         <h2 class="ob-step-title">האימוג'י שלך 😄</h2>
-        <p class="ob-step-sub">${_obEmoji ? 'האימוג\'י שנבחר עבורך — אפשר לשנות' : 'בחר אימוג\'י שמייצג אותך'}</p>
+        <p class="ob-step-sub">${_obEmoji ? 'האימוג\'י שנבחר עבורך — אפשר לשנות' : g('בחר אימוג\'י שמייצג אותך', 'בחרי אימוג\'י שמייצג אותך')}</p>
 
         <div class="ob-emoji-preview" id="ob-emoji-preview">
           ${_obEmoji || '?'}

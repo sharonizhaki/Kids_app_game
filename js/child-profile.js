@@ -3,7 +3,7 @@
 // initProfile(db, renderChildFn) — קורא פעם אחת מ-child.js
 
 import { doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { state } from './child-state.js';
+import { state, g } from './child-state.js';
 import { show } from './child-ui.js';
 import { cropAndCompressPhoto } from './ui.js';
 import { SPLAT_SVG } from './icons.js';
@@ -123,6 +123,18 @@ export function openChildProfile() {
   }
 
   document.getElementById('profile-error').textContent = '';
+
+  // עדכן טקסטים לפי מין
+  const isFem = childData.gender === 'female';
+  document.getElementById('profile-color-display').title = isFem ? 'לחצי לעריכה' : 'לחץ לעריכה';
+  document.getElementById('profile-emoji-display').title = isFem ? 'לחצי לעריכה' : 'לחץ לעריכה';
+  const photoPlaceholder = document.getElementById('profile-photo-placeholder');
+  if (photoPlaceholder) {
+    const small = photoPlaceholder.querySelector('small');
+    if (small) small.textContent = isFem ? 'בחרי תמונה' : 'בחר תמונה';
+  }
+  document.getElementById('btn-profile-save').textContent = isFem ? 'שמרי ✅' : 'שמור ✅';
+
   show('screen-child-profile');
 }
 
@@ -147,7 +159,7 @@ async function saveProfile() {
     _renderChildFn();
     show('screen-child');
   } catch (e) {
-    err.textContent = 'שגיאה בשמירה, נסה שוב';
+    err.textContent = g('שגיאה בשמירה, נסה שוב', 'שגיאה בשמירה, נסי שוב');
     console.error(e);
   }
 }
@@ -160,7 +172,7 @@ function showProfileEmojiModal() {
   sh.innerHTML = `
     <div class="modal-handle"></div>
     <div class="modal-header">
-      <h2>בחר אימוג'י</h2>
+      <h2>${g("בחר אימוג'י", "בחרי אימוג'י")}</h2>
       <button class="modal-close">✕</button>
     </div>
     <div class="modal-body">
@@ -215,7 +227,7 @@ function showProfileColorModal() {
   let tempColor = profileColor;
   sh.innerHTML = `
     <div class="modal-handle"></div>
-    <div class="modal-header"><h2>בחר צבע 🎨</h2><button class="modal-close">✕</button></div>
+    <div class="modal-header"><h2>${g('בחר צבע 🎨', 'בחרי צבע 🎨')}</h2><button class="modal-close">✕</button></div>
     <div class="modal-body">
       <div class="splat-modal-preview" id="modal-color-preview">
         ${profileColor ? SPLAT_SVG(profileColor, 115) : SPLAT_SVG('#94A3B8', 115, true)}
