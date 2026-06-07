@@ -358,6 +358,7 @@ async function handleQuickPrizes(triggerEl, category) {
 
   hideLoading();
   showScreen('screen-dashboard');
+  renderDashboardChildren(currentFamilyId); // טעינה מוקדמת — לפני הבאנרים
   refreshQuickTasksBanner();
   refreshQuickPrizesBanner();
   saveWeeklySnapshot(currentFamilyId).catch(() => {});
@@ -379,7 +380,7 @@ async function handleQuickPrizes(triggerEl, category) {
   // הפעל טוטוריאל חד-פעמי לדשבורד
   const uid = user.uid;
   if (!localStorage.getItem('dashTourDone_' + uid)) {
-    setTimeout(() => startDashTour(currentFamilyId, uid), 700);
+    setTimeout(() => startDashTour(currentFamilyId, uid), 3500);
   }
 })();
 
@@ -915,6 +916,17 @@ async function startDashTour(familyId, uid) {
   overlay.appendChild(card);
   document.body.appendChild(overlay);
 
+  function applyShutters(el) {
+    const rect = el.getBoundingClientRect();
+    if (!rect.height) return false;
+    shutterTop.style.height = Math.max(0, rect.top - PAD) + 'px';
+    shutterBottom.style.height = Math.max(0, window.innerHeight - rect.bottom - PAD) + 'px';
+    const fitsBelow = rect.bottom + 200 < window.innerHeight;
+    card.style.top    = fitsBelow ? (rect.bottom + 10) + 'px' : 'auto';
+    card.style.bottom = fitsBelow ? 'auto' : (window.innerHeight - rect.top + 10) + 'px';
+    return true;
+  }
+
   function showStep(idx) {
     const step = visibleSteps[idx];
     const rawEl = document.querySelector(step.el);
@@ -926,13 +938,17 @@ async function startDashTour(familyId, uid) {
     void card.offsetWidth;
     shutterTop.style.height = '0px';
     shutterBottom.style.height = '0px';
-    rawEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // גלול את מסך הדשבורד (לא body) כדי להביא את האלמנט למרכז
+    const screen = document.querySelector('.screen.active') || document.getElementById('screen-dashboard');
+    if (screen) {
+      const screenRect = screen.getBoundingClientRect();
+      const elRect = rawEl.getBoundingClientRect();
+      const desired = screen.scrollTop + (elRect.top - screenRect.top) - (window.innerHeight / 2 - elRect.height / 2);
+      screen.scrollTo({ top: Math.max(0, desired), behavior: 'smooth' });
+    }
 
     setTimeout(() => {
-      const rect = el.getBoundingClientRect();
-      shutterTop.style.height = Math.max(0, rect.top - PAD) + 'px';
-      shutterBottom.style.height = Math.max(0, window.innerHeight - rect.bottom - PAD) + 'px';
-
       const dotsHTML = visibleSteps.map((_, i) => `<span class="tour-dot${i === idx ? ' active' : ''}"></span>`).join('');
       card.innerHTML = `
         <div class="tour-card-btns" style="margin-bottom:10px;">
@@ -946,17 +962,17 @@ async function startDashTour(familyId, uid) {
           <button class="tour-next-btn" id="tour-next">${idx === visibleSteps.length - 1 ? 'סיום ✅' : 'הבא ←'}</button>
         </div>`;
 
-      const fitsBelow = rect.bottom + 190 < window.innerHeight;
-      card.style.top    = fitsBelow ? (rect.bottom + 8) + 'px' : 'auto';
-      card.style.bottom = fitsBelow ? 'auto' : (window.innerHeight - rect.top + 8) + 'px';
-
       document.getElementById('tour-next').onclick = () => {
         currentStep++;
         if (currentStep >= visibleSteps.length) endTour(); else showStep(currentStep);
       };
       document.getElementById('tour-skip')?.addEventListener('click', endTour);
 
+      applyShutters(el);
       setTimeout(() => card.classList.add('visible'), 130);
+
+      // חישוב מחדש אחרי 600ms — אם הדף השתנה (גריד נטען וכו')
+      setTimeout(() => applyShutters(el), 700);
     }, 520);
   }
 
