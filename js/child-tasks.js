@@ -278,6 +278,7 @@ function showCatModal(cat, saveStateFn, renderChildFn) {
       <div class="task-row-info">
         <strong>${t.task}</strong>
         <span class="freq-tag ${freqCls}">${FREQ_LABEL[t.freq] || ''}</span>
+        ${t.desc ? `<span class="task-row-note">📝 ${t.desc}</span>` : ''}
       </div>
       <div class="task-row-actions"></div>`;
 
@@ -291,7 +292,7 @@ function showCatModal(cat, saveStateFn, renderChildFn) {
       // חובה לצלם
       const btnPhoto = document.createElement('button');
       btnPhoto.className = 'task-btn-photo-required';
-      btnPhoto.textContent = '📸 צלם';
+      btnPhoto.innerHTML = `📸 צלם<span class="photo-req-label">חובת צילום</span>`;
       btnPhoto.onclick = () => _handleComplete(t, true, saveStateFn, renderChildFn, ov);
       actions.appendChild(btnPhoto);
     } else {
