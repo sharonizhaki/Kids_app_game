@@ -383,6 +383,28 @@ function flyStarToCounter(pts) {
 }
 
 // -------- TASK SUCCESS POPUP --------
+function showApprovalSentPopup(withPhoto) {
+  document.querySelectorAll('.task-approval-popup').forEach(el => el.remove());
+
+  const popup = document.createElement('div');
+  popup.className = 'task-approval-popup';
+  popup.innerHTML = `
+    <div class="tap-icon">${withPhoto ? '📸' : '⏳'}</div>
+    <div class="tap-title">${withPhoto ? 'תמונה נשלחה!' : 'נשלח לאישור!'}</div>
+    <div class="tap-sub">ממתין לאישור הורה</div>
+  `;
+  document.body.appendChild(popup);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { popup.classList.add('tap-show'); });
+  });
+
+  setTimeout(() => {
+    popup.classList.remove('tap-show');
+    setTimeout(() => popup.remove(), 350);
+  }, 2200);
+}
+
 function showTaskSuccessPopup(pts) {
   const enc = getEncourage();
 
@@ -427,7 +449,7 @@ function _handleComplete(t, withPhoto, saveStateFn, renderChildFn, ov) {
       completeTask(t, saveStateFn, photoUrl);
       ov.remove();
       if (t.requireApproval) {
-        showToast({ message: 'נשלח לאישור הורה! ⏳', color: state.childData?.color });
+        showApprovalSentPopup(true);
       } else {
         showTaskSuccessPopup(t.pts);
       }
@@ -440,7 +462,7 @@ function _handleComplete(t, withPhoto, saveStateFn, renderChildFn, ov) {
   completeTask(t, saveStateFn);
   ov.remove();
   if (t.requireApproval) {
-    showToast({ message: 'נשלח לאישור הורה! ⏳', color: state.childData?.color });
+    showApprovalSentPopup(false);
   } else {
     showTaskSuccessPopup(t.pts);
   }
