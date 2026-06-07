@@ -1,7 +1,7 @@
 import { auth, db } from './firebase.js';
 import {
   doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
-  collection, serverTimestamp, Timestamp
+  collection, serverTimestamp, Timestamp, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { showScreen, showToast, showLoading, hideLoading } from './ui.js';
 import { generateCode } from './auth.js';
@@ -558,6 +558,54 @@ export async function renderDashTaskRows(familyId) {
     }
     container.appendChild(row);
   });
+}
+
+// =========== DASHBOARD LIVE LISTENERS ===========
+export function initDashboardListeners(familyId) {
+  let renderTimer = null;
+  let renderChildTimer = null;
+
+  function scheduleRenderAll() {
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(() => {
+      renderDashboardChildren(familyId);
+      renderDashTaskRows(familyId);
+    }, 120);
+  }
+
+  function scheduleRenderChildren() {
+    clearTimeout(renderChildTimer);
+    renderChildTimer = setTimeout(() => {
+      renderDashboardChildren(familyId);
+    }, 120);
+  }
+
+  const unsubTasks = onSnapshot(
+    collection(db, 'families', familyId, 'tasks'),
+    () => scheduleRenderAll(),
+    () => {}
+  );
+
+  const unsubPrizeReq = onSnapshot(
+    collection(db, 'families', familyId, 'prizeRequests'),
+    () => scheduleRenderChildren(),
+    () => {}
+  );
+
+  const childStateUnsubs = [];
+  for (const child of childrenCache) {
+    const stateRef = doc(db, 'families', familyId, 'children', child.id, 'state', 'current');
+    const u = onSnapshot(stateRef, () => scheduleRenderAll(), () => {});
+    childStateUnsubs.push(u);
+  }
+
+  return function unsub() {
+    clearTimeout(renderTimer);
+    clearTimeout(renderChildTimer);
+    unsubTasks();
+    unsubPrizeReq();
+    childStateUnsubs.forEach(u => u());
+  };
 }
 
 export function shareParentCode(code) {

@@ -10,7 +10,7 @@ import {
   createParentInviteCode, shareCode, shareParentCode,
   CHILD_EMOJIS, CHILD_COLORS, colorGradient,
   renderDashboardChildren, renderDashTaskRows, saveWeeklySnapshot,
-  showChildInviteModal
+  showChildInviteModal, initDashboardListeners
 } from './family.js';
 import { SPLAT_SVG } from './icons.js';
 import { createQuickTasks } from './tasks.js';
@@ -302,12 +302,11 @@ async function handleQuickPrizes(triggerEl, category) {
 
   hideLoading();
   showScreen('screen-dashboard');
-  renderDashboardChildren(currentFamilyId);
   refreshQuickTasksBanner();
   refreshQuickPrizesBanner();
-  renderDashTaskRows(currentFamilyId);
   saveWeeklySnapshot(currentFamilyId).catch(() => {});
   initApprovalQueue(currentFamilyId);
+  initDashboardListeners(currentFamilyId);
 
   // Quick banner buttons
   document.getElementById('btn-quick-banner-close').addEventListener('click', dismissQuickBanner);
