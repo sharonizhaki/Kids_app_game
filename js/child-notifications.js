@@ -6,6 +6,11 @@ import {
 let _db, _familyId, _childId;
 let _notifications = [];
 
+// =========== LAST-SEEN (localStorage) ===========
+function _seenKey()    { return `notifLastSeen_${_familyId}_${_childId}`; }
+function _getLastSeen(){ try { return parseInt(localStorage.getItem(_seenKey()) || '0', 10); } catch(e) { return 0; } }
+function _setLastSeen(){ try { localStorage.setItem(_seenKey(), String(Date.now())); } catch(e) {} }
+
 // טייפים שמציגים פופאפ בכניסה
 const POPUP_TYPES = new Set([
   'task_cancelled', 'prize_approved', 'prize_declined',
@@ -98,7 +103,8 @@ async function _markRead(id) {
 
 // =========== BADGE ===========
 export function getUnreadCount() {
-  return _notifications.filter(n => !n.read).length;
+  const lastSeen = _getLastSeen();
+  return _notifications.filter(n => _tsOf(n) > lastSeen).length;
 }
 
 export function updateNotificationBadge() {
@@ -114,6 +120,12 @@ export function renderNotificationsScreen() {
   const list = document.getElementById('notifs-list');
   if (!list) return;
 
+  // שמור את ה-lastSeen הישן לפני עדכון — לקביעת עיגולי "חדש" בביקור זה
+  const prevSeen = _getLastSeen();
+  // עדכן lastSeen עכשיו — הבאדג' ייעלם מיד, העיגולים ייעלמו בביקור הבא
+  _setLastSeen();
+  updateNotificationBadge();
+
   if (_notifications.length === 0) {
     list.innerHTML = `<div class="notifs-empty">אין התראות עדיין 🔔</div>`;
     return;
@@ -123,19 +135,20 @@ export function renderNotificationsScreen() {
     const cfg     = TYPE_CFG[n.type] || { icon: '🔔', title: 'התראה' };
     const icon    = n.prizeEmoji || n.emoji || cfg.icon;
     const ts      = _tsOf(n);
+    const isNew   = ts > prevSeen;
     const timeStr = ts ? new Date(ts).toLocaleString('he-IL', {
       day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
     }) : '';
 
     return `
-      <div class="notif-item${n.read ? '' : ' notif-unread'}">
+      <div class="notif-item${isNew ? ' notif-unread' : ''}">
         <span class="notif-item-icon">${icon}</span>
         <div class="notif-item-body">
           <div class="notif-item-title">${cfg.title}</div>
           <div class="notif-item-msg">${n.message || ''}</div>
           ${timeStr ? `<div class="notif-item-time">${timeStr}</div>` : ''}
         </div>
-        ${!n.read ? '<span class="notif-dot"></span>' : ''}
+        ${isNew ? '<span class="notif-dot"></span>' : ''}
       </div>`;
   }).join('');
 }
