@@ -389,7 +389,7 @@ export async function renderDashboardChildren(familyId) {
 
     const onclick = isWaiting
       ? `showChildInviteModal('${child.id}')`
-      : `openEditChild('${child.id}')`;
+      : `location.href='points.html?childName=${encodeURIComponent(child.name)}'`;
 
     return `
       <div onclick="${onclick}" style="${cardFlexStyle}background:white;border-radius:20px;
