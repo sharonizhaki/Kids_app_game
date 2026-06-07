@@ -101,7 +101,7 @@ export async function renderPrizesScreen() {
     return `
       <div class="prize-card${!canAfford ? ' prize-locked' : ''}" data-prize-id="${prize.id}">
         <span class="prize-emoji">${prize.emoji || '🎁'}</span>
-        <span class="prize-title">${prize.title}</span>
+        <span class="prize-title">${prize.name || prize.title || ''}</span>
         <span class="prize-cost">${prize.pts || 0} ⭐</span>
         ${actionHTML}
         ${lockHTML}
@@ -138,7 +138,7 @@ function renderPendingSection(requests) {
     <div class="pending-req-card">
       <span class="pending-req-emoji">${r.prizeEmoji || '🎁'}</span>
       <div class="pending-req-info">
-        <div class="pending-req-title">${r.prizeTitle}</div>
+        <div class="pending-req-title">${r.prizeName || r.prizeTitle || ''}</div>
         <div class="pending-req-status">${r.cost || 0} ⭐</div>
       </div>
       <span class="pending-req-badge ${STATUS_CLS[r.status] || 'status-pending'}">
@@ -161,7 +161,7 @@ function showPrizeConfirmModal(prize, totalPts) {
       <div style="width:44px;height:5px;background:#E2E8F0;border-radius:3px;margin:14px auto 0;"></div>
       <div style="padding:24px 24px 28px;">
         <div style="font-size:2.8rem;text-align:center;margin-bottom:10px;">${prize.emoji || '🎁'}</div>
-        <div style="font-size:1.05rem;font-weight:800;margin-bottom:8px;color:#1E293B;text-align:center;">${prize.title}</div>
+        <div style="font-size:1.05rem;font-weight:800;margin-bottom:8px;color:#1E293B;text-align:center;">${prize.name || prize.title || ''}</div>
         ${descHTML}
         <div style="font-size:0.85rem;color:#94A3B8;font-weight:600;text-align:center;margin-bottom:20px;">
           עולה ${prize.pts} ⭐ — יש לך ${totalPts} ⭐
@@ -188,7 +188,7 @@ async function sendPrizeRequest(prize) {
   try {
     await addDoc(collection(_db, 'families', state.familyId, 'prizeRequests'), {
       prizeId:    prize.id,
-      prizeTitle: prize.title,
+      prizeName:  prize.name || prize.title || '',
       prizeEmoji: prize.emoji || '🎁',
       cost:       prize.pts || 0,
       childId:    state.childId,
