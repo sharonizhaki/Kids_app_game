@@ -76,24 +76,26 @@ function _renderQueue() {
 
   list.innerHTML = all.map(item => _buildCard(item)).join('');
 
-  list.querySelectorAll('.aq-card').forEach(card => _attachSwipe(card));
-
   list.querySelectorAll('.aq-btn-approve').forEach(btn =>
     btn.addEventListener('click', () => _handleApprove(btn.dataset.id, btn.dataset.type))
   );
   list.querySelectorAll('.aq-btn-reject').forEach(btn =>
     btn.addEventListener('click', () => _handleReject(btn.dataset.id, btn.dataset.type))
   );
+  list.querySelectorAll('.aq-photo-thumb').forEach(img =>
+    img.addEventListener('click', () => _openLightbox(img.src))
+  );
 }
 
 // =========== CARD HTML ===========
 function _buildCard(item) {
-  const isTask    = item.type === 'task';
-  const emoji     = isTask ? (item.emoji || '⭐') : (item.prizeEmoji || '🎁');
-  const name      = isTask ? (item.task  || 'משימה') : (item.prizeName || 'פרס');
-  const pts       = item.pts || 0;
+  const isTask     = item.type === 'task';
+  const emoji      = isTask ? (item.emoji || '⭐') : (item.prizeEmoji || '🎁');
+  const name       = isTask ? (item.task  || 'משימה') : (item.prizeName || 'פרס');
+  const pts        = item.pts || 0;
   const childName  = item.childName  || '';
   const childEmoji = item.childEmoji || '👦';
+  const photoUrl   = item.photoUrl   || '';
 
   const typeTag = isTask
     ? `<span class="aq-type-tag aq-type-task">✅ משימה</span>`
@@ -103,12 +105,15 @@ function _buildCard(item) {
     ? `<span class="aq-pts">+${pts} ⭐</span>`
     : `<span class="aq-pts aq-pts-cost">-${pts} ⭐</span>`;
 
-  const swipeHint = `<span class="aq-swipe-hint">← החלק לביטול &nbsp;|&nbsp; אישור החלק →</span>`;
+  const photoHTML = photoUrl
+    ? `<div>
+        <div class="aq-photo-label">📸 תמונה מהילד</div>
+        <img class="aq-photo-thumb" src="${photoUrl}" alt="תמונת משימה">
+       </div>`
+    : '';
 
   return `
     <div class="aq-wrap" data-id="${item.id}" data-type="${item.type}">
-      <div class="aq-bg aq-bg-approve"><span>✅</span><span style="font-size:0.85rem;font-weight:800;margin-right:6px;">אישור</span></div>
-      <div class="aq-bg aq-bg-reject"><span style="font-size:0.85rem;font-weight:800;margin-left:6px;">ביטול</span><span>❌</span></div>
       <div class="aq-card" data-id="${item.id}" data-type="${item.type}">
         <div class="aq-row-top">
           <span class="aq-child-emoji">${childEmoji}</span>
@@ -120,7 +125,7 @@ function _buildCard(item) {
           <span class="aq-task-name">${name}</span>
           ${ptsTag}
         </div>
-        <div class="aq-row-hint">${swipeHint}</div>
+        ${photoHTML}
         <div class="aq-actions">
           <button class="aq-btn aq-btn-reject" data-id="${item.id}" data-type="${item.type}">❌ ביטול</button>
           <button class="aq-btn aq-btn-approve" data-id="${item.id}" data-type="${item.type}">✅ אשר</button>
@@ -129,61 +134,22 @@ function _buildCard(item) {
     </div>`;
 }
 
-// =========== SWIPE ===========
-function _attachSwipe(card) {
-  const wrap = card.closest('.aq-wrap');
-  if (!wrap) return;
+// =========== PHOTO LIGHTBOX ===========
+function _openLightbox(src) {
+  const existing = document.getElementById('aq-lightbox');
+  if (existing) existing.remove();
 
-  const bgApprove = wrap.querySelector('.aq-bg-approve');
-  const bgReject  = wrap.querySelector('.aq-bg-reject');
-  const THRESHOLD = 85;
+  const box = document.createElement('div');
+  box.id = 'aq-lightbox';
+  box.className = 'aq-lightbox';
+  box.innerHTML = `
+    <button class="aq-lightbox-close" id="aq-lightbox-close">✕</button>
+    <img src="${src}" alt="תמונת משימה">
+  `;
+  document.body.appendChild(box);
 
-  let startX   = 0;
-  let deltaX   = 0;
-  let dragging = false;
-
-  card.addEventListener('touchstart', e => {
-    startX   = e.touches[0].clientX;
-    deltaX   = 0;
-    dragging = true;
-    card.style.transition = 'none';
-  }, { passive: true });
-
-  card.addEventListener('touchmove', e => {
-    if (!dragging) return;
-    deltaX = e.touches[0].clientX - startX;
-    card.style.transform = `translateX(${deltaX}px)`;
-
-    if (deltaX > 0) {
-      bgApprove.style.opacity = Math.min(1, deltaX / THRESHOLD);
-      bgReject.style.opacity  = 0;
-    } else {
-      bgReject.style.opacity  = Math.min(1, -deltaX / THRESHOLD);
-      bgApprove.style.opacity = 0;
-    }
-  }, { passive: true });
-
-  card.addEventListener('touchend', () => {
-    if (!dragging) return;
-    dragging = false;
-
-    const id   = card.dataset.id;
-    const type = card.dataset.type;
-
-    card.style.transition = 'transform 0.3s cubic-bezier(.25,.8,.25,1)';
-
-    if (deltaX >= THRESHOLD) {
-      card.style.transform = 'translateX(110%)';
-      setTimeout(() => _handleApprove(id, type), 260);
-    } else if (deltaX <= -THRESHOLD) {
-      card.style.transform = 'translateX(-110%)';
-      setTimeout(() => _handleReject(id, type), 260);
-    } else {
-      card.style.transform = 'translateX(0)';
-      bgApprove.style.opacity = 0;
-      bgReject.style.opacity  = 0;
-    }
-    deltaX = 0;
+  box.addEventListener('click', e => {
+    if (e.target === box || e.target.id === 'aq-lightbox-close') box.remove();
   });
 }
 
