@@ -290,8 +290,8 @@ export async function confirmDeleteAccount(onConfirmed, familyId = currentFamily
   const isPrimary = user ? await isPrimaryParentForFamily(familyId, user.uid) : true;
 
   const bodyText = isPrimary
-    ? 'פעולה זו תמחק לצמיתות את חשבונך, את כל הילדים, המטלות וכל נתוני המשפחה. <strong>לא ניתן לשחזר.</strong>'
-    : 'פעולה זו תמחק לצמיתות רק את <strong>חשבונך</strong> ותסיר אותך מהמשפחה. הילדים, המטלות ושאר נתוני המשפחה <strong>יישארו ללא שינוי</strong>. לא ניתן לשחזר את חשבונך.';
+    ? 'פעולה זו תמחק לצמיתות את חשבונך, את כל הילדים, המשימות וכל נתוני המשפחה. <strong>לא ניתן לשחזר.</strong>'
+    : 'פעולה זו תמחק לצמיתות רק את <strong>חשבונך</strong> ותסיר אותך מהמשפחה. הילדים, המשימות ושאר נתוני המשפחה <strong>יישארו ללא שינוי</strong>. לא ניתן לשחזר את חשבונך.';
 
   const confirmLabel = isPrimary ? '🗑️ כן, מחק הכל' : '🗑️ כן, מחק את החשבון שלי';
 

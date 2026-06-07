@@ -159,7 +159,7 @@ function showQuickTasksConfirm(catName) {
     renderEditTasksFilters();
     renderEditTasksList(getFamilyId());
   } else {
-    // ברירת מחדל: הוספת מטלה
+    // ברירת מחדל: הוספת משימה
     await openAddTask(getFamilyId());
   }
 

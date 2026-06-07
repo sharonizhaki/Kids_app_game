@@ -328,7 +328,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 }
 .task-btn-photo-required:active { transform: scale(0.95); }
 
-/* סטטוסים בשורת מטלה */
+/* סטטוסים בשורת משימה */
 .task-row-done    { opacity: 0.4; pointer-events: none; }
 .task-row-pending { background: #FFFBEB; }
 

@@ -23,11 +23,11 @@
 <div id="screen-add-task" class="screen">
   <div class="screen-header">
     <button class="back-btn" id="btn-back-to-parent">→</button>
-    <h2>הוספת מטלה 📋</h2>
+    <h2>הוספת משימה 📋</h2>
   </div>
   <div class="card">
     <div class="form-section">
-      <div class="form-label"><span class="fl-icon">✏️</span> שם המטלה</div>
+      <div class="form-label"><span class="fl-icon">✏️</span> שם המשימה</div>
       <div class="input-group" style="margin-bottom:6px;">
         <input type="text" id="task-name-input" placeholder="לדוגמה: צחצוח שיניים" autocomplete="off">
       </div>
@@ -106,7 +106,7 @@
       <div class="form-section">
         <div class="form-label"><span class="fl-icon">📝</span> תיאור (לא חובה)</div>
         <div class="input-group" style="margin-bottom:0;">
-          <input type="text" id="task-desc-input" placeholder="הסבר קצר על המטלה" autocomplete="off">
+          <input type="text" id="task-desc-input" placeholder="הסבר קצר על המשימה" autocomplete="off">
         </div>
       </div>
     </div>
@@ -126,7 +126,7 @@
     </div>
 
     <div class="error-msg" id="add-task-error"></div>
-    <button class="btn btn-primary" id="btn-save-task" style="margin-top:18px;">שמור מטלה ✅</button>
+    <button class="btn btn-primary" id="btn-save-task" style="margin-top:18px;">שמור משימה ✅</button>
   </div>
 </div>
 
@@ -136,7 +136,7 @@
     <button class="back-btn" id="btn-back-edit-list">→</button>
     <h2>עריכת משימות ✏️</h2>
   </div>
-  <button id="btn-add-task-from-edit" class="btn btn-primary" style="max-width:480px;width:100%;margin-bottom:12px;">+ הוסף מטלה חדשה</button>
+  <button id="btn-add-task-from-edit" class="btn btn-primary" style="max-width:480px;width:100%;margin-bottom:12px;">+ הוסף משימה חדשה</button>
   <div class="filter-scroll" id="edit-tasks-filter">
     <span class="filter-chip active" data-filter="all">📋 לפי סדר הוספה</span>
     <span class="filter-chip" data-filter="child">👧👦 לפי ילד</span>
@@ -154,13 +154,13 @@
 <div id="screen-edit-task" class="screen">
   <div class="screen-header">
     <button class="back-btn" id="btn-back-edit-task">→</button>
-    <h2>עריכת מטלה ✏️</h2>
+    <h2>עריכת משימה ✏️</h2>
   </div>
   <div class="card">
     <div class="form-section">
-      <div class="form-label"><span class="fl-icon">✏️</span> שם המטלה</div>
+      <div class="form-label"><span class="fl-icon">✏️</span> שם המשימה</div>
       <div class="input-group" style="margin-bottom:0;">
-        <input type="text" id="et-name" placeholder="שם המטלה" autocomplete="off">
+        <input type="text" id="et-name" placeholder="שם המשימה" autocomplete="off">
       </div>
     </div>
     <div class="form-section">
@@ -238,7 +238,7 @@
       <button class="btn btn-primary btn-sm" id="btn-et-save" style="flex:2;">שמור ✅</button>
       <button class="btn btn-sm" id="btn-et-hide" style="flex:1;background:#FEF3C7;color:#92400E;border:none;">👁️ הסתר</button>
     </div>
-    <button class="btn btn-danger btn-sm" id="btn-et-delete" style="margin-top:8px;">🗑️ מחק מטלה</button>
+    <button class="btn btn-danger btn-sm" id="btn-et-delete" style="margin-top:8px;">🗑️ מחק משימה</button>
   </div>
 </div>
 
@@ -246,7 +246,7 @@
 <div id="modal-task-saved" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:24px;">
   <div style="background:#fff;border-radius:24px;padding:28px 24px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.18);">
     <div style="font-size:3rem;margin-bottom:10px;">✅</div>
-    <h3 style="font-size:1.15rem;font-weight:900;color:#111;margin:0 0 8px;">המטלה נוצרה בהצלחה!</h3>
+    <h3 style="font-size:1.15rem;font-weight:900;color:#111;margin:0 0 8px;">המשימה נוצרה בהצלחה!</h3>
     <p style="font-size:0.85rem;color:#666;margin:0 0 22px;" id="modal-task-saved-name"></p>
     <div style="display:flex;flex-direction:column;gap:10px;">
       <button id="btn-task-saved-another" class="btn btn-primary" style="width:100%;">➕ יצירת משימה נוספת</button>

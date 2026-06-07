@@ -372,7 +372,7 @@ export async function renderDashboardChildren(familyId) {
         <div style="height:100%;border-radius:99px;background:${barColor};width:${pct}%;transition:width 0.6s ease;"></div>
       </div>
       <div style="font-size:0.68rem;font-weight:700;color:${barColor};margin-top:3px;">
-        ${allDone ? '✅ הכל בוצע!' : `${done}/${total} מטלות`}
+        ${allDone ? '✅ הכל בוצע!' : `${done}/${total} משימות`}
       </div>`;
 
     // badge פרסים ממתינים
@@ -457,7 +457,7 @@ export async function saveWeeklySnapshot(familyId) {
 // =========== DASH TASK ROWS ===========
 const _dtrIntervals = [];
 
-const PLACEHOLDER_HTML = `<div class="dash-task-placeholder" style="background:white;border-radius:14px;padding:14px 16px;text-align:center;color:#CBD5E1;font-size:0.82rem;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.05);border:2px dashed #E2E8F0;">כאן יוצגו המטלות להיום</div>`;
+const PLACEHOLDER_HTML = `<div class="dash-task-placeholder" style="background:white;border-radius:14px;padding:14px 16px;text-align:center;color:#CBD5E1;font-size:0.82rem;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.05);border:2px dashed #E2E8F0;">כאן יוצגו המשימות להיום</div>`;
 
 function buildChildPlaceholders(children) {
   return children.map((child, ci) => {

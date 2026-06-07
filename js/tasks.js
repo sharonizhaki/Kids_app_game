@@ -129,7 +129,7 @@ export async function saveTask(familyId) {
   const reminder = document.getElementById('task-reminder-input').value;
   const err = document.getElementById('add-task-error');
 
-  if (!name) { err.textContent = 'נא להכניס שם מטלה'; highlightField(document.getElementById('task-name-input')); return; }
+  if (!name) { err.textContent = 'נא להכניס שם משימה'; highlightField(document.getElementById('task-name-input')); return; }
   if (!cat) { err.textContent = 'נא לבחור קטגוריה'; highlightField(document.getElementById('task-cat-scroll')); return; }
   if (taskAssignedChildren.length === 0) {
     err.textContent = 'נא לשייך לפחות ילד אחד';
@@ -148,7 +148,7 @@ export async function saveTask(familyId) {
   if (!taskSelectedFreq) { err.textContent = 'נא לבחור תדירות'; highlightField(document.getElementById('task-freq-grid')); return; }
   err.textContent = '';
 
-  showLoading('שומר מטלה...');
+  showLoading('שומר משימה...');
   try {
     const taskRef = doc(collection(db, 'families', familyId, 'tasks'));
     await setDoc(taskRef, {
@@ -394,7 +394,7 @@ export function renderEditTasksList(familyId) {
       e.stopPropagation();
       showConfirm({
         icon: '🗑️',
-        title: 'למחוק את המטלה?',
+        title: 'למחוק את המשימה?',
         message: 'לא ניתן לשחזר לאחר המחיקה',
         confirmText: 'מחק',
         onConfirm: async () => {
@@ -523,7 +523,7 @@ export async function saveEditedTask(familyId) {
       <div class="qc-bg" style="position:absolute;inset:0;background:rgba(15,23,42,0.55);backdrop-filter:blur(3px);opacity:0;transition:opacity 0.22s ease;"></div>
       <div class="qc-card" style="position:relative;background:#fff;border-radius:28px;padding:32px 24px 24px;max-width:300px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.22);transform:scale(0.75) translateY(24px);opacity:0;transition:transform 0.32s cubic-bezier(.34,1.56,.64,1),opacity 0.24s ease;">
         <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 16px;box-shadow:0 6px 20px #6366F155;">✏️</div>
-        <div style="font-size:1.15rem;font-weight:900;color:#0F172A;margin-bottom:6px;">המטלה עודכנה!</div>
+        <div style="font-size:1.15rem;font-weight:900;color:#0F172A;margin-bottom:6px;">המשימה עודכנה!</div>
         <div style="font-size:0.84rem;color:#64748B;line-height:1.55;margin-bottom:24px;">השינויים נשמרו בהצלחה</div>
         <button id="btn-edit-task-saved-ok" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;border:none;border-radius:16px;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 14px #6366F166;">אישור ✓</button>
       </div>`;
@@ -557,7 +557,7 @@ export async function toggleHideTask(familyId) {
     await updateDoc(doc(db, 'families', familyId, 'tasks', editingTask.taskId), { hidden: !isHidden });
     await loadAllTasks(familyId);
     hideLoading();
-    showToast(isHidden ? 'המטלה מוצגת! 👁️' : 'המטלה מוסתרת! 🙈');
+    showToast(isHidden ? 'המשימה מוצגת! 👁️' : 'המשימה מוסתרת! 🙈');
     showScreen('screen-edit-tasks');
     renderEditTasksList(familyId);
   } catch(e) { hideLoading(); console.error(e); }
@@ -568,7 +568,7 @@ export function deleteTask(familyId) {
   if (!editingTask) return;
   showConfirm({
     icon: '🗑️',
-    title: 'למחוק את המטלה?',
+    title: 'למחוק את המשימה?',
     message: 'לא ניתן לשחזר לאחר המחיקה',
     confirmText: 'מחק',
     onConfirm: async () => {
@@ -799,16 +799,16 @@ document.getElementById('et-require-approval')?.addEventListener('change', (e) =
 export function startTaskTour(familyId) {
   const quickCatsVisible = getComputedStyle(document.getElementById('form-quick-cats-section') || document.createElement('div')).display !== 'none';
   const step1Text = quickCatsVisible
-    ? 'הכנס שם למטלה — לחץ "💡 רעיונות לדוגמא" לרשימת רעיונות, או בחר קטגוריה משמאל ליצירת 3 משימות מהירות אוטומטית'
-    : 'הכנס שם למטלה, לחץ "💡 רעיונות לדוגמא" לרעיונות מוכנים';
+    ? 'הכנס שם למשימה — לחץ "💡 רעיונות לדוגמא" לרשימת רעיונות, או בחר קטגוריה משמאל ליצירת 3 משימות מהירות אוטומטית'
+    : 'הכנס שם למשימה, לחץ "💡 רעיונות לדוגמא" לרעיונות מוכנים';
   const steps = [
-    { el: '#task-name-input',         title: 'שם המטלה',      text: step1Text },
+    { el: '#task-name-input',         title: 'שם המשימה',      text: step1Text },
     { el: '#task-cat-scroll',         title: 'קטגוריה',       text: 'בחר קטגוריה — היגיינה, לימודים, מטלות בית... או צור קטגוריה חדשה' },
-    { el: '#task-assign-grid',        title: 'שיוך לילד/ים',  text: 'כאן מופיעים הילדים שלך — בחר לאיזה ילד/ים המטלה משויכת' },
-    { el: '#task-emoji-grid',         title: 'אייקון',         text: 'בחר אייקון שיופיע ליד שם המטלה' },
-    { el: '#task-stars-picker',       title: 'כוכבים',        text: 'כמה כוכבים שווה המטלה? לחץ על הכוכב הרצוי' },
+    { el: '#task-assign-grid',        title: 'שיוך לילד/ים',  text: 'כאן מופיעים הילדים שלך — בחר לאיזה ילד/ים המשימה משויכת' },
+    { el: '#task-emoji-grid',         title: 'אייקון',         text: 'בחר אייקון שיופיע ליד שם המשימה' },
+    { el: '#task-stars-picker',       title: 'כוכבים',        text: 'כמה כוכבים שווה המשימה? לחץ על הכוכב הרצוי' },
     { el: '#task-freq-grid',          title: 'תדירות',        text: 'מתי יוכל הילד לבצע את המשימה — כל יום, פעם בשבוע, ימים ספציפיים, או חד פעמית' },
-    { el: '#task-reminder-desc-wrap', title: 'תזכורת ותיאור', text: 'בחר שעה לתזכורת ומתחת הוסף הסבר קצר על המטלה — שניהם לא חובה' },
+    { el: '#task-reminder-desc-wrap', title: 'תזכורת ותיאור', text: 'בחר שעה לתזכורת ומתחת הוסף הסבר קצר על המשימה — שניהם לא חובה' },
   ];
 
   let currentStep = 0;

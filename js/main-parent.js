@@ -145,7 +145,7 @@ function showQuickTasksConfirm(catName, onConfirm) {
     accentFrom: '#6366F1',
     accentTo: '#8B5CF6',
     title: '3 משימות נוצרו!',
-    body: `משימות ${catName} נוספו לכל הילדים בהצלחה<br><span style="font-size:0.78rem;color:#94A3B8;margin-top:10px;display:block;">ניתן לערוך ולמחוק במסך <strong style="color:#6366F1;">עריכת מטלות</strong> בתפריט <strong style="color:#6366F1;">הגדרות</strong> ⚙️</span>`,
+    body: `משימות ${catName} נוספו לכל הילדים בהצלחה<br><span style="font-size:0.78rem;color:#94A3B8;margin-top:10px;display:block;">ניתן לערוך ולמחוק במסך <strong style="color:#6366F1;">עריכת משימות</strong> בתפריט <strong style="color:#6366F1;">הגדרות</strong> ⚙️</span>`,
     btnId: 'btn-quick-confirm-close',
     onConfirm
   });
@@ -812,7 +812,7 @@ async function startDashTour(familyId, uid) {
     {
       el: '#dash-children-grid',
       title: 'סקירת הילדים 👨‍👧‍👦',
-      text: 'כאן תוכל לראות את כל הילדים — כוכבים שצברו השבוע והחודש, ומטלות שנותרו להיום'
+      text: 'כאן תוכל לראות את כל הילדים — כוכבים שצברו השבוע והחודש, ומשימות שנותרו להיום'
     },
     {
       el: '#dash-task-section',
@@ -822,7 +822,7 @@ async function startDashTour(familyId, uid) {
     {
       el: '#btn-open-menu',
       title: 'תפריט הגדרות ⚙️',
-      text: 'כאן תוכל לנהל משפחה, מטלות, פרסים, נקודות ועוד — הכל במקום אחד',
+      text: 'כאן תוכל לנהל משפחה, משימות, פרסים, נקודות ועוד — הכל במקום אחד',
       exact: true
     },
   ];

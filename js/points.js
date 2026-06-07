@@ -336,7 +336,7 @@ export function renderMPList(familyId) {
   if (mpFilter === 'cat'    && mpSubFilter) tasks = tasks.filter(t => (t.cat || '📋 ללא') === mpSubFilter);
   if (mpFilter === 'stars'  && mpSubFilter) tasks = tasks.filter(t => t.pts === parseInt(mpSubFilter));
   if (mpFilter === 'day'    && mpSubFilter) tasks = tasks.filter(t => t.day === mpSubFilter);
-  if (tasks.length === 0) { list.innerHTML = '<div class="empty-state">אין מטלות שבוצעו</div>'; return; }
+  if (tasks.length === 0) { list.innerHTML = '<div class="empty-state">אין משימות שבוצעו</div>'; return; }
   list.innerHTML = tasks.map((t, i) => `
     <div class="etask-wrap" data-idx="${i}" data-child-id="${t.childId}" data-hist-idx="${t.histIdx}">
       <div class="etask-actions"><div class="etask-action act-delete" data-act="undo"><span>↩️</span>בטל</div></div>
@@ -573,7 +573,7 @@ function attachMPSwipeHandlers(list, familyId) {
       if (swiped) { card.style.transition = 'transform 0.2s ease'; card.style.transform = 'translateX(0)'; swiped = false; }
     });
     wrap.querySelector('[data-act="undo"]').onclick = () => {
-      showConfirm({ icon: '↩️', title: 'לבטל את ביצוע המטלה?', message: 'הכוכבים יורדו מהילד',
+      showConfirm({ icon: '↩️', title: 'לבטל את ביצוע המשימה?', message: 'הכוכבים יורדו מהילד',
         confirmText: 'בטל ביצוע', confirmColor: 'linear-gradient(135deg,#F59E0B,#D97706)',
         onConfirm: () => undoTask(familyId, childId, histIdx),
       });

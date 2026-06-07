@@ -99,7 +99,7 @@ function _renderStatsContent() {
       </div>
 
       ${d.topTask ? `<div style="background:#F8FAFC;border-radius:10px;padding:6px 10px;font-size:0.73rem;color:#64748B;margin-top:4px;">
-        🥇 מטלה מובילה: <strong style="color:#0F172A;">${d.topTask}</strong>
+        🥇 משימה מובילה: <strong style="color:#0F172A;">${d.topTask}</strong>
       </div>` : ''}
     </div>`).join('');
 }
