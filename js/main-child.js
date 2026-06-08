@@ -24,7 +24,7 @@ import {
   initNotifications, processNotificationPopups,
   renderNotificationsScreen, updateNotificationBadge,
 } from './child-notifications.js';
-import { requestPushPermission, saveChildFcmToken, listenForegroundMessages, scheduleTaskReminders } from './notifications.js';
+import { listenForegroundMessages, scheduleTaskReminders, isPushGranted } from './notifications.js';
 
 // -------- GREETINGS --------
 const GREETINGS_M = ['יאללה נתחיל! 💪','בוא נעשה את זה! 🚀','היום תהיה מדהים! ✨','מוכן לאסוף כוכבים? 🔥','הגיבור שלנו הגיע! 🦸‍♂️'];
@@ -347,20 +347,20 @@ async function loadChild() {
     await initNotifications(db, state.familyId, state.childId);
     updateNotificationBadge();
 
-    // Push notifications + תזכורות מתוזמנות
+    // תזמון תזכורות + האזנה להודעות foreground
     (async () => {
       try {
-        const token = await requestPushPermission();
-        if (token) {
-          await saveChildFcmToken(db, state.familyId, state.childId, token);
+        // תזמן תזכורות לפי שעות המשימות (7 ימים קדימה)
+        if (state.tasksData?.length) {
+          await scheduleTaskReminders(state.tasksData);
+        }
+        // הצג toast כשמגיעה הודעה בזמן שהאפליקציה פתוחה
+        if (isPushGranted()) {
           listenForegroundMessages(payload => {
             const title = payload.notification?.title || '';
             const body  = payload.notification?.body  || '';
             if (title || body) showToast({ message: (title + ' ' + body).trim() });
           });
-        }
-        if (state.tasksData?.length) {
-          await scheduleTaskReminders(state.tasksData);
         }
       } catch(e) { console.warn('child notifications error:', e); }
     })();

@@ -6,6 +6,7 @@ import { doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/fireb
 import { state, g } from './child-state.js';
 import { cropAndCompressPhoto } from './ui.js';
 import { SPLAT_SVG } from './icons.js';
+import { requestPushPermission, saveChildFcmToken } from './notifications.js';
 
 // -------- CONSTANTS --------
 const ONBOARD_EMOJIS = [
@@ -71,7 +72,7 @@ function showPopup(icon, message, duration = 1600) {
 // נקודות התקדמות (שלבים 1-3)
 function dotsHTML(active) {
   return `<div class="ob-dots">
-    ${[1,2,3].map(i => `<div class="ob-dot${i === active ? ' ob-dot-active' : i < active ? ' ob-dot-done' : ''}"></div>`).join('')}
+    ${[1,2,3,4].map(i => `<div class="ob-dot${i === active ? ' ob-dot-active' : i < active ? ' ob-dot-done' : ''}"></div>`).join('')}
   </div>`;
 }
 
@@ -87,7 +88,7 @@ function navBtnsHTML(step) {
   if (step === 3) return `
     <div class="ob-nav-row">
       <button class="ob-btn ob-btn-ghost" id="ob-back">→ חזור</button>
-      <button class="ob-btn ob-btn-finish" id="ob-finish">סיום 🎉</button>
+      <button class="ob-btn ob-btn-primary" id="ob-next">המשך ←</button>
     </div>`;
   return '';
 }
@@ -107,6 +108,7 @@ function goToStep(step) {
   if (step === 1) showPhotoStep();
   if (step === 2) showColorStep();
   if (step === 3) showEmojiStep();
+  if (step === 4) showNotifStep();
 }
 
 // -------- STEP 0: WELCOME --------
@@ -343,19 +345,81 @@ function showEmojiStep() {
     };
   });
 
-  const finBtn = overlay.querySelector('#ob-finish');
-  if (finBtn) {
-    finBtn.onclick = () => {
+  const nextBtn = overlay.querySelector('#ob-next');
+  if (nextBtn) {
+    nextBtn.onclick = () => {
       if (!_obEmoji) {
         overlay.querySelector('#ob-emoji-error').textContent = 'חובה לבחור אימוג\'י 😊';
         return;
       }
       if (!_obColor) { goToStep(2); return; }
-      finishOnboarding();
+      goToStep(4);
     };
   }
   const backBtn = overlay.querySelector('#ob-back');
   if (backBtn) backBtn.onclick = () => goToStep(2);
+}
+
+// -------- STEP 4: NOTIFICATIONS --------
+function showNotifStep() {
+  _currentStep = 4;
+  const overlay  = getOverlay();
+  const isFem    = state.childData?.gender === 'female';
+  const isBlocked = 'Notification' in window && Notification.permission === 'denied';
+
+  overlay.innerHTML = `
+    <div class="ob-backdrop">
+      <div class="ob-card" id="ob-card">
+        ${dotsHTML(4)}
+        <div class="ob-step-label">שלב 4 מתוך 4</div>
+        <div class="ob-notif-icon">🔔</div>
+        <h2 class="ob-step-title">תזכורות חכמות</h2>
+        <p class="ob-step-sub">
+          ${isBlocked
+            ? 'התראות חסומות בדפדפן — אפשר להפעיל אחר כך בהגדרות'
+            : 'אפשר${isFem ? "י" : ""} התראות כדי לקבל תזכורות על משימות בזמן הנכון 📅'}
+        </p>
+        <div class="ob-notif-preview">
+          <div class="ob-notif-example">
+            <span class="ob-notif-ex-icon">🪥</span>
+            <div class="ob-notif-ex-text">
+              <div class="ob-notif-ex-title">תזכורת: צחצוח שיניים</div>
+              <div class="ob-notif-ex-body">השלם את המשימה ותרוויח 1 ⭐</div>
+            </div>
+          </div>
+        </div>
+        ${isBlocked ? '' : `
+        <button class="ob-btn ob-btn-finish" id="ob-notif-allow" style="margin-bottom:10px;">
+          🔔 אפשר${isFem ? "י" : ""} התראות
+        </button>`}
+        <button class="ob-btn ob-btn-ghost" id="ob-notif-skip">
+          ${isBlocked ? 'המשך בלי התראות ←' : 'אולי אחר כך ←'}
+        </button>
+      </div>
+    </div>`;
+
+  animateIn(overlay.querySelector('#ob-card'));
+
+  // כפתור אפשר התראות
+  overlay.querySelector('#ob-notif-allow')?.addEventListener('click', async () => {
+    const btn = overlay.querySelector('#ob-notif-allow');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ מבקש הרשאה...'; }
+    try {
+      const token = await requestPushPermission();
+      if (token && state.familyId && state.childId) {
+        await saveChildFcmToken(_db, state.familyId, state.childId, token);
+      }
+      showPopup('🔔', 'התראות הופעלו! ✅');
+    } catch(e) {
+      console.warn('notif permission error:', e);
+    }
+    setTimeout(() => finishOnboarding(), 900);
+  });
+
+  // כפתור דלג
+  overlay.querySelector('#ob-notif-skip')?.addEventListener('click', () => {
+    finishOnboarding();
+  });
 }
 
 // -------- FINISH --------
