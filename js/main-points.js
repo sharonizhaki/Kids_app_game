@@ -5,7 +5,7 @@ import { getDocs, collection, query, where } from 'https://www.gstatic.com/fireb
 import { showScreen, hideLoading } from './ui.js';
 import { currentFamilyId, setCurrentFamilyId } from './auth.js';
 import {
-  loadCompletedTasks, loadPendingApprovals, loadAllPrizeRequests,
+  loadCompletedTasks, loadPendingApprovals, loadAllPrizeRequests, loadRejectedItems,
   renderMPTabs, renderMPFilters, renderMPList, renderPendingTab, showActiveTab,
   initPendingListener, initPrizeRequestsListener,
   resetMPState, setMPState,
@@ -55,6 +55,7 @@ document.getElementById('btn-back-to-parent')?.addEventListener('click', () => {
     loadCompletedTasks(familyId),
     loadPendingApprovals(familyId),
     loadAllPrizeRequests(familyId),
+    loadRejectedItems(familyId),
   ]);
 
   renderMPTabs(familyId);

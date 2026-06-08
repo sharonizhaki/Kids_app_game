@@ -101,15 +101,15 @@ function _buildCard(item) {
     ? `<span class="aq-type-tag aq-type-task">✅ משימה</span>`
     : `<span class="aq-type-tag aq-type-prize">🎁 פרס</span>`;
 
+  const starsStr = isTask
+    ? '+' + ('⭐'.repeat(Math.min(pts, 5)) || '⭐')
+    : '⭐ ' + pts;
   const ptsTag = isTask
-    ? `<span class="aq-pts">+${pts} ⭐</span>`
-    : `<span class="aq-pts aq-pts-cost">-${pts} ⭐</span>`;
+    ? `<span class="aq-pts">${starsStr}</span>`
+    : `<span class="aq-pts aq-pts-cost">${starsStr}</span>`;
 
-  const photoHTML = photoUrl
-    ? `<div>
-        <div class="aq-photo-label">📸 תמונה מהילד</div>
-        <img class="aq-photo-thumb" src="${photoUrl}" alt="תמונת משימה">
-       </div>`
+  const photoThumb = photoUrl
+    ? `<img class="aq-photo-thumb" src="${photoUrl}" alt="צפה בתמונה" title="לחץ להגדלה">`
     : '';
 
   return `
@@ -124,8 +124,8 @@ function _buildCard(item) {
           <span class="aq-task-emoji">${emoji}</span>
           <span class="aq-task-name">${name}</span>
           ${ptsTag}
+          ${photoThumb}
         </div>
-        ${photoHTML}
         <div class="aq-actions">
           <button class="aq-btn aq-btn-reject" data-id="${item.id}" data-type="${item.type}">❌ ביטול</button>
           <button class="aq-btn aq-btn-approve" data-id="${item.id}" data-type="${item.type}">✅ אשר</button>
