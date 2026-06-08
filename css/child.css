@@ -439,6 +439,12 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 }
 .prize-status-pending  { background: #EDE9FE; color: #6D28D9; }
 .prize-status-approved { background: #DCFCE7; color: #15803D; }
+.prize-status-declined { background: #FEE2E2; color: #B91C1C; }
+.prize-btn-retry {
+  background: linear-gradient(135deg, #EF4444, #F87171);
+  box-shadow: 0 3px 10px rgba(239,68,68,0.25);
+  margin-top: 4px;
+}
 .pending-req-card  { background: var(--card); border-radius: 14px; padding: 14px 16px; margin: 0 auto 10px; max-width: 480px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow); }
 .pending-req-emoji { font-size: 1.8rem; }
 .pending-req-info  { flex: 1; }

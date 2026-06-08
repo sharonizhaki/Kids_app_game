@@ -58,18 +58,15 @@ function _markActivitySeen(familyId) {
 }
 
 function _setActivityBadge(count) {
+  _currentActivityCount = count;
   const badge = document.getElementById('activity-badge');
   if (!badge) return;
-  if (count > 0) {
-    badge.textContent = count;
-    badge.style.display = 'flex';
-  } else {
-    badge.style.display = 'none';
-  }
+  badge.style.display = count > 0 ? 'block' : 'none';
 }
 
 let _activityUnsubs = [];
 let _activityHistMap = {};
+let _currentActivityCount = 0;
 
 function initActivityBadgeListeners(familyId) {
   _activityUnsubs.forEach(u => u());
@@ -447,6 +444,7 @@ document.getElementById('btn-open-menu').onclick = () => {
   openSideMenu({
     auth,
     isPrimary: isPrimaryParent,
+    activityCount: _currentActivityCount,
     onAction: (action) => {
       if (action === 'manage-family') document.getElementById('btn-manage-family').click();
       else if (action === 'add-tasks') document.getElementById('btn-add-tasks').click();

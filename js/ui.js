@@ -120,7 +120,7 @@ export function showConfirm({ icon = '⚠️', title, message, confirmText = 'א
 }
 
 // =========== SIDE MENU ===========
-export async function openSideMenu({ auth, onAction, isPrimary = true }) {
+export async function openSideMenu({ auth, onAction, isPrimary = true, activityCount = 0 }) {
   closeSideMenu();
   document.getElementById('btn-open-menu')?.classList.add('settings-btn--active');
 
@@ -167,6 +167,7 @@ export async function openSideMenu({ auth, onAction, isPrimary = true }) {
     <div class="side-item" data-action="manage-points">
       <div class="side-icon" style="background:linear-gradient(135deg,#CCFBF1,#99F6E4);">📋</div>
       <span class="side-item-text">מרכז פעילות</span>
+      ${activityCount > 0 ? `<span style="width:10px;height:10px;background:#EF4444;border-radius:50%;display:inline-block;flex-shrink:0;margin-right:auto;box-shadow:0 1px 4px rgba(239,68,68,0.5);"></span>` : ''}
     </div>
     <div class="side-item" data-action="stats">
       <div class="side-icon" style="background:linear-gradient(135deg,#E0E7FF,#C7D2FE);">📊</div>

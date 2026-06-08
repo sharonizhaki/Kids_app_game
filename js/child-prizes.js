@@ -50,7 +50,12 @@ export async function renderPrizesScreen() {
   } catch (e) { requests = []; }
 
   const pendingByPrize = {};
-  requests.forEach(r => { pendingByPrize[r.prizeId] = r; });
+  const sorted = [...requests].sort((a, b) => {
+    const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt || 0);
+    const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt || 0);
+    return ta - tb;
+  });
+  sorted.forEach(r => { pendingByPrize[r.prizeId] = r; });
 
   // pending section
   const pendingRequests = requests.filter(r => r.status !== 'rejected' || _isRecent(r.resolvedAt));
@@ -72,6 +77,7 @@ export async function renderPrizesScreen() {
     const myRequest  = pendingByPrize[prize.id];
     const isPending  = myRequest?.status === 'pending';
     const isApproved = myRequest?.status === 'approved';
+    const isDeclined = myRequest?.status === 'declined' && _isRecent(myRequest?.resolvedAt);
     const missing    = (prize.pts || 0) - totalPts;
     const pct        = canAfford ? 100 : Math.round((totalPts / (prize.pts || 1)) * 100);
 
@@ -94,6 +100,10 @@ export async function renderPrizesScreen() {
       actionHTML = `
         <button class="prize-request-btn prize-btn-pending" disabled>אני רוצה! 🎁</button>
         <div class="prize-status-tag prize-status-pending">⏳ ממתין לאישור הורה</div>`;
+    } else if (isDeclined) {
+      actionHTML = `
+        <div class="prize-status-tag prize-status-declined">❌ לא אושר</div>
+        ${canAfford ? `<button class="prize-request-btn prize-btn-retry" data-prize-id="${prize.id}">בקש שוב 🎁</button>` : ''}`;
     } else if (canAfford) {
       actionHTML = `<button class="prize-request-btn" data-prize-id="${prize.id}">אני רוצה! 🎁</button>`;
     }
