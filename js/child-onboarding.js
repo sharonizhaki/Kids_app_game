@@ -148,7 +148,7 @@ function showPhotoStep() {
         ${dotsHTML(1)}
         <div class="ob-step-label">שלב 1 מתוך 3</div>
         <h2 class="ob-step-title">התמונה שלך 📷</h2>
-        <p class="ob-step-sub">${isFromParent ? 'ההורה בחר תמונה עבורך — אפשר להחליף' : g('בחר תמונה שתייצג אותך', 'בחרי תמונה שתייצגי אותך')}</p>
+        <p class="ob-step-sub">${isFromParent ? 'ההורה בחר תמונה עבורך — אפשר להחליף' : g('בחר תמונה שתייצג אותך', 'בחרי תמונה שתייצג אותך')}</p>
 
         <div class="ob-photo-area">
           <div class="ob-photo-circle" id="ob-photo-circle">
