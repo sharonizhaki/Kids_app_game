@@ -177,7 +177,7 @@ export async function loginWithFacebook() {
 // =========== MAGIC LINK ===========
 export async function sendMagicLink(email) {
   const actionCodeSettings = {
-    url: window.location.origin + '/index.html',
+    url: window.location.href.split('?')[0].split('#')[0],
     handleCodeInApp: true,
   };
   try {
