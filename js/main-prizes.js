@@ -89,11 +89,11 @@ function showQuickPrizesConfirm(catName, onConfirm) {
   modal.innerHTML = `
     <div class="qc-bg" style="position:absolute;inset:0;background:rgba(15,23,42,0.55);backdrop-filter:blur(3px);opacity:0;transition:opacity 0.22s ease;"></div>
     <div class="qc-card" style="position:relative;background:#fff;border-radius:28px;padding:32px 24px 24px;max-width:300px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.22);transform:scale(0.75) translateY(24px);opacity:0;transition:transform 0.32s cubic-bezier(.34,1.56,.64,1),opacity 0.24s ease;">
-      <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#F59E0B,#D97706);display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 16px;box-shadow:0 6px 20px #F59E0B55;">🎁</div>
+      <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#A78BFA);display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 16px;box-shadow:0 6px 20px rgba(124,58,237,0.35);">🎁</div>
       <div style="font-size:1.15rem;font-weight:900;color:#0F172A;margin-bottom:6px;">3 פרסים נוצרו!</div>
       <div style="font-size:0.84rem;color:#64748B;line-height:1.55;margin-bottom:8px;">פרסים ${catName} נוספו לרשימה בהצלחה</div>
-      <div style="font-size:0.78rem;color:#94A3B8;margin-bottom:24px;">ניתן לערוך ולמחוק במסך <strong style="color:#D97706;">עריכת פרסים</strong> בתפריט <strong style="color:#D97706;">הגדרות</strong> ⚙️</div>
-      <button id="btn-quick-prizes-confirm-close" style="width:100%;padding:14px;background:linear-gradient(135deg,#F59E0B,#D97706);color:#fff;border:none;border-radius:16px;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 14px #F59E0B66;">אישור ✓</button>
+      <div style="font-size:0.78rem;color:#94A3B8;margin-bottom:24px;">ניתן לערוך ולמחוק במסך <strong style="color:#7C3AED;">עריכת פרסים</strong> בתפריט <strong style="color:#7C3AED;">הגדרות</strong> ⚙️</div>
+      <button id="btn-quick-prizes-confirm-close" style="width:100%;padding:14px;background:linear-gradient(135deg,#7C3AED,#6D28D9);color:#fff;border:none;border-radius:16px;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(124,58,237,0.4);">אישור ✓</button>
     </div>`;
   document.body.appendChild(modal);
   requestAnimationFrame(() => {
