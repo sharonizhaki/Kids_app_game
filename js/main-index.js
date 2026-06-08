@@ -487,7 +487,7 @@ function showChildAddedPopup(name, gender, inviteCode, onAddMore, onContinue) {
     <div style="font-size:1.25rem;font-weight:900;color:#1E293B;margin-bottom:4px;">${name} ${isBoy ? 'נוסף' : 'נוספה'} בהצלחה!</div>
     <div style="font-size:0.86rem;color:#64748B;margin-bottom:18px;">${isBoy ? 'הוא' : 'היא'} כבר חלק מהמשפחה ✨</div>
     ${codeBlock}
-    ${inviteCode ? `<button id="pop-share-code" style="width:100%;padding:13px;background:linear-gradient(135deg,#7C3AED,#5B21B6);border:none;border-radius:16px;font-size:0.95rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;margin-bottom:10px;">📤 שתף קוד עם ה${isBoy ? 'בן' : 'בת'}</button>` : ''}
+    ${inviteCode ? `<button id="pop-share-code" style="width:100%;padding:13px;background:linear-gradient(135deg,#7C3AED,#5B21B6);border:none;border-radius:16px;font-size:0.95rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;margin-bottom:10px;">📤 שתף קוד עם ה${isBoy ? 'ילד' : 'ילדה'}</button>` : ''}
     <div style="display:flex;gap:8px;">
       <button id="pop-add-more" style="flex:1;padding:13px 8px;background:#F5F3FF;border:2px dashed #A78BFA;border-radius:16px;font-size:0.85rem;font-weight:800;font-family:Heebo,sans-serif;cursor:pointer;color:#7C3AED;">➕ הוסף ילד/ה</button>
       <button id="pop-continue" style="flex:1;padding:13px;background:linear-gradient(135deg,#6D28D9,#5B21B6);border:none;border-radius:16px;font-size:0.88rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;">המשך ←</button>

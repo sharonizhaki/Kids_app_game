@@ -42,42 +42,6 @@
     </div>
   </div>
 
-  <!-- Quick tasks banner -->
-  <div id="quick-tasks-banner" style="display:none;width:100%;max-width:480px;margin-top:20px;padding:0 4px;">
-    <div id="quick-tasks-inner" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border:2px dashed #C4B5FD;border-radius:20px;padding:18px 16px;text-align:center;position:relative;">
-      <button id="btn-quick-banner-close" style="position:absolute;top:8px;left:8px;background:rgba(124,58,237,0.13);border:none;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:0.8rem;display:flex;align-items:center;justify-content:center;color:#7C3AED;font-weight:900;font-family:'Heebo',sans-serif;">✕</button>
-      <div style="display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:3px;">
-        <span style="font-size:1.1rem;">⚡</span>
-        <div style="font-weight:900;font-size:1rem;color:#1E293B;">מתחילים מהר!</div>
-      </div>
-      <div style="font-size:0.82rem;color:#64748B;margin-bottom:14px;line-height:1.5;">בחר קטגוריה — <strong style="color:#5B21B6;font-size:0.9rem;">3 משימות</strong> יתווספו אוטומטית</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-        <button class="quick-cat-btn" data-cat="hygiene" style="background:white;border:2px solid #C4B5FD;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">🧼</div><div style="font-size:0.78rem;font-weight:800;color:#5B21B6;">היגיינה</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">3 משימות</div></button>
-        <button class="quick-cat-btn" data-cat="chores" style="background:white;border:2px solid #C4B5FD;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">🏠</div><div style="font-size:0.78rem;font-weight:800;color:#5B21B6;">מטלות בית</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">3 משימות</div></button>
-        <button class="quick-cat-btn" data-cat="study" style="background:white;border:2px solid #C4B5FD;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">📚</div><div style="font-size:0.78rem;font-weight:800;color:#5B21B6;">לימודים</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">3 משימות</div></button>
-      </div>
-      <div dir="rtl" style="margin-top:11px;font-size:0.71rem;color:#94A3B8;line-height:1.45;">ניתן לערוך ולמחוק משימות במסך <strong style="color:#7C3AED;">עריכת משימות</strong> בתפריט <strong style="color:#7C3AED;">הגדרות</strong> ⚙️</div>
-    </div>
-  </div>
-
-  <!-- Quick prizes banner -->
-  <div id="quick-prizes-banner" style="display:none;width:100%;max-width:480px;margin-top:12px;padding:0 4px;">
-    <div id="quick-prizes-inner" style="background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:2px dashed #FDE68A;border-radius:20px;padding:18px 16px;text-align:center;position:relative;">
-      <button id="btn-quick-prizes-close" style="position:absolute;top:8px;left:8px;background:rgba(245,158,11,0.13);border:none;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:0.8rem;display:flex;align-items:center;justify-content:center;color:#D97706;font-weight:900;font-family:'Heebo',sans-serif;">✕</button>
-      <div style="display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:3px;">
-        <span style="font-size:1.1rem;">🎁</span>
-        <div style="font-weight:900;font-size:1rem;color:#1E293B;">מתחילים מהר!</div>
-      </div>
-      <div style="font-size:0.82rem;color:#64748B;margin-bottom:14px;line-height:1.5;">בחר קטגוריה — <strong style="color:#92400E;font-size:0.9rem;">3 פרסים</strong> יתווספו אוטומטית</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-        <button class="quick-prize-dash-btn" data-cat="treats" style="background:white;border:2px solid #FDE68A;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">🍦</div><div style="font-size:0.78rem;font-weight:800;color:#92400E;">פינוקים</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">3 פרסים</div></button>
-        <button class="quick-prize-dash-btn" data-cat="fun" style="background:white;border:2px solid #FDE68A;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">🎮</div><div style="font-size:0.78rem;font-weight:800;color:#92400E;">פנאי</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">3 פרסים</div></button>
-        <button class="quick-prize-dash-btn" data-cat="gifts" style="background:white;border:2px solid #FDE68A;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">🎁</div><div style="font-size:0.78rem;font-weight:800;color:#92400E;">מתנות</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">3 פרסים</div></button>
-      </div>
-      <div dir="rtl" style="margin-top:11px;font-size:0.71rem;color:#94A3B8;line-height:1.45;">ניתן לערוך ולמחוק פרסים במסך <strong style="color:#D97706;">עריכת פרסים</strong> בתפריט <strong style="color:#D97706;">הגדרות</strong> ⚙️</div>
-    </div>
-  </div>
-
   <!-- ==================== APPROVAL QUEUE ==================== -->
   <div id="approval-queue" style="display:none;width:100%;max-width:480px;margin-top:20px;padding:0 4px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 2px;">
@@ -115,6 +79,45 @@
       </button>
     </div>
   </div>
+
+  <!-- Quick tasks banner — בתחתית הדף -->
+  <div id="quick-tasks-banner" style="display:none;width:100%;max-width:480px;margin-top:20px;padding:0 4px;">
+    <div id="quick-tasks-inner" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border:2px dashed #C4B5FD;border-radius:20px;padding:18px 16px;text-align:center;position:relative;">
+      <button id="btn-quick-banner-close" style="position:absolute;top:8px;left:8px;background:rgba(124,58,237,0.13);border:none;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:0.8rem;display:flex;align-items:center;justify-content:center;color:#7C3AED;font-weight:900;font-family:'Heebo',sans-serif;">✕</button>
+      <div style="display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:3px;">
+        <span style="font-size:1.1rem;">⚡</span>
+        <div style="font-weight:900;font-size:1rem;color:#1E293B;">מתחילים מהר!</div>
+      </div>
+      <div style="font-size:0.82rem;color:#64748B;margin-bottom:14px;line-height:1.5;">בחר קטגוריה — <strong style="color:#5B21B6;font-size:0.9rem;">3 משימות</strong> יתווספו אוטומטית</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <button class="quick-cat-btn" data-cat="hygiene" style="background:white;border:2px solid #C4B5FD;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">🧼</div><div style="font-size:0.78rem;font-weight:800;color:#5B21B6;">היגיינה</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">3 משימות</div></button>
+        <button class="quick-cat-btn" data-cat="chores" style="background:white;border:2px solid #C4B5FD;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">🏠</div><div style="font-size:0.78rem;font-weight:800;color:#5B21B6;">מטלות בית</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">3 משימות</div></button>
+        <button class="quick-cat-btn" data-cat="study" style="background:white;border:2px solid #C4B5FD;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">📚</div><div style="font-size:0.78rem;font-weight:800;color:#5B21B6;">לימודים</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">3 משימות</div></button>
+      </div>
+      <div dir="rtl" style="margin-top:11px;font-size:0.71rem;color:#94A3B8;line-height:1.45;">ניתן לערוך ולמחוק משימות במסך <strong style="color:#7C3AED;">עריכת משימות</strong> בתפריט <strong style="color:#7C3AED;">הגדרות</strong> ⚙️</div>
+    </div>
+  </div>
+
+  <!-- Quick prizes banner — בתחתית הדף -->
+  <div id="quick-prizes-banner" style="display:none;width:100%;max-width:480px;margin-top:12px;padding:0 4px;">
+    <div id="quick-prizes-inner" style="background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:2px dashed #FDE68A;border-radius:20px;padding:18px 16px;text-align:center;position:relative;">
+      <button id="btn-quick-prizes-close" style="position:absolute;top:8px;left:8px;background:rgba(245,158,11,0.13);border:none;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:0.8rem;display:flex;align-items:center;justify-content:center;color:#D97706;font-weight:900;font-family:'Heebo',sans-serif;">✕</button>
+      <div style="display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:3px;">
+        <span style="font-size:1.1rem;">🎁</span>
+        <div style="font-weight:900;font-size:1rem;color:#1E293B;">מתחילים מהר!</div>
+      </div>
+      <div style="font-size:0.82rem;color:#64748B;margin-bottom:14px;line-height:1.5;">בחר קטגוריה — <strong style="color:#92400E;font-size:0.9rem;">3 פרסים</strong> יתווספו אוטומטית</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <button class="quick-prize-dash-btn" data-cat="treats" style="background:white;border:2px solid #FDE68A;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">🍦</div><div style="font-size:0.78rem;font-weight:800;color:#92400E;">פינוקים</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">3 פרסים</div></button>
+        <button class="quick-prize-dash-btn" data-cat="fun" style="background:white;border:2px solid #FDE68A;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">🎮</div><div style="font-size:0.78rem;font-weight:800;color:#92400E;">פנאי</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">3 פרסים</div></button>
+        <button class="quick-prize-dash-btn" data-cat="gifts" style="background:white;border:2px solid #FDE68A;border-radius:14px;padding:10px 4px;cursor:pointer;font-family:'Heebo',sans-serif;transition:all 0.25s;"><div style="font-size:1.5rem;margin-bottom:4px;">🎁</div><div style="font-size:0.78rem;font-weight:800;color:#92400E;">מתנות</div><div style="font-size:0.65rem;color:#64748B;margin-top:2px;">3 פרסים</div></button>
+      </div>
+      <div dir="rtl" style="margin-top:11px;font-size:0.71rem;color:#94A3B8;line-height:1.45;">ניתן לערוך ולמחוק פרסים במסך <strong style="color:#D97706;">עריכת פרסים</strong> בתפריט <strong style="color:#D97706;">הגדרות</strong> ⚙️</div>
+    </div>
+  </div>
+
+  <!-- spacer לפס הניווט של אנדרואיד -->
+  <div style="width:100%;min-height:max(24px, env(safe-area-inset-bottom, 0px));flex-shrink:0;"></div>
 
   <!-- Hidden trigger buttons -->
   <button style="display:none;" id="btn-manage-family"></button>

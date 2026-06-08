@@ -229,7 +229,7 @@ export function showChildInviteModal(childId, familyId) {
       <div style="text-align:right;margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
           <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">1</span>
-          <span style="font-size:0.92rem;font-weight:600;">פתח${child.gender === 'female' ? 'י' : ''} את האפליקציה במכשיר של ${child.gender === 'female' ? 'הבת' : 'הבן'}</span>
+          <span style="font-size:0.92rem;font-weight:600;">פתח${child.gender === 'female' ? 'י' : ''} את האפליקציה במכשיר של ${child.gender === 'female' ? 'הילדה' : 'הילד'}</span>
         </div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
           <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">2</span>

@@ -537,7 +537,7 @@ document.getElementById('btn-do-create-child').onclick = async () => {
 
   const codeBlock = inviteCode ? `
     <div style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border-radius:18px;padding:14px 16px;margin-bottom:12px;">
-      <div style="font-size:0.72rem;font-weight:700;color:#7C3AED;margin-bottom:6px;">קוד כניסה ל${isBoy ? 'בן' : 'בת'}</div>
+      <div style="font-size:0.72rem;font-weight:700;color:#7C3AED;margin-bottom:6px;">קוד כניסה ל${isBoy ? 'ילד' : 'ילדה'}</div>
       <div style="font-size:2rem;font-weight:900;color:#5B21B6;letter-spacing:8px;direction:ltr;font-variant-numeric:tabular-nums;">${inviteCode}</div>
       <div style="font-size:0.7rem;color:#A78BFA;margin-top:6px;font-weight:600;">⏰ תקף ל-24 שעות</div>
     </div>` : '';
@@ -547,7 +547,7 @@ document.getElementById('btn-do-create-child').onclick = async () => {
     <div style="font-size:1.25rem;font-weight:900;color:#1E293B;margin-bottom:4px;">${name} ${isBoy ? 'נוסף' : 'נוספה'} בהצלחה!</div>
     <div style="font-size:0.86rem;color:#64748B;margin-bottom:18px;">${isBoy ? 'הוא' : 'היא'} כבר חלק מהמשפחה ✨</div>
     ${codeBlock}
-    ${inviteCode ? `<button id="pop-share-code" style="width:100%;padding:13px;background:linear-gradient(135deg,#7C3AED,#5B21B6);border:none;border-radius:16px;font-size:0.95rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;margin-bottom:10px;">📤 שתף קוד עם ה${isBoy ? 'בן' : 'בת'}</button>` : ''}
+    ${inviteCode ? `<button id="pop-share-code" style="width:100%;padding:13px;background:linear-gradient(135deg,#7C3AED,#5B21B6);border:none;border-radius:16px;font-size:0.95rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;margin-bottom:10px;">📤 שתף קוד עם ה${isBoy ? 'ילד' : 'ילדה'}</button>` : ''}
     <button id="pop-back" style="width:100%;padding:13px;background:#F5F3FF;border:2px solid #DDD6FE;border-radius:16px;font-size:0.95rem;font-weight:800;font-family:Heebo,sans-serif;cursor:pointer;color:#6D28D9;">סגור</button>`;
 
   backdrop.appendChild(card);
