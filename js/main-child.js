@@ -24,6 +24,7 @@ import {
   initNotifications, processNotificationPopups,
   renderNotificationsScreen, updateNotificationBadge,
 } from './child-notifications.js';
+import { requestPushPermission, saveChildFcmToken, listenForegroundMessages } from './notifications.js';
 
 // -------- GREETINGS --------
 const GREETINGS_M = ['יאללה נתחיל! 💪','בוא נעשה את זה! 🚀','היום תהיה מדהים! ✨','מוכן לאסוף כוכבים? 🔥','הגיבור שלנו הגיע! 🦸‍♂️'];
@@ -345,6 +346,22 @@ async function loadChild() {
     // טען התראות
     await initNotifications(db, state.familyId, state.childId);
     updateNotificationBadge();
+
+    // בקש הרשאת Push ושמור token לילד
+    (async () => {
+      try {
+        const token = await requestPushPermission();
+        if (token) {
+          await saveChildFcmToken(db, state.familyId, state.childId, token);
+          // הקשב להודעות כשהאפליקציה פתוחה
+          listenForegroundMessages(payload => {
+            const title = payload.notification?.title || '';
+            const body  = payload.notification?.body  || '';
+            if (title || body) showToast({ message: `${title} ${body}`.trim() });
+          });
+        }
+      } catch(e) { console.warn('child FCM error:', e); }
+    })();
 
     // -------- ONBOARDING CHECK --------
     if (!state.childData.onboarded) {

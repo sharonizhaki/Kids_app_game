@@ -12,6 +12,7 @@ import {
   CHILD_EMOJIS, CHILD_COLORS, colorGradient
 } from './family.js';
 import { SPLAT_SVG } from './icons.js';
+import { requestPushPermission, saveParentFcmToken } from './notifications.js';
 
 window.showScreen = showScreen;
 
@@ -581,7 +582,12 @@ document.getElementById('ob2-share').onclick = () => {
 };
 document.getElementById('ob3-back').onclick = () => showScreen('screen-onboard-2');
 document.getElementById('ob3-allow').onclick = async () => {
-  if ('Notification' in window) { try { await Notification.requestPermission(); } catch(e) {} }
+  try {
+    const { db: _db } = await import('./firebase.js');
+    const { currentFamilyId: _fid } = await import('./auth.js');
+    const token = await requestPushPermission();
+    if (token && _fid) await saveParentFcmToken(_db, _fid, token);
+  } catch(e) { console.warn('ob3-allow FCM error:', e); }
   window.location.href = 'parent.html';
 };
 document.getElementById('ob3-later').onclick = () => { window.location.href = 'parent.html'; };
