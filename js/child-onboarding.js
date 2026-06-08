@@ -371,7 +371,7 @@ async function finishOnboarding() {
       <div class="ob-finish-body">
         <div class="ob-finish-emoji">${_obEmoji || '🎉'}</div>
         <h2 class="ob-finish-title">${name ? `${name}, ` : ''}מוכן${isFem ? 'ה' : ''}! 🎉</h2>
-        <p class="ob-finish-sub">הפרופיל שלך מוכן<br>בוא${isFem ? 'י' : ''} נתחיל לאסוף כוכבים ⭐</p>
+        <p class="ob-finish-sub">הפרופיל שלך מוכן${isFem ? 'ה' : ''}<br>בוא${isFem ? 'י' : ''} נתחיל לאסוף כוכבים ⭐</p>
         <div class="ob-spinner"></div>
       </div>`;
     animateIn(card);

@@ -477,7 +477,7 @@ function showChildAddedPopup(name, gender, inviteCode, onAddMore, onContinue) {
 
   const codeBlock = inviteCode ? `
     <div style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);border-radius:18px;padding:14px 16px;margin-bottom:12px;">
-      <div style="font-size:0.72rem;font-weight:700;color:#7C3AED;margin-bottom:6px;">קוד כניסה לילד/ה</div>
+      <div style="font-size:0.72rem;font-weight:700;color:#7C3AED;margin-bottom:6px;">קוד כניסה ל${isBoy ? 'בן' : 'בת'}</div>
       <div style="font-size:2rem;font-weight:900;color:#5B21B6;letter-spacing:8px;direction:ltr;font-variant-numeric:tabular-nums;">${inviteCode}</div>
       <div style="font-size:0.7rem;color:#A78BFA;margin-top:6px;font-weight:600;">⏰ תקף ל-24 שעות</div>
     </div>` : '';
@@ -487,7 +487,7 @@ function showChildAddedPopup(name, gender, inviteCode, onAddMore, onContinue) {
     <div style="font-size:1.25rem;font-weight:900;color:#1E293B;margin-bottom:4px;">${name} ${isBoy ? 'נוסף' : 'נוספה'} בהצלחה!</div>
     <div style="font-size:0.86rem;color:#64748B;margin-bottom:18px;">${isBoy ? 'הוא' : 'היא'} כבר חלק מהמשפחה ✨</div>
     ${codeBlock}
-    ${inviteCode ? `<button id="pop-share-code" style="width:100%;padding:13px;background:linear-gradient(135deg,#7C3AED,#5B21B6);border:none;border-radius:16px;font-size:0.95rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;margin-bottom:10px;">📤 שתף קוד עם הילד/ה</button>` : ''}
+    ${inviteCode ? `<button id="pop-share-code" style="width:100%;padding:13px;background:linear-gradient(135deg,#7C3AED,#5B21B6);border:none;border-radius:16px;font-size:0.95rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;margin-bottom:10px;">📤 שתף קוד עם ה${isBoy ? 'בן' : 'בת'}</button>` : ''}
     <div style="display:flex;gap:8px;">
       <button id="pop-add-more" style="flex:1;padding:13px 8px;background:#F5F3FF;border:2px dashed #A78BFA;border-radius:16px;font-size:0.85rem;font-weight:800;font-family:Heebo,sans-serif;cursor:pointer;color:#7C3AED;">➕ הוסף ילד/ה</button>
       <button id="pop-continue" style="flex:1;padding:13px;background:linear-gradient(135deg,#6D28D9,#5B21B6);border:none;border-radius:16px;font-size:0.88rem;font-weight:900;font-family:Heebo,sans-serif;cursor:pointer;color:white;">המשך ←</button>
@@ -555,7 +555,7 @@ document.getElementById('ob1-next').onclick = async () => {
 
   const nameLC = name.toLowerCase();
   const duplicate = childrenCache.find(c => c.name && c.name.toLowerCase() === nameLC);
-  if (duplicate) { err.textContent = `ילד/ה בשם "${name}" כבר קיים/ת`; return; }
+  if (duplicate) { err.textContent = `${obGender === 'female' ? 'ילדה' : 'ילד'} בשם "${name}" כבר קיים${obGender === 'female' ? 'ת' : ''}`; return; }
 
   const result = await createChild(currentFamilyId, name, obGender);
   if (result.error) { err.textContent = result.error; return; }

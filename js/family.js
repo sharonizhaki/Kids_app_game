@@ -229,11 +229,11 @@ export function showChildInviteModal(childId, familyId) {
       <div style="text-align:right;margin-bottom:16px;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
           <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">1</span>
-          <span style="font-size:0.92rem;font-weight:600;">פתח את האפליקציה במכשיר של הילד/ה</span>
+          <span style="font-size:0.92rem;font-weight:600;">פתח${child.gender === 'female' ? 'י' : ''} את האפליקציה במכשיר של ${child.gender === 'female' ? 'הבת' : 'הבן'}</span>
         </div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
           <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">2</span>
-          <span style="font-size:0.92rem;font-weight:600;">בחר <strong>"אני ילד/ה"</strong></span>
+          <span style="font-size:0.92rem;font-weight:600;">${child.gender === 'female' ? 'בחרי' : 'בחר'} <strong>"אני ילד/ה"</strong></span>
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
           <span style="background:var(--primary);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:800;flex-shrink:0;">3</span>
@@ -251,7 +251,7 @@ export function showChildInviteModal(childId, familyId) {
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
 
-  sh.querySelector('#modal-share-code').onclick = () => shareCode(code, child.name);
+  sh.querySelector('#modal-share-code').onclick = () => shareCode(code, child.name, child.gender);
   sh.querySelector('#modal-edit-child').onclick = () => {
     ov.remove();
     window.openEditChild(childId);
@@ -262,11 +262,13 @@ export function showChildInviteModal(childId, familyId) {
 }
 
 // =========== SHARE CODE ===========
-export function shareCode(code, childName = '') {
+export function shareCode(code, childName = '', gender = '') {
   const url = window.location.origin + window.location.pathname.replace(/[^/]*$/, 'index.html');
   const nameStr = childName ? ` ל${childName}` : '';
   const greeting = childName ? `שלום ${childName}! ` : '';
-  const text = `🏠 משימות משפחתיות — קוד הזמנה${nameStr}\n\n${greeting}קיבלת הזמנה להצטרף למשימות המשפחה.\n\n📱 שלב 1: פתח את הקישור במכשיר שלך\n👧 שלב 2: בחר "אני ילד/ה"\n🔢 שלב 3: הזן את הקוד: ${code}\n\n⏰ הקוד תקף ל-24 שעות\n\n🔗 ${url}`;
+  const step2verb = gender === 'female' ? 'בחרי' : 'בחר';
+  const step1verb = gender === 'female' ? 'פתחי' : 'פתח';
+  const text = `🏠 משימות משפחתיות — קוד הזמנה${nameStr}\n\n${greeting}קיבלת הזמנה להצטרף למשימות המשפחה.\n\n📱 שלב 1: ${step1verb} את הקישור במכשיר שלך\n👧 שלב 2: ${step2verb} "אני ילד/ה"\n🔢 שלב 3: הזן את הקוד: ${code}\n\n⏰ הקוד תקף ל-24 שעות\n\n🔗 ${url}`;
   if (navigator.share) {
     navigator.share({ title: 'קוד הזמנה', text }).catch(() => {});
   } else {
