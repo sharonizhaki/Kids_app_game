@@ -399,7 +399,7 @@ document.getElementById('btn-edit-tasks').onclick = () => {
 };
 
 document.getElementById('btn-manage-points').onclick = () => {
-  window.location.href = 'points.html';
+  window.location.href = 'points.html?tab=history';
 };
 
 document.getElementById('btn-add-prizes').onclick = () => {

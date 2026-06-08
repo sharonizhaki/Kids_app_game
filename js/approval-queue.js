@@ -234,9 +234,10 @@ async function _rejectTask(familyId, docId) {
     const approvalSnap = await getDoc(approvalRef);
     if (!approvalSnap.exists()) { hideLoading(); return; }
 
-    const data = approvalSnap.data();
+    const data     = approvalSnap.data();
+    const stateRef = doc(db, 'families', familyId, 'children', data.childId, 'state', 'current');
 
-    await Promise.all([
+    const ops = [
       updateDoc(approvalRef, { status: 'rejected', resolvedAt: serverTimestamp() }),
       setDoc(
         doc(collection(db, 'families', familyId, 'children', data.childId, 'notifications')),
@@ -250,9 +251,24 @@ async function _rejectTask(familyId, docId) {
           read:     false,
           createdAt: serverTimestamp(),
         }
-      )
-    ]);
+      ),
+    ];
 
+    // עדכון מערך pending בצד הילד — הסרת "ממתין" כדי שהמשימה תחזור להיות פעילה
+    const stateSnap = await getDoc(stateRef);
+    if (stateSnap.exists()) {
+      const cs = stateSnap.data();
+      if (cs.pending?.length) {
+        const updated = cs.pending.map(p =>
+          p.taskId === data.taskId && Math.abs((p.ts || 0) - (data.ts || 0)) < 10000
+            ? { ...p, status: 'rejected' }
+            : p
+        );
+        ops.push(updateDoc(stateRef, { pending: updated }));
+      }
+    }
+
+    await Promise.all(ops);
     hideLoading();
     showToast('המשימה לא אושרה');
   } catch (e) {
