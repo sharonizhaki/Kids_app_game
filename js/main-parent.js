@@ -16,6 +16,7 @@ import {
 import { SPLAT_SVG } from './icons.js';
 import { createQuickTasks } from './tasks.js';
 import { createQuickPrizes } from './prizes.js';
+import { requestPushPermission, saveParentFcmToken } from './notifications.js';
 import { initApprovalQueue } from './approval-queue.js';
 
 let isPrimaryParent = true;
@@ -360,6 +361,12 @@ async function handleQuickPrizes(triggerEl, category) {
   refreshQuickPrizesBanner();
   saveWeeklySnapshot(currentFamilyId).catch(() => {});
   initApprovalQueue(currentFamilyId);
+
+  // שמירת FCM token של ההורה בכל כניסה
+  try {
+    const token = await requestPushPermission();
+    if (token) await saveParentFcmToken(db, currentFamilyId, token);
+  } catch(e) { console.warn('FCM parent token error:', e); }
   initDashboardListeners(currentFamilyId);
   initActivityBadgeListeners(currentFamilyId);
 
