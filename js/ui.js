@@ -218,6 +218,10 @@ export async function openSideMenu({ auth, onAction, isPrimary = true, activityC
   document.body.appendChild(overlay);
   document.body.appendChild(menu);
 
+  // נעל גלילת הדף מאחורי התפריט
+  document.body.style.overflow = 'hidden';
+  document.documentElement.style.overflow = 'hidden';
+
   document.getElementById('side-settings-close').onclick = closeSideMenu;
 
   // טען badge בקשות ממתינות
@@ -281,4 +285,7 @@ export function closeSideMenu() {
   document.getElementById('side-overlay')?.remove();
   document.getElementById('side-menu')?.remove();
   document.getElementById('btn-open-menu')?.classList.remove('settings-btn--active');
+  // שחרר נעילת גלילה
+  document.body.style.overflow = '';
+  document.documentElement.style.overflow = '';
 }
