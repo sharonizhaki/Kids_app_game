@@ -406,7 +406,7 @@ function showApprovalSentPopup(withPhoto) {
   }, 2200);
 }
 
-function showTaskSuccessPopup(pts) {
+export function showTaskSuccessPopup(pts) {
   const enc = getEncourage();
 
   // הסר popup קודם אם יש

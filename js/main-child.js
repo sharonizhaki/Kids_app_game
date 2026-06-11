@@ -11,7 +11,7 @@ import { state }                                              from './child-stat
 import { show, showToast, showConfirm }                      from './child-ui.js';
 import {
   isDone, renderCategories, renderHistory,
-  renderPendingSection, initTasksModule,
+  renderPendingSection, initTasksModule, showTaskSuccessPopup,
 } from './child-tasks.js';
 import { initProfile, openChildProfile }                      from './child-profile.js';
 import { initPrizes, renderPrizesScreen }                    from './child-prizes.js';
@@ -418,15 +418,51 @@ async function loadChild() {
         snap.docChanges().forEach(change => {
           const data = change.doc.data();
           if (data.childId !== state.childId) return;
-          if (change.type === 'modified' || change.type === 'added') {
-            const idx = (cs.pending || []).findIndex(
-              p => p.taskId === data.taskId && Math.abs(p.ts - data.ts) < 5000
+
+          const idx = (cs.pending || []).findIndex(
+            p => p.taskId === data.taskId && Math.abs((p.ts || 0) - (data.ts || 0)) < 5000
+          );
+
+          // כשהורה מאשר בזמן שהילד פתוח — עדכן זיכרון מיד
+          if (change.type === 'modified' && data.status === 'approved' && idx !== -1) {
+            const pts = data.pts || 0;
+
+            cs.pending[idx].status = 'approved';
+            cs.pts = (cs.pts || 0) + pts;
+
+            if (!cs.hist) cs.hist = [];
+            const alreadyInHist = cs.hist.some(
+              h => h.taskId === data.taskId && Math.abs((h.ts || 0) - (data.ts || 0)) < 5000
             );
-            if (idx !== -1) {
-              cs.pending[idx].status = data.status;
-              saveState();
-              renderChild();
+            if (!alreadyInHist) {
+              cs.hist.unshift({
+                taskId: data.taskId || '',
+                task:   data.task   || '',
+                emoji:  data.emoji  || '⭐',
+                pts,
+                time:   data.time   || '',
+                day:    data.day    || '',
+                ts:     data.ts     || Date.now(),
+              });
+              if (cs.hist.length > 50) cs.hist.pop();
             }
+
+            const tsDate  = data.ts ? new Date(data.ts) : new Date();
+            const dateKey = `${tsDate.getFullYear()}-${String(tsDate.getMonth()+1).padStart(2,'0')}-${String(tsDate.getDate()).padStart(2,'0')}`;
+            if (!cs.dailyPts) cs.dailyPts = {};
+            cs.dailyPts[dateKey] = (cs.dailyPts[dateKey] || 0) + pts;
+
+            saveState();
+            renderChild();
+            if (pts > 0) showTaskSuccessPopup(pts);
+            return;
+          }
+
+          // עדכון סטטוס בלבד (rejected / added)
+          if ((change.type === 'modified' || change.type === 'added') && idx !== -1) {
+            cs.pending[idx].status = data.status;
+            saveState();
+            renderChild();
           }
         });
       }
