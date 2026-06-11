@@ -116,7 +116,7 @@ exports.testNotification13 = onSchedule(
 // TRIGGERS — Gen2
 // =========================================================
 
-exports.onPendingApprovalCreated = onDocumentCreated(
+exports.fsApprovalCreated = onDocumentCreated(
   { document: 'families/{familyId}/pendingApprovals/{approvalId}', region: REGION },
   async (event) => {
     const data = event.data.data();
@@ -141,7 +141,7 @@ exports.onPendingApprovalCreated = onDocumentCreated(
   }
 );
 
-exports.onPrizeRequestCreated = onDocumentCreated(
+exports.fsPrizeCreated = onDocumentCreated(
   { document: 'families/{familyId}/prizeRequests/{requestId}', region: REGION },
   async (event) => {
     const data = event.data.data();
@@ -166,7 +166,7 @@ exports.onPrizeRequestCreated = onDocumentCreated(
   }
 );
 
-exports.onPendingApprovalUpdated = onDocumentUpdated(
+exports.fsApprovalUpdated = onDocumentUpdated(
   { document: 'families/{familyId}/pendingApprovals/{approvalId}', region: REGION },
   async (event) => {
     const before = event.data.before.data();
@@ -200,7 +200,7 @@ exports.onPendingApprovalUpdated = onDocumentUpdated(
   }
 );
 
-exports.onPrizeRequestUpdated = onDocumentUpdated(
+exports.fsPrizeUpdated = onDocumentUpdated(
   { document: 'families/{familyId}/prizeRequests/{requestId}', region: REGION },
   async (event) => {
     const before = event.data.before.data();
