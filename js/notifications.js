@@ -39,12 +39,13 @@ export async function requestPushPermission() {
       return null;
     }
 
-    // רשום את ה-SW — עם scope מפורש לשורש
-    let reg;
+    // רשום את ה-SW — וחכה ל-active worker
+    let activeReg;
     try {
-      reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
-      await navigator.serviceWorker.ready;
-      console.log('[FCM] SW registered, scope:', reg.scope, 'state:', reg.active?.state);
+      await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
+      // navigator.serviceWorker.ready מחזיר את ה-registration שיש לו active worker
+      activeReg = await navigator.serviceWorker.ready;
+      console.log('[FCM] SW ready, scope:', activeReg.scope, 'active:', !!activeReg.active);
     } catch (swErr) {
       console.error('[FCM] SW registration failed:', swErr);
       return null;
@@ -59,7 +60,7 @@ export async function requestPushPermission() {
     try {
       token = await getToken(messaging, {
         vapidKey: VAPID_KEY,
-        serviceWorkerRegistration: reg,
+        serviceWorkerRegistration: activeReg,
       });
       console.log('[FCM] token obtained:', token ? token.substring(0, 20) + '…' : 'null');
     } catch (tokenErr) {
