@@ -143,6 +143,7 @@ export async function openSideMenu({ auth, onAction, isPrimary = true, activityC
         <p>שלום ${parentName}</p>
       </div>
     </div>
+    <div class="side-items-list">
     <div class="side-item" data-action="manage-family">
       <div class="side-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);">👨‍👩‍👧‍👦</div>
       <span class="side-item-text">ניהול משפחה</span>
@@ -203,6 +204,7 @@ export async function openSideMenu({ auth, onAction, isPrimary = true, activityC
     <div class="side-item danger" data-action="delete-account">
       <div class="side-icon" style="background:linear-gradient(135deg,#FEE2E2,#FECACA);">${isPrimary ? '🗑️' : '🚪'}</div>
       <span class="side-item-text">${isPrimary ? 'מחק חשבון' : 'התנתק'}</span>
+    </div>
     </div>
   `;
 
