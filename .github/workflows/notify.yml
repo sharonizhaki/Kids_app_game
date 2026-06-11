@@ -2,6 +2,8 @@ name: Scheduled Parent Notifications
 
 on:
   schedule:
+    # כל 5 דקות — לבדיקת משימות ממתינות
+    - cron: '*/5 * * * *'
     # הורה — ערב 20:00 ישראל (17:00 UTC קיץ)
     - cron: '0 17 * * *'
     # ילד — בוקר 7:30 ישראל (04:30 UTC קיץ)
@@ -87,9 +89,56 @@ jobs:
 
             const firestore = new Firestore({ projectId, credentials: serviceAccount });
 
+            // =========== משימות ממתינות לאישור — כל 5 דקות ===========
+            // בודק רשומות שנוצרו ב-6 דקות האחרונות (מרווח קטן יותר מ-5 כדי לא לפספס)
+            const cutoff = new Date(Date.now() - 6 * 60 * 1000);
+            const familiesSnap = await firestore.collection('families').get();
+
+            for (const familyDoc of familiesSnap.docs) {
+              const familyId = familyDoc.id;
+              const parentTokens = (familyDoc.data().fcmTokens || []).filter(Boolean);
+              if (parentTokens.length === 0) continue;
+
+              const pendingSnap = await firestore
+                .collection('families').doc(familyId)
+                .collection('pendingApprovals')
+                .where('status', '==', 'pending')
+                .where('createdAt', '>=', cutoff)
+                .get();
+
+              if (pendingSnap.empty) continue;
+
+              // קבץ לפי ילד — שלח הודעה אחת אפילו אם הילד סיים כמה משימות
+              const byChild = {};
+              pendingSnap.forEach(doc => {
+                const d = doc.data();
+                const childId = d.childId || 'unknown';
+                if (!byChild[childId]) byChild[childId] = [];
+                byChild[childId].push(d);
+              });
+
+              for (const [childId, tasks] of Object.entries(byChild)) {
+                const childName = tasks[0].childName || 'הילד';
+                let title, body;
+
+                if (tasks.length === 1) {
+                  const t = tasks[0];
+                  title = `${t.emoji || '✅'} ${childName} סיים משימה!`;
+                  body  = `"${t.task || 'משימה'}" ממתינה לאישורך`;
+                } else {
+                  title = `✅ ${childName} סיים ${tasks.length} משימות!`;
+                  body  = 'ממתינות לאישורך';
+                }
+
+                console.log(`Pending task push → family ${familyId}, child ${childId}: ${tasks.length} tasks`);
+                for (const token of parentTokens) {
+                  await sendPush(accessToken, projectId, token, title, body, '/parent.html');
+                }
+              }
+            }
+
             // =========== הורים — ערב 20:00 ===========
             if (hour === 20) {
-              const familiesSnap = await firestore.collection('families').get();
               const parentTokens = [];
               familiesSnap.forEach(doc => {
                 const tokens = doc.data().fcmTokens || [];
@@ -121,7 +170,6 @@ jobs:
             }
 
             if (childTitle) {
-              const familiesSnap = await firestore.collection('families').get();
               const childTokens = [];
               for (const familyDoc of familiesSnap.docs) {
                 const childrenSnap = await firestore
@@ -143,7 +191,6 @@ jobs:
 
             // =========== בדיקות — 10:00-13:00 ===========
             if (hour >= 10 && hour <= 13 && (hour !== 7) && (hour !== 15) && (hour !== 20)) {
-              const familiesSnap = await firestore.collection('families').get();
               const testTokens = [];
               familiesSnap.forEach(doc => {
                 const tokens = doc.data().fcmTokens || [];
