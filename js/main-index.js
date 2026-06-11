@@ -583,10 +583,16 @@ document.getElementById('ob2-share').onclick = () => {
 document.getElementById('ob3-back').onclick = () => showScreen('screen-onboard-2');
 document.getElementById('ob3-allow').onclick = async () => {
   try {
-    const { db: _db } = await import('./firebase.js');
-    const { currentFamilyId: _fid } = await import('./auth.js');
+    // requestPushPermission חייב להיות ראשון — לפני כל await אחר
+    // כדי שהדפדפן יזהה שזה ממש user gesture ויציג את הדיאלוג
     const token = await requestPushPermission();
-    if (token && _fid) await saveParentFcmToken(_db, _fid, token);
+    if (token) {
+      const [{ db: _db }, { currentFamilyId: _fid }] = await Promise.all([
+        import('./firebase.js'),
+        import('./auth.js'),
+      ]);
+      if (_fid) await saveParentFcmToken(_db, _fid, token);
+    }
   } catch(e) { console.warn('ob3-allow FCM error:', e); }
   window.location.href = 'parent.html';
 };
