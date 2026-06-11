@@ -120,7 +120,7 @@ export function showConfirm({ icon = '⚠️', title, message, confirmText = 'א
 }
 
 // =========== SIDE MENU ===========
-export async function openSideMenu({ auth, onAction, isPrimary = true, activityCount = 0 }) {
+export async function openSideMenu({ auth, onAction, isPrimary = true, activityCount = 0, notifStatus = 'default' }) {
   closeSideMenu();
   document.getElementById('btn-open-menu')?.classList.add('settings-btn--active');
 
@@ -173,6 +173,21 @@ export async function openSideMenu({ auth, onAction, isPrimary = true, activityC
       <div class="side-icon" style="background:linear-gradient(135deg,#E0E7FF,#C7D2FE);">📊</div>
       <span class="side-item-text">סטטיסטיקות</span>
     </div>
+    ${notifStatus === 'granted'
+      ? `<div class="side-item" data-action="notifications" style="cursor:default;opacity:0.8;">
+           <div class="side-icon" style="background:linear-gradient(135deg,#D1FAE5,#6EE7B7);">🔔</div>
+           <span class="side-item-text">התראות פעילות ✅</span>
+         </div>`
+      : notifStatus === 'denied'
+      ? `<div class="side-item" data-action="notifications">
+           <div class="side-icon" style="background:linear-gradient(135deg,#FEE2E2,#FECACA);">🔕</div>
+           <span class="side-item-text" style="color:#EF4444;">התראות חסומות — לחץ לפתרון</span>
+         </div>`
+      : `<div class="side-item" data-action="notifications">
+           <div class="side-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);">🔔</div>
+           <span class="side-item-text">הפעל התראות</span>
+         </div>`
+    }
     <div class="side-item" data-action="replay-tour">
       <div class="side-icon" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE);">🧭</div>
       <span class="side-item-text">סיור מודרך</span>

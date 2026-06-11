@@ -16,7 +16,7 @@ import {
 import { SPLAT_SVG } from './icons.js';
 import { createQuickTasks } from './tasks.js';
 import { createQuickPrizes } from './prizes.js';
-import { requestPushPermission, saveParentFcmToken } from './notifications.js';
+import { requestPushPermission, saveParentFcmToken, isPushGranted, isPushBlocked } from './notifications.js';
 import { initApprovalQueue } from './approval-queue.js';
 
 let isPrimaryParent = true;
@@ -448,11 +448,17 @@ document.getElementById('modal-no-child-create').onclick = () => {
 document.getElementById('btn-open-menu').onclick = () => {
   const existing = document.getElementById('side-menu');
   if (existing) { existing.remove(); document.getElementById('side-overlay')?.remove(); return; }
+
+  let notifStatus = 'default';
+  if (isPushGranted()) notifStatus = 'granted';
+  else if (isPushBlocked()) notifStatus = 'denied';
+
   openSideMenu({
     auth,
     isPrimary: isPrimaryParent,
     activityCount: _currentActivityCount,
-    onAction: (action) => {
+    notifStatus,
+    onAction: async (action) => {
       if (action === 'manage-family') document.getElementById('btn-manage-family').click();
       else if (action === 'add-tasks') document.getElementById('btn-add-tasks').click();
       else if (action === 'edit-tasks') document.getElementById('btn-edit-tasks').click();
@@ -464,6 +470,25 @@ document.getElementById('btn-open-menu').onclick = () => {
       else if (action === 'delete-account') document.getElementById('btn-delete-account').click();
       else if (action === 'stats') window.location.href = 'stats.html';
       else if (action === 'replay-tour') startDashTour(currentFamilyId, auth.currentUser?.uid);
+      else if (action === 'notifications') {
+        if (isPushBlocked()) {
+          showToast('התראות חסומות בדפדפן — עבור להגדרות הדפדפן ואפשר התראות לאתר זה 🔔');
+        } else if (isPushGranted()) {
+          showToast('התראות כבר פעילות ✅');
+        } else {
+          try {
+            const token = await requestPushPermission();
+            if (token) {
+              await saveParentFcmToken(db, currentFamilyId, token);
+              showToast('התראות הופעלו בהצלחה! 🔔');
+            } else {
+              showToast('לא ניתן היה להפעיל התראות. אנא אפשר בהגדרות הדפדפן.');
+            }
+          } catch (e) {
+            showToast('שגיאה בהפעלת התראות');
+          }
+        }
+      }
     }
   });
 };
