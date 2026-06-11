@@ -1,5 +1,6 @@
-// =========== functions/index.js ===========
-const functions = require('firebase-functions');
+// =========== functions/index.js — Gen2 v2 ===========
+const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/firestore');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const admin = require('firebase-admin');
 
 admin.initializeApp();
@@ -71,81 +72,55 @@ async function sendPushToAllParents(title, body, data = {}) {
 // =========================================================
 
 // הודעת ערב יומית — 20:00 שעון ירושלים
-exports.eveningParentNotification = functions
-  .region(REGION)
-  .pubsub.schedule('0 20 * * *')
-  .timeZone('Asia/Jerusalem')
-  .onRun(async () => {
+exports.eveningParentNotification = onSchedule(
+  { schedule: '0 20 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
+  async () => {
     await sendPushToAllParents(
       '🌙 זמן משפחה!',
       'בדוק מה הילדים עשו היום ואשר משימות ופרסים',
       { url: '/parent.html', type: 'evening_reminder' }
     );
-    return null;
-  });
+  }
+);
 
-// הודעות בדיקה — כל שעה עגולה בין 10:00 ל-13:00 (לצורך בדיקות בלבד)
-exports.testNotification10 = functions
-  .region(REGION)
-  .pubsub.schedule('0 10 * * *')
-  .timeZone('Asia/Jerusalem')
-  .onRun(async () => {
-    await sendPushToAllParents(
-      '🔔 הודעת בדיקה',
-      'בדיקה — 10:00',
-      { url: '/parent.html', type: 'test' }
-    );
-    return null;
-  });
+// הודעות בדיקה — 10:00-13:00
+exports.testNotification10 = onSchedule(
+  { schedule: '0 10 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
+  async () => {
+    await sendPushToAllParents('🔔 הודעת בדיקה', 'בדיקה — 10:00', { url: '/parent.html', type: 'test' });
+  }
+);
 
-exports.testNotification11 = functions
-  .region(REGION)
-  .pubsub.schedule('0 11 * * *')
-  .timeZone('Asia/Jerusalem')
-  .onRun(async () => {
-    await sendPushToAllParents(
-      '🔔 הודעת בדיקה',
-      'בדיקה — 11:00',
-      { url: '/parent.html', type: 'test' }
-    );
-    return null;
-  });
+exports.testNotification11 = onSchedule(
+  { schedule: '0 11 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
+  async () => {
+    await sendPushToAllParents('🔔 הודעת בדיקה', 'בדיקה — 11:00', { url: '/parent.html', type: 'test' });
+  }
+);
 
-exports.testNotification12 = functions
-  .region(REGION)
-  .pubsub.schedule('0 12 * * *')
-  .timeZone('Asia/Jerusalem')
-  .onRun(async () => {
-    await sendPushToAllParents(
-      '🔔 הודעת בדיקה',
-      'בדיקה — 12:00',
-      { url: '/parent.html', type: 'test' }
-    );
-    return null;
-  });
+exports.testNotification12 = onSchedule(
+  { schedule: '0 12 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
+  async () => {
+    await sendPushToAllParents('🔔 הודעת בדיקה', 'בדיקה — 12:00', { url: '/parent.html', type: 'test' });
+  }
+);
 
-exports.testNotification13 = functions
-  .region(REGION)
-  .pubsub.schedule('0 13 * * *')
-  .timeZone('Asia/Jerusalem')
-  .onRun(async () => {
-    await sendPushToAllParents(
-      '🔔 הודעת בדיקה',
-      'בדיקה — 13:00',
-      { url: '/parent.html', type: 'test' }
-    );
-    return null;
-  });
+exports.testNotification13 = onSchedule(
+  { schedule: '0 13 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
+  async () => {
+    await sendPushToAllParents('🔔 הודעת בדיקה', 'בדיקה — 13:00', { url: '/parent.html', type: 'test' });
+  }
+);
 
 // =========================================================
-// TRIGGERS
+// TRIGGERS — Gen2
 // =========================================================
 
-exports.onPendingApprovalCreated = functions.region(REGION).firestore
-  .document('families/{familyId}/pendingApprovals/{approvalId}')
-  .onCreate(async (snap, context) => {
-    const data = snap.data();
-    const familyId = context.params.familyId;
+exports.onPendingApprovalCreated = onDocumentCreated(
+  { document: 'families/{familyId}/pendingApprovals/{approvalId}', region: REGION },
+  async (event) => {
+    const data = event.data.data();
+    const familyId = event.params.familyId;
     if (!data || data.status !== 'pending') return null;
 
     const familyRef = db.doc(`families/${familyId}`);
@@ -163,13 +138,14 @@ exports.onPendingApprovalCreated = functions.region(REGION).firestore
     );
     if (stale.length > 0) await removeStaleTokens(familyRef, 'fcmTokens', stale);
     return null;
-  });
+  }
+);
 
-exports.onPrizeRequestCreated = functions.region(REGION).firestore
-  .document('families/{familyId}/prizeRequests/{requestId}')
-  .onCreate(async (snap, context) => {
-    const data = snap.data();
-    const familyId = context.params.familyId;
+exports.onPrizeRequestCreated = onDocumentCreated(
+  { document: 'families/{familyId}/prizeRequests/{requestId}', region: REGION },
+  async (event) => {
+    const data = event.data.data();
+    const familyId = event.params.familyId;
     if (!data || data.status !== 'pending') return null;
 
     const familyRef = db.doc(`families/${familyId}`);
@@ -187,14 +163,15 @@ exports.onPrizeRequestCreated = functions.region(REGION).firestore
     );
     if (stale.length > 0) await removeStaleTokens(familyRef, 'fcmTokens', stale);
     return null;
-  });
+  }
+);
 
-exports.onPendingApprovalUpdated = functions.region(REGION).firestore
-  .document('families/{familyId}/pendingApprovals/{approvalId}')
-  .onUpdate(async (change, context) => {
-    const before = change.before.data();
-    const after = change.after.data();
-    const familyId = context.params.familyId;
+exports.onPendingApprovalUpdated = onDocumentUpdated(
+  { document: 'families/{familyId}/pendingApprovals/{approvalId}', region: REGION },
+  async (event) => {
+    const before = event.data.before.data();
+    const after = event.data.after.data();
+    const familyId = event.params.familyId;
     if (!before || !after) return null;
     if (before.status !== 'pending') return null;
     if (after.status !== 'approved' && after.status !== 'rejected') return null;
@@ -220,14 +197,15 @@ exports.onPendingApprovalUpdated = functions.region(REGION).firestore
     );
     if (stale.length > 0) await removeStaleTokens(childRef, 'fcmTokens', stale);
     return null;
-  });
+  }
+);
 
-exports.onPrizeRequestUpdated = functions.region(REGION).firestore
-  .document('families/{familyId}/prizeRequests/{requestId}')
-  .onUpdate(async (change, context) => {
-    const before = change.before.data();
-    const after = change.after.data();
-    const familyId = context.params.familyId;
+exports.onPrizeRequestUpdated = onDocumentUpdated(
+  { document: 'families/{familyId}/prizeRequests/{requestId}', region: REGION },
+  async (event) => {
+    const before = event.data.before.data();
+    const after = event.data.after.data();
+    const familyId = event.params.familyId;
     if (!before || !after) return null;
     if (before.status !== 'pending') return null;
     if (after.status !== 'approved' && after.status !== 'declined') return null;
@@ -252,4 +230,5 @@ exports.onPrizeRequestUpdated = functions.region(REGION).firestore
     );
     if (stale.length > 0) await removeStaleTokens(childRef, 'fcmTokens', stale);
     return null;
-  });
+  }
+);
