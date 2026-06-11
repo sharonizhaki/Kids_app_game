@@ -62,10 +62,15 @@ document.getElementById('btn-back-to-parent')?.addEventListener('click', () => {
   showActiveTab(familyId);
 
   // listeners חיים
-  initPendingListener(familyId, () => {
+  initPendingListener(familyId, async () => {
+    await Promise.all([
+      loadCompletedTasks(familyId),
+      loadRejectedItems(familyId),
+    ]);
     renderMPTabs(familyId);
     const activeTab = document.querySelector('.mp-tab.active');
     if (activeTab?.dataset?.tab === 'pending') renderPendingTab(familyId);
+    if (activeTab?.dataset?.tab === 'history') { renderMPFilters(); renderMPList(familyId); }
   });
 
   initPrizeRequestsListener(familyId, () => {

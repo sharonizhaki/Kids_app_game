@@ -83,6 +83,10 @@ export async function loadCompletedTasks(familyId) {
     const tasksSnap = await getDocs(collection(db, 'families', familyId, 'tasks'));
     tasksSnap.forEach(d => { taskMap[d.data().task] = d.data(); });
   } catch(e) {}
+
+  const histEntries = [];
+  const histKeys    = new Set();
+
   for (const child of childrenCache) {
     try {
       const stateSnap = await getDoc(doc(db, 'families', familyId, 'children', child.id, 'state', 'current'));
@@ -90,8 +94,10 @@ export async function loadCompletedTasks(familyId) {
       const st = stateSnap.data();
       if (!st.hist?.length) continue;
       st.hist.forEach((h, idx) => {
+        const key = `${h.taskId || h.task}_${h.ts || 0}`;
+        histKeys.add(key);
         const taskInfo = taskMap[h.task] || {};
-        allCompletedTasks.push({
+        histEntries.push({
           childId: child.id, childName: child.name,
           childEmoji: child.emoji || (child.gender === 'female' ? '👧' : '👦'),
           childColor: child.color || '#6366F1',
@@ -103,7 +109,39 @@ export async function loadCompletedTasks(familyId) {
       });
     } catch(e) {}
   }
-  allCompletedTasks.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+
+  // טען גם משימות שאושרו מ-pendingApprovals ישירות — מניעת פספוס אם hist לא עודכן
+  try {
+    const approvedSnap = await getDocs(query(
+      collection(db, 'families', familyId, 'pendingApprovals'),
+      where('status', '==', 'approved')
+    ));
+    approvedSnap.forEach(d => {
+      const data = d.data();
+      const key  = `${data.taskId || data.task}_${data.ts || 0}`;
+      if (histKeys.has(key)) return;
+      const child    = childrenCache.find(c => c.id === data.childId);
+      const taskInfo = taskMap[data.task] || {};
+      histEntries.push({
+        childId:    data.childId,
+        childName:  data.childName  || child?.name  || '',
+        childEmoji: data.childEmoji || child?.emoji || (child?.gender === 'female' ? '👧' : '👦'),
+        childColor: child?.color    || '#6366F1',
+        task:    data.task  || '',
+        emoji:   data.emoji || taskInfo.emoji || '⭐',
+        pts:     data.pts   || 0,
+        cat:     taskInfo.cat || '',
+        time:    data.time  || '',
+        day:     data.day   || '',
+        ts:      data.ts    || 0,
+        histIdx: -1,
+        photoUrl: data.photoUrl || '',
+        fromApproval: true,
+      });
+    });
+  } catch(e) {}
+
+  allCompletedTasks = histEntries.sort((a, b) => (b.ts || 0) - (a.ts || 0));
 }
 
 export async function loadPendingApprovals(familyId) {
@@ -632,9 +670,15 @@ async function _doResolve(p, status, familyId) {
     hideLoading();
     if (status === 'approved') showStarsAddedPopup(p.childName, p.pts);
     else showToast('❌ הבקשה נדחתה');
-    await loadPendingApprovals(familyId);
+    await Promise.all([
+      loadPendingApprovals(familyId),
+      loadCompletedTasks(familyId),
+      loadRejectedItems(familyId),
+    ]);
     renderMPTabs(familyId);
     renderPendingTab(familyId);
+    const activeTab = document.querySelector('.mp-tab.active');
+    if (activeTab?.dataset?.tab === 'history') { renderMPFilters(); renderMPList(familyId); }
   } catch(e) { hideLoading(); console.error(e); showToast('שגיאה, נסה שוב'); }
 }
 
