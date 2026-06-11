@@ -2,9 +2,7 @@ name: Scheduled Parent Notifications
 
 on:
   schedule:
-    # הודעת ערב — 20:00 שעון ירושלים (17:00 UTC בקיץ)
     - cron: '0 17 * * *'
-    # הודעות בדיקה — 10:00-13:00 שעון ירושלים (07:00-10:00 UTC בקיץ)
     - cron: '0 7 * * *'
     - cron: '0 8 * * *'
     - cron: '0 9 * * *'
@@ -15,12 +13,13 @@ jobs:
   send-notification:
     runs-on: ubuntu-latest
     steps:
-      - name: Install dependencies
-        run: npm install google-auth-library @google-cloud/firestore
-
-      - name: Send FCM Notifications
+      - name: Setup and Send FCM Notifications
         run: |
-          node << 'EOF'
+          mkdir -p /tmp/notifier && cd /tmp/notifier
+          npm init -y
+          npm install google-auth-library @google-cloud/firestore
+
+          cat > send.js << 'EOF'
           const { GoogleAuth } = require('google-auth-library');
           const { Firestore } = require('@google-cloud/firestore');
           const https = require('https');
@@ -29,7 +28,6 @@ jobs:
             const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
             const projectId = serviceAccount.project_id;
 
-            // Access token
             const auth = new GoogleAuth({
               credentials: serviceAccount,
               scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
@@ -37,7 +35,6 @@ jobs:
             const client = await auth.getClient();
             const { token: accessToken } = await client.getAccessToken();
 
-            // שעה נוכחית בישראל
             const israelHour = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' })).getHours();
 
             let title, body;
@@ -51,7 +48,6 @@ jobs:
 
             console.log(`Hour: ${israelHour}, Title: ${title}`);
 
-            // שלוף tokens מ-Firestore
             const firestore = new Firestore({ projectId, credentials: serviceAccount });
             const familiesSnap = await firestore.collection('families').get();
             const allTokens = [];
@@ -62,11 +58,7 @@ jobs:
 
             const unique = [...new Set(allTokens.filter(Boolean))];
             console.log(`Sending to ${unique.length} tokens`);
-
-            if (unique.length === 0) {
-              console.log('No tokens found');
-              return;
-            }
+            if (unique.length === 0) { console.log('No tokens'); return; }
 
             const FCM_URL = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
 
@@ -93,7 +85,7 @@ jobs:
                   let data = '';
                   res.on('data', chunk => data += chunk);
                   res.on('end', () => {
-                    console.log(`Token ${token.slice(0,20)}...: ${res.statusCode} ${data}`);
+                    console.log(`${token.slice(0,20)}...: ${res.statusCode} ${data}`);
                     resolve();
                   });
                 });
@@ -102,11 +94,12 @@ jobs:
                 req.end();
               });
             }
-
             console.log('Done!');
           }
 
           main().catch(e => { console.error(e); process.exit(1); });
           EOF
+
+          node send.js
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
