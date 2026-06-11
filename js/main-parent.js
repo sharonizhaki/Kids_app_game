@@ -530,10 +530,13 @@ document.getElementById('btn-open-menu').onclick = () => {
             } else if (isPushBlocked()) {
               _showNotifBlockedModal();
             } else {
-              showToast('לא ניתן היה להפעיל התראות — נסה שוב');
+              // token null אבל לא blocked — בדוק ב-console לפרטים
+              console.error('[FCM] token is null after permission granted — check console for [FCM] logs');
+              showToast('לא ניתן לקבל token — פתח את ה-console לפרטים');
             }
           } catch (e) {
-            showToast('שגיאה בהפעלת התראות');
+            console.error('[FCM] notifications action error:', e);
+            showToast('שגיאה: ' + (e?.message || e));
           }
         }
       }

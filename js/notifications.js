@@ -30,23 +30,46 @@ function _getMessaging() {
 
 export async function requestPushPermission() {
   try {
-    if (!('Notification' in window)) return null;
-    if (!('serviceWorker' in navigator)) return null;
+    if (!('Notification' in window)) {
+      console.warn('[FCM] Notification API not supported');
+      return null;
+    }
+    if (!('serviceWorker' in navigator)) {
+      console.warn('[FCM] ServiceWorker not supported');
+      return null;
+    }
 
-    const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    // רשום את ה-SW — עם scope מפורש לשורש
+    let reg;
+    try {
+      reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
+      await navigator.serviceWorker.ready;
+      console.log('[FCM] SW registered, scope:', reg.scope, 'state:', reg.active?.state);
+    } catch (swErr) {
+      console.error('[FCM] SW registration failed:', swErr);
+      return null;
+    }
 
     const permission = await Notification.requestPermission();
+    console.log('[FCM] permission:', permission);
     if (permission !== 'granted') return null;
 
     const messaging = _getMessaging();
-    const token = await getToken(messaging, {
-      vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: reg,
-    });
+    let token;
+    try {
+      token = await getToken(messaging, {
+        vapidKey: VAPID_KEY,
+        serviceWorkerRegistration: reg,
+      });
+      console.log('[FCM] token obtained:', token ? token.substring(0, 20) + '…' : 'null');
+    } catch (tokenErr) {
+      console.error('[FCM] getToken failed:', tokenErr);
+      return null;
+    }
 
     return token || null;
   } catch (e) {
-    console.warn('FCM requestPushPermission error:', e);
+    console.error('[FCM] requestPushPermission unexpected error:', e);
     return null;
   }
 }
