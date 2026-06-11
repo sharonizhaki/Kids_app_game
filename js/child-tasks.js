@@ -130,7 +130,8 @@ async function _submitPending(t, saveStateFn, photoUrl = '') {
           childEmoji: state.childData?.emoji || '👦',
           status:     'pending',
           createdAt:  serverTimestamp(),
-          ...(photoUrl ? { photoUrl } : {}),
+          // photoUrl מוחזק בstate המקומי בלבד — לא ב-Firestore
+          // כדי שה-Eventarc event payload לא יעבור את מגבלת 1MB
         }
       );
     } catch (e) { console.error('pendingApprovals write error:', e); }

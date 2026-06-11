@@ -1,11 +1,13 @@
-// =========== functions/index.js — Gen2 v2 ===========
-const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/firestore');
-const { onSchedule } = require('firebase-functions/v2/scheduler');
-const admin = require('firebase-admin');
+// =========== functions/index.js ===========
+// Scheduled functions — Gen2 (onSchedule)
+// Firestore triggers   — Gen1 (no Cloud Build, deploys in seconds)
+const functionsV1        = require('firebase-functions/v1');
+const { onSchedule }     = require('firebase-functions/v2/scheduler');
+const admin              = require('firebase-admin');
 
 admin.initializeApp();
 
-const db = admin.firestore();
+const db  = admin.firestore();
 const fcm = admin.messaging();
 
 const REGION = 'europe-west1';
@@ -68,10 +70,9 @@ async function sendPushToAllParents(title, body, data = {}) {
 }
 
 // =========================================================
-// SCHEDULED NOTIFICATIONS — הורים
+// SCHEDULED NOTIFICATIONS — Gen2
 // =========================================================
 
-// הודעת ערב יומית — 20:00 שעון ירושלים
 exports.eveningParentNotification = onSchedule(
   { schedule: '0 20 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
   async () => {
@@ -83,7 +84,6 @@ exports.eveningParentNotification = onSchedule(
   }
 );
 
-// הודעות בדיקה — 10:00-13:00
 exports.testNotification10 = onSchedule(
   { schedule: '0 10 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
   async () => {
@@ -113,14 +113,16 @@ exports.testNotification13 = onSchedule(
 );
 
 // =========================================================
-// TRIGGERS — Gen2
+// FIRESTORE TRIGGERS — Gen1
+// (מתפרסות בשניות בלי Cloud Build — אין בעיית timeout)
 // =========================================================
 
-exports.fsApprovalCreated = onDocumentCreated(
-  { document: 'families/{familyId}/pendingApprovals/{approvalId}', region: REGION },
-  async (event) => {
-    const data = event.data.data();
-    const familyId = event.params.familyId;
+// ילד סיים משימה → התראה להורה
+exports.fsApprovalCreated = functionsV1.region(REGION).firestore
+  .document('families/{familyId}/pendingApprovals/{approvalId}')
+  .onCreate(async (snap, context) => {
+    const data = snap.data();
+    const familyId = context.params.familyId;
     if (!data || data.status !== 'pending') return null;
 
     const familyRef = db.doc(`families/${familyId}`);
@@ -138,14 +140,14 @@ exports.fsApprovalCreated = onDocumentCreated(
     );
     if (stale.length > 0) await removeStaleTokens(familyRef, 'fcmTokens', stale);
     return null;
-  }
-);
+  });
 
-exports.fsPrizeCreated = onDocumentCreated(
-  { document: 'families/{familyId}/prizeRequests/{requestId}', region: REGION },
-  async (event) => {
-    const data = event.data.data();
-    const familyId = event.params.familyId;
+// ילד ביקש פרס → התראה להורה
+exports.fsPrizeCreated = functionsV1.region(REGION).firestore
+  .document('families/{familyId}/prizeRequests/{requestId}')
+  .onCreate(async (snap, context) => {
+    const data = snap.data();
+    const familyId = context.params.familyId;
     if (!data || data.status !== 'pending') return null;
 
     const familyRef = db.doc(`families/${familyId}`);
@@ -163,15 +165,15 @@ exports.fsPrizeCreated = onDocumentCreated(
     );
     if (stale.length > 0) await removeStaleTokens(familyRef, 'fcmTokens', stale);
     return null;
-  }
-);
+  });
 
-exports.fsApprovalUpdated = onDocumentUpdated(
-  { document: 'families/{familyId}/pendingApprovals/{approvalId}', region: REGION },
-  async (event) => {
-    const before = event.data.before.data();
-    const after = event.data.after.data();
-    const familyId = event.params.familyId;
+// הורה אישר/דחה משימה → התראה לילד
+exports.fsApprovalUpdated = functionsV1.region(REGION).firestore
+  .document('families/{familyId}/pendingApprovals/{approvalId}')
+  .onUpdate(async (change, context) => {
+    const before = change.before.data();
+    const after  = change.after.data();
+    const familyId = context.params.familyId;
     if (!before || !after) return null;
     if (before.status !== 'pending') return null;
     if (after.status !== 'approved' && after.status !== 'rejected') return null;
@@ -179,7 +181,7 @@ exports.fsApprovalUpdated = onDocumentUpdated(
     const childId = after.childId;
     if (!childId) return null;
 
-    const childRef = db.doc(`families/${familyId}/children/${childId}`);
+    const childRef  = db.doc(`families/${familyId}/children/${childId}`);
     const childSnap = await childRef.get();
     if (!childSnap.exists) return null;
 
@@ -197,15 +199,15 @@ exports.fsApprovalUpdated = onDocumentUpdated(
     );
     if (stale.length > 0) await removeStaleTokens(childRef, 'fcmTokens', stale);
     return null;
-  }
-);
+  });
 
-exports.fsPrizeUpdated = onDocumentUpdated(
-  { document: 'families/{familyId}/prizeRequests/{requestId}', region: REGION },
-  async (event) => {
-    const before = event.data.before.data();
-    const after = event.data.after.data();
-    const familyId = event.params.familyId;
+// הורה אישר/דחה פרס → התראה לילד
+exports.fsPrizeUpdated = functionsV1.region(REGION).firestore
+  .document('families/{familyId}/prizeRequests/{requestId}')
+  .onUpdate(async (change, context) => {
+    const before = change.before.data();
+    const after  = change.after.data();
+    const familyId = context.params.familyId;
     if (!before || !after) return null;
     if (before.status !== 'pending') return null;
     if (after.status !== 'approved' && after.status !== 'declined') return null;
@@ -213,7 +215,7 @@ exports.fsPrizeUpdated = onDocumentUpdated(
     const childId = after.childId;
     if (!childId) return null;
 
-    const childRef = db.doc(`families/${familyId}/children/${childId}`);
+    const childRef  = db.doc(`families/${familyId}/children/${childId}`);
     const childSnap = await childRef.get();
     if (!childSnap.exists) return null;
 
@@ -230,5 +232,4 @@ exports.fsPrizeUpdated = onDocumentUpdated(
     );
     if (stale.length > 0) await removeStaleTokens(childRef, 'fcmTokens', stale);
     return null;
-  }
-);
+  });
