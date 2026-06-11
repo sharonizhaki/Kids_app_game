@@ -177,13 +177,19 @@ async function _approveTask(familyId, docId) {
   showLoading('מאשר משימה...');
   try {
     const approvalRef  = doc(db, 'families', familyId, 'pendingApprovals', docId);
+
     const approvalSnap = await getDoc(approvalRef);
     if (!approvalSnap.exists()) { hideLoading(); return; }
 
     const data     = approvalSnap.data();
     const pts      = data.pts || 0;
     const childRef = doc(db, 'families', familyId, 'children', data.childId);
-    const childSnap = await getDoc(childRef);
+    const realStateRef = doc(db, 'families', familyId, 'children', data.childId, 'state', 'current');
+
+    const [childSnap, stateSnap] = await Promise.all([
+      getDoc(childRef),
+      getDoc(realStateRef),
+    ]);
 
     const updates = [
       updateDoc(approvalRef, { status: 'approved', resolvedAt: serverTimestamp() })
@@ -214,6 +220,53 @@ async function _approveTask(familyId, docId) {
           }
         )
       );
+    }
+
+    // עדכון state/current של הילד — כמו _finalizeTask בצד הילד
+    if (stateSnap.exists()) {
+      const cs = stateSnap.data();
+
+      const tsDate  = data.ts ? new Date(data.ts) : new Date();
+      const dateKey = `${tsDate.getFullYear()}-${String(tsDate.getMonth()+1).padStart(2,'0')}-${String(tsDate.getDate()).padStart(2,'0')}`;
+
+      const hist = Array.isArray(cs.hist) ? [...cs.hist] : [];
+      hist.unshift({
+        taskId: data.taskId || '',
+        task:   data.task   || '',
+        emoji:  data.emoji  || '⭐',
+        pts,
+        time:   data.time   || '',
+        day:    data.day    || '',
+        ts:     data.ts     || Date.now(),
+      });
+      if (hist.length > 50) hist.pop();
+
+      const comp = cs.comp ? { ...cs.comp } : {};
+      const taskKey = data.taskId || '';
+      if (taskKey) {
+        const c = comp[taskKey] || { wc: 0, d: '', count: 0, lastTs: 0 };
+        comp[taskKey] = { wc: (c.wc||0)+1, d: dateKey, count: (c.count||0)+1, lastTs: Date.now() };
+      }
+
+      const dailyPts = cs.dailyPts ? { ...cs.dailyPts } : {};
+      dailyPts[dateKey] = (dailyPts[dateKey] || 0) + pts;
+
+      const pending = Array.isArray(cs.pending)
+        ? cs.pending.map(p =>
+            p.taskId === data.taskId && Math.abs((p.ts || 0) - (data.ts || 0)) < 10000
+              ? { ...p, status: 'approved' }
+              : p
+          )
+        : [];
+
+      updates.push(updateDoc(realStateRef, {
+        pts:      (cs.pts || 0) + pts,
+        hist,
+        comp,
+        dailyPts,
+        pending,
+        lastActive: dateKey,
+      }));
     }
 
     await Promise.all(updates);
