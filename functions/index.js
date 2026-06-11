@@ -1,7 +1,12 @@
 // =========== functions/index.js ===========
 // Scheduled functions — Gen2 (onSchedule)
 // Firestore triggers   — Gen1 (no Cloud Build, deploys in seconds)
-const functionsV1        = require('firebase-functions/v1');
+let functionsV1;
+try {
+  functionsV1 = require('firebase-functions/v1'); // firebase-functions v7+
+} catch (_) {
+  functionsV1 = require('firebase-functions');    // firebase-functions v3-v6 — יש להם .region()
+}
 const { onSchedule }     = require('firebase-functions/v2/scheduler');
 const admin              = require('firebase-admin');
 
