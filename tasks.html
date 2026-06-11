@@ -63,19 +63,21 @@
       <div class="assign-grid" id="task-assign-grid"></div>
     </div>
 
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">🎨</span> אייקון</div>
-      <div class="task-emoji-grid" id="task-emoji-grid"></div>
-    </div>
+    <div id="task-emoji-stars-wrap">
+      <div class="form-section">
+        <div class="form-label"><span class="fl-icon">🎨</span> אייקון</div>
+        <div class="task-emoji-grid" id="task-emoji-grid"></div>
+      </div>
 
-    <div class="form-section">
-      <div class="form-label"><span class="fl-icon">⭐</span> מספר כוכבים</div>
-      <div class="stars-picker" id="task-stars-picker">
-        <span class="star-btn" data-val="1">⭐</span>
-        <span class="star-btn" data-val="2">⭐</span>
-        <span class="star-btn" data-val="3">⭐</span>
-        <span class="star-btn" data-val="4">⭐</span>
-        <span class="star-btn" data-val="5">⭐</span>
+      <div class="form-section">
+        <div class="form-label"><span class="fl-icon">⭐</span> מספר כוכבים</div>
+        <div class="stars-picker" id="task-stars-picker">
+          <span class="star-btn" data-val="1">⭐</span>
+          <span class="star-btn" data-val="2">⭐</span>
+          <span class="star-btn" data-val="3">⭐</span>
+          <span class="star-btn" data-val="4">⭐</span>
+          <span class="star-btn" data-val="5">⭐</span>
+        </div>
       </div>
     </div>
 
@@ -98,30 +100,31 @@
       </div>
     </div>
 
-    <div id="task-reminder-desc-wrap">
-      <div class="form-section">
-        <div class="form-label"><span class="fl-icon">🔔</span> תזכורת</div>
-        <input type="time" class="reminder-input" id="task-reminder-input">
-      </div>
-      <div class="form-section">
-        <div class="form-label"><span class="fl-icon">📝</span> תיאור (לא חובה)</div>
-        <div class="input-group" style="margin-bottom:0;">
-          <input type="text" id="task-desc-input" placeholder="הסבר קצר על המשימה" autocomplete="off">
+    <div id="task-desc-approval-wrap">
+      <div id="task-reminder-desc-wrap">
+        <div class="form-section">
+          <div class="form-label"><span class="fl-icon">🔔</span> תזכורת</div>
+          <input type="time" class="reminder-input" id="task-reminder-input">
+        </div>
+        <div class="form-section">
+          <div class="form-label"><span class="fl-icon">📝</span> תיאור (לא חובה)</div>
+          <div class="input-group" style="margin-bottom:0;">
+            <input type="text" id="task-desc-input" placeholder="הסבר קצר על המשימה" autocomplete="off">
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- ← חדש: שלב 5 — דורש אישור הורה -->
-    <div class="form-section">
-      <div class="require-approval-row">
-        <div>
-          <div class="form-label" style="margin:0 0 2px;"><span class="fl-icon">👁️</span> דורש אישור הורה</div>
-          <div style="font-size:0.75rem;color:var(--muted);line-height:1.4;">הילד ישלח בקשה, ההורה יאשר לפני שהכוכבים יתווספו</div>
+      <div class="form-section">
+        <div class="require-approval-row">
+          <div>
+            <div class="form-label" style="margin:0 0 2px;"><span class="fl-icon">👁️</span> דורש אישור הורה</div>
+            <div style="font-size:0.75rem;color:var(--muted);line-height:1.4;">הילד ישלח בקשה, ההורה יאשר לפני שהכוכבים יתווספו</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="task-require-approval">
+            <span class="toggle-slider"></span>
+          </label>
         </div>
-        <label class="toggle-switch">
-          <input type="checkbox" id="task-require-approval">
-          <span class="toggle-slider"></span>
-        </label>
       </div>
     </div>
 

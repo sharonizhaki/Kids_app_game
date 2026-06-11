@@ -800,15 +800,13 @@ export function startTaskTour(familyId) {
   const quickCatsVisible = getComputedStyle(document.getElementById('form-quick-cats-section') || document.createElement('div')).display !== 'none';
   const step1Text = quickCatsVisible
     ? 'הכנס שם למשימה — לחץ "💡 רעיונות לדוגמא" לרשימת רעיונות, או בחר קטגוריה משמאל ליצירת 3 משימות מהירות אוטומטית'
-    : 'הכנס שם למשימה, לחץ "💡 רעיונות לדוגמא" לרעיונות מוכנים';
+    : 'הכנס שם למשימה — לחץ "💡 רעיונות לדוגמא" לרשימת רעיונות מוכנים';
   const steps = [
-    { el: '#task-name-input',         title: 'שם המשימה',      text: step1Text },
-    { el: '#task-cat-scroll',         title: 'קטגוריה',       text: 'בחר קטגוריה — היגיינה, לימודים, מטלות בית... או צור קטגוריה חדשה' },
-    { el: '#task-assign-grid',        title: 'שיוך לילד/ים',  text: 'כאן מופיעים הילדים שלך — בחר לאיזה ילד/ים המשימה משויכת' },
-    { el: '#task-emoji-grid',         title: 'אייקון',         text: 'בחר אייקון שיופיע ליד שם המשימה' },
-    { el: '#task-stars-picker',       title: 'כוכבים',        text: 'כמה כוכבים שווה המשימה? לחץ על הכוכב הרצוי' },
-    { el: '#task-freq-grid',          title: 'תדירות',        text: 'מתי יוכל הילד לבצע את המשימה — כל יום, פעם בשבוע, ימים ספציפיים, או חד פעמית' },
-    { el: '#task-reminder-desc-wrap', title: 'תזכורת ותיאור', text: 'בחר שעה לתזכורת ומתחת הוסף הסבר קצר על המשימה — שניהם לא חובה' },
+    { el: '#task-name-input',          title: '1 · שם המשימה',       text: step1Text },
+    { el: '#task-cat-scroll',          title: '2 · קטגוריה',          text: 'בחר קטגוריה — היגיינה, לימודים, מטלות בית ועוד — או צור קטגוריה חדשה בעצמך' },
+    { el: '#task-assign-grid',         title: '3 · שיוך לילד/ים',    text: 'בחר לאיזה ילד המשימה שייכת — ניתן לשייך לכמה ילדים בו-זמנית' },
+    { el: '#task-emoji-stars-wrap',    title: '4 · אייקון וכוכבים',   text: 'בחר אייקון שמייצג את המשימה, ולידו — כמה כוכבים הילד יקבל על ביצועה (1 עד 5)' },
+    { el: '#task-desc-approval-wrap',  title: '5 · תיאור ואישור הורה', text: 'הוסף הסבר קצר על המשימה (לא חובה), ובחר אם נדרש אישור הורה לפני שהכוכבים נצברים' },
   ];
 
   let currentStep = 0;
