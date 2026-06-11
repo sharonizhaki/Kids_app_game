@@ -592,12 +592,20 @@ async function submitManualPoints(familyId, childId, amount, isAdd, reason) {
     const newPts = Math.max(0, (st.pts || 0) + delta);
     await updateDoc(stateRef, { pts: newPts });
 
+    const manualTitle = isAdd
+      ? `ההורים הוסיפו לך ${amount} ⭐`
+      : `ההורים הפחיתו לך ${amount} ⭐`;
+    const manualMsg = isAdd
+      ? `ההורים החליטו להוסיף לך ${amount} כוכבים${reason ? ` — ${reason}` : ' 🎉'}`
+      : `ההורים החליטו להפחית לך ${amount} כוכבים${reason ? ` — ${reason}` : ''}`;
+
     await addDoc(collection(db, 'families', familyId, 'children', childId, 'notifications'), {
       type:    'manual_pts',
       pts:      amount,
       isAdd,
       reason,
-      message: `${isAdd ? '➕' : '➖'} ${amount} ⭐${reason ? `: ${reason}` : ''}`,
+      title:   manualTitle,
+      message: manualMsg,
       read:    false,
       ts:      Date.now(),
     });

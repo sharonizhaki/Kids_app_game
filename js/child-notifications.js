@@ -68,15 +68,16 @@ export async function processNotificationPopups() {
 
 function _showPopup(n) {
   return new Promise(resolve => {
-    const cfg  = TYPE_CFG[n.type] || { icon: '🔔', title: 'התראה' };
-    const icon = n.prizeEmoji || n.emoji || cfg.icon;
+    const cfg   = TYPE_CFG[n.type] || { icon: '🔔', title: 'התראה' };
+    const icon  = n.prizeEmoji || n.emoji || cfg.icon;
+    const title = n.title || cfg.title;
 
     const ov = document.createElement('div');
     ov.className = 'notif-popup-ov';
     ov.innerHTML = `
       <div class="notif-popup-card">
         <div class="notif-popup-icon">${icon}</div>
-        <div class="notif-popup-title">${cfg.title}</div>
+        <div class="notif-popup-title">${title}</div>
         <div class="notif-popup-msg">${n.message || ''}</div>
         <button class="notif-popup-btn">הבנתי ✅</button>
       </div>`;
