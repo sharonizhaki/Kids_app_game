@@ -446,6 +446,49 @@ document.getElementById('modal-no-child-create').onclick = () => {
   showScreen('screen-manage-family');
 };
 
+// =========== NOTIFICATION BLOCKED MODAL ===========
+function _showNotifBlockedModal() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isAndroid = /Android/.test(navigator.userAgent);
+
+  const steps = isIOS
+    ? `<ol style="text-align:right;padding-right:18px;margin:10px 0;line-height:2;">
+        <li>פתח <b>הגדרות</b> באייפון</li>
+        <li>גלול ל<b>Safari</b> ← <b>הגדרות אתרים</b></li>
+        <li>לחץ על <b>התראות</b></li>
+        <li>מצא את האתר הזה ← שנה ל<b>אפשר</b></li>
+        <li>חזור לכאן ולחץ שוב "הפעל התראות"</li>
+      </ol>`
+    : isAndroid
+    ? `<ol style="text-align:right;padding-right:18px;margin:10px 0;line-height:2;">
+        <li>לחץ על <b>🔒 / ⓘ</b> ליד כתובת האתר</li>
+        <li>לחץ על <b>הרשאות אתר</b></li>
+        <li>הפעל <b>התראות</b></li>
+        <li>רענן את הדף וחזור לכאן</li>
+      </ol>`
+    : `<ol style="text-align:right;padding-right:18px;margin:10px 0;line-height:2;">
+        <li>לחץ על <b>🔒 / ⓘ</b> ליד כתובת האתר בדפדפן</li>
+        <li>מצא <b>התראות</b> ← שנה ל<b>אפשר</b></li>
+        <li>רענן את הדף וחזור לכאן</li>
+      </ol>`;
+
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML = `
+    <div style="background:#fff;border-radius:24px;width:100%;max-width:360px;padding:24px 20px;text-align:center;direction:rtl;font-family:'Heebo',sans-serif;">
+      <div style="font-size:2.4rem;margin-bottom:8px;">🔕</div>
+      <div style="font-size:1.05rem;font-weight:900;color:#0F172A;margin-bottom:6px;">התראות חסומות</div>
+      <div style="font-size:0.82rem;color:#64748B;margin-bottom:4px;">הדפדפן חסם את ההרשאה. כדי להפעיל:</div>
+      <div style="font-size:0.82rem;color:#334155;background:#F8FAFC;border-radius:12px;padding:10px 14px;margin:10px 0;text-align:right;">
+        ${steps}
+      </div>
+      <button id="notif-blocked-ok" style="background:linear-gradient(135deg,#7C3AED,#5B21B6);color:#fff;border:none;border-radius:14px;padding:12px 28px;font-size:0.9rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;width:100%;margin-top:6px;">הבנתי</button>
+    </div>`;
+  document.body.appendChild(ov);
+  ov.querySelector('#notif-blocked-ok').onclick = () => ov.remove();
+  ov.onclick = (e) => { if (e.target === ov) ov.remove(); };
+}
+
 // =========== SIDE MENU ===========
 document.getElementById('btn-open-menu').onclick = () => {
   const existing = document.getElementById('side-menu');
@@ -473,18 +516,21 @@ document.getElementById('btn-open-menu').onclick = () => {
       else if (action === 'stats') window.location.href = 'stats.html';
       else if (action === 'replay-tour') startDashTour(currentFamilyId, auth.currentUser?.uid);
       else if (action === 'notifications') {
-        if (isPushBlocked()) {
-          showToast('התראות חסומות בדפדפן — עבור להגדרות הדפדפן ואפשר התראות לאתר זה 🔔');
-        } else if (isPushGranted()) {
+        if (isPushGranted()) {
           showToast('התראות כבר פעילות ✅');
+        } else if (isPushBlocked()) {
+          _showNotifBlockedModal();
         } else {
           try {
             const token = await requestPushPermission();
             if (token) {
               await saveParentFcmToken(db, currentFamilyId, token);
               showToast('התראות הופעלו בהצלחה! 🔔');
+              openSideMenu({ auth, isPrimary: isPrimaryParent, activityCount: _currentActivityCount, notifStatus: 'granted', onAction: () => {} });
+            } else if (isPushBlocked()) {
+              _showNotifBlockedModal();
             } else {
-              showToast('לא ניתן היה להפעיל התראות. אנא אפשר בהגדרות הדפדפן.');
+              showToast('לא ניתן היה להפעיל התראות — נסה שוב');
             }
           } catch (e) {
             showToast('שגיאה בהפעלת התראות');
