@@ -1,0 +1,108 @@
+name: Scheduled Parent Notifications
+
+on:
+  schedule:
+    # הודעת ערב — 20:00 שעון ירושלים (17:00 UTC בקיץ)
+    - cron: '0 17 * * *'
+    # הודעות בדיקה — 10:00-13:00 שעון ירושלים (07:00-10:00 UTC בקיץ)
+    - cron: '0 7 * * *'
+    - cron: '0 8 * * *'
+    - cron: '0 9 * * *'
+    - cron: '0 10 * * *'
+  workflow_dispatch: # אפשרות להרצה ידנית
+
+jobs:
+  send-notification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send FCM Notifications
+        uses: actions/github-script@v7
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        with:
+          script: |
+            const { GoogleAuth } = require('google-auth-library');
+            const https = require('https');
+
+            // קבל access token מה-Service Account
+            const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+            const auth = new GoogleAuth({
+              credentials: serviceAccount,
+              scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
+            });
+            const client = await auth.getClient();
+            const tokenResponse = await client.getAccessToken();
+            const accessToken = tokenResponse.token;
+
+            const projectId = serviceAccount.project_id;
+
+            // קבע שעה נוכחית בישראל
+            const nowUtc = new Date();
+            const israelHour = new Date(nowUtc.toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' })).getHours();
+
+            // בחר הודעה לפי שעה
+            let title, body;
+            if (israelHour === 20) {
+              title = '🌙 זמן משפחה!';
+              body  = 'בדוק מה הילדים עשו היום ואשר משימות ופרסים';
+            } else {
+              title = '🔔 הודעת בדיקה';
+              body  = `בדיקה — ${israelHour}:00`;
+            }
+
+            // שלוף את כל ה-FCM tokens של ההורים מ-Firestore
+            const { Firestore } = require('@google-cloud/firestore');
+            const firestore = new Firestore({ projectId, credentials: serviceAccount });
+
+            const familiesSnap = await firestore.collection('families').get();
+            const allTokens = [];
+            familiesSnap.forEach(doc => {
+              const tokens = doc.data().fcmTokens || [];
+              allTokens.push(...tokens);
+            });
+
+            if (allTokens.length === 0) {
+              console.log('No FCM tokens found');
+              return;
+            }
+
+            const unique = [...new Set(allTokens.filter(Boolean))];
+            console.log(`Sending to ${unique.length} tokens`);
+
+            // שלח Push לכל token
+            const FCM_URL = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
+
+            for (const token of unique) {
+              const payload = JSON.stringify({
+                message: {
+                  token,
+                  notification: { title, body },
+                  webpush: {
+                    notification: { icon: '/icons/icon-192.png', dir: 'rtl' },
+                    fcm_options: { link: '/parent.html' },
+                  },
+                },
+              });
+
+              await new Promise((resolve, reject) => {
+                const req = https.request(FCM_URL, {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                  },
+                }, res => {
+                  let data = '';
+                  res.on('data', chunk => data += chunk);
+                  res.on('end', () => {
+                    console.log(`Token ${token.slice(0,20)}...: ${res.statusCode}`);
+                    resolve();
+                  });
+                });
+                req.on('error', reject);
+                req.write(payload);
+                req.end();
+              });
+            }
+
+            console.log('Done!');
