@@ -2,9 +2,11 @@
 !*/
 !.gitignore
 !*.html
+!firebase-messaging-sw.js
 !js/**
 !css/**
 !functions/index.js
 !functions/package.json
 !functions/package-lock.json
-functions/node_modules!.github/**
+functions/node_modules
+!.github/**

@@ -4,7 +4,7 @@ import { onAuthStateChanged, signOut }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import {
   doc, getDoc, setDoc, getDocs,
-  collection, updateDoc, onSnapshot,
+  collection, updateDoc, onSnapshot, query, where,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 import { state }                                              from './child-state.js';
