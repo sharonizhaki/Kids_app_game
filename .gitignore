@@ -7,4 +7,4 @@
 !functions/index.js
 !functions/package.json
 !functions/package-lock.json
-functions/node_modules
+functions/node_modules!.github/**
