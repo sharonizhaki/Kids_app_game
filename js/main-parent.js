@@ -362,11 +362,13 @@ async function handleQuickPrizes(triggerEl, category) {
   saveWeeklySnapshot(currentFamilyId).catch(() => {});
   initApprovalQueue(currentFamilyId);
 
-  // שמירת FCM token של ההורה בכל כניסה
-  try {
-    const token = await requestPushPermission();
-    if (token) await saveParentFcmToken(db, currentFamilyId, token);
-  } catch(e) { console.warn('FCM parent token error:', e); }
+  // רענון FCM token רק אם כבר הופעלו התראות — ללא בקשת הרשאה חדשה
+  if (isPushGranted()) {
+    try {
+      const token = await requestPushPermission();
+      if (token) await saveParentFcmToken(db, currentFamilyId, token);
+    } catch(e) { console.warn('FCM parent token refresh error:', e); }
+  }
   initDashboardListeners(currentFamilyId);
   initActivityBadgeListeners(currentFamilyId);
 
