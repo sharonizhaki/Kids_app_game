@@ -24,7 +24,7 @@ import {
   initNotifications, processNotificationPopups,
   renderNotificationsScreen, updateNotificationBadge,
 } from './child-notifications.js';
-import { listenForegroundMessages, scheduleTaskReminders, isPushGranted } from './notifications.js';
+import { listenForegroundMessages, scheduleTaskReminders, isPushGranted, requestPushPermission, saveChildFcmToken } from './notifications.js';
 
 // -------- GREETINGS --------
 const GREETINGS_M = ['יאללה נתחיל! 💪','בוא נעשה את זה! 🚀','היום תהיה מדהים! ✨','מוכן לאסוף כוכבים? 🔥','הגיבור שלנו הגיע! 🦸‍♂️'];
@@ -342,6 +342,12 @@ async function loadChild() {
     initProfile(db, renderChild);
     initPrizes(db);
     initNav();
+
+    // שמור FCM token של הילד בכל כניסה
+    try {
+      const token = await requestPushPermission();
+      if (token) await saveChildFcmToken(db, state.familyId, state.childId, token);
+    } catch(e) { console.warn('FCM child token error:', e); }
 
     // טען התראות
     await initNotifications(db, state.familyId, state.childId);
