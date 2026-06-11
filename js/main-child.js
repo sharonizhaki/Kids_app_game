@@ -430,6 +430,17 @@ async function loadChild() {
             cs.pending[idx].status = 'approved';
             cs.pts = (cs.pts || 0) + pts;
 
+            const tsDate  = data.ts ? new Date(data.ts) : new Date();
+            const dateKey = `${tsDate.getFullYear()}-${String(tsDate.getMonth()+1).padStart(2,'0')}-${String(tsDate.getDate()).padStart(2,'0')}`;
+
+            // סמן משימה כ"בוצעה היום" — כך isDone יחזיר true ולא תופיע שוב
+            if (!cs.comp) cs.comp = {};
+            const taskKey = data.taskId || '';
+            if (taskKey) {
+              const c = cs.comp[taskKey] || { wc: 0, d: '', count: 0, lastTs: 0 };
+              cs.comp[taskKey] = { wc: (c.wc||0)+1, d: dateKey, count: (c.count||0)+1, lastTs: Date.now() };
+            }
+
             if (!cs.hist) cs.hist = [];
             const alreadyInHist = cs.hist.some(
               h => h.taskId === data.taskId && Math.abs((h.ts || 0) - (data.ts || 0)) < 5000
@@ -447,8 +458,6 @@ async function loadChild() {
               if (cs.hist.length > 50) cs.hist.pop();
             }
 
-            const tsDate  = data.ts ? new Date(data.ts) : new Date();
-            const dateKey = `${tsDate.getFullYear()}-${String(tsDate.getMonth()+1).padStart(2,'0')}-${String(tsDate.getDate()).padStart(2,'0')}`;
             if (!cs.dailyPts) cs.dailyPts = {};
             cs.dailyPts[dateKey] = (cs.dailyPts[dateKey] || 0) + pts;
 
