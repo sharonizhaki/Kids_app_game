@@ -1,14 +1,10 @@
 // =========== functions/index.js ===========
-// Scheduled functions — Gen2 (onSchedule)
-// Firestore triggers   — Gen1 (no Cloud Build, deploys in seconds)
-let functionsV1;
-try {
-  functionsV1 = require('firebase-functions/v1'); // firebase-functions v7+
-} catch (_) {
-  functionsV1 = require('firebase-functions');    // firebase-functions v3-v6 — יש להם .region()
-}
-const { onSchedule }     = require('firebase-functions/v2/scheduler');
-const admin              = require('firebase-admin');
+// Gen1 triggers: require('firebase-functions/v1') בlocal (v7+), fallback לroot בcloud runtime
+const functionsV1 = (() => {
+  try { return require('firebase-functions/v1'); } catch (_) { return require('firebase-functions'); }
+})();
+const { onSchedule } = require('firebase-functions/v2/scheduler');
+const admin = require('firebase-admin');
 
 admin.initializeApp();
 
@@ -119,7 +115,6 @@ exports.testNotification13 = onSchedule(
 
 // =========================================================
 // FIRESTORE TRIGGERS — Gen1
-// (מתפרסות בשניות בלי Cloud Build — אין בעיית timeout)
 // =========================================================
 
 // ילד סיים משימה → התראה להורה
