@@ -288,6 +288,20 @@ export async function renderDashboardChildren(familyId) {
   const grid = document.getElementById('dash-children-grid');
   if (!grid) return;
 
+  // skeleton מיידי לפני קריאות Firestore
+  if (!grid.querySelector('.child-dash-card')) {
+    grid.innerHTML = `
+      <style>@keyframes skelPulse{0%,100%{opacity:1}50%{opacity:.45}}</style>
+      <div style="display:flex;gap:14px;width:100%;justify-content:center;">
+        ${[0,1].map(() => `
+          <div style="flex:1;min-width:0;max-width:160px;background:#F1F5F9;border-radius:20px;padding:18px 12px;text-align:center;animation:skelPulse 1.4s ease-in-out infinite;">
+            <div style="width:68px;height:68px;border-radius:50%;background:#E2E8F0;margin:0 auto 10px;"></div>
+            <div style="height:13px;background:#E2E8F0;border-radius:6px;width:60%;margin:0 auto 8px;"></div>
+            <div style="height:10px;background:#E2E8F0;border-radius:6px;width:80%;margin:0 auto;"></div>
+          </div>`).join('')}
+      </div>`;
+  }
+
   await loadChildren(familyId);
   const children = childrenCache;
 
@@ -394,7 +408,7 @@ export async function renderDashboardChildren(familyId) {
       : `location.href='points.html?childName=${encodeURIComponent(child.name)}'`;
 
     return `
-      <div onclick="${onclick}" style="${cardFlexStyle}background:white;border-radius:20px;
+      <div class="child-dash-card" onclick="${onclick}" style="${cardFlexStyle}background:white;border-radius:20px;
            box-shadow:0 2px 12px rgba(0,0,0,0.08),inset 0 -4px 0 ${color};
            padding:16px 10px 14px;text-align:center;display:flex;flex-direction:column;
            align-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent;

@@ -356,7 +356,7 @@ async function handleQuickPrizes(triggerEl, category) {
 
   hideLoading();
   showScreen('screen-dashboard');
-  renderDashboardChildren(currentFamilyId); // טעינה מוקדמת — לפני הבאנרים
+  const childrenReady = renderDashboardChildren(currentFamilyId); // skeleton מיידי, טוען ברקע
   refreshQuickTasksBanner();
   refreshQuickPrizesBanner();
   saveWeeklySnapshot(currentFamilyId).catch(() => {});
@@ -383,10 +383,10 @@ async function handleQuickPrizes(triggerEl, category) {
     btn.addEventListener('click', function() { handleQuickPrizes(this, this.dataset.cat); });
   });
 
-  // הפעל טוטוריאל חד-פעמי לדשבורד
+  // הפעל טוטוריאל חד-פעמי — רק אחרי שהילדים נטענו
   const uid = user.uid;
   if (!localStorage.getItem('dashTourDone_' + uid)) {
-    setTimeout(() => startDashTour(currentFamilyId, uid), 3500);
+    childrenReady.then(() => setTimeout(() => startDashTour(currentFamilyId, uid), 600));
   }
 })();
 
