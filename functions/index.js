@@ -1,9 +1,6 @@
 // =========== functions/index.js ===========
-// Gen1 triggers: require('firebase-functions/v1') בlocal (v7+), fallback לroot בcloud runtime
-const functionsV1 = (() => {
-  try { return require('firebase-functions/v1'); } catch (_) { return require('firebase-functions'); }
-})();
-const { onSchedule } = require('firebase-functions/v2/scheduler');
+const { onSchedule }                          = require('firebase-functions/v2/scheduler');
+const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 
 admin.initializeApp();
@@ -18,7 +15,6 @@ async function sendPush(tokens, title, body, data = {}) {
   if (!tokens || tokens.length === 0) return [];
   const unique = [...new Set(tokens.filter(Boolean))];
   if (unique.length === 0) return [];
-
   try {
     const res = await fcm.sendEachForMulticast({
       notification: { title, body },
@@ -55,19 +51,15 @@ async function removeStaleTokens(ref, field, staleTokens) {
   await ref.update({ [field]: cleaned });
 }
 
-// =========== helper: שלח Push לכל ההורים ===========
 async function sendPushToAllParents(title, body, data = {}) {
   const familiesSnap = await db.collection('families').get();
   if (familiesSnap.empty) return;
-
-  const promises = familiesSnap.docs.map(async (familyDoc) => {
+  await Promise.all(familiesSnap.docs.map(async (familyDoc) => {
     const tokens = familyDoc.data().fcmTokens || [];
     if (tokens.length === 0) return;
     const stale = await sendPush(tokens, title, body, data);
     if (stale.length > 0) await removeStaleTokens(familyDoc.ref, 'fcmTokens', stale);
-  });
-
-  await Promise.all(promises);
+  }));
 }
 
 // =========================================================
@@ -114,23 +106,23 @@ exports.testNotification13 = onSchedule(
 );
 
 // =========================================================
-// FIRESTORE TRIGGERS — Gen1
+// FIRESTORE TRIGGERS — Gen2
 // =========================================================
 
 // ילד סיים משימה → התראה להורה
-exports.fsApprovalCreated = functionsV1.region(REGION).firestore
-  .document('families/{familyId}/pendingApprovals/{approvalId}')
-  .onCreate(async (snap, context) => {
-    const data = snap.data();
-    const familyId = context.params.familyId;
-    if (!data || data.status !== 'pending') return null;
+exports.fsApprovalCreated = onDocumentCreated(
+  { document: 'families/{familyId}/pendingApprovals/{approvalId}', region: REGION },
+  async (event) => {
+    const data = event.data.data();
+    const { familyId } = event.params;
+    if (!data || data.status !== 'pending') return;
 
     const familyRef = db.doc(`families/${familyId}`);
     const familySnap = await familyRef.get();
-    if (!familySnap.exists) return null;
+    if (!familySnap.exists) return;
 
     const tokens = familySnap.data().fcmTokens || [];
-    if (tokens.length === 0) return null;
+    if (tokens.length === 0) return;
 
     const stale = await sendPush(
       tokens,
@@ -139,23 +131,23 @@ exports.fsApprovalCreated = functionsV1.region(REGION).firestore
       { url: '/parent.html', type: 'pending_task' }
     );
     if (stale.length > 0) await removeStaleTokens(familyRef, 'fcmTokens', stale);
-    return null;
-  });
+  }
+);
 
 // ילד ביקש פרס → התראה להורה
-exports.fsPrizeCreated = functionsV1.region(REGION).firestore
-  .document('families/{familyId}/prizeRequests/{requestId}')
-  .onCreate(async (snap, context) => {
-    const data = snap.data();
-    const familyId = context.params.familyId;
-    if (!data || data.status !== 'pending') return null;
+exports.fsPrizeCreated = onDocumentCreated(
+  { document: 'families/{familyId}/prizeRequests/{requestId}', region: REGION },
+  async (event) => {
+    const data = event.data.data();
+    const { familyId } = event.params;
+    if (!data || data.status !== 'pending') return;
 
     const familyRef = db.doc(`families/${familyId}`);
     const familySnap = await familyRef.get();
-    if (!familySnap.exists) return null;
+    if (!familySnap.exists) return;
 
     const tokens = familySnap.data().fcmTokens || [];
-    if (tokens.length === 0) return null;
+    if (tokens.length === 0) return;
 
     const stale = await sendPush(
       tokens,
@@ -164,29 +156,29 @@ exports.fsPrizeCreated = functionsV1.region(REGION).firestore
       { url: '/parent.html', type: 'prize_request' }
     );
     if (stale.length > 0) await removeStaleTokens(familyRef, 'fcmTokens', stale);
-    return null;
-  });
+  }
+);
 
 // הורה אישר/דחה משימה → התראה לילד
-exports.fsApprovalUpdated = functionsV1.region(REGION).firestore
-  .document('families/{familyId}/pendingApprovals/{approvalId}')
-  .onUpdate(async (change, context) => {
-    const before = change.before.data();
-    const after  = change.after.data();
-    const familyId = context.params.familyId;
-    if (!before || !after) return null;
-    if (before.status !== 'pending') return null;
-    if (after.status !== 'approved' && after.status !== 'rejected') return null;
+exports.fsApprovalUpdated = onDocumentUpdated(
+  { document: 'families/{familyId}/pendingApprovals/{approvalId}', region: REGION },
+  async (event) => {
+    const before = event.data.before.data();
+    const after  = event.data.after.data();
+    const { familyId } = event.params;
+    if (!before || !after) return;
+    if (before.status !== 'pending') return;
+    if (after.status !== 'approved' && after.status !== 'rejected') return;
 
     const childId = after.childId;
-    if (!childId) return null;
+    if (!childId) return;
 
     const childRef  = db.doc(`families/${familyId}/children/${childId}`);
     const childSnap = await childRef.get();
-    if (!childSnap.exists) return null;
+    if (!childSnap.exists) return;
 
     const tokens = childSnap.data().fcmTokens || [];
-    if (tokens.length === 0) return null;
+    if (tokens.length === 0) return;
 
     const approved = after.status === 'approved';
     const pts = after.pts || 0;
@@ -198,29 +190,29 @@ exports.fsApprovalUpdated = functionsV1.region(REGION).firestore
       { url: '/child.html', type: approved ? 'task_approved' : 'task_rejected' }
     );
     if (stale.length > 0) await removeStaleTokens(childRef, 'fcmTokens', stale);
-    return null;
-  });
+  }
+);
 
 // הורה אישר/דחה פרס → התראה לילד
-exports.fsPrizeUpdated = functionsV1.region(REGION).firestore
-  .document('families/{familyId}/prizeRequests/{requestId}')
-  .onUpdate(async (change, context) => {
-    const before = change.before.data();
-    const after  = change.after.data();
-    const familyId = context.params.familyId;
-    if (!before || !after) return null;
-    if (before.status !== 'pending') return null;
-    if (after.status !== 'approved' && after.status !== 'declined') return null;
+exports.fsPrizeUpdated = onDocumentUpdated(
+  { document: 'families/{familyId}/prizeRequests/{requestId}', region: REGION },
+  async (event) => {
+    const before = event.data.before.data();
+    const after  = event.data.after.data();
+    const { familyId } = event.params;
+    if (!before || !after) return;
+    if (before.status !== 'pending') return;
+    if (after.status !== 'approved' && after.status !== 'declined') return;
 
     const childId = after.childId;
-    if (!childId) return null;
+    if (!childId) return;
 
     const childRef  = db.doc(`families/${familyId}/children/${childId}`);
     const childSnap = await childRef.get();
-    if (!childSnap.exists) return null;
+    if (!childSnap.exists) return;
 
     const tokens = childSnap.data().fcmTokens || [];
-    if (tokens.length === 0) return null;
+    if (tokens.length === 0) return;
 
     const approved = after.status === 'approved';
 
@@ -231,5 +223,5 @@ exports.fsPrizeUpdated = functionsV1.region(REGION).firestore
       { url: '/child.html', type: approved ? 'prize_approved' : 'prize_declined' }
     );
     if (stale.length > 0) await removeStaleTokens(childRef, 'fcmTokens', stale);
-    return null;
-  });
+  }
+);
