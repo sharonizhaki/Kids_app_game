@@ -6,6 +6,7 @@ import { showScreen, hideLoading } from './ui.js';
 import { currentFamilyId, setCurrentFamilyId } from './auth.js';
 import {
   loadCompletedTasks, loadPendingApprovals, loadAllPrizeRequests, loadRejectedItems,
+  loadCancelledTasks,
   renderMPTabs, renderMPFilters, renderMPList, renderPendingTab, showActiveTab,
   initPendingListener, initPrizeRequestsListener,
   resetMPState, setMPState,
@@ -56,6 +57,7 @@ document.getElementById('btn-back-to-parent')?.addEventListener('click', () => {
     loadPendingApprovals(familyId),
     loadAllPrizeRequests(familyId),
     loadRejectedItems(familyId),
+    loadCancelledTasks(familyId),
   ]);
 
   renderMPTabs(familyId);
@@ -66,6 +68,7 @@ document.getElementById('btn-back-to-parent')?.addEventListener('click', () => {
     await Promise.all([
       loadCompletedTasks(familyId),
       loadRejectedItems(familyId),
+      loadCancelledTasks(familyId),
     ]);
     renderMPTabs(familyId);
     const activeTab = document.querySelector('.mp-tab.active');

@@ -13,6 +13,7 @@ let allCompletedTasks  = [];
 let allPendingApprovals = [];
 let allPrizeRequests   = [];
 let allRejectedItems   = [];
+let allCancelledTasks  = [];
 let mpFilter    = 'all';
 let mpSubFilter = '';
 let mpTab       = 'pending';
@@ -40,7 +41,7 @@ export function renderMPTabs(familyId) {
 
   const pendingTaskCount  = allPendingApprovals.filter(p => p.status === 'pending').length;
   const pendingPrizeCount = allPrizeRequests.filter(r => r.status === 'pending').length;
-  const totalPending = pendingTaskCount + pendingPrizeCount;
+  const totalPending = pendingTaskCount + pendingPrizeCount + allCancelledTasks.length;
 
   const tabs = [
     { key: 'history',  label: '📋 היסטוריה', badge: 0 },
@@ -201,6 +202,36 @@ export async function loadRejectedItems(familyId) {
   } catch(e) { console.error('loadRejectedItems:', e); }
 }
 
+export async function loadCancelledTasks(familyId) {
+  allCancelledTasks = [];
+  await loadChildren(familyId);
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'families', familyId, 'pendingApprovals'),
+      where('status', '==', 'cancelled')
+    ));
+    snap.forEach(d => {
+      const data = d.data();
+      const child = childrenCache.find(c => c.id === data.childId);
+      allCancelledTasks.push({
+        id: d.id,
+        childId:    data.childId,
+        childName:  data.childName  || child?.name  || '',
+        childEmoji: data.childEmoji || child?.emoji || '👦',
+        task:       data.task    || '',
+        emoji:      data.emoji   || '⭐',
+        pts:        data.pts     || 0,
+        taskId:     data.taskId  || '',
+        freq:       data.freq    || 'daily',
+        time:       data.time    || '',
+        day:        data.day     || '',
+        ts:         data.cancelledAt || data.ts || 0,
+      });
+    });
+    allCancelledTasks.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  } catch(e) { console.error('loadCancelledTasks:', e); }
+}
+
 export function initPendingListener(familyId, onUpdate) {
   return onSnapshot(collection(db, 'families', familyId, 'pendingApprovals'), async () => {
     await loadPendingApprovals(familyId);
@@ -227,7 +258,7 @@ export function renderPendingTab(familyId) {
                                           - (a.requestedAt?.toMillis?.() || a.requestedAt || 0))
                             .slice(0, 10);
 
-  if (pendingTasks.length === 0 && pendingPrizes.length === 0 && approvedPrizes.length === 0) {
+  if (pendingTasks.length === 0 && pendingPrizes.length === 0 && approvedPrizes.length === 0 && allCancelledTasks.length === 0) {
     list.innerHTML = '<div class="empty-state" style="padding:40px 0;">🎉<br><br>אין בקשות ממתינות</div>';
     return;
   }
@@ -305,6 +336,40 @@ export function renderPendingTab(familyId) {
         await loadAllPrizeRequests(familyId);
         renderMPTabs(familyId); renderPendingTab(familyId);
       };
+      sec.appendChild(card);
+    });
+    list.appendChild(sec);
+  }
+
+  // משימות שבוטלו ע"י ההורה — ממתינות להחלטה
+  if (allCancelledTasks.length > 0) {
+    const hasPrevSections = pendingTasks.length > 0 || pendingPrizes.length > 0;
+    const sec = document.createElement('div');
+    sec.style.marginTop = hasPrevSections ? '20px' : '0';
+    sec.innerHTML = `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:0.82rem;font-weight:800;color:#64748B;">
+      <span>↩️</span><span>בוטלו — ממתינות להחלטה</span>
+      <span style="background:#F59E0B;color:white;border-radius:10px;font-size:0.7rem;font-weight:900;padding:1px 7px;">${allCancelledTasks.length}</span>
+    </div>`;
+    allCancelledTasks.forEach(item => {
+      const isDailyType = item.freq === 'daily' || item.freq === 'specific';
+      const card = document.createElement('div');
+      card.style.cssText = 'background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;';
+      card.innerHTML = `
+        <span style="font-size:1.6rem;">${item.emoji}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:800;font-size:0.88rem;color:#0F172A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.task}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;">
+            <span style="background:#FEF3C7;color:#92400E;border-radius:6px;padding:1px 7px;font-size:0.68rem;font-weight:900;">↩️ בוטל</span>
+            <span style="font-size:0.75rem;color:#64748B;">${item.childEmoji} ${item.childName}</span>
+            <span style="font-size:0.75rem;color:#64748B;">${'⭐'.repeat(Math.min(item.pts||0,5)) || '⭐'}</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <button class="btn-reapprove" style="background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;border:none;border-radius:10px;padding:6px 10px;font-size:0.73rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;">✅ אשר בכ"ז</button>
+          ${!isDailyType ? `<button class="btn-permcancel" style="background:#FEE2E2;color:#B91C1C;border:none;border-radius:10px;padding:6px 10px;font-size:0.73rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;">🗑 בטל סופית</button>` : ''}
+        </div>`;
+      card.querySelector('.btn-reapprove').onclick = () => _reApproveTask(familyId, item);
+      if (!isDailyType) card.querySelector('.btn-permcancel').onclick = () => _permanentlyCancelTask(familyId, item);
       sec.appendChild(card);
     });
     list.appendChild(sec);
@@ -742,21 +807,44 @@ async function undoTask(familyId, childId, histIdx) {
       const st = stateSnap.data();
       const histItem = st.hist?.[histIdx];
       if (histItem) {
+        // הפחת כוכבים והסר מהיסטוריה — אבל השאר comp כמו שהוא
+        // כדי שהילד יראה את המשימה כ"בוצעה" ולא יוכל לשלוח שוב
         st.pts = Math.max(0, (st.pts || 0) - (histItem.pts || 0));
         st.hist.splice(histIdx, 1);
-        const tasksSnap = await getDocs(collection(db, 'families', familyId, 'tasks'));
-        tasksSnap.forEach(d => {
-          const td = d.data();
-          if (td.task === histItem.task && st.comp?.[d.id]) {
-            const c = st.comp[d.id];
-            c.wc = Math.max(0, (c.wc || 0) - 1);
-            if (c.wc === 0) delete st.comp[d.id];
-            else { c.d = ''; c.lastTs = 0; }
-          }
-        });
         await updateDoc(stateRef, st);
 
-        // התראה לילד על ביטול המשימה
+        // מצא את המשימה כדי לקבל freq
+        let taskFreq = 'daily';
+        let taskDocId = histItem.taskId || '';
+        try {
+          const tasksSnap = await getDocs(collection(db, 'families', familyId, 'tasks'));
+          tasksSnap.forEach(d => {
+            if (d.id === histItem.taskId || d.data().task === histItem.task) {
+              taskFreq  = d.data().freq || 'daily';
+              taskDocId = d.id;
+            }
+          });
+        } catch(e) {}
+
+        // צור רשומת "בוטל" ב-pendingApprovals — ממתינה להחלטת ההורה
+        const child = childrenCache.find(c => c.id === childId);
+        await addDoc(collection(db, 'families', familyId, 'pendingApprovals'), {
+          status:     'cancelled',
+          childId,
+          childName:  child?.name  || '',
+          childEmoji: child?.emoji || '👦',
+          task:       histItem.task  || '',
+          emoji:      histItem.emoji || '⭐',
+          pts:        histItem.pts   || 0,
+          taskId:     taskDocId,
+          freq:       taskFreq,
+          time:       histItem.time  || '',
+          day:        histItem.day   || '',
+          ts:         histItem.ts    || Date.now(),
+          cancelledAt: Date.now(),
+        });
+
+        // התראה לילד על ביטול
         await addDoc(collection(db, 'families', familyId, 'children', childId, 'notifications'), {
           type:     'task_cancelled',
           taskName: histItem.task  || '',
@@ -768,10 +856,11 @@ async function undoTask(familyId, childId, histIdx) {
         });
       }
     }
-    await loadCompletedTasks(familyId);
+    await Promise.all([loadCompletedTasks(familyId), loadCancelledTasks(familyId)]);
     hideLoading();
-    showToast('ביצוע בוטל ↩️');
+    showToast('ביצוע בוטל — ממתין להחלטה ↩️');
     renderMPList(familyId);
+    renderMPTabs(familyId);
   } catch(e) { hideLoading(); console.error(e); }
 }
 
@@ -850,6 +939,99 @@ async function _restoreRejectedPrize(familyId, item) {
       await Promise.all([loadRejectedItems(familyId), loadAllPrizeRequests(familyId)]);
       renderMPTabs(familyId);
       renderMPList(familyId);
+    },
+  });
+}
+
+// =========== RE-APPROVE / PERMANENTLY CANCEL ===========
+async function _reApproveTask(familyId, item) {
+  showConfirm({
+    icon: item.emoji || '⭐',
+    title: `לאשר בכל זאת: ${item.task}?`,
+    message: `${item.childName} יקבל בחזרה ${item.pts} ⭐`,
+    confirmText: '✅ אשר',
+    confirmColor: 'linear-gradient(135deg,#7C3AED,#5B21B6)',
+    onConfirm: async () => {
+      showLoading('מאשר...');
+      try {
+        // עדכן סטטוס לאושר
+        await updateDoc(doc(db, 'families', familyId, 'pendingApprovals', item.id), {
+          status: 'approved', resolvedAt: Date.now(),
+        });
+
+        // החזר כוכבים + הוסף להיסטוריה (comp נשאר כמו שהוא)
+        const stateRef  = doc(db, 'families', familyId, 'children', item.childId, 'state', 'current');
+        const stateSnap = await getDoc(stateRef);
+        if (stateSnap.exists()) {
+          const cs = stateSnap.data();
+          cs.pts = (cs.pts || 0) + (item.pts || 0);
+          if (!cs.hist) cs.hist = [];
+          const dateKey = item.ts ? new Date(item.ts).toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
+          cs.hist.unshift({
+            taskId: item.taskId, task: item.task, emoji: item.emoji || '⭐',
+            pts: item.pts || 0, time: item.time || '', day: item.day || '',
+            ts: item.ts || Date.now(),
+          });
+          if (cs.hist.length > 50) cs.hist.pop();
+          if (!cs.dailyPts) cs.dailyPts = {};
+          cs.dailyPts[dateKey] = (cs.dailyPts[dateKey] || 0) + (item.pts || 0);
+          await updateDoc(stateRef, cs);
+        }
+
+        // התראה לילד
+        await addDoc(collection(db, 'families', familyId, 'children', item.childId, 'notifications'), {
+          type: 'task_approved', taskName: item.task, emoji: item.emoji || '✅',
+          pts: item.pts || 0,
+          message: `המשימה "${item.task}" אושרה בדיעבד! קיבלת ${item.pts} ⭐`,
+          read: false, ts: Date.now(),
+        });
+
+        hideLoading();
+        showStarsAddedPopup(item.childName, item.pts);
+        await Promise.all([loadCompletedTasks(familyId), loadCancelledTasks(familyId)]);
+        renderMPTabs(familyId);
+        renderPendingTab(familyId);
+        renderMPList(familyId);
+      } catch(e) { hideLoading(); console.error(e); showToast('שגיאה, נסה שוב'); }
+    },
+  });
+}
+
+async function _permanentlyCancelTask(familyId, item) {
+  showConfirm({
+    icon: '🗑',
+    title: `לבטל סופית: ${item.task}?`,
+    message: `המשימה תחזור להיות זמינה לביצוע מחדש`,
+    confirmText: '🗑 בטל סופית',
+    confirmColor: 'linear-gradient(135deg,#EF4444,#B91C1C)',
+    onConfirm: async () => {
+      showLoading('מבטל סופית...');
+      try {
+        // עדכן סטטוס
+        await updateDoc(doc(db, 'families', familyId, 'pendingApprovals', item.id), {
+          status: 'permanently_cancelled', resolvedAt: Date.now(),
+        });
+
+        // נקה את comp[taskId] — המשימה תהיה זמינה שוב לילד
+        const stateRef  = doc(db, 'families', familyId, 'children', item.childId, 'state', 'current');
+        const stateSnap = await getDoc(stateRef);
+        if (stateSnap.exists()) {
+          const st = stateSnap.data();
+          if (item.taskId && st.comp?.[item.taskId]) {
+            const c = st.comp[item.taskId];
+            c.wc = Math.max(0, (c.wc || 0) - 1);
+            if (c.wc === 0) delete st.comp[item.taskId];
+            else { c.d = ''; c.lastTs = 0; }
+            await updateDoc(stateRef, st);
+          }
+        }
+
+        hideLoading();
+        showToast('בוטל סופית — המשימה זמינה שוב');
+        await loadCancelledTasks(familyId);
+        renderMPTabs(familyId);
+        renderPendingTab(familyId);
+      } catch(e) { hideLoading(); console.error(e); showToast('שגיאה, נסה שוב'); }
     },
   });
 }
