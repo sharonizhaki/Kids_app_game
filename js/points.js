@@ -277,6 +277,7 @@ export function renderPendingTab(familyId) {
       const childDisplay = child ? `${child.emoji || '👦'} ${child.name}` : p.childName || 'ילד';
       const card = document.createElement('div');
       card.className = 'approval-card';
+      card.dataset.approvalId = p.id;
       card.style.cssText = 'background:white;border-radius:16px;padding:14px 16px;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;align-items:center;gap:10px;';
       card.innerHTML = `
         <span style="font-size:1.8rem;">${p.emoji || '⭐'}</span>
@@ -309,6 +310,7 @@ export function renderPendingTab(familyId) {
       const child = childrenCache.find(c => c.id === r.childId);
       const childDisplay = child ? `${child.emoji || '👦'} ${child.name}` : r.childName || 'ילד';
       const card = document.createElement('div');
+      card.dataset.approvalId = r.id;
       card.style.cssText = 'background:white;border-radius:16px;padding:14px 16px;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;align-items:center;gap:10px;';
       card.innerHTML = `
         <span style="font-size:1.8rem;">${r.prizeEmoji || '🎁'}</span>
@@ -320,11 +322,18 @@ export function renderPendingTab(familyId) {
           <button class="btn-prize-approve" style="background:linear-gradient(135deg,#F59E0B,#D97706);color:white;border:none;border-radius:10px;padding:6px 12px;font-size:0.78rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">✅ אשר</button>
           <button class="btn-prize-reject" style="background:#FEE2E2;color:#B91C1C;border:none;border-radius:10px;padding:6px 12px;font-size:0.78rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">❌ דחה</button>
         </div>`;
+      const _fadeRemoveCard = () => {
+        card.style.transition = 'opacity 0.18s, transform 0.18s';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.95)';
+        setTimeout(() => card.remove(), 180);
+      };
       card.querySelector('.btn-prize-approve').onclick = async () => {
         showConfirm({ icon: r.prizeEmoji || '🎁', title: `לאשר: ${r.prizeName || r.name}?`,
           message: `${child?.name || ''} יממש את הפרס`, confirmText: '✅ אשר',
           confirmColor: 'linear-gradient(135deg,#F59E0B,#D97706)',
           onConfirm: async () => {
+            _fadeRemoveCard();
             await approvePrizeRequest(familyId, r.id);
             await loadAllPrizeRequests(familyId);
             renderMPTabs(familyId); renderPendingTab(familyId);
@@ -332,6 +341,7 @@ export function renderPendingTab(familyId) {
         });
       };
       card.querySelector('.btn-prize-reject').onclick = async () => {
+        _fadeRemoveCard();
         await declinePrizeRequest(familyId, r.id);
         await loadAllPrizeRequests(familyId);
         renderMPTabs(familyId); renderPendingTab(familyId);
@@ -678,6 +688,10 @@ async function submitManualPoints(familyId, childId, amount, isAdd, reason) {
     hideLoading();
     const child = childrenCache.find(c => c.id === childId);
     showToast(`${isAdd ? '➕' : '➖'} ${amount} ⭐ עודכן עבור ${child?.name || 'ילד'}`);
+    // רענון מיידי של תצוגת הכוכבים וההיסטוריה
+    await loadCompletedTasks(familyId);
+    renderMPTabs(familyId);
+    if (mpTab === 'manual') renderManualTab(familyId);
   } catch(e) {
     hideLoading();
     console.error(e);
@@ -699,6 +713,14 @@ async function resolveApproval(p, status, familyId) {
 }
 
 async function _doResolve(p, status, familyId) {
+  // הסרה מיידית של הכרטיס מה-UI לפני תגובת השרת
+  const cardEl = document.querySelector(`[data-approval-id="${p.id}"]`);
+  if (cardEl) {
+    cardEl.style.transition = 'opacity 0.18s, transform 0.18s';
+    cardEl.style.opacity = '0';
+    cardEl.style.transform = 'scale(0.95)';
+    setTimeout(() => cardEl.remove(), 180);
+  }
   showLoading(status === 'approved' ? 'מאשר...' : 'דוחה...');
   try {
     await updateDoc(doc(db, 'families', familyId, 'pendingApprovals', p.id), { status, resolvedAt: Date.now() });

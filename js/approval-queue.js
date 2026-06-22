@@ -156,6 +156,10 @@ function _openLightbox(src) {
 // =========== ACTIONS ===========
 async function _handleApprove(id, type) {
   if (!_familyId) return;
+  // הסרה מיידית מה-UI לפני תגובת השרת
+  if (type === 'prize') _prizeItems = _prizeItems.filter(i => i.id !== id);
+  else _taskItems = _taskItems.filter(i => i.id !== id);
+  _renderQueue();
   if (type === 'prize') {
     await approvePrizeRequest(_familyId, id);
   } else {
@@ -165,6 +169,10 @@ async function _handleApprove(id, type) {
 
 async function _handleReject(id, type) {
   if (!_familyId) return;
+  // הסרה מיידית מה-UI לפני תגובת השרת
+  if (type === 'prize') _prizeItems = _prizeItems.filter(i => i.id !== id);
+  else _taskItems = _taskItems.filter(i => i.id !== id);
+  _renderQueue();
   if (type === 'prize') {
     await declinePrizeRequest(_familyId, id);
   } else {
