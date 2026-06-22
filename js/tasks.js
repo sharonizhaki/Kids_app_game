@@ -174,9 +174,19 @@ export async function saveTask(familyId) {
     if (nameEl) nameEl.textContent = `"${taskName}" שויכה לילד/ים בהצלחה`;
     if (modal) {
       modal.style.display = 'flex';
+      requestAnimationFrame(() => {
+        const card = document.getElementById('modal-task-saved-card');
+        if (card) { card.style.transform = 'scale(1) translateY(0)'; card.style.opacity = '1'; }
+      });
       document.getElementById('btn-task-saved-another').onclick = () => {
         modal.style.display = 'none';
+        const card = document.getElementById('modal-task-saved-card');
+        if (card) { card.style.transform = 'scale(0.75) translateY(24px)'; card.style.opacity = '0'; }
         openAddTask(familyId);
+      };
+      document.getElementById('btn-task-saved-edit').onclick = () => {
+        sessionStorage.setItem('tasksMode', 'edit');
+        window.location.href = 'tasks.html';
       };
       document.getElementById('btn-task-saved-dashboard').onclick = () => {
         window.location.href = 'parent.html';

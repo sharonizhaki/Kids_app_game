@@ -261,6 +261,10 @@ document.getElementById('btn-save-prize')?.addEventListener('click', async () =>
         if (card) { card.style.transform = 'scale(0.75) translateY(24px)'; card.style.opacity = '0'; }
         openAddPrize(getFamilyId());
       };
+      document.getElementById('btn-prize-saved-edit').onclick = () => {
+        localStorage.setItem('prizesTab', 'manage');
+        window.location.href = 'prizes.html';
+      };
       document.getElementById('btn-prize-saved-dashboard').onclick = () => {
         window.location.href = 'parent.html';
       };
