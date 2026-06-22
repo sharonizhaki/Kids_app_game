@@ -24,7 +24,7 @@ import {
   initNotifications, processNotificationPopups,
   renderNotificationsScreen, updateNotificationBadge,
 } from './child-notifications.js';
-import { listenForegroundMessages, scheduleTaskReminders, isPushGranted, requestPushPermission, saveChildFcmToken } from './notifications.js';
+import { listenForegroundMessages, scheduleTaskReminders, isPushGranted, isPushBlocked, requestPushPermission, saveChildFcmToken } from './notifications.js';
 
 // -------- GREETINGS --------
 const GREETINGS_M = ['יאללה נתחיל! 💪','בוא נעשה את זה! 🚀','היום תהיה מדהים! ✨','מוכן לאסוף כוכבים? 🔥','הגיבור שלנו הגיע! 🦸‍♂️'];
@@ -248,8 +248,38 @@ function initNav() {
     navBtns.forEach(b => b.classList.remove('active'));
     document.querySelector('.nav-btn[data-tab="home"]')?.classList.add('active');
   });
-  document.getElementById('btn-notifs-to-profile')?.addEventListener('click', () => {
-    if (state.childData) openChildProfile();
+  function updateNotifBtn() {
+    const icon  = document.getElementById('notif-btn-icon');
+    const label = document.getElementById('notif-btn-label');
+    if (!icon || !label) return;
+    if (isPushGranted()) {
+      icon.textContent = '🔔'; icon.style.color = '#7C3AED';
+      label.textContent = 'פעיל'; label.style.color = '#7C3AED';
+    } else if (isPushBlocked()) {
+      icon.textContent = '🔕'; icon.style.color = '#94A3B8';
+      label.textContent = 'חסום'; label.style.color = '#94A3B8';
+    } else {
+      icon.textContent = '🔔'; icon.style.color = '#94A3B8';
+      label.textContent = 'כבוי'; label.style.color = '#94A3B8';
+    }
+  }
+  updateNotifBtn();
+
+  document.getElementById('btn-notif-toggle')?.addEventListener('click', async () => {
+    if (isPushGranted()) {
+      showToast('התראות פעילות ✓');
+    } else if (isPushBlocked()) {
+      showToast('לאפשר התראות: הגדרות הדפדפן ← אתר ← התראות');
+    } else {
+      try {
+        const token = await requestPushPermission();
+        if (token) {
+          await saveChildFcmToken(db, state.familyId, state.childId, token);
+          showToast('התראות הופעלו! 🔔');
+        }
+      } catch(e) { /* blocked */ }
+      updateNotifBtn();
+    }
   });
 }
 

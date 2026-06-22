@@ -368,15 +368,31 @@ export function renderPrizeEmojiGrid(containerId, selectedEmoji, onChange) {
   const grid = document.getElementById(containerId);
   if (!grid) return;
   const SHOW_INITIAL = 11;
+  const kbBtnId = `${containerId}-kb-btn`;
+
+  let kbInput = document.getElementById(`${containerId}-kb-input`);
+  if (!kbInput) {
+    kbInput = document.createElement('input');
+    kbInput.id = `${containerId}-kb-input`;
+    kbInput.type = 'text';
+    kbInput.placeholder = '✏️ הקלד אמוגי…';
+    kbInput.style.cssText = 'display:none;width:100%;margin-top:8px;padding:8px 12px;border-radius:10px;border:1.5px solid #A78BFA;font-size:1.4rem;text-align:center;outline:none;box-sizing:border-box;';
+    grid.parentNode.insertBefore(kbInput, grid.nextSibling);
+  }
+
+  const isCustom = selectedEmoji && PRIZE_EMOJIS.indexOf(selectedEmoji) === -1;
+  if (isCustom) { kbInput.value = selectedEmoji; kbInput.style.display = 'block'; }
 
   function buildGrid(showAll) {
     const visible = showAll ? PRIZE_EMOJIS : PRIZE_EMOJIS.slice(0, SHOW_INITIAL);
     const remaining = PRIZE_EMOJIS.length - SHOW_INITIAL;
+    const kbActive = isCustom || kbInput.style.display === 'block';
+    const kbBtnHtml = `<div id="${kbBtnId}" style="font-size:1.2rem;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;background:${kbActive ? '#EDE9FE' : '#F3F0FF'};border:2px ${kbActive ? 'solid' : 'dashed'} #A78BFA;color:#7C3AED;font-weight:900;line-height:1.2;">⌨️<span style="font-size:0.55rem;">אחר</span></div>`;
     grid.innerHTML = visible.map(e =>
       `<div class="task-emoji-opt${e === selectedEmoji ? ' selected' : ''}" data-emoji="${e}">${e}</div>`
     ).join('') + (!showAll && remaining > 0
       ? `<div class="task-emoji-opt" id="${containerId}-show-more" style="font-size:0.72rem;font-weight:800;color:var(--primary);background:#EEF2FF;border:1.5px dashed var(--primary);">+${remaining}</div>`
-      : '');
+      : '') + kbBtnHtml;
 
     grid.querySelectorAll('.task-emoji-opt').forEach(el => {
       if (el.id === `${containerId}-show-more`) {
@@ -386,10 +402,35 @@ export function renderPrizeEmojiGrid(containerId, selectedEmoji, onChange) {
           grid.querySelectorAll('.task-emoji-opt').forEach(x => x.classList.remove('selected'));
           el.classList.add('selected');
           selectedEmoji = el.dataset.emoji;
+          kbInput.style.display = 'none'; kbInput.value = '';
+          const kb = document.getElementById(kbBtnId);
+          if (kb) { kb.style.background = '#F3F0FF'; kb.style.borderStyle = 'dashed'; }
           onChange(el.dataset.emoji);
         };
       }
     });
+
+    const kbBtnEl = document.getElementById(kbBtnId);
+    if (kbBtnEl) {
+      kbBtnEl.onclick = () => {
+        kbInput.style.display = 'block';
+        kbInput.focus();
+        kbBtnEl.style.background = '#EDE9FE';
+        kbBtnEl.style.borderStyle = 'solid';
+        kbInput.oninput = () => {
+          const val = kbInput.value;
+          if (!val) return;
+          const seg = new Intl.Segmenter();
+          const first = [...seg.segment(val)][0]?.segment;
+          if (first && /\p{Emoji}/u.test(first)) {
+            kbInput.value = first;
+            grid.querySelectorAll('.task-emoji-opt').forEach(x => x.classList.remove('selected'));
+            selectedEmoji = first;
+            onChange(first);
+          }
+        };
+      };
+    }
   }
 
   const currentIdx = PRIZE_EMOJIS.indexOf(selectedEmoji);

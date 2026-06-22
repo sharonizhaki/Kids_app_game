@@ -325,7 +325,9 @@ function showEmojiStep() {
           ${ONBOARD_EMOJIS.map(e => `
             <div class="ob-emoji-opt${e === _obEmoji ? ' ob-emoji-selected' : ''}"
               data-emoji="${e}">${e}</div>`).join('')}
+          <div id="ob-kb-btn" style="font-size:1.2rem;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;background:#F3F0FF;border:2px dashed #A78BFA;color:#7C3AED;font-weight:900;line-height:1.2;">⌨️<span style="font-size:0.55rem;">אחר</span></div>
         </div>
+        <input id="ob-kb-input" type="text" placeholder="✏️ הקלד אמוגי…" style="display:none;width:100%;margin-top:8px;padding:8px 12px;border-radius:10px;border:1.5px solid #A78BFA;font-size:1.4rem;text-align:center;outline:none;box-sizing:border-box;">
 
         <div id="ob-emoji-error" class="ob-error"></div>
         ${navBtnsHTML(3)}
@@ -341,9 +343,36 @@ function showEmojiStep() {
       overlay.querySelectorAll('.ob-emoji-opt').forEach(x => x.classList.remove('ob-emoji-selected'));
       el.classList.add('ob-emoji-selected');
       overlay.querySelector('#ob-emoji-preview').textContent = _obEmoji;
+      const kbInp = overlay.querySelector('#ob-kb-input');
+      if (kbInp) { kbInp.style.display = 'none'; kbInp.value = ''; }
+      const kbBtn = overlay.querySelector('#ob-kb-btn');
+      if (kbBtn) { kbBtn.style.background = '#F3F0FF'; kbBtn.style.borderStyle = 'dashed'; }
       if (_obEmoji !== prev) showPopup(_obEmoji, 'נבחר!', 1100);
     };
   });
+
+  const obKbBtn = overlay.querySelector('#ob-kb-btn');
+  const obKbInput = overlay.querySelector('#ob-kb-input');
+  if (obKbBtn && obKbInput) {
+    obKbBtn.onclick = () => {
+      obKbInput.style.display = 'block';
+      obKbInput.focus();
+      obKbBtn.style.background = '#EDE9FE';
+      obKbBtn.style.borderStyle = 'solid';
+      obKbInput.oninput = () => {
+        const val = obKbInput.value;
+        if (!val) return;
+        const seg = new Intl.Segmenter();
+        const first = [...seg.segment(val)][0]?.segment;
+        if (first && /\p{Emoji}/u.test(first)) {
+          obKbInput.value = first;
+          _obEmoji = first;
+          overlay.querySelectorAll('.ob-emoji-opt').forEach(x => x.classList.remove('ob-emoji-selected'));
+          overlay.querySelector('#ob-emoji-preview').textContent = first;
+        }
+      };
+    };
+  }
 
   const nextBtn = overlay.querySelector('#ob-next');
   if (nextBtn) {
