@@ -42,6 +42,7 @@ document.getElementById('btn-add-task-from-edit')?.addEventListener('click', () 
 });
 document.getElementById('btn-back-edit-task')?.addEventListener('click', () => {
   showScreen('screen-edit-tasks');
+  renderEditTasksFilters();
   renderEditTasksList(getFamilyId());
 });
 
