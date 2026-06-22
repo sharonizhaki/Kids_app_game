@@ -278,7 +278,10 @@ onAuthStateChanged(auth, async user => {
     if (fSnap.empty) fSnap = await getDocs(query(collection(db, 'families'), where('secondaryParentUid', '==', user.uid)));
     if (fSnap.empty) { window.location.href = 'index.html'; return; }
     await initPrizesPage(fSnap.docs[0].id);
-  } catch (e) { console.error(e); window.location.href = 'index.html'; }
+  } catch (e) {
+    console.error(e);
+    document.body.innerHTML = `<div style="padding:24px;font-family:monospace;direction:ltr;background:#fff;color:#c00;font-size:13px;white-space:pre-wrap;word-break:break-word;">DEBUG ERROR:\n${e && e.stack ? e.stack : String(e)}</div>`;
+  }
 });
 </script>
 <script src="./js/bg-floaters.js?v=2"></script>
