@@ -895,21 +895,23 @@ export async function initPrizesPage(familyId) {
   const params = new URLSearchParams(window.location.search);
   const mode = prizesTab || params.get('mode');
 
+  // אתחול סליידר ו-toggle תמיד — גם אם מתחילים במסך manage
+  initPtsSlider('prize-pts-slider', 'prize-pts-display', 'prize-pts-preset', (val) => setPrizePts(val));
+  document.getElementById('prize-repeat-toggle')?.addEventListener('change', (e) => setPrizeRepeat(e.target.checked));
+  initPrizeSuggestions();
+  document.getElementById('btn-prize-quick-close')?.addEventListener('click', () => {
+    localStorage.setItem(quickBannerKey(), '1');
+    animateQuickAway();
+  });
+  document.querySelectorAll('.quick-prize-cat-btn').forEach(btn => {
+    btn.addEventListener('click', function() { handleQuickPrizes(this, this.dataset.cat); });
+  });
+
   if (mode === 'manage') {
     showScreen('screen-manage-prizes');
     renderPrizesList();
   } else {
     // ברירת מחדל: הוספת פרס
     await openAddPrize(familyId);
-    initPrizeSuggestions();
-    initPtsSlider('prize-pts-slider', 'prize-pts-display', 'prize-pts-preset', (val) => setPrizePts(val));
-    document.getElementById('prize-repeat-toggle')?.addEventListener('change', (e) => setPrizeRepeat(e.target.checked));
-    document.getElementById('btn-prize-quick-close')?.addEventListener('click', () => {
-      localStorage.setItem(quickBannerKey(), '1');
-      animateQuickAway();
-    });
-    document.querySelectorAll('.quick-prize-cat-btn').forEach(btn => {
-      btn.addEventListener('click', function() { handleQuickPrizes(this, this.dataset.cat); });
-    });
   }
 }
