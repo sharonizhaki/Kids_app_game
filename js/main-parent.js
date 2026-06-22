@@ -670,8 +670,13 @@ function showNewChildEmojiModal() {
     <div class="modal-header"><h2>🙂 בחר אימוג'י</h2><button class="modal-close">✕</button></div>
     <div class="modal-body">
       <div id="emoji-preview-display" style="font-size:4rem;text-align:center;min-height:64px;margin-bottom:12px;transition:transform 0.2s cubic-bezier(.34,1.28,.64,1);">${tempEmoji || '?'}</div>
-      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:16px;">
-        ${CHILD_EMOJIS.map(e => `<div class="emoji-opt${e === tempEmoji ? ' selected' : ''}" data-emoji="${e}" style="font-size:1.6rem;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;">${e}</div>`).join('')}
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:8px;">
+        ${CHILD_EMOJIS.slice(0,-1).map(e => `<div class="emoji-opt${e === tempEmoji ? ' selected' : ''}" data-emoji="${e}" style="font-size:1.6rem;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;">${e}</div>`).join('')}
+        <div id="emoji-keyboard-btn" style="font-size:1.2rem;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;background:#F3F0FF;border:2px dashed #A78BFA;color:#7C3AED;font-weight:900;line-height:1.2;">⌨️<span style="font-size:0.55rem;">אחר</span></div>
+      </div>
+      <div id="emoji-kb-wrap" style="display:none;text-align:center;margin:0 0 12px;">
+        <input id="emoji-kb-input" type="text" inputmode="text" style="font-size:2.5rem;width:60px;height:60px;text-align:center;border:2px solid #7C3AED;border-radius:14px;background:#EDE9FE;outline:none;" placeholder="😊" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <div style="font-size:0.72rem;color:#94A3B8;margin-top:4px;">בחר אימוג'י מהמקלדת</div>
       </div>
       <button id="emoji-confirm-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#7C3AED,#5B21B6);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;">אישור ✓</button>
     </div>`;
@@ -690,6 +695,25 @@ function showNewChildEmojiModal() {
       }
     };
   });
+  sh.querySelector('#emoji-keyboard-btn').onclick = () => {
+    const wrap = sh.querySelector('#emoji-kb-wrap');
+    wrap.style.display = 'block';
+    const inp = sh.querySelector('#emoji-kb-input');
+    inp.focus();
+    inp.oninput = () => {
+      const val = inp.value;
+      if (!val) return;
+      const seg = new Intl.Segmenter();
+      const first = [...seg.segment(val)][0]?.segment;
+      if (first && /\p{Emoji}/u.test(first)) {
+        tempEmoji = first;
+        inp.value = first;
+        sh.querySelectorAll('.emoji-opt').forEach(x => x.classList.remove('selected'));
+        preview.style.transform = 'scale(0.6)';
+        setTimeout(() => { preview.textContent = tempEmoji; preview.style.transform = 'scale(1)'; }, 120);
+      }
+    };
+  };
   sh.querySelector('#emoji-confirm-btn').onclick = () => {
     if (!tempEmoji) { ov.remove(); return; }
     newChildEmoji = tempEmoji;
@@ -875,8 +899,13 @@ function showEditEmojiModal(current) {
     <div class="modal-header"><h2>🙂 בחר אימוג'י</h2><button class="modal-close">✕</button></div>
     <div class="modal-body">
       <div id="emoji-preview-display" style="font-size:4rem;text-align:center;min-height:64px;margin-bottom:12px;transition:transform 0.2s cubic-bezier(.34,1.28,.64,1);">${tempEmoji || '?'}</div>
-      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:16px;">
-        ${CHILD_EMOJIS.map(e => `<div class="emoji-opt${e === tempEmoji ? ' selected' : ''}" data-emoji="${e}" style="font-size:1.6rem;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;">${e}</div>`).join('')}
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:8px;">
+        ${CHILD_EMOJIS.slice(0,-1).map(e => `<div class="emoji-opt${e === tempEmoji ? ' selected' : ''}" data-emoji="${e}" style="font-size:1.6rem;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;">${e}</div>`).join('')}
+        <div id="emoji-keyboard-btn" style="font-size:1.2rem;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;background:#F3F0FF;border:2px dashed #A78BFA;color:#7C3AED;font-weight:900;line-height:1.2;">⌨️<span style="font-size:0.55rem;">אחר</span></div>
+      </div>
+      <div id="emoji-kb-wrap" style="display:none;text-align:center;margin:0 0 12px;">
+        <input id="emoji-kb-input" type="text" inputmode="text" style="font-size:2.5rem;width:60px;height:60px;text-align:center;border:2px solid #7C3AED;border-radius:14px;background:#EDE9FE;outline:none;" placeholder="😊" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <div style="font-size:0.72rem;color:#94A3B8;margin-top:4px;">בחר אימוג'י מהמקלדת</div>
       </div>
       <button id="emoji-confirm-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#7C3AED,#5B21B6);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;">אישור ✓</button>
     </div>`;
@@ -895,6 +924,25 @@ function showEditEmojiModal(current) {
       }
     };
   });
+  sh.querySelector('#emoji-keyboard-btn').onclick = () => {
+    const wrap = sh.querySelector('#emoji-kb-wrap');
+    wrap.style.display = 'block';
+    const inp = sh.querySelector('#emoji-kb-input');
+    inp.focus();
+    inp.oninput = () => {
+      const val = inp.value;
+      if (!val) return;
+      const seg = new Intl.Segmenter();
+      const first = [...seg.segment(val)][0]?.segment;
+      if (first && /\p{Emoji}/u.test(first)) {
+        tempEmoji = first;
+        inp.value = first;
+        sh.querySelectorAll('.emoji-opt').forEach(x => x.classList.remove('selected'));
+        preview.style.transform = 'scale(0.6)';
+        setTimeout(() => { preview.textContent = tempEmoji; preview.style.transform = 'scale(1)'; }, 120);
+      }
+    };
+  };
   sh.querySelector('#emoji-confirm-btn').onclick = () => {
     if (!tempEmoji) { ov.remove(); return; }
     editEmoji = tempEmoji;
