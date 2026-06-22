@@ -408,7 +408,7 @@ export function renderPrizeAssignGrid(containerId, selectedIds, onChange) {
       ? `<img src="${c.photo}" alt="${c.name}">`
       : `<span>${c.emoji || genderEmoji}</span>`;
     const isSelected = assigned.includes(c.id);
-    const color    = c.color || '#6366F1';
+    const color    = c.color || '#7C3AED';
     const bg       = colorGradient ? colorGradient(color) : color;
     const selStyle = isSelected ? `border-color:${color};background:${bg};box-shadow:0 0 0 3px ${color}33;` : '';
     return `<div class="assign-opt${isSelected ? ' selected' : ''}" data-child-id="${c.id}" data-color="${color}" style="${selStyle}">
@@ -420,7 +420,7 @@ export function renderPrizeAssignGrid(containerId, selectedIds, onChange) {
     el.onclick = () => {
       el.classList.toggle('selected');
       const cid   = el.dataset.childId;
-      const color = el.dataset.color || '#6366F1';
+      const color = el.dataset.color || '#7C3AED';
       const bg    = colorGradient ? colorGradient(color) : color;
       if (el.classList.contains('selected')) {
         el.style.borderColor = color;

@@ -196,10 +196,10 @@ function showQuickTasksConfirm(catName, onConfirm) {
   _showQuickConfirm({
     modalId: 'quick-tasks-confirm-modal',
     emoji: '⚡',
-    accentFrom: '#6366F1',
-    accentTo: '#8B5CF6',
+    accentFrom: '#7C3AED',
+    accentTo: '#5B21B6',
     title: '3 משימות נוצרו!',
-    body: `משימות ${catName} נוספו לכל הילדים בהצלחה<br><span style="font-size:0.78rem;color:#94A3B8;margin-top:10px;display:block;">ניתן לערוך ולמחוק במסך <strong style="color:#6366F1;">עריכת משימות</strong> בתפריט <strong style="color:#6366F1;">הגדרות</strong> ⚙️</span>`,
+    body: `משימות ${catName} נוספו לכל הילדים בהצלחה<br><span style="font-size:0.78rem;color:#94A3B8;margin-top:10px;display:block;">ניתן לערוך ולמחוק במסך <strong style="color:#7C3AED;">עריכת משימות</strong> בתפריט <strong style="color:#7C3AED;">הגדרות</strong> ⚙️</span>`,
     btnId: 'btn-quick-confirm-close',
     onConfirm
   });
@@ -296,10 +296,10 @@ function showQuickPrizesConfirm(catName, onConfirm) {
   _showQuickConfirm({
     modalId: 'quick-prizes-confirm-modal',
     emoji: '🎁',
-    accentFrom: '#F59E0B',
-    accentTo: '#D97706',
+    accentFrom: '#7C3AED',
+    accentTo: '#5B21B6',
     title: '3 פרסים נוצרו!',
-    body: `פרסים ${catName} נוספו לרשימה בהצלחה<br><span style="font-size:0.78rem;color:#94A3B8;margin-top:10px;display:block;">ניתן לערוך ולמחוק במסך <strong style="color:#D97706;">עריכת פרסים</strong> בתפריט <strong style="color:#D97706;">הגדרות</strong> ⚙️</span>`,
+    body: `פרסים ${catName} נוספו לרשימה בהצלחה<br><span style="font-size:0.78rem;color:#94A3B8;margin-top:10px;display:block;">ניתן לערוך ולמחוק במסך <strong style="color:#7C3AED;">עריכת פרסים</strong> בתפריט <strong style="color:#7C3AED;">הגדרות</strong> ⚙️</span>`,
     btnId: 'btn-quick-prizes-confirm-close',
     onConfirm
   });
@@ -572,13 +572,13 @@ document.getElementById('btn-create-child').onclick = () => {
 
 function resetNewChildUI() {
   const ncpc = document.getElementById('new-child-photo-circle');
-  ncpc.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
-  ncpc.style.border = '3px dashed #818CF8'; ncpc.style.width = '95px'; ncpc.style.height = '95px';
+  ncpc.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  ncpc.style.border = '3px dashed #A78BFA'; ncpc.style.width = '95px'; ncpc.style.height = '95px';
   document.getElementById('new-child-photo-input').value = '';
   const emojiEl = document.getElementById('new-child-emoji-display');
   emojiEl.textContent = '?';
   emojiEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
-  emojiEl.style.border = '3px dashed #818CF8';
+  emojiEl.style.border = '3px dashed #A78BFA';
   emojiEl.style.fontSize = '';
   const colorEl = document.getElementById('new-child-color-display');
   colorEl.innerHTML = SPLAT_SVG('#94A3B8', 75, true); colorEl.style.background = 'transparent'; colorEl.style.border = 'none'; colorEl.style.borderRadius = '0';
@@ -673,7 +673,7 @@ function showNewChildEmojiModal() {
       <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:16px;">
         ${CHILD_EMOJIS.map(e => `<div class="emoji-opt${e === tempEmoji ? ' selected' : ''}" data-emoji="${e}" style="font-size:1.6rem;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;">${e}</div>`).join('')}
       </div>
-      <button id="emoji-confirm-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366F1,#4F46E5);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;">אישור ✓</button>
+      <button id="emoji-confirm-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#7C3AED,#5B21B6);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;">אישור ✓</button>
     </div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
@@ -770,13 +770,13 @@ function openEditChild(childId) {
     emojiEl.style.fontSize = '80px';
   } else {
     emojiEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
-    emojiEl.style.border = '3px dashed #818CF8';
+    emojiEl.style.border = '3px dashed #A78BFA';
     emojiEl.style.fontSize = '';
   }
   emojiEl.onclick = () => showEditEmojiModal(child.emoji);
   const photoCircle = document.getElementById('edit-child-photo-circle');
   const clearBtn = document.getElementById('btn-clear-photo');
-  const svgPlaceholder = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  const svgPlaceholder = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
   if (child.photo && child.photo.length > 10) {
     photoCircle.innerHTML = `<img src="${child.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     photoCircle.style.border = 'none'; photoCircle.style.width = '85px'; photoCircle.style.height = '85px';
@@ -784,7 +784,7 @@ function openEditChild(childId) {
     clearBtn.style.display = 'block';
   } else {
     photoCircle.innerHTML = svgPlaceholder;
-    photoCircle.style.border = '3px dashed #818CF8'; photoCircle.style.width = '95px'; photoCircle.style.height = '95px';
+    photoCircle.style.border = '3px dashed #A78BFA'; photoCircle.style.width = '95px'; photoCircle.style.height = '95px';
     clearBtn.style.display = 'none';
   }
   const inviteSection = document.getElementById('edit-child-invite-section');
@@ -799,7 +799,7 @@ function openEditChild(childId) {
 document.getElementById('edit-gender-male').onclick = () => { editGender = 'male'; document.getElementById('edit-gender-male').classList.add('selected'); document.getElementById('edit-gender-female').classList.remove('selected'); };
 document.getElementById('edit-gender-female').onclick = () => { editGender = 'female'; document.getElementById('edit-gender-female').classList.add('selected'); document.getElementById('edit-gender-male').classList.remove('selected'); };
 
-const _editSvgPlaceholder = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+const _editSvgPlaceholder = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
 
 document.getElementById('edit-photo-input').onchange = async (e) => {
   const file = e.target.files[0]; if (!file) return;
@@ -819,7 +819,7 @@ document.getElementById('btn-clear-photo').onclick = () => {
   editPhotoData = null; editPhotoCleared = true;
   const pc = document.getElementById('edit-child-photo-circle');
   pc.innerHTML = _editSvgPlaceholder;
-  pc.style.border = '3px dashed #818CF8'; pc.style.width = '95px'; pc.style.height = '95px';
+  pc.style.border = '3px dashed #A78BFA'; pc.style.width = '95px'; pc.style.height = '95px';
   const clearBtn = document.getElementById('btn-clear-photo');
   clearBtn.style.display = 'none';
   clearBtn.innerHTML = '🗑️ מחק';
@@ -878,7 +878,7 @@ function showEditEmojiModal(current) {
       <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:16px;">
         ${CHILD_EMOJIS.map(e => `<div class="emoji-opt${e === tempEmoji ? ' selected' : ''}" data-emoji="${e}" style="font-size:1.6rem;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;">${e}</div>`).join('')}
       </div>
-      <button id="emoji-confirm-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366F1,#4F46E5);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;">אישור ✓</button>
+      <button id="emoji-confirm-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#7C3AED,#5B21B6);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;">אישור ✓</button>
     </div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };

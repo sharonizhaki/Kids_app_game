@@ -182,7 +182,7 @@ function showProfileEmojiModal() {
           `<div class="emoji-opt${e === tempEmoji ? ' selected' : ''}" data-emoji="${e}" style="font-size:1.6rem;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;">${e}</div>`
         ).join('')}
       </div>
-      <button id="emoji-confirm-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--child-color,#6366F1),#8B5CF6);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;">אישור ✓</button>
+      <button id="emoji-confirm-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#7C3AED,#5B21B6);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;">אישור ✓</button>
     </div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };

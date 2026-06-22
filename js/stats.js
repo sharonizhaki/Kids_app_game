@@ -38,7 +38,7 @@ export async function loadAndRenderStats(familyId) {
         id:             child.id,
         name:           child.name,
         emoji:          child.emoji || (child.gender === 'female' ? '👧' : '👦'),
-        color:          child.color || '#6366F1',
+        color:          child.color || '#7C3AED',
         currentBalance: st.pts || 0,
         tasksCompleted: filtered.length,
         starsEarned:    filtered.reduce((s, h) => s + (h.pts || 0), 0),
@@ -94,7 +94,7 @@ function _renderStatsContent() {
           <span>✅ משימות שבוצעו</span><span>${d.tasksCompleted}</span>
         </div>
         <div style="background:#F1F5F9;border-radius:8px;height:9px;overflow:hidden;">
-          <div style="height:100%;border-radius:8px;background:linear-gradient(90deg,#6366F1,#4F46E5);width:${maxTasks > 0 ? Math.round((d.tasksCompleted/maxTasks)*100) : 0}%;transition:width 0.4s;"></div>
+          <div style="height:100%;border-radius:8px;background:linear-gradient(90deg,#7C3AED,#5B21B6);width:${maxTasks > 0 ? Math.round((d.tasksCompleted/maxTasks)*100) : 0}%;transition:width 0.4s;"></div>
         </div>
       </div>
 

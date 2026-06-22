@@ -177,7 +177,7 @@ function showPrizeConfirmModal(prize, totalPts) {
           עולה ${prize.pts} ⭐ — יש לך ${totalPts} ⭐
         </div>
         <div style="display:flex;gap:10px;flex-direction:row-reverse;">
-          <button id="prize-confirm-send" style="flex:1;padding:14px;background:linear-gradient(135deg,#6366F1,#818CF8);color:white;border:none;border-radius:14px;font-size:1rem;font-weight:800;cursor:pointer;font-family:'Heebo',sans-serif;box-shadow:0 4px 14px rgba(99,102,241,0.3);">שלח בקשה 🎁</button>
+          <button id="prize-confirm-send" style="flex:1;padding:14px;background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;border:none;border-radius:14px;font-size:1rem;font-weight:800;cursor:pointer;font-family:'Heebo',sans-serif;box-shadow:0 4px 14px rgba(124,58,237,0.3);">שלח בקשה 🎁</button>
           <button id="prize-confirm-cancel" style="flex:1;padding:14px;background:#F1F5F9;color:#1E293B;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;font-family:'Heebo',sans-serif;">ביטול</button>
         </div>
       </div>

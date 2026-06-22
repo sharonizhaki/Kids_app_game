@@ -89,7 +89,7 @@ export function showConnectionError() {
     <div style="font-size:3rem;">📡</div>
     <div style="font-size:1.15rem;font-weight:900;color:#1E293B;">בעיית חיבור לאינטרנט</div>
     <div style="font-size:0.88rem;color:#64748B;font-weight:600;line-height:1.55;">לא הצלחנו להתחבר לשרת.<br>בדוק שיש חיבור לאינטרנט ונסה שוב.</div>
-    <button id="btn-connection-retry" style="margin-top:8px;padding:14px 36px;background:linear-gradient(135deg,#6366F1,#4F46E5);color:white;border:none;border-radius:16px;font-size:1rem;font-weight:900;cursor:pointer;font-family:Heebo,sans-serif;box-shadow:0 4px 16px rgba(99,102,241,0.35);">נסה שוב 🔄</button>
+    <button id="btn-connection-retry" style="margin-top:8px;padding:14px 36px;background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;border:none;border-radius:16px;font-size:1rem;font-weight:900;cursor:pointer;font-family:Heebo,sans-serif;box-shadow:0 4px 16px rgba(124,58,237,0.35);">נסה שוב 🔄</button>
   `;
   ov.querySelector('#btn-connection-retry').onclick = () => window.location.reload();
   document.body.appendChild(ov);

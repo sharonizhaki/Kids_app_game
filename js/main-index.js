@@ -318,7 +318,7 @@ function showOb1EmojiModal() {
       <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:16px;">
         ${CHILD_EMOJIS.map(e => `<div class="emoji-opt${e === obEmoji ? ' selected' : ''}" data-emoji="${e}" style="font-size:1.6rem;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;">${e}</div>`).join('')}
       </div>
-      <button id="emoji-confirm-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366F1,#4F46E5);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;">אישור ✓</button>
+      <button id="emoji-confirm-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#7C3AED,#5B21B6);border:none;border-radius:16px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;color:white;">אישור ✓</button>
     </div>`;
   sh.querySelector('.modal-close').onclick = () => ov.remove();
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
@@ -389,7 +389,7 @@ function showOb1ColorModal() {
 window.showOb1EmojiModal = showOb1EmojiModal;
 window.showOb1ColorModal = showOb1ColorModal;
 
-const _ob1SvgPlaceholder = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+const _ob1SvgPlaceholder = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
 
 document.getElementById('ob1-photo-input').onchange = async (e) => {
   const file = e.target.files[0]; if (!file) return;
@@ -408,7 +408,7 @@ document.getElementById('ob1-clear-photo').onclick = () => {
   obChildPhoto = null;
   const ob1pc = document.getElementById('ob1-photo-circle');
   ob1pc.innerHTML = _ob1SvgPlaceholder;
-  ob1pc.style.border = '3px dashed #818CF8'; ob1pc.style.width = '95px'; ob1pc.style.height = '95px';
+  ob1pc.style.border = '3px dashed #A78BFA'; ob1pc.style.width = '95px'; ob1pc.style.height = '95px';
   const clearBtn = document.getElementById('ob1-clear-photo');
   clearBtn.style.display = 'none';
   clearBtn.innerHTML = '🗑️ מחק';
@@ -448,16 +448,16 @@ function resetOb1Form() {
   document.getElementById('ob1-error').textContent = '';
   document.querySelectorAll('.ob1-gender').forEach(b => b.classList.remove('selected'));
   const ob1pc = document.getElementById('ob1-photo-circle');
-  ob1pc.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
-  ob1pc.style.border = '3px dashed #818CF8'; ob1pc.style.width = '95px'; ob1pc.style.height = '95px';
+  ob1pc.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  ob1pc.style.border = '3px dashed #A78BFA'; ob1pc.style.width = '95px'; ob1pc.style.height = '95px';
   document.getElementById('ob1-photo-input').value = '';
   document.getElementById('ob1-clear-photo').style.display = 'none';
   const emojiEl = document.getElementById('ob1-emoji-display');
   emojiEl.textContent = '?';
   emojiEl.style.background = 'linear-gradient(135deg,#EDE9FE,#C7D2FE)';
-  emojiEl.style.border = '3px dashed #818CF8';
+  emojiEl.style.border = '3px dashed #A78BFA';
   emojiEl.style.fontSize = '';
-  emojiEl.style.color = '#818CF8';
+  emojiEl.style.color = '#A78BFA';
   const colorEl = document.getElementById('ob1-color-display');
   colorEl.innerHTML = SPLAT_SVG('#94A3B8', 75, true); colorEl.style.background = 'transparent'; colorEl.style.border = 'none';
 }

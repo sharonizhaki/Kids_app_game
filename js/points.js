@@ -101,7 +101,7 @@ export async function loadCompletedTasks(familyId) {
         histEntries.push({
           childId: child.id, childName: child.name,
           childEmoji: child.emoji || (child.gender === 'female' ? '👧' : '👦'),
-          childColor: child.color || '#6366F1',
+          childColor: child.color || '#7C3AED',
           task: h.task, emoji: h.emoji || taskInfo.emoji || '⭐',
           pts: h.pts || 0, cat: taskInfo.cat || '',
           time: h.time || '', day: h.day || '', ts: h.ts || 0, histIdx: idx,
@@ -127,7 +127,7 @@ export async function loadCompletedTasks(familyId) {
         childId:    data.childId,
         childName:  data.childName  || child?.name  || '',
         childEmoji: data.childEmoji || child?.emoji || (child?.gender === 'female' ? '👧' : '👦'),
-        childColor: child?.color    || '#6366F1',
+        childColor: child?.color    || '#7C3AED',
         task:    data.task  || '',
         emoji:   data.emoji || taskInfo.emoji || '⭐',
         pts:     data.pts   || 0,
@@ -270,7 +270,7 @@ export function renderPendingTab(familyId) {
     const sec = document.createElement('div');
     sec.innerHTML = `<div class="mp-section-title" style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
       <span style="font-size:1rem;">✅</span><span>אישור משימות</span>
-      <span style="background:#6366F1;color:white;border-radius:10px;font-size:0.7rem;font-weight:900;padding:1px 7px;">${pendingTasks.length}</span>
+      <span style="background:#7C3AED;color:white;border-radius:10px;font-size:0.7rem;font-weight:900;padding:1px 7px;">${pendingTasks.length}</span>
     </div>`;
     pendingTasks.forEach(p => {
       const child = childrenCache.find(c => c.id === p.childId);
@@ -304,7 +304,7 @@ export function renderPendingTab(familyId) {
     sec.style.marginTop = pendingTasks.length > 0 ? '16px' : '0';
     sec.innerHTML = `<div class="mp-section-title" style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
       <span style="font-size:1rem;">🎁</span><span>בקשות פרסים</span>
-      <span style="background:#F59E0B;color:white;border-radius:10px;font-size:0.7rem;font-weight:900;padding:1px 7px;">${pendingPrizes.length}</span>
+      <span style="background:#7C3AED;color:white;border-radius:10px;font-size:0.7rem;font-weight:900;padding:1px 7px;">${pendingPrizes.length}</span>
     </div>`;
     pendingPrizes.forEach(r => {
       const child = childrenCache.find(c => c.id === r.childId);
@@ -319,7 +319,7 @@ export function renderPendingTab(familyId) {
           <div style="font-size:0.78rem;color:#64748B;">${childDisplay} · ⭐ ${r.pts || r.cost || 0}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;">
-          <button class="btn-prize-approve" style="background:linear-gradient(135deg,#F59E0B,#D97706);color:white;border:none;border-radius:10px;padding:6px 12px;font-size:0.78rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">✅ אשר</button>
+          <button class="btn-prize-approve" style="background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;border:none;border-radius:10px;padding:6px 12px;font-size:0.78rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">✅ אשר</button>
           <button class="btn-prize-reject" style="background:#FEE2E2;color:#B91C1C;border:none;border-radius:10px;padding:6px 12px;font-size:0.78rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">❌ דחה</button>
         </div>`;
       const _fadeRemoveCard = () => {
@@ -331,7 +331,7 @@ export function renderPendingTab(familyId) {
       card.querySelector('.btn-prize-approve').onclick = async () => {
         showConfirm({ icon: r.prizeEmoji || '🎁', title: `לאשר: ${r.prizeName || r.name}?`,
           message: `${child?.name || ''} יממש את הפרס`, confirmText: '✅ אשר',
-          confirmColor: 'linear-gradient(135deg,#F59E0B,#D97706)',
+          confirmColor: 'linear-gradient(135deg,#7C3AED,#5B21B6)',
           onConfirm: async () => {
             _fadeRemoveCard();
             await approvePrizeRequest(familyId, r.id);
@@ -358,7 +358,7 @@ export function renderPendingTab(familyId) {
     sec.style.marginTop = hasPrevSections ? '20px' : '0';
     sec.innerHTML = `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:0.82rem;font-weight:800;color:#64748B;">
       <span>↩️</span><span>בוטלו — ממתינות להחלטה</span>
-      <span style="background:#F59E0B;color:white;border-radius:10px;font-size:0.7rem;font-weight:900;padding:1px 7px;">${allCancelledTasks.length}</span>
+      <span style="background:#7C3AED;color:white;border-radius:10px;font-size:0.7rem;font-weight:900;padding:1px 7px;">${allCancelledTasks.length}</span>
     </div>`;
     allCancelledTasks.forEach(item => {
       const isDailyType = item.freq === 'daily' || item.freq === 'specific';
@@ -420,7 +420,7 @@ export function renderPendingTab(familyId) {
           title: `לבטל: ${r.prizeName || r.name}?`,
           message: `${child?.name || ''} יקבל בחזרה ${r.pts || r.cost || 0} ⭐`,
           confirmText: '↩️ בטל מימוש',
-          confirmColor: 'linear-gradient(135deg,#F59E0B,#D97706)',
+          confirmColor: 'linear-gradient(135deg,#7C3AED,#5B21B6)',
           onConfirm: async () => {
             await reversePrizeRequest(familyId, r.id);
             await loadAllPrizeRequests(familyId);
@@ -559,7 +559,7 @@ export function renderMPList(familyId) {
               <span style="font-size:0.75rem;color:#64748B;">⭐ ${item.pts}</span>
             </div>
           </div>
-          <button class="btn-restore-prize" style="background:linear-gradient(135deg,#F59E0B,#D97706);color:white;border:none;border-radius:10px;padding:7px 10px;font-size:0.73rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;">✅ אשר</button>`;
+          <button class="btn-restore-prize" style="background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;border:none;border-radius:10px;padding:7px 10px;font-size:0.73rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;">✅ אשר</button>`;
         card.querySelector('.btn-restore-prize').onclick = () => _restoreRejectedPrize(familyId || _familyId, item);
       }
       sec.appendChild(card);
@@ -805,7 +805,7 @@ function attachMPSwipeHandlers(list, familyId) {
     });
     wrap.querySelector('[data-act="undo"]').onclick = () => {
       showConfirm({ icon: '↩️', title: 'לבטל את ביצוע המשימה?', message: 'הכוכבים יורדו מהילד',
-        confirmText: 'בטל ביצוע', confirmColor: 'linear-gradient(135deg,#F59E0B,#D97706)',
+        confirmText: 'בטל ביצוע', confirmColor: 'linear-gradient(135deg,#7C3AED,#5B21B6)',
         onConfirm: () => undoTask(familyId, childId, histIdx),
       });
     };
@@ -955,7 +955,7 @@ async function _restoreRejectedPrize(familyId, item) {
     title: `לאשר בדיעבד: ${item.prizeName}?`,
     message: `${item.childName} יממש את הפרס (⭐ ${item.pts})`,
     confirmText: '✅ אשר',
-    confirmColor: 'linear-gradient(135deg,#F59E0B,#D97706)',
+    confirmColor: 'linear-gradient(135deg,#7C3AED,#5B21B6)',
     onConfirm: async () => {
       await approvePrizeRequest(familyId, item.id);
       await Promise.all([loadRejectedItems(familyId), loadAllPrizeRequests(familyId)]);

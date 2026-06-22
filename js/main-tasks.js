@@ -129,7 +129,7 @@ function showQuickTasksConfirm(catName) {
       <div style="font-size:2.8rem;margin-bottom:10px;">✅</div>
       <h3 style="font-size:1.1rem;font-weight:900;color:#111;margin:0 0 8px;">3 משימות נוצרו בהצלחה!</h3>
       <p style="font-size:0.85rem;color:#666;margin:0 0 22px;">משימות בקטגורית ${catName} נוספו לכל הילדים</p>
-      <button id="btn-quick-confirm-close" style="width:100%;padding:12px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;border:none;border-radius:14px;font-size:0.95rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">סגור</button>
+      <button id="btn-quick-confirm-close" style="width:100%;padding:12px;background:linear-gradient(135deg,#7C3AED,#5B21B6);color:#fff;border:none;border-radius:14px;font-size:0.95rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">סגור</button>
     </div>`;
   document.body.appendChild(modal);
   document.getElementById('btn-quick-confirm-close').onclick = () => modal.remove();

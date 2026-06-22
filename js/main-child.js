@@ -90,7 +90,7 @@ function _startPrizeRotation() {
 
 function _renderPrizeBar() {
   const totalPts = state.childState?.pts || 0;
-  const color    = state.childData?.color || '#6366F1';
+  const color    = state.childData?.color || '#7C3AED';
 
   const emojiEl     = document.getElementById('ppcard-emoji');
   const nameEl      = document.getElementById('ppcard-name');
@@ -172,7 +172,7 @@ export function renderChild() {
   }
 
   // ---- greeting ----
-  const color = childData.color || '#6366F1';
+  const color = childData.color || '#7C3AED';
   const gc    = document.getElementById('greeting-card');
   if (gc) {
     gc.style.background = `linear-gradient(135deg, ${color}, ${darkenColor(color)})`;
