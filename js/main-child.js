@@ -115,7 +115,7 @@ function _renderPrizeBar() {
   const remain  = Math.max(0, cost - totalPts);
 
   emojiEl.textContent  = prize.emoji || '🎁';
-  nameEl.textContent   = prize.title || '';
+  nameEl.textContent   = prize.name || prize.title || '';
   remainEl.textContent = remain > 0 ? `עוד ${remain} ⭐` : '✅ הגעת!';
   fillEl.style.background = `linear-gradient(90deg, ${color}, ${lightenColor(color)})`;
   fillEl.style.width   = pct + '%';

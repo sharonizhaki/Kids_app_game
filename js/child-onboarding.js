@@ -365,45 +365,90 @@ function showNotifStep() {
   _currentStep = 4;
   const overlay  = getOverlay();
   const isFem    = state.childData?.gender === 'female';
-  const isBlocked = 'Notification' in window && Notification.permission === 'denied';
+  const fem      = isFem ? 'י' : '';
+  const color    = state.childData?.color || '#7C3AED';
+
+  const isIOS      = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const isIOSBrowser = isIOS && !isStandalone;
+  const isBlocked  = 'Notification' in window && Notification.permission === 'denied';
+  const isGranted  = 'Notification' in window && Notification.permission === 'granted';
+
+  // תוכן כרטיס לפי מצב
+  let statusBox = '';
+  let mainBtn   = '';
+  let skipLabel = 'המשך ←';
+
+  if (isGranted) {
+    statusBox = `
+      <div style="background:#D1FAE5;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:10px;margin:4px 0;">
+        <span style="font-size:1.5rem;">✅</span>
+        <div style="font-size:0.85rem;font-weight:700;color:#065F46;">התראות כבר מופעלות!</div>
+      </div>`;
+    skipLabel = 'המשך ←';
+  } else if (isIOSBrowser) {
+    statusBox = `
+      <div style="background:#FEF3C7;border:1.5px solid #FDE68A;border-radius:16px;padding:14px 16px;text-align:right;">
+        <div style="font-weight:800;font-size:0.88rem;color:#92400E;margin-bottom:6px;">📲 כדי לקבל התראות ב-iOS:</div>
+        <ol style="margin:0;padding-right:18px;font-size:0.82rem;color:#78350F;line-height:2;">
+          <li>לחצ${fem} על <strong>שתף</strong> (□↑) בתחתית Safari</li>
+          <li>בחר${fem} <strong>הוסף${fem} למסך הבית</strong></li>
+          <li>פתח${fem} את האפליקציה מהמסך הבית</li>
+        </ol>
+      </div>`;
+    skipLabel = 'המשך בינתיים ←';
+  } else if (isBlocked) {
+    statusBox = `
+      <div style="background:#FEE2E2;border:1.5px solid #FECACA;border-radius:16px;padding:14px 16px;text-align:right;">
+        <div style="font-weight:800;font-size:0.88rem;color:#991B1B;margin-bottom:6px;">🔕 התראות חסומות — כדי לשחרר:</div>
+        <ol style="margin:0;padding-right:18px;font-size:0.82rem;color:#7F1D1D;line-height:2;">
+          <li>לחצ${fem} על 🔒 / ⓘ ליד כתובת האתר</li>
+          <li>לחצ${fem} על <strong>הרשאות אתר</strong></li>
+          <li>הפעל${fem} <strong>התראות</strong> ורענן</li>
+        </ol>
+      </div>`;
+    skipLabel = 'המשך בלי התראות ←';
+  } else {
+    statusBox = `
+      <div style="background:#EDE9FE;border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:12px;">
+        <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#7C3AED,#6D28D9);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">🪥</div>
+        <div style="text-align:right;">
+          <div style="font-size:0.82rem;font-weight:800;color:#1E293B;">תזכורת: צחצוח שיניים</div>
+          <div style="font-size:0.75rem;color:#6D28D9;margin-top:2px;">השלמ${fem} ותרוויח${fem} ⭐ עכשיו!</div>
+        </div>
+      </div>`;
+    mainBtn = `
+      <button class="ob-btn ob-btn-finish" id="ob-notif-allow"
+        style="background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;border:none;width:100%;padding:15px;border-radius:18px;font-size:1rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;margin-bottom:10px;box-shadow:0 6px 20px rgba(124,58,237,0.4);">
+        🔔 אפשר${fem} התראות
+      </button>`;
+    skipLabel = 'אולי אחר כך ←';
+  }
 
   overlay.innerHTML = `
     <div class="ob-backdrop">
       <div class="ob-card" id="ob-card">
         ${dotsHTML(4)}
         <div class="ob-step-label">שלב 4 מתוך 4</div>
-        <div class="ob-notif-icon">🔔</div>
+        <div style="width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#7C3AED,#5B21B6);display:flex;align-items:center;justify-content:center;font-size:2rem;margin:4px auto 10px;box-shadow:0 4px 16px rgba(124,58,237,0.35);">🔔</div>
         <h2 class="ob-step-title">תזכורות חכמות</h2>
-        <p class="ob-step-sub">
-          ${isBlocked
-            ? 'התראות חסומות בדפדפן — אפשר להפעיל אחר כך בהגדרות'
-            : 'אפשר${isFem ? "י" : ""} התראות כדי לקבל תזכורות על משימות בזמן הנכון 📅'}
+        <p class="ob-step-sub" style="margin-bottom:12px;">
+          ${isGranted ? `מעולה! תקבל${fem} תזכורות על משימות בזמן` :
+            isIOSBrowser ? `כדי לקבל התראות ב-iPhone — הוסיפ${fem} למסך הבית` :
+            isBlocked ? `התראות חסומות — אפשר לשחרר בהגדרות` :
+            `קבל${fem} תזכורות על משימות ב⏰ הנכון`}
         </p>
-        <div class="ob-notif-preview">
-          <div class="ob-notif-example">
-            <span class="ob-notif-ex-icon">🪥</span>
-            <div class="ob-notif-ex-text">
-              <div class="ob-notif-ex-title">תזכורת: צחצוח שיניים</div>
-              <div class="ob-notif-ex-body">השלם את המשימה ותרוויח 1 ⭐</div>
-            </div>
-          </div>
-        </div>
-        ${isBlocked ? '' : `
-        <button class="ob-btn ob-btn-finish" id="ob-notif-allow" style="margin-bottom:10px;">
-          🔔 אפשר${isFem ? "י" : ""} התראות
-        </button>`}
-        <button class="ob-btn ob-btn-ghost" id="ob-notif-skip">
-          ${isBlocked ? 'המשך בלי התראות ←' : 'אולי אחר כך ←'}
-        </button>
+        ${statusBox}
+        ${mainBtn}
+        <button class="ob-btn ob-btn-ghost" id="ob-notif-skip">${skipLabel}</button>
       </div>
     </div>`;
 
   animateIn(overlay.querySelector('#ob-card'));
 
-  // כפתור אפשר התראות
   overlay.querySelector('#ob-notif-allow')?.addEventListener('click', async () => {
     const btn = overlay.querySelector('#ob-notif-allow');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ מבקש הרשאה...'; }
+    if (btn) { btn.disabled = true; btn.textContent = `⏳ מבקש${fem} הרשאה...`; }
     try {
       const token = await requestPushPermission();
       if (token && state.familyId && state.childId) {
@@ -416,7 +461,6 @@ function showNotifStep() {
     setTimeout(() => finishOnboarding(), 900);
   });
 
-  // כפתור דלג
   overlay.querySelector('#ob-notif-skip')?.addEventListener('click', () => {
     finishOnboarding();
   });
