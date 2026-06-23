@@ -67,6 +67,7 @@ function _renderQueue() {
   }
 
   section.style.display = 'block';
+  section.closest('.screen')?.scrollTo({ top: 0, behavior: 'smooth' });
 
   const badge = document.getElementById('approval-count');
   if (badge) badge.textContent = all.length;
