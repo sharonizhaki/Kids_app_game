@@ -92,7 +92,7 @@ function showQuickPrizesConfirm(catName, onConfirm) {
       <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#A78BFA);display:flex;align-items:center;justify-content:center;font-size:2.2rem;margin:0 auto 16px;box-shadow:0 6px 20px rgba(124,58,237,0.35);">🎁</div>
       <div style="font-size:1.15rem;font-weight:900;color:#0F172A;margin-bottom:6px;">3 פרסים נוצרו!</div>
       <div style="font-size:0.84rem;color:#64748B;line-height:1.55;margin-bottom:8px;">פרסים ${catName} נוספו לרשימה בהצלחה</div>
-      <div style="font-size:0.78rem;color:#94A3B8;margin-bottom:24px;">ניתן לערוך ולמחוק במסך <strong style="color:#7C3AED;">עריכת פרסים</strong> בתפריט <strong style="color:#7C3AED;">הגדרות</strong> ⚙️</div>
+      <div style="font-size:0.78rem;color:#94A3B8;margin-bottom:24px;">ניתן לערוך ולמחוק במסך <strong style="color:#7C3AED;">עריכת פרסים</strong> מהתפריט הראשי ☰</div>
       <button id="btn-quick-prizes-confirm-close" style="width:100%;padding:14px;background:linear-gradient(135deg,#7C3AED,#6D28D9);color:#fff;border:none;border-radius:16px;font-size:1rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(124,58,237,0.4);">אישור ✓</button>
     </div>`;
   document.body.appendChild(modal);

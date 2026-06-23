@@ -137,7 +137,7 @@ export async function openSideMenu({ auth, onAction, isPrimary = true, activityC
 
   menu.innerHTML = `
     <div class="side-header">
-      <div class="side-settings-icon" id="side-settings-close">⚙️</div>
+      <div class="side-settings-icon" id="side-settings-close">☰</div>
       <div class="side-header-text">
         <h3>תפריט</h3>
         <p>שלום ${parentName}</p>

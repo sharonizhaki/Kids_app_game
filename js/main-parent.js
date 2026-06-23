@@ -199,7 +199,7 @@ function showQuickTasksConfirm(catName, onConfirm) {
     accentFrom: '#7C3AED',
     accentTo: '#5B21B6',
     title: '3 משימות נוצרו!',
-    body: `משימות ${catName} נוספו לכל הילדים בהצלחה<br><span style="font-size:0.78rem;color:#94A3B8;margin-top:10px;display:block;">ניתן לערוך ולמחוק במסך <strong style="color:#7C3AED;">עריכת משימות</strong> בתפריט <strong style="color:#7C3AED;">הגדרות</strong> ⚙️</span>`,
+    body: `משימות ${catName} נוספו לכל הילדים בהצלחה<br><span style="font-size:0.78rem;color:#94A3B8;margin-top:10px;display:block;">ניתן לערוך ולמחוק במסך <strong style="color:#7C3AED;">עריכת משימות</strong> מהתפריט הראשי ☰</span>`,
     btnId: 'btn-quick-confirm-close',
     onConfirm
   });
@@ -299,7 +299,7 @@ function showQuickPrizesConfirm(catName, onConfirm) {
     accentFrom: '#7C3AED',
     accentTo: '#5B21B6',
     title: '3 פרסים נוצרו!',
-    body: `פרסים ${catName} נוספו לרשימה בהצלחה<br><span style="font-size:0.78rem;color:#94A3B8;margin-top:10px;display:block;">ניתן לערוך ולמחוק במסך <strong style="color:#7C3AED;">עריכת פרסים</strong> בתפריט <strong style="color:#7C3AED;">הגדרות</strong> ⚙️</span>`,
+    body: `פרסים ${catName} נוספו לרשימה בהצלחה<br><span style="font-size:0.78rem;color:#94A3B8;margin-top:10px;display:block;">ניתן לערוך ולמחוק במסך <strong style="color:#7C3AED;">עריכת פרסים</strong> מהתפריט הראשי ☰</span>`,
     btnId: 'btn-quick-prizes-confirm-close',
     onConfirm
   });
@@ -1007,7 +1007,7 @@ async function startDashTour(familyId, uid) {
     },
     {
       el: '#btn-open-menu',
-      title: 'תפריט הגדרות ⚙️',
+      title: 'תפריט ☰',
       text: 'כאן תוכל לנהל משפחה, משימות, פרסים, נקודות ועוד — הכל במקום אחד',
       exact: true
     },
