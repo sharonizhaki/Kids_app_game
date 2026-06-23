@@ -328,7 +328,7 @@ function renderPrizesListUI() {
   if (!list) return;
 
   const subLabels = { child: 'ילד', stars: 'כוכבים' };
-  if (_prFilter !== 'all' && !_prSubFilter) {
+  if (_prFilter !== 'all' && _prFilter !== 'child' && !_prSubFilter) {
     list.innerHTML = `<div class="empty-state">👆 בחר ${subLabels[_prFilter] || ''} מהרשימה למעלה</div>`;
     return;
   }
