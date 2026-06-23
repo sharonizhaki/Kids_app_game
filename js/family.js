@@ -405,7 +405,9 @@ export async function renderDashboardChildren(familyId) {
 
     const onclick = isWaiting
       ? `showChildInviteModal('${child.id}')`
-      : `location.href='points.html?childName=${encodeURIComponent(child.name)}'`;
+      : pending > 0
+        ? `location.href='points.html?tab=pending'`
+        : `location.href='points.html?childName=${encodeURIComponent(child.name)}'`;
 
     return `
       <div class="child-dash-card" onclick="${onclick}" style="${cardFlexStyle}background:white;border-radius:20px;
