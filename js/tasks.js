@@ -704,7 +704,7 @@ export function renderTaskEmojiGrid(gridId, current, onSelect) {
       `<div class="task-emoji-opt${e === current ? ' selected' : ''}" data-emoji="${e}">${e}</div>`
     ).join('') + (!showAll && remaining > 0
       ? `<div class="task-emoji-opt" id="${gridId}-show-more" style="font-size:0.72rem;font-weight:800;color:var(--primary);background:#EEF2FF;border:1.5px dashed var(--primary);">+${remaining}</div>`
-      : '') + kbBtnHtml;
+      : '') + (showAll ? kbBtnHtml : '');
 
     grid.querySelectorAll('.task-emoji-opt').forEach(el => {
       if (el.id === `${gridId}-show-more`) {
@@ -745,7 +745,7 @@ export function renderTaskEmojiGrid(gridId, current, onSelect) {
   }
 
   const currentIdx = TASK_EMOJIS.indexOf(current);
-  buildGrid(currentIdx >= SHOW_INITIAL);
+  buildGrid(currentIdx >= SHOW_INITIAL || isCustom);
 }
 
 export function initStarsPicker(pickerId, current, onChange) {
