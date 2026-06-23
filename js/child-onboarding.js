@@ -328,12 +328,12 @@ function showEmojiStep() {
         </div>
 
         <div class="ob-emoji-grid">
-          ${ONBOARD_EMOJIS.map(e => `
+          ${ONBOARD_EMOJIS.slice(0, -1).map(e => `
             <div class="ob-emoji-opt${e === _obEmoji ? ' ob-emoji-selected' : ''}"
               data-emoji="${e}">${e}</div>`).join('')}
           <div id="ob-kb-btn" style="font-size:1.2rem;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;background:#F3F0FF;border:2px dashed #A78BFA;color:#7C3AED;font-weight:900;line-height:1.2;">⌨️<span style="font-size:0.55rem;">אחר</span></div>
         </div>
-        <input id="ob-kb-input" type="text" placeholder="✏️ הקלד אמוגי…" style="display:none;width:100%;margin-top:8px;padding:8px 12px;border-radius:10px;border:1.5px solid #A78BFA;font-size:1.4rem;text-align:center;outline:none;box-sizing:border-box;">
+        <input id="ob-kb-input" type="text" placeholder="😊" style="display:none;width:60px;height:60px;margin:8px auto 0;padding:4px;border-radius:12px;border:2px solid #A78BFA;font-size:1.8rem;text-align:center;outline:none;box-sizing:border-box;">
 
         <div id="ob-emoji-error" class="ob-error"></div>
         ${navBtnsHTML(3)}

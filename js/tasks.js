@@ -684,8 +684,8 @@ export function renderTaskEmojiGrid(gridId, current, onSelect) {
     kbInput = document.createElement('input');
     kbInput.id = `${gridId}-kb-input`;
     kbInput.type = 'text';
-    kbInput.placeholder = '✏️ הקלד אמוגי…';
-    kbInput.style.cssText = 'display:none;width:100%;max-width:300px;margin:8px auto 0;padding:8px 12px;border-radius:10px;border:1.5px solid #A78BFA;font-size:1.4rem;text-align:center;outline:none;box-sizing:border-box;';
+    kbInput.placeholder = '😊';
+    kbInput.style.cssText = 'display:none;width:60px;height:60px;margin:8px auto 0;padding:4px;border-radius:12px;border:2px solid #A78BFA;font-size:1.8rem;text-align:center;outline:none;box-sizing:border-box;';
     grid.parentNode.insertBefore(kbInput, grid.nextSibling);
   }
 
@@ -696,7 +696,7 @@ export function renderTaskEmojiGrid(gridId, current, onSelect) {
   }
 
   function buildGrid(showAll) {
-    const visible = showAll ? TASK_EMOJIS : TASK_EMOJIS.slice(0, SHOW_INITIAL);
+    const visible = showAll ? TASK_EMOJIS.slice(0, -1) : TASK_EMOJIS.slice(0, SHOW_INITIAL);
     const remaining = TASK_EMOJIS.length - SHOW_INITIAL;
     const kbActive = isCustom || kbInput.style.display === 'block';
     const kbBtnHtml = `<div id="${kbBtnId}" style="font-size:1.2rem;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;background:${kbActive ? '#EDE9FE' : '#F3F0FF'};border:2px ${kbActive ? 'solid' : 'dashed'} #A78BFA;color:#7C3AED;font-weight:900;line-height:1.2;">⌨️<span style="font-size:0.55rem;">אחר</span></div>`;
