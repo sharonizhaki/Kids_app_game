@@ -4,8 +4,12 @@
 import {
   collection, addDoc, serverTimestamp,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import {
+  ref, uploadString, getDownloadURL,
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
 import { state }                                    from './child-state.js';
+import { storage }                                   from './firebase.js';
 import { starsText, makeModal, closeModals, showToast } from './child-ui.js';
 
 // -------- CONSTANTS --------
@@ -117,6 +121,16 @@ async function _submitPending(t, saveStateFn, photoUrl = '') {
 
   if (_db && state.familyId && state.childId) {
     try {
+      let storedPhotoUrl = '';
+      if (photoUrl && storage) {
+        try {
+          const photoRef = ref(storage, `pendingPhotos/${state.familyId}/${ts}.jpg`);
+          await uploadString(photoRef, photoUrl, 'data_url');
+          storedPhotoUrl = await getDownloadURL(photoRef);
+        } catch (uploadErr) {
+          console.warn('photo upload failed, continuing without photo:', uploadErr);
+        }
+      }
       await addDoc(
         collection(_db, 'families', state.familyId, 'pendingApprovals'),
         {
@@ -130,8 +144,7 @@ async function _submitPending(t, saveStateFn, photoUrl = '') {
           childEmoji: state.childData?.emoji || '👦',
           status:     'pending',
           createdAt:  serverTimestamp(),
-          // photoUrl מוחזק בstate המקומי בלבד — לא ב-Firestore
-          // כדי שה-Eventarc event payload לא יעבור את מגבלת 1MB
+          ...(storedPhotoUrl ? { photoUrl: storedPhotoUrl } : {}),
         }
       );
     } catch (e) { console.error('pendingApprovals write error:', e); }

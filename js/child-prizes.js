@@ -112,6 +112,7 @@ export async function renderPrizesScreen() {
       <div class="prize-card${!canAfford ? ' prize-locked' : ''}" data-prize-id="${prize.id}">
         <span class="prize-emoji">${prize.emoji || '🎁'}</span>
         <span class="prize-title">${prize.name || prize.title || ''}</span>
+        ${prize.desc ? `<span class="prize-desc">${prize.desc}</span>` : ''}
         <span class="prize-cost">${prize.pts || 0} ⭐</span>
         ${actionHTML}
         ${lockHTML}
