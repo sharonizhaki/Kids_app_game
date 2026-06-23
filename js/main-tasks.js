@@ -153,7 +153,7 @@ function showQuickTasksConfirm(catName) {
   initParentNav(null, null);
 
   // בדוק mode מ-sessionStorage (מועבר מ-parent.html)
-  const mode = sessionStorage.getItem('tasksMode') || 'add';
+  const mode = sessionStorage.getItem('tasksMode') || new URLSearchParams(window.location.search).get('mode') || 'add';
   sessionStorage.removeItem('tasksMode');
 
   if (mode === 'edit') {
