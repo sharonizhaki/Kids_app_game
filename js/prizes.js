@@ -4,7 +4,7 @@ import {
   collection, serverTimestamp, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { showToast, showLoading, hideLoading, showConfirm, highlightField } from './ui.js';
-import { childrenCache, loadChildren } from './family.js';
+import { childrenCache, loadChildren, colorGradient } from './family.js';
 
 // =========== CONSTANTS ===========
 
