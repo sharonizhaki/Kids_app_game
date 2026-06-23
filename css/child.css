@@ -780,10 +780,13 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 #profile-color-display:hover { transform: scale(1.12); }
 
 /* רשת splat במודל עריכת פרופיל */
-.splat-color-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 12px; justify-items: center; align-items: center;
+.splat-color-grid,
+.ob-color-grid {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px; justify-items: center; align-items: center;
   margin: 8px 0 16px;
+  width: 100%; box-sizing: border-box;
+  padding: 10px 6px;
 }
 .splat-color-opt {
   cursor: pointer; display: flex; align-items: center; justify-content: center;
