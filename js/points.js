@@ -584,57 +584,57 @@ export function renderManualTab(familyId) {
 
   function draw() {
     container.innerHTML = `
-      <div style="background:white;border-radius:20px;padding:16px 18px;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+      <div style="background:white;border-radius:20px;padding:12px 14px;margin-bottom:8px;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
 
-        <div style="font-size:0.82rem;font-weight:800;color:#64748B;margin-bottom:10px;">👶 בחר ילד</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;">
+        <div style="font-size:0.82rem;font-weight:800;color:#64748B;margin-bottom:8px;">👶 בחר ילד</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
           ${childrenCache.map(c => `
             <div data-child-id="${c.id}" class="manual-child-pill"
-              style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 12px;
+              style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;
                      border-radius:16px;border:2.5px solid ${c.id === selChildId ? 'var(--primary)' : 'var(--border)'};
-                     background:${c.id === selChildId ? '#EDE9FE' : 'white'};cursor:pointer;min-width:60px;transition:all 0.15s;">
-              <span style="font-size:1.8rem;">${c.emoji || '👦'}</span>
+                     background:${c.id === selChildId ? '#EDE9FE' : 'white'};cursor:pointer;min-width:56px;transition:all 0.15s;">
+              <span style="font-size:1.6rem;">${c.emoji || '👦'}</span>
               <span style="font-size:0.72rem;font-weight:800;color:${c.id === selChildId ? 'var(--primary)' : '#64748B'};">${c.name}</span>
             </div>`).join('')}
         </div>
 
-        <div style="font-size:0.82rem;font-weight:800;color:#64748B;margin-bottom:8px;">📌 סוג פעולה</div>
-        <div style="display:flex;gap:8px;margin-bottom:18px;">
+        <div style="font-size:0.82rem;font-weight:800;color:#64748B;margin-bottom:6px;">📌 סוג פעולה</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
           <button id="btn-type-add"
-            style="flex:1;padding:10px;border-radius:12px;font-family:'Heebo',sans-serif;font-weight:900;font-size:0.88rem;cursor:pointer;transition:all 0.15s;
+            style="flex:1;padding:8px;border-radius:12px;font-family:'Heebo',sans-serif;font-weight:900;font-size:0.88rem;cursor:pointer;transition:all 0.15s;
                    border:2px solid ${isAdding ? '#10B981' : 'var(--border)'};
                    background:${isAdding ? 'linear-gradient(135deg,#D1FAE5,#A7F3D0)' : 'white'};
                    color:${isAdding ? '#065F46' : '#64748B'};">➕ הוסף כוכבים</button>
           <button id="btn-type-remove"
-            style="flex:1;padding:10px;border-radius:12px;font-family:'Heebo',sans-serif;font-weight:900;font-size:0.88rem;cursor:pointer;transition:all 0.15s;
+            style="flex:1;padding:8px;border-radius:12px;font-family:'Heebo',sans-serif;font-weight:900;font-size:0.88rem;cursor:pointer;transition:all 0.15s;
                    border:2px solid ${!isAdding ? '#EF4444' : 'var(--border)'};
                    background:${!isAdding ? 'linear-gradient(135deg,#FEE2E2,#FECACA)' : 'white'};
                    color:${!isAdding ? '#B91C1C' : '#64748B'};">➖ הפחת כוכבים</button>
         </div>
 
-        <div style="font-size:0.82rem;font-weight:800;color:#64748B;margin-bottom:8px;">⭐ כמות</div>
-        <div style="display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:18px;">
+        <div style="font-size:0.82rem;font-weight:800;color:#64748B;margin-bottom:6px;">⭐ כמות</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:10px;">
           <button id="btn-amt-minus"
-            style="width:46px;height:46px;border-radius:50%;border:2px solid var(--border);background:white;
-                   font-size:1.5rem;font-weight:900;cursor:pointer;color:#64748B;font-family:'Heebo',sans-serif;line-height:1;">−</button>
-          <div style="text-align:center;min-width:64px;">
-            <div style="font-size:3rem;font-weight:900;color:${isAdding ? '#10B981' : '#EF4444'};line-height:1;">${manualAmt}</div>
+            style="width:42px;height:42px;border-radius:50%;border:2px solid var(--border);background:white;
+                   font-size:1.4rem;font-weight:900;cursor:pointer;color:#64748B;font-family:'Heebo',sans-serif;line-height:1;">−</button>
+          <div style="text-align:center;min-width:56px;">
+            <div style="font-size:2.5rem;font-weight:900;color:${isAdding ? '#10B981' : '#EF4444'};line-height:1;">${manualAmt}</div>
             <div style="font-size:0.72rem;color:#94A3B8;font-weight:700;">כוכבים ⭐</div>
           </div>
           <button id="btn-amt-plus"
-            style="width:46px;height:46px;border-radius:50%;border:2px solid var(--border);background:white;
-                   font-size:1.5rem;font-weight:900;cursor:pointer;color:#64748B;font-family:'Heebo',sans-serif;line-height:1;">+</button>
+            style="width:42px;height:42px;border-radius:50%;border:2px solid var(--border);background:white;
+                   font-size:1.4rem;font-weight:900;cursor:pointer;color:#64748B;font-family:'Heebo',sans-serif;line-height:1;">+</button>
         </div>
 
-        <div style="font-size:0.82rem;font-weight:800;color:#64748B;margin-bottom:6px;">📝 סיבה (לא חובה)</div>
-        <textarea id="manual-reason" rows="3"
-          placeholder="לדוגמה: עזרה ספונטנית בבישול&#10;התנהגות יוצאת דופן&#10;תיקון שגיאת ניקוד"
-          style="width:100%;border:2px solid var(--border);border-radius:12px;padding:10px 12px;
+        <div style="font-size:0.82rem;font-weight:800;color:#64748B;margin-bottom:4px;">📝 סיבה (לא חובה)</div>
+        <textarea id="manual-reason" rows="2"
+          placeholder="לדוגמה: עזרה ספונטנית בבישול"
+          style="width:100%;border:2px solid var(--border);border-radius:12px;padding:8px 12px;
                  font-size:0.85rem;font-family:'Heebo',sans-serif;resize:none;box-sizing:border-box;
                  outline:none;color:#0F172A;background:#F8FAFC;direction:rtl;"></textarea>
 
         <button id="btn-manual-submit"
-          style="width:100%;margin-top:14px;padding:14px;border-radius:14px;font-size:1rem;font-weight:900;
+          style="width:100%;margin-top:8px;padding:13px;border-radius:14px;font-size:1rem;font-weight:900;
                  border:none;cursor:pointer;font-family:'Heebo',sans-serif;color:white;
                  background:${isAdding ? 'linear-gradient(135deg,#10B981,#059669)' : 'linear-gradient(135deg,#EF4444,#DC2626)'};">
           ${isAdding ? '➕' : '➖'} ${manualAmt} ⭐ עבור ${childrenCache.find(c => c.id === selChildId)?.name || ''}
