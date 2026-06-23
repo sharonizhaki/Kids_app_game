@@ -41,6 +41,7 @@ document.getElementById('btn-back-to-parent')?.addEventListener('click', () => {
   } catch(e) { window.location.href = 'parent.html'; return; }
 
   const familyId = getFamilyId();
+  try { localStorage.setItem(`activityLastSeen_${familyId}`, String(Date.now())); } catch(e) {}
   hideLoading();
   resetMPState();
 
