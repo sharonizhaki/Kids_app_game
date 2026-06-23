@@ -78,6 +78,29 @@ exports.eveningParentNotification = onSchedule(
 );
 
 
+exports.eveningChildNotification = onSchedule(
+  { schedule: '0 19 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
+  async () => {
+    const familiesSnap = await db.collection('families').get();
+    if (familiesSnap.empty) return;
+    await Promise.all(familiesSnap.docs.map(async (familyDoc) => {
+      const childrenSnap = await familyDoc.ref.collection('children').get();
+      if (childrenSnap.empty) return;
+      await Promise.all(childrenSnap.docs.map(async (childDoc) => {
+        const tokens = childDoc.data().fcmTokens || [];
+        if (tokens.length === 0) return;
+        const stale = await sendPush(
+          tokens,
+          '🌟 מה עם הכוכבים?',
+          'סיימת את כל המשימות להיום?',
+          { url: '/child.html', type: 'evening_child_reminder' }
+        );
+        if (stale.length > 0) await removeStaleTokens(childDoc.ref, 'fcmTokens', stale);
+      }));
+    }));
+  }
+);
+
 // =========================================================
 // FIRESTORE TRIGGERS — Gen2
 // =========================================================
