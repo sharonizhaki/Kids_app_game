@@ -51,6 +51,7 @@ document.getElementById('btn-back-to-parent')?.addEventListener('click', () => {
   const tabParam   = urlParams.get('tab');
   if (childName) setMPState('history', 'child', childName);
   else if (tabParam) setMPState(tabParam, 'all', '');
+  else setMPState('history', 'all', '');
 
   showScreen('screen-manage-points');
   initParentNav('activity', null);
