@@ -10,7 +10,7 @@ import {
   openAddTask, saveTask, loadAllTasks,
   renderEditTasksFilters, renderEditTasksList,
   openEditTask, saveEditedTask, toggleHideTask, deleteTask,
-  initSuggestions, startTaskTour, createQuickTasks
+  initSuggestions, startTaskTour, createQuickTasks, startEditTasksTour
 } from './tasks.js';
 
 // =========== GUARD ===========
@@ -161,6 +161,10 @@ function showQuickTasksConfirm(catName) {
     await loadAllTasks(getFamilyId());
     renderEditTasksFilters();
     renderEditTasksList(getFamilyId());
+    const etTourKey = `editTasksTourDone_${getFamilyId() || 'none'}`;
+    if (!localStorage.getItem(etTourKey)) {
+      setTimeout(() => startEditTasksTour(getFamilyId()), 900);
+    }
   } else {
     // ברירת מחדל: הוספת משימה
     await openAddTask(getFamilyId());

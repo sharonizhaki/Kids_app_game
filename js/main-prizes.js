@@ -8,7 +8,7 @@ import {
   loadPrizeRequests, countPendingRequests,
   approvePrizeRequest, declinePrizeRequest, reversePrizeRequest,
   renderPrizeEmojiGrid, renderPrizeAssignGrid, renderPrizeSuggestions,
-  DECLINE_REASONS, startPrizeTour,
+  DECLINE_REASONS, startPrizeTour, startManagePrizesTour,
   setPrizeEmoji, setPrizePts, setPrizeChildren, resetPrizeState, setPrizeRepeat
 } from './prizes.js';
 
@@ -914,6 +914,10 @@ export async function initPrizesPage(familyId) {
   if (mode === 'manage') {
     showScreen('screen-manage-prizes');
     renderPrizesList();
+    const mpTourKey = `managePrizesTourDone_${familyId || 'none'}`;
+    if (!localStorage.getItem(mpTourKey)) {
+      setTimeout(() => startManagePrizesTour(familyId), 900);
+    }
   } else {
     // ברירת מחדל: הוספת פרס
     await openAddPrize(familyId);

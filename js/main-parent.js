@@ -1011,10 +1011,16 @@ async function startDashTour(familyId, uid) {
       text: 'כאן מוצגות המשימות שנותרו לביצוע היום לכל ילד — מתחלפות אוטומטית אם יש כמה'
     },
     {
+      el: '#dash-quick-actions',
+      title: 'פעולות מהירות ⚡',
+      text: 'מכאן תוכל להוסיף משימות ופרסים, לערוך אותם ולנהל את הפעילות המשפחתית'
+    },
+    {
       el: '#parent-bottom-nav',
-      title: 'תפריט ☰',
-      text: 'כאן תוכל לנהל משפחה, משימות, פרסים, נקודות ועוד — הכל במקום אחד',
-      exact: true
+      title: 'תפריט הניווט 🧭',
+      text: 'בסרגל התחתון: בית, מרכז פעילות, נתונים — ובתפריט הראשי תמצא את כל הניהול',
+      exact: true,
+      highlight: true
     },
   ];
 
@@ -1053,9 +1059,10 @@ async function startDashTour(familyId, uid) {
   function applyShutters(el) {
     const rect = el.getBoundingClientRect();
     if (!rect.height) return false;
+    const NAV_H = document.getElementById('parent-bottom-nav')?.offsetHeight || 0;
     shutterTop.style.height = Math.max(0, rect.top - PAD) + 'px';
-    shutterBottom.style.height = Math.max(0, window.innerHeight - rect.bottom - PAD) + 'px';
-    const fitsBelow = rect.bottom + 200 < window.innerHeight;
+    shutterBottom.style.height = Math.max(0, window.innerHeight - rect.bottom - PAD - NAV_H) + 'px';
+    const fitsBelow = rect.bottom + 200 < window.innerHeight - NAV_H;
     card.style.top    = fitsBelow ? (rect.bottom + 10) + 'px' : 'auto';
     card.style.bottom = fitsBelow ? 'auto' : (window.innerHeight - rect.top + 10) + 'px';
     return true;
@@ -1065,6 +1072,8 @@ async function startDashTour(familyId, uid) {
     const step = visibleSteps[idx];
     const rawEl = document.querySelector(step.el);
     if (!rawEl) { endTour(); return; }
+
+    document.querySelectorAll('.tour-highlight').forEach(e => e.classList.remove('tour-highlight'));
 
     const el = step.exact ? rawEl : (rawEl.closest('.card') || rawEl.closest('[style]') || rawEl);
 
@@ -1102,6 +1111,7 @@ async function startDashTour(familyId, uid) {
       };
       document.getElementById('tour-skip')?.addEventListener('click', endTour);
 
+      if (step.highlight) rawEl.classList.add('tour-highlight');
       applyShutters(el);
       setTimeout(() => card.classList.add('visible'), 130);
 
@@ -1111,6 +1121,7 @@ async function startDashTour(familyId, uid) {
   }
 
   async function endTour() {
+    document.querySelectorAll('.tour-highlight').forEach(e => e.classList.remove('tour-highlight'));
     card.classList.remove('visible');
     shutterTop.style.height = Math.ceil(window.innerHeight / 2 + 2) + 'px';
     shutterBottom.style.height = Math.ceil(window.innerHeight / 2 + 2) + 'px';
