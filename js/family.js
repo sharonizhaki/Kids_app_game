@@ -354,13 +354,15 @@ export async function renderDashboardChildren(familyId) {
     );
     try {
       const stateSnap = await getDoc(doc(db, 'families', familyId, 'children', child.id, 'state', 'current'));
-      if (!stateSnap.exists()) return { weekly: 0, total: childTasks.length, done: 0 };
-      const hist = stateSnap.data().hist || [];
+      if (!stateSnap.exists()) return { weekly: 0, total: childTasks.length, done: 0, pts: 0 };
+      const data = stateSnap.data();
+      const hist = data.hist || [];
+      const pts = data.pts || 0;
       const weekly = hist.filter(h => (h.ts||0) >= startOfWeek).reduce((s,h) => s+(h.pts||0), 0);
       const completedTodayIds = new Set(hist.filter(h => (h.ts||0) >= todayStart).map(h => h.taskId));
       const done = childTasks.filter(t => completedTodayIds.has(t.id)).length;
-      return { weekly, total: childTasks.length, done };
-    } catch(e) { return { weekly: 0, total: childTasks.length, done: 0 }; }
+      return { weekly, total: childTasks.length, done, pts };
+    } catch(e) { return { weekly: 0, total: childTasks.length, done: 0, pts: 0 }; }
   });
 
   const stats = await Promise.all(statsPromises);
@@ -368,7 +370,7 @@ export async function renderDashboardChildren(familyId) {
   grid.innerHTML = children.map((child, i) => {
     const hasPhoto = child.photo && child.photo.length > 10;
     const color    = child.color || CHILD_COLORS[i % CHILD_COLORS.length];
-    const { weekly, total, done } = stats[i];
+    const { weekly, total, done, pts } = stats[i];
     const pending  = pendingPrizeRequests[child.id] || 0;
     const isWaiting = child.status === 'waiting';
 
@@ -421,7 +423,10 @@ export async function renderDashboardChildren(familyId) {
         </div>
         <div style="font-weight:800;font-size:0.88rem;color:var(--text);white-space:nowrap;
                     overflow:hidden;text-overflow:ellipsis;width:100%;">${child.name}</div>
-        <div style="font-size:0.75rem;font-weight:700;color:#F59E0B;margin-top:4px;">⭐ ${weekly} השבוע</div>
+        <div style="display:flex;justify-content:space-between;width:100%;font-size:0.72rem;font-weight:700;margin-top:4px;direction:rtl;">
+          <span style="color:#F59E0B;">⭐ ${weekly} השבוע</span>
+          <span style="color:#7C3AED;">💰 ${pts}</span>
+        </div>
         ${progressBar}
         ${prizeBadge}
         ${waitingBadge}
