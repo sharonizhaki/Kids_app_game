@@ -77,33 +77,6 @@ exports.eveningParentNotification = onSchedule(
   }
 );
 
-exports.testNotification10 = onSchedule(
-  { schedule: '0 10 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
-  async () => {
-    await sendPushToAllParents('🔔 הודעת בדיקה', 'בדיקה — 10:00', { url: '/parent.html', type: 'test' });
-  }
-);
-
-exports.testNotification11 = onSchedule(
-  { schedule: '0 11 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
-  async () => {
-    await sendPushToAllParents('🔔 הודעת בדיקה', 'בדיקה — 11:00', { url: '/parent.html', type: 'test' });
-  }
-);
-
-exports.testNotification12 = onSchedule(
-  { schedule: '0 12 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
-  async () => {
-    await sendPushToAllParents('🔔 הודעת בדיקה', 'בדיקה — 12:00', { url: '/parent.html', type: 'test' });
-  }
-);
-
-exports.testNotification13 = onSchedule(
-  { schedule: '0 13 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
-  async () => {
-    await sendPushToAllParents('🔔 הודעת בדיקה', 'בדיקה — 13:00', { url: '/parent.html', type: 'test' });
-  }
-);
 
 // =========================================================
 // FIRESTORE TRIGGERS — Gen2
@@ -189,6 +162,42 @@ exports.fsApprovalUpdated = onDocumentUpdated(
       approved ? `"${after.task}" — קיבלת ${pts} כוכבים ⭐` : `"${after.task}" — נסה שוב`,
       { url: '/child.html', type: approved ? 'task_approved' : 'task_rejected' }
     );
+    if (stale.length > 0) await removeStaleTokens(childRef, 'fcmTokens', stale);
+  }
+);
+
+// הורה שינה כוכבים ידנית → התראה לילד
+exports.fsChildPtsUpdated = onDocumentUpdated(
+  { document: 'families/{familyId}/children/{childId}', region: REGION },
+  async (event) => {
+    const before = event.data.before.data();
+    const after  = event.data.after.data();
+    if (!before || !after) return;
+
+    const prevPts = before.pts ?? 0;
+    const newPts  = after.pts  ?? 0;
+    if (prevPts === newPts) return;
+
+    const tokens = after.fcmTokens || [];
+    if (tokens.length === 0) return;
+
+    const diff    = newPts - prevPts;
+    const added   = diff > 0;
+    const absDiff = Math.abs(diff);
+
+    const title = added
+      ? `⭐ קיבלת ${absDiff} כוכב${absDiff !== 1 ? 'ים' : ''}!`
+      : `💫 הופחתו ${absDiff} כוכב${absDiff !== 1 ? 'ים' : ''}`;
+    const body = added
+      ? `יש לך עכשיו ${newPts} כוכבים — כל הכבוד! 🎉`
+      : `יש לך עכשיו ${newPts} כוכבים`;
+
+    const childRef = event.data.after.ref;
+
+    const stale = await sendPush(tokens, title, body, {
+      url: '/child.html',
+      type: added ? 'pts_added' : 'pts_deducted',
+    });
     if (stale.length > 0) await removeStaleTokens(childRef, 'fcmTokens', stale);
   }
 );
