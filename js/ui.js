@@ -149,7 +149,7 @@ export async function openSideMenu({ auth, onAction, isPrimary = true, activityC
       <span class="side-item-text">ניהול משפחה</span>
     </div>
     <div class="side-item" data-action="add-tasks">
-      <div class="side-icon" style="background:linear-gradient(135deg,#D1FAE5,#A7F3D0);">📋</div>
+      <div class="side-icon" style="background:linear-gradient(135deg,#D1FAE5,#A7F3D0);">➕</div>
       <span class="side-item-text">הוספת משימות</span>
     </div>
     <div class="side-item" data-action="edit-tasks">
@@ -166,7 +166,7 @@ export async function openSideMenu({ auth, onAction, isPrimary = true, activityC
       <span id="side-prizes-badge" style="display:none;background:#EF4444;color:white;font-size:0.65rem;font-weight:900;border-radius:999px;padding:2px 7px;min-width:18px;text-align:center;margin-right:auto;"></span>
     </div>
     <div class="side-item" data-action="manage-points">
-      <div class="side-icon" style="background:linear-gradient(135deg,#CCFBF1,#99F6E4);">📋</div>
+      <div class="side-icon" style="background:linear-gradient(135deg,#CCFBF1,#99F6E4);">⭐</div>
       <span class="side-item-text">מרכז פעילות</span>
       ${activityCount > 0 ? `<span style="width:10px;height:10px;background:#EF4444;border-radius:50%;display:inline-block;flex-shrink:0;margin-right:auto;box-shadow:0 1px 4px rgba(239,68,68,0.5);"></span>` : ''}
     </div>
