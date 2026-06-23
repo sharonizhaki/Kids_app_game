@@ -445,7 +445,11 @@ export function openEditTask(childId, taskId, familyId) {
     const genderEmoji = c.gender === 'male' ? '👦' : '👧';
     const hasPhoto = c.photo && c.photo.length > 10;
     const photoHTML = hasPhoto ? `<img src="${c.photo}" alt="${c.name}">` : `<span>${c.emoji || genderEmoji}</span>`;
-    return `<div class="assign-opt${c.id === childId?' selected':''}" data-child-id="${c.id}">
+    const isSelected = etAssignedChildren.includes(c.id);
+    const color = c.color || '#7C3AED';
+    const bg = colorGradient ? colorGradient(color) : color;
+    const selStyle = isSelected ? `border-color:${color};background:${bg};box-shadow:0 0 0 3px ${color}33;` : '';
+    return `<div class="assign-opt${isSelected?' selected':''}" data-child-id="${c.id}" data-color="${color}" style="${selStyle}">
       <div class="assign-photo">${photoHTML}</div>
       <span class="assign-name">${c.name}</span>
     </div>`;
@@ -454,6 +458,17 @@ export function openEditTask(childId, taskId, familyId) {
     el.onclick = () => {
       el.classList.toggle('selected');
       const cid = el.dataset.childId;
+      const color = el.dataset.color || '#7C3AED';
+      const bg = colorGradient ? colorGradient(color) : color;
+      if (el.classList.contains('selected')) {
+        el.style.borderColor = color;
+        el.style.background = bg;
+        el.style.boxShadow = `0 0 0 3px ${color}33`;
+      } else {
+        el.style.borderColor = '';
+        el.style.background = '';
+        el.style.boxShadow = '';
+      }
       if (etAssignedChildren.includes(cid)) etAssignedChildren = etAssignedChildren.filter(id => id !== cid);
       else etAssignedChildren.push(cid);
     };
