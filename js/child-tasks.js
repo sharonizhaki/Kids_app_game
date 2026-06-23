@@ -323,7 +323,7 @@ function showCatModal(cat, saveStateFn, renderChildFn) {
       btnPhoto.className = 'task-btn-photo';
       btnPhoto.textContent = '📸';
       btnPhoto.title = 'צלם תמונה (אופציונלי)';
-      btnPhoto.onclick = () => _handleComplete(t, false, saveStateFn, renderChildFn, ov);
+      btnPhoto.onclick = () => _handleComplete(t, true, saveStateFn, renderChildFn, ov);
 
       actions.appendChild(btnDone);
       actions.appendChild(btnPhoto);
@@ -452,31 +452,34 @@ export function showTaskSuccessPopup(pts) {
   flyStarToCounter(pts);
 }
 
+// -------- PHOTO PREVIEW MODAL --------
+function _showPhotoPreview(photoUrl, onSend, onRetake, onCancel) {
+  const prev = document.getElementById('_photo-preview-modal');
+  if (prev) prev.remove();
+
+  const modal = document.createElement('div');
+  modal.id = '_photo-preview-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.82);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:16px;';
+  modal.innerHTML = `
+    <img src="${photoUrl}" style="max-width:100%;max-height:55vh;border-radius:16px;object-fit:contain;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+    <div style="display:flex;gap:12px;width:100%;max-width:340px;">
+      <button id="_ph-retake" style="flex:1;padding:13px 0;border-radius:14px;border:2px solid #A78BFA;background:#1E1B4B;color:#C4B5FD;font-size:0.95rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">🔄 צלם שוב</button>
+      <button id="_ph-send"   style="flex:2;padding:13px 0;border-radius:14px;border:none;background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;font-size:0.95rem;font-weight:900;font-family:'Heebo',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,0.45);">שלח ✓</button>
+    </div>
+    <button id="_ph-cancel" style="background:none;border:none;color:#94A3B8;font-size:0.85rem;font-family:'Heebo',sans-serif;cursor:pointer;padding:4px 12px;">ביטול</button>
+  `;
+  document.body.appendChild(modal);
+  modal.querySelector('#_ph-send').onclick   = () => { modal.remove(); onSend(); };
+  modal.querySelector('#_ph-retake').onclick = () => { modal.remove(); onRetake(); };
+  modal.querySelector('#_ph-cancel').onclick = () => { modal.remove(); onCancel(); };
+}
+
 // -------- HANDLE COMPLETE --------
 function _handleComplete(t, withPhoto, saveStateFn, renderChildFn, ov) {
   if (withPhoto) {
-    // פותח מצלמה — לא מסמן עדיין
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.capture = 'environment';
-    input.onchange = async () => {
-      const file = input.files[0];
-      const photoUrl = file ? await _compressPhoto(file) : '';
-      // אחרי בחירת תמונה — מסמן כבוצע
-      completeTask(t, saveStateFn, photoUrl);
-      ov.remove();
-      if (t.requireApproval) {
-        showApprovalSentPopup(true);
-      } else {
-        showTaskSuccessPopup(t.pts);
-      }
-      renderChildFn();
-    };
-    input.click();
+    _openCamera(t, saveStateFn, renderChildFn, ov);
     return;
   }
-
   completeTask(t, saveStateFn);
   ov.remove();
   if (t.requireApproval) {
@@ -485,6 +488,31 @@ function _handleComplete(t, withPhoto, saveStateFn, renderChildFn, ov) {
     showTaskSuccessPopup(t.pts);
   }
   renderChildFn();
+}
+
+function _openCamera(t, saveStateFn, renderChildFn, ov) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = 'environment';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    const photoUrl = await _compressPhoto(file);
+    _showPhotoPreview(
+      photoUrl,
+      () => {
+        completeTask(t, saveStateFn, photoUrl);
+        ov.remove();
+        if (t.requireApproval) showApprovalSentPopup(true);
+        else showTaskSuccessPopup(t.pts);
+        renderChildFn();
+      },
+      () => _openCamera(t, saveStateFn, renderChildFn, ov),
+      () => {}
+    );
+  };
+  input.click();
 }
 // -------- COMPRESS PHOTO --------
 function _compressPhoto(file) {

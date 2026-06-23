@@ -395,7 +395,7 @@ async function loadChild() {
           listenForegroundMessages(payload => {
             const title = payload.notification?.title || '';
             const body  = payload.notification?.body  || '';
-            if (title || body) showToast({ message: (title + ' ' + body).trim() });
+            if (title || body) showToast((title + ' ' + body).trim());
           });
         }
       } catch(e) { console.warn('child notifications error:', e); }
@@ -527,7 +527,7 @@ async function loadChild() {
               renderChild();
               const prizesScreen = document.getElementById('screen-prizes-child');
               if (prizesScreen && prizesScreen.classList.contains('active')) renderPrizesScreen();
-              showToast({ message: `${data.prizeEmoji || '🎁'} ${data.prizeTitle} אושר!`, color: state.childData?.color });
+              showToast(`${data.prizeEmoji || '🎁'} ${data.prizeTitle} אושר!`);
             }
           }
         });
