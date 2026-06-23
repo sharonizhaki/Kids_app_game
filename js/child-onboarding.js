@@ -173,32 +173,33 @@ function showPhotoStep() {
 
   animateIn(overlay.querySelector('#ob-card'));
 
-  // העלאת תמונה
-  overlay.querySelector('#ob-photo-input').onchange = async (e) => {
+  // העלאת תמונה — named function כדי שניתן להצמיד מחדש אחרי עדכון DOM
+  async function handlePhotoChange(e) {
     const file = e.target.files[0];
     if (!file) return;
     try {
       _obPhoto = await cropAndCompressPhoto(file);
-      // עדכן תצוגה
       const circle = overlay.querySelector('#ob-photo-circle');
       circle.innerHTML = `
         <img id="ob-photo-img" src="${_obPhoto}" alt="תמונה">
         <input type="file" accept="image/*" id="ob-photo-input" class="ob-photo-file-input">`;
-      // הוסף כפתור פח
-      if (!overlay.querySelector('#ob-photo-trash')) {
-        const trash = document.createElement('button');
+      overlay.querySelector('#ob-photo-input').onchange = handlePhotoChange;
+      let trash = overlay.querySelector('#ob-photo-trash');
+      if (!trash) {
+        trash = document.createElement('button');
         trash.className = 'ob-trash-btn'; trash.id = 'ob-photo-trash'; trash.title = 'הסר תמונה';
         trash.textContent = '🗑️';
         overlay.querySelector('.ob-photo-area').appendChild(trash);
-        trash.onclick = () => clearPhoto();
       }
-      // re-attach file input listener
-      overlay.querySelector('#ob-photo-input').onchange = arguments.callee;
+      trash.onclick = () => clearPhoto();
+      overlay.querySelector('#ob-photo-error').textContent = '';
       showPopup('📸', 'תמונה נבחרה!');
     } catch {
       overlay.querySelector('#ob-photo-error').textContent = 'שגיאה בטעינת התמונה ⚠️';
     }
-  };
+  }
+
+  overlay.querySelector('#ob-photo-input').onchange = handlePhotoChange;
 
   // כפתור פח
   const trashBtn = overlay.querySelector('#ob-photo-trash');
@@ -210,27 +211,7 @@ function showPhotoStep() {
     circle.innerHTML = `
       <div class="ob-photo-placeholder"><span>📷</span><small>${g('בחר תמונה', 'בחרי תמונה')}</small></div>
       <input type="file" accept="image/*" id="ob-photo-input" class="ob-photo-file-input">`;
-    overlay.querySelector('#ob-photo-input').onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      try {
-        _obPhoto = await cropAndCompressPhoto(file);
-        circle.innerHTML = `<img id="ob-photo-img" src="${_obPhoto}" alt="תמונה">
-          <input type="file" accept="image/*" id="ob-photo-input" class="ob-photo-file-input">`;
-        overlay.querySelector('#ob-photo-input').onchange = arguments.callee;
-        let trash = overlay.querySelector('#ob-photo-trash');
-        if (!trash) {
-          trash = document.createElement('button');
-          trash.className = 'ob-trash-btn'; trash.id = 'ob-photo-trash'; trash.title = 'הסר תמונה';
-          trash.textContent = '🗑️';
-          overlay.querySelector('.ob-photo-area').appendChild(trash);
-        }
-        trash.onclick = () => clearPhoto();
-        showPopup('📸', 'תמונה נבחרה!');
-      } catch {
-        overlay.querySelector('#ob-photo-error').textContent = 'שגיאה בטעינת התמונה ⚠️';
-      }
-    };
+    overlay.querySelector('#ob-photo-input').onchange = handlePhotoChange;
     const t = overlay.querySelector('#ob-photo-trash');
     if (t) t.remove();
     showPopup('🗑️', 'התמונה הוסרה');
