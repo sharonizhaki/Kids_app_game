@@ -61,9 +61,8 @@ function _markActivitySeen(familyId) {
 
 function _setActivityBadge(count) {
   _currentActivityCount = count;
-  const badge = document.getElementById('activity-badge');
-  if (!badge) return;
-  badge.style.display = count > 0 ? 'block' : 'none';
+  const badge = document.getElementById('nav-activity-badge');
+  if (badge) badge.style.display = count > 0 ? 'block' : 'none';
 }
 
 let _activityUnsubs = [];

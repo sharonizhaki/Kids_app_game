@@ -24,8 +24,8 @@ function _render() {
       <span class="pbn-icon">🏠</span>
       <span class="pbn-label">בית</span>
     </button>
-    <button class="pbn-tab${_activePage === 'activity' ? ' pbn-active' : ''}" data-tab="activity">
-      <span class="pbn-icon">⭐</span>
+    <button class="pbn-tab${_activePage === 'activity' ? ' pbn-active' : ''}" data-tab="activity" style="position:relative;">
+      <span class="pbn-icon" style="position:relative;display:inline-block;">⭐<span id="nav-activity-badge" style="display:none;position:absolute;top:-3px;left:-3px;width:9px;height:9px;background:#EF4444;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(239,68,68,0.5);"></span></span>
       <span class="pbn-label">מרכז פעילות</span>
     </button>
     <button class="pbn-tab${_activePage === 'family' ? ' pbn-active' : ''}" data-tab="family">
