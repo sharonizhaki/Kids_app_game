@@ -4,6 +4,7 @@
 
 import { doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { state, g } from './child-state.js';
+import { openPhotoModal } from './child-ui.js';
 import { cropAndCompressPhoto } from './ui.js';
 import { SPLAT_SVG } from './icons.js';
 import { requestPushPermission, saveChildFcmToken } from './notifications.js';
@@ -173,6 +174,28 @@ function showPhotoStep() {
 
   animateIn(overlay.querySelector('#ob-card'));
 
+  // כשיש תמונה קיימת — לחיצה על העיגול פותחת modal ולא picker ישיר
+  function attachCircleModal() {
+    const circle = overlay.querySelector('#ob-photo-circle');
+    const input  = overlay.querySelector('#ob-photo-input');
+    if (!circle || !input) return;
+    input.style.pointerEvents = 'none';
+    circle.onclick = () => openPhotoModal(
+      _obPhoto,
+      () => overlay.querySelector('#ob-photo-input').click(),
+      () => clearPhoto()
+    );
+  }
+
+  function detachCircleModal() {
+    const circle = overlay.querySelector('#ob-photo-circle');
+    const input  = overlay.querySelector('#ob-photo-input');
+    if (circle) circle.onclick = null;
+    if (input)  input.style.pointerEvents = 'auto';
+  }
+
+  if (hasPhoto) attachCircleModal();
+
   // העלאת תמונה — named function כדי שניתן להצמיד מחדש אחרי עדכון DOM
   async function handlePhotoChange(e) {
     const file = e.target.files[0];
@@ -193,6 +216,7 @@ function showPhotoStep() {
       }
       trash.onclick = () => clearPhoto();
       overlay.querySelector('#ob-photo-error').textContent = '';
+      attachCircleModal();
       showPopup('📸', 'תמונה נבחרה!');
     } catch {
       overlay.querySelector('#ob-photo-error').textContent = 'שגיאה בטעינת התמונה ⚠️';
@@ -212,6 +236,7 @@ function showPhotoStep() {
       <div class="ob-photo-placeholder"><span>📷</span><small>${g('בחר תמונה', 'בחרי תמונה')}</small></div>
       <input type="file" accept="image/*" id="ob-photo-input" class="ob-photo-file-input">`;
     overlay.querySelector('#ob-photo-input').onchange = handlePhotoChange;
+    detachCircleModal();
     const t = overlay.querySelector('#ob-photo-trash');
     if (t) t.remove();
     showPopup('🗑️', 'התמונה הוסרה');

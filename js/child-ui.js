@@ -47,3 +47,25 @@ export function makeModal(title) {
 export function closeModals() {
   document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
 }
+
+// -------- PHOTO PREVIEW MODAL --------
+// src: מקור התמונה; onReplace: callback לפתיחת picker; onDelete: callback למחיקה
+export function openPhotoModal(src, onReplace, onDelete) {
+  document.getElementById('_photo-modal')?.remove();
+  const ov = document.createElement('div');
+  ov.id = '_photo-modal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;';
+  ov.innerHTML = `
+    <img src="${src}" style="width:210px;height:210px;border-radius:50%;object-fit:cover;border:4px solid white;box-shadow:0 8px 40px rgba(0,0,0,0.4);">
+    <div style="display:flex;gap:16px;">
+      <button id="_pm-replace" style="padding:13px 26px;border-radius:14px;border:none;background:#7C3AED;color:white;font-size:1rem;font-weight:800;cursor:pointer;font-family:inherit;">📷 החלף</button>
+      <button id="_pm-delete"  style="padding:13px 26px;border-radius:14px;border:none;background:#FEE2E2;color:#DC2626;font-size:1rem;font-weight:800;cursor:pointer;font-family:inherit;">🗑️ מחק</button>
+    </div>
+    <button id="_pm-close" style="color:rgba(255,255,255,0.65);background:none;border:none;font-size:0.95rem;cursor:pointer;padding:8px;">✕ סגור</button>`;
+  const close = () => ov.remove();
+  ov.addEventListener('click', e => { if (e.target === ov) close(); });
+  ov.querySelector('#_pm-close').onclick    = close;
+  ov.querySelector('#_pm-replace').onclick  = () => { close(); onReplace(); };
+  ov.querySelector('#_pm-delete').onclick   = () => { close(); onDelete(); };
+  document.body.appendChild(ov);
+}

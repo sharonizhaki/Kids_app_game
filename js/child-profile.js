@@ -4,7 +4,7 @@
 
 import { doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { state, g } from './child-state.js';
-import { show } from './child-ui.js';
+import { show, openPhotoModal } from './child-ui.js';
 import { cropAndCompressPhoto } from './ui.js';
 import { SPLAT_SVG } from './icons.js';
 
@@ -38,36 +38,47 @@ export function initProfile(db, renderChildFn) {
 
   document.getElementById('btn-profile-back').onclick = () => show('screen-child');
 
+  function doClearPhoto() {
+    profilePhotoData    = null;
+    profilePhotoCleared = true;
+    document.getElementById('profile-photo-preview').style.display = 'none';
+    document.getElementById('profile-photo-placeholder').style.display = '';
+    document.getElementById('profile-photo-input').value = '';
+    document.getElementById('profile-photo-input').style.pointerEvents = 'auto';
+    const upload = document.getElementById('profile-photo-upload');
+    upload.style.border = '3px dashed var(--border)'; upload.style.width = '95px'; upload.style.height = '95px';
+    document.getElementById('profile-error').textContent = '';
+  }
+
+  // לחיצה על אזור התמונה: אם יש תמונה → modal; אם אין → file picker (ע"י input מכוסה)
+  document.getElementById('profile-photo-upload').onclick = () => {
+    const preview = document.getElementById('profile-photo-preview');
+    if (preview.style.display !== 'none') {
+      openPhotoModal(
+        preview.src,
+        () => document.getElementById('profile-photo-input').click(),
+        doClearPhoto
+      );
+    }
+  };
+
   document.getElementById('profile-photo-input').onchange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     profilePhotoCleared = false;
     try {
       profilePhotoData = await cropAndCompressPhoto(file);
-      document.getElementById('profile-photo-preview').src = profilePhotoData;
-      document.getElementById('profile-photo-preview').style.display = 'block';
+      const preview = document.getElementById('profile-photo-preview');
+      preview.src = profilePhotoData;
+      preview.style.display = 'block';
       document.getElementById('profile-photo-placeholder').style.display = 'none';
+      document.getElementById('profile-photo-input').style.pointerEvents = 'none';
       const upload = document.getElementById('profile-photo-upload');
       upload.style.border = 'none'; upload.style.width = '85px'; upload.style.height = '85px';
-      const clearBtn = document.getElementById('btn-profile-clear-photo');
-      clearBtn.innerHTML = '🗑️ מחק';
-      clearBtn.style.display = 'block';
-    } catch (err) {
+      document.getElementById('profile-error').textContent = '';
+    } catch {
       document.getElementById('profile-error').textContent = 'שגיאה בטעינת התמונה ⚠️';
     }
-  };
-
-  document.getElementById('btn-profile-clear-photo').onclick = () => {
-    profilePhotoData    = null;
-    profilePhotoCleared = true;
-    document.getElementById('profile-photo-preview').style.display = 'none';
-    document.getElementById('profile-photo-placeholder').style.display = '';
-    document.getElementById('profile-photo-input').value = '';
-    const upload = document.getElementById('profile-photo-upload');
-    upload.style.border = '3px dashed var(--border)'; upload.style.width = '95px'; upload.style.height = '95px';
-    const clearBtn = document.getElementById('btn-profile-clear-photo');
-    clearBtn.style.display = 'none';
-    clearBtn.innerHTML = '🗑️ מחק';
   };
 
   document.getElementById('btn-profile-save').onclick = saveProfile;
@@ -107,19 +118,18 @@ export function openChildProfile() {
   const preview     = document.getElementById('profile-photo-preview');
   const placeholder = document.getElementById('profile-photo-placeholder');
   const upload      = document.getElementById('profile-photo-upload');
-  const clearBtn    = document.getElementById('btn-profile-clear-photo');
+  const photoInput  = document.getElementById('profile-photo-input');
   if (childData.photo && childData.photo.length > 10) {
-    preview.src            = childData.photo;
-    preview.style.display  = 'block';
+    preview.src               = childData.photo;
+    preview.style.display     = 'block';
     placeholder.style.display = 'none';
     upload.style.border = 'none'; upload.style.width = '85px'; upload.style.height = '85px';
-    clearBtn.innerHTML = '🗑️ מחק';
-    clearBtn.style.display = 'block';
+    photoInput.style.pointerEvents = 'none';
   } else {
     preview.style.display     = 'none';
     placeholder.style.display = '';
     upload.style.border = '3px dashed var(--border)'; upload.style.width = '95px'; upload.style.height = '95px';
-    clearBtn.style.display = 'none';
+    photoInput.style.pointerEvents = 'auto';
   }
 
   document.getElementById('profile-error').textContent = '';
