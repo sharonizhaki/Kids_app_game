@@ -147,7 +147,10 @@ async function _submitPending(t, saveStateFn, photoUrl = '') {
           ...(storedPhotoUrl ? { photoUrl: storedPhotoUrl } : {}),
         }
       );
-    } catch (e) { console.error('pendingApprovals write error:', e); }
+    } catch (e) {
+      console.error('pendingApprovals write error:', e);
+      showToast('שגיאה בשליחה — נסה שוב ⚠️');
+    }
   }
 }
 
@@ -495,7 +498,10 @@ function _openCamera(t, saveStateFn, renderChildFn, ov) {
   input.type = 'file';
   input.accept = 'image/*';
   input.capture = 'environment';
+  input.style.cssText = 'position:fixed;top:-200px;left:-200px;opacity:0;pointer-events:none;';
+  document.body.appendChild(input);
   input.onchange = async () => {
+    document.body.removeChild(input);
     const file = input.files[0];
     if (!file) return;
     const photoUrl = await _compressPhoto(file);
