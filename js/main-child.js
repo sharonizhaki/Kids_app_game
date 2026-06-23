@@ -386,10 +386,6 @@ async function loadChild() {
     // תזמון תזכורות + האזנה להודעות foreground
     (async () => {
       try {
-        // תזמן תזכורות לפי שעות המשימות (7 ימים קדימה)
-        if (state.tasksData?.length) {
-          await scheduleTaskReminders(state.tasksData);
-        }
         // הצג toast כשמגיעה הודעה בזמן שהאפליקציה פתוחה
         if (isPushGranted()) {
           listenForegroundMessages(payload => {
@@ -426,6 +422,7 @@ async function loadChild() {
           state.tasksData.push({ id: d.id, ...data });
       });
       renderChild();
+      scheduleTaskReminders(state.tasksData);
     });
 
     // listener על prizes — לעדכן את בר המתנות בזמן אמת
