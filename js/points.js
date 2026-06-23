@@ -41,7 +41,7 @@ export function renderMPTabs(familyId) {
 
   const pendingTaskCount  = allPendingApprovals.filter(p => p.status === 'pending').length;
   const pendingPrizeCount = allPrizeRequests.filter(r => r.status === 'pending').length;
-  const totalPending = pendingTaskCount + pendingPrizeCount + allCancelledTasks.length;
+  const totalPending = pendingTaskCount + pendingPrizeCount;
 
   const tabs = [
     { key: 'history',  label: '📋 היסטוריה', badge: 0 },
@@ -253,12 +253,8 @@ export function renderPendingTab(familyId) {
 
   const pendingTasks    = allPendingApprovals.filter(p => p.status === 'pending');
   const pendingPrizes   = allPrizeRequests.filter(r => r.status === 'pending');
-  const approvedPrizes  = allPrizeRequests.filter(r => r.status === 'approved')
-                            .sort((a, b) => (b.requestedAt?.toMillis?.() || b.requestedAt || 0)
-                                          - (a.requestedAt?.toMillis?.() || a.requestedAt || 0))
-                            .slice(0, 10);
 
-  if (pendingTasks.length === 0 && pendingPrizes.length === 0 && approvedPrizes.length === 0 && allCancelledTasks.length === 0) {
+  if (pendingTasks.length === 0 && pendingPrizes.length === 0) {
     list.innerHTML = '<div class="empty-state" style="padding:40px 0;">🎉<br><br>אין בקשות ממתינות</div>';
     return;
   }
@@ -351,87 +347,6 @@ export function renderPendingTab(familyId) {
     list.appendChild(sec);
   }
 
-  // משימות שבוטלו ע"י ההורה — ממתינות להחלטה
-  if (allCancelledTasks.length > 0) {
-    const hasPrevSections = pendingTasks.length > 0 || pendingPrizes.length > 0;
-    const sec = document.createElement('div');
-    sec.style.marginTop = hasPrevSections ? '20px' : '0';
-    sec.innerHTML = `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:0.82rem;font-weight:800;color:#64748B;">
-      <span>↩️</span><span>בוטלו — ממתינות להחלטה</span>
-      <span style="background:#7C3AED;color:white;border-radius:10px;font-size:0.7rem;font-weight:900;padding:1px 7px;">${allCancelledTasks.length}</span>
-    </div>`;
-    allCancelledTasks.forEach(item => {
-      const isDailyType = item.freq === 'daily' || item.freq === 'specific';
-      const card = document.createElement('div');
-      card.style.cssText = 'background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;';
-      card.innerHTML = `
-        <span style="font-size:1.6rem;">${item.emoji}</span>
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:800;font-size:0.88rem;color:#0F172A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.task}</div>
-          <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;">
-            <span style="background:#FEF3C7;color:#92400E;border-radius:6px;padding:1px 7px;font-size:0.68rem;font-weight:900;">↩️ בוטל</span>
-            <span style="font-size:0.75rem;color:#64748B;">${item.childEmoji} ${item.childName}</span>
-            <span style="font-size:0.75rem;color:#64748B;">${'⭐'.repeat(Math.min(item.pts||0,5)) || '⭐'}</span>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <button class="btn-reapprove" style="background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;border:none;border-radius:10px;padding:6px 10px;font-size:0.73rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;">✅ אשר בכ"ז</button>
-          ${!isDailyType ? `<button class="btn-permcancel" style="background:#FEE2E2;color:#B91C1C;border:none;border-radius:10px;padding:6px 10px;font-size:0.73rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;">🗑 בטל סופית</button>` : ''}
-        </div>`;
-      card.querySelector('.btn-reapprove').onclick = () => _reApproveTask(familyId, item);
-      if (!isDailyType) card.querySelector('.btn-permcancel').onclick = () => _permanentlyCancelTask(familyId, item);
-      sec.appendChild(card);
-    });
-    list.appendChild(sec);
-  }
-
-  // פרסים שכבר אושרו — אפשר לבטל
-  if (approvedPrizes.length > 0) {
-    const sec = document.createElement('div');
-    sec.style.marginTop = (pendingTasks.length > 0 || pendingPrizes.length > 0) ? '20px' : '0';
-    sec.innerHTML = `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:0.82rem;font-weight:800;color:#64748B;">
-      <span>🎁</span><span>פרסים שמומשו</span>
-      <span style="font-size:0.7rem;color:#94A3B8;font-weight:600;">(אפשר לבטל)</span>
-    </div>`;
-    approvedPrizes.forEach(r => {
-      const child = childrenCache.find(c => c.id === r.childId);
-      const childDisplay = child ? `${child.emoji || '👦'} ${child.name}` : r.childName || 'ילד';
-      const dateStr = r.requestedAt?.toDate
-        ? r.requestedAt.toDate().toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' })
-        : r.requestedAt
-          ? new Date(r.requestedAt).toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' })
-          : '';
-      const card = document.createElement('div');
-      card.style.cssText = 'background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:16px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;';
-      card.innerHTML = `
-        <span style="font-size:1.6rem;">${r.prizeEmoji || '🎁'}</span>
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:800;font-size:0.9rem;color:#0F172A;margin-bottom:2px;">${r.prizeName || r.name || ''}</div>
-          <div style="font-size:0.75rem;color:#92400E;">${childDisplay} · ⭐ ${r.pts || r.cost || 0} · ${dateStr}</div>
-        </div>
-        <button class="btn-prize-reverse"
-          style="background:#FEF3C7;color:#92400E;border:1.5px solid #FDE68A;border-radius:10px;padding:6px 10px;
-                 font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;">
-          ↩️ בטל
-        </button>`;
-      card.querySelector('.btn-prize-reverse').onclick = () => {
-        showConfirm({
-          icon: r.prizeEmoji || '🎁',
-          title: `לבטל: ${r.prizeName || r.name}?`,
-          message: `${child?.name || ''} יקבל בחזרה ${r.pts || r.cost || 0} ⭐`,
-          confirmText: '↩️ בטל מימוש',
-          confirmColor: 'linear-gradient(135deg,#7C3AED,#5B21B6)',
-          onConfirm: async () => {
-            await reversePrizeRequest(familyId, r.id);
-            await loadAllPrizeRequests(familyId);
-            renderMPTabs(familyId); renderPendingTab(familyId);
-          }
-        });
-      };
-      sec.appendChild(card);
-    });
-    list.appendChild(sec);
-  }
 }
 
 // =========== TAB: היסטוריה ===========
@@ -562,6 +477,94 @@ export function renderMPList(familyId) {
           <button class="btn-restore-prize" style="background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;border:none;border-radius:10px;padding:7px 10px;font-size:0.73rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;">✅ אשר</button>`;
         card.querySelector('.btn-restore-prize').onclick = () => _restoreRejectedPrize(familyId || _familyId, item);
       }
+      sec.appendChild(card);
+    });
+    list.appendChild(sec);
+  }
+
+  // קטע "בוטלו"
+  if (allCancelledTasks.length > 0) {
+    const sec = document.createElement('div');
+    sec.style.marginTop = '20px';
+    sec.innerHTML = `
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:0.82rem;font-weight:800;color:#64748B;">
+        <span>↩️</span><span>בוטלו</span>
+        <span style="font-size:0.7rem;color:#94A3B8;font-weight:600;">(אפשר לאשר בדיעבד)</span>
+      </div>`;
+    allCancelledTasks.forEach(item => {
+      const isDailyType = item.freq === 'daily' || item.freq === 'specific';
+      const card = document.createElement('div');
+      card.style.cssText = 'background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;';
+      card.innerHTML = `
+        <span style="font-size:1.6rem;">${item.emoji}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:800;font-size:0.88rem;color:#0F172A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.task}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;">
+            <span style="background:#FEF3C7;color:#92400E;border-radius:6px;padding:1px 7px;font-size:0.68rem;font-weight:900;">↩️ בוטל</span>
+            <span style="font-size:0.75rem;color:#64748B;">${item.childEmoji} ${item.childName}</span>
+            <span style="font-size:0.75rem;color:#64748B;">${'⭐'.repeat(Math.min(item.pts||0,5)) || '⭐'}</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <button class="btn-reapprove" style="background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;border:none;border-radius:10px;padding:6px 10px;font-size:0.73rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;">✅ אשר בכ"ז</button>
+          ${!isDailyType ? `<button class="btn-permcancel" style="background:#FEE2E2;color:#B91C1C;border:none;border-radius:10px;padding:6px 10px;font-size:0.73rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;">🗑 בטל סופית</button>` : ''}
+        </div>`;
+      card.querySelector('.btn-reapprove').onclick = () => _reApproveTask(familyId || _familyId, item);
+      if (!isDailyType) card.querySelector('.btn-permcancel').onclick = () => _permanentlyCancelTask(familyId || _familyId, item);
+      sec.appendChild(card);
+    });
+    list.appendChild(sec);
+  }
+
+  // קטע "פרסים שמומשו"
+  const approvedPrizes = allPrizeRequests
+    .filter(r => r.status === 'approved')
+    .sort((a, b) => (b.requestedAt?.toMillis?.() || b.requestedAt || 0) - (a.requestedAt?.toMillis?.() || a.requestedAt || 0))
+    .slice(0, 10);
+  if (approvedPrizes.length > 0) {
+    const sec = document.createElement('div');
+    sec.style.marginTop = '20px';
+    sec.innerHTML = `
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:0.82rem;font-weight:800;color:#64748B;">
+        <span>🎁</span><span>פרסים שמומשו</span>
+        <span style="font-size:0.7rem;color:#94A3B8;font-weight:600;">(אפשר לבטל)</span>
+      </div>`;
+    approvedPrizes.forEach(r => {
+      const child = childrenCache.find(c => c.id === r.childId);
+      const childDisplay = child ? `${child.emoji || '👦'} ${child.name}` : r.childName || 'ילד';
+      const dateStr = r.requestedAt?.toDate
+        ? r.requestedAt.toDate().toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' })
+        : r.requestedAt
+          ? new Date(r.requestedAt).toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' })
+          : '';
+      const card = document.createElement('div');
+      card.style.cssText = 'background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:16px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;';
+      card.innerHTML = `
+        <span style="font-size:1.6rem;">${r.prizeEmoji || '🎁'}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:800;font-size:0.9rem;color:#0F172A;margin-bottom:2px;">${r.prizeName || r.name || ''}</div>
+          <div style="font-size:0.75rem;color:#92400E;">${childDisplay} · ⭐ ${r.pts || r.cost || 0} · ${dateStr}</div>
+        </div>
+        <button class="btn-prize-reverse"
+          style="background:#FEF3C7;color:#92400E;border:1.5px solid #FDE68A;border-radius:10px;padding:6px 10px;
+                 font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;">
+          ↩️ בטל
+        </button>`;
+      card.querySelector('.btn-prize-reverse').onclick = () => {
+        showConfirm({
+          icon: r.prizeEmoji || '🎁',
+          title: `לבטל: ${r.prizeName || r.name}?`,
+          message: `${child?.name || ''} יקבל בחזרה ${r.pts || r.cost || 0} ⭐`,
+          confirmText: '↩️ בטל מימוש',
+          confirmColor: 'linear-gradient(135deg,#7C3AED,#5B21B6)',
+          onConfirm: async () => {
+            await reversePrizeRequest(familyId || _familyId, r.id);
+            await loadAllPrizeRequests(familyId || _familyId);
+            renderMPTabs(familyId || _familyId);
+            renderMPList(familyId || _familyId);
+          }
+        });
+      };
       sec.appendChild(card);
     });
     list.appendChild(sec);

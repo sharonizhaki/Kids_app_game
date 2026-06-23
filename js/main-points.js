@@ -80,9 +80,11 @@ document.getElementById('btn-back-to-parent')?.addEventListener('click', () => {
     if (activeTab?.dataset?.tab === 'history') { renderMPFilters(); renderMPList(familyId); }
   });
 
-  initPrizeRequestsListener(familyId, () => {
+  initPrizeRequestsListener(familyId, async () => {
+    await loadAllPrizeRequests(familyId);
     renderMPTabs(familyId);
     const activeTab = document.querySelector('.mp-tab.active');
     if (activeTab?.dataset?.tab === 'pending') renderPendingTab(familyId);
+    if (activeTab?.dataset?.tab === 'history') { renderMPFilters(); renderMPList(familyId); }
   });
 })();
