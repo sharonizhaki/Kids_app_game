@@ -715,4 +715,5 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
 .pbn-tab.pbn-active .pbn-label{color:#7C3AED;font-weight:900;}
 .has-bottom-nav .screen{padding-bottom:0 !important;}
 .has-bottom-nav .screen::after{content:'';display:block;width:100%;height:calc(88px + env(safe-area-inset-bottom, 0px));flex-shrink:0;}
-#screen-add-task .card,#screen-edit-task .card,#screen-add-prize .card,#screen-edit-prize .card{padding-bottom:40px;}
+#screen-add-task .card,#screen-edit-task .card,#screen-add-prize .card,#screen-edit-prize .card,#screen-create-child .card,#screen-edit-child .card{padding-bottom:40px;}
+#screen-manage-family,#screen-create-child,#screen-edit-child,#screen-invite-code,#screen-parent-invite{overflow-y:auto !important;}
