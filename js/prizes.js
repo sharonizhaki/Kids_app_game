@@ -376,7 +376,7 @@ export function renderPrizeEmojiGrid(containerId, selectedEmoji, onChange) {
     kbInput.id = `${containerId}-kb-input`;
     kbInput.type = 'text';
     kbInput.placeholder = '✏️ הקלד אמוגי…';
-    kbInput.style.cssText = 'display:none;width:100%;margin-top:8px;padding:8px 12px;border-radius:10px;border:1.5px solid #A78BFA;font-size:1.4rem;text-align:center;outline:none;box-sizing:border-box;';
+    kbInput.style.cssText = 'display:none;width:100%;max-width:300px;margin:8px auto 0;padding:8px 12px;border-radius:10px;border:1.5px solid #A78BFA;font-size:1.4rem;text-align:center;outline:none;box-sizing:border-box;';
     grid.parentNode.insertBefore(kbInput, grid.nextSibling);
   }
 
