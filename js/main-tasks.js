@@ -3,6 +3,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/f
 import { getDocs, collection, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 import { showScreen, showToast, showLoading, hideLoading } from './ui.js';
+import { initParentNav } from './parent-nav.js';
 import { currentFamilyId, setCurrentFamilyId } from './auth.js';
 import { loadChildren } from './family.js';
 import {
@@ -149,6 +150,7 @@ function showQuickTasksConfirm(catName) {
 
   await loadChildren(getFamilyId());
   hideLoading();
+  initParentNav(null, null);
 
   // בדוק mode מ-sessionStorage (מועבר מ-parent.html)
   const mode = sessionStorage.getItem('tasksMode') || 'add';

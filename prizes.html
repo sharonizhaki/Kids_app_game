@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>עריכת פרסים</title>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/styles.css?v=2">
+  <link rel="stylesheet" href="./css/styles.css?v=3">
   <link rel="stylesheet" href="./css/bg-floaters.css?v=2">
 </head>
 <body>
@@ -271,6 +271,8 @@ import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/f
 import { getDocs, query, collection, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { initPrizesPage } from './js/main-prizes.js';
 
+import { initParentNav } from './js/parent-nav.js';
+
 onAuthStateChanged(auth, async user => {
   if (!user || user.isAnonymous) { window.location.href = 'index.html'; return; }
   try {
@@ -278,6 +280,7 @@ onAuthStateChanged(auth, async user => {
     if (fSnap.empty) fSnap = await getDocs(query(collection(db, 'families'), where('secondaryParentUid', '==', user.uid)));
     if (fSnap.empty) { window.location.href = 'index.html'; return; }
     await initPrizesPage(fSnap.docs[0].id);
+    initParentNav(null, null);
   } catch (e) {
     console.error(e);
     document.body.innerHTML = `<div style="padding:24px;font-family:monospace;direction:ltr;background:#fff;color:#c00;font-size:13px;white-space:pre-wrap;word-break:break-word;">DEBUG ERROR:\n${e && e.stack ? e.stack : String(e)}</div>`;

@@ -3,6 +3,7 @@ import { auth, db } from './firebase.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getDocs, collection, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { showScreen, hideLoading } from './ui.js';
+import { initParentNav } from './parent-nav.js';
 import { currentFamilyId, setCurrentFamilyId } from './auth.js';
 import {
   loadCompletedTasks, loadPendingApprovals, loadAllPrizeRequests, loadRejectedItems,
@@ -51,6 +52,7 @@ document.getElementById('btn-back-to-parent')?.addEventListener('click', () => {
   else if (tabParam) setMPState(tabParam, 'all', '');
 
   showScreen('screen-manage-points');
+  initParentNav('activity', null);
 
   await Promise.all([
     loadCompletedTasks(familyId),

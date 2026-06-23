@@ -3,6 +3,7 @@ import { auth, db } from './firebase.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getDocs, collection, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { showScreen, hideLoading } from './ui.js';
+import { initParentNav } from './parent-nav.js';
 import { currentFamilyId, setCurrentFamilyId } from './auth.js';
 import { loadAndRenderStats, initStatsPeriodChips } from './stats.js';
 
@@ -34,6 +35,7 @@ document.getElementById('btn-back-stats')?.addEventListener('click', () => {
   const familyId = currentFamilyId;
   hideLoading();
   showScreen('screen-stats');
+  initParentNav(null, null);
   initStatsPeriodChips(familyId);
   await loadAndRenderStats(familyId);
 })();

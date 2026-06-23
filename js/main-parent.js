@@ -5,6 +5,7 @@ import { onSnapshot, doc } from 'https://www.gstatic.com/firebasejs/10.12.0/fire
 import { showScreen, showToast, showLoading, hideLoading, openSideMenu, closeSideMenu, showConfirm } from './ui.js';
 import { cropAndCompressPhoto } from './ui.js';
 import { logoutParent, currentFamilyId, setCurrentFamilyId, confirmDeleteAccount, deleteAccount } from './auth.js';
+import { initParentNav } from './parent-nav.js';
 import {
   childrenCache, clearChildrenCache, loadChildren, renderFamily,
   createChild, saveChild, deleteChild,
@@ -356,6 +357,11 @@ async function handleQuickPrizes(triggerEl, category) {
 
   hideLoading();
   showScreen('screen-dashboard');
+  initParentNav('home', null);
+  const _urlParams = new URLSearchParams(window.location.search);
+  if (_urlParams.get('screen') === 'manage-family') {
+    setTimeout(() => document.getElementById('btn-manage-family')?.click(), 150);
+  }
   const childrenReady = renderDashboardChildren(currentFamilyId); // skeleton מיידי, טוען ברקע
   refreshQuickTasksBanner();
   refreshQuickPrizesBanner();
@@ -1006,7 +1012,7 @@ async function startDashTour(familyId, uid) {
       text: 'כאן מוצגות המשימות שנותרו לביצוע היום לכל ילד — מתחלפות אוטומטית אם יש כמה'
     },
     {
-      el: '#btn-open-menu',
+      el: '#parent-bottom-nav',
       title: 'תפריט ☰',
       text: 'כאן תוכל לנהל משפחה, משימות, פרסים, נקודות ועוד — הכל במקום אחד',
       exact: true

@@ -703,3 +703,13 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
   color: #1E293B;
   flex: 1;
 }
+
+/* =========== PARENT BOTTOM NAV =========== */
+.parent-bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:1400;background:#fff;border-top:1px solid #E2E8F0;display:flex;align-items:stretch;height:64px;box-shadow:0 -2px 12px rgba(0,0,0,0.06);}
+.pbn-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:transparent;cursor:pointer;padding:6px 4px;-webkit-tap-highlight-color:transparent;transition:background 0.15s;}
+.pbn-tab:active{background:#F1F5F9;}
+.pbn-icon{font-size:1.3rem;line-height:1;}
+.pbn-label{font-size:0.62rem;font-weight:700;color:#94A3B8;font-family:'Heebo',sans-serif;white-space:nowrap;}
+.pbn-tab.pbn-active{background:#F5F3FF;}
+.pbn-tab.pbn-active .pbn-label{color:#7C3AED;font-weight:900;}
+.has-bottom-nav .screen{padding-bottom:72px !important;}
