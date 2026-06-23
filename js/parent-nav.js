@@ -28,9 +28,9 @@ function _render() {
       <span class="pbn-icon" style="position:relative;display:inline-block;">⭐<span id="nav-activity-badge" style="display:none;position:absolute;top:-3px;left:-3px;width:9px;height:9px;background:#EF4444;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(239,68,68,0.5);"></span></span>
       <span class="pbn-label">מרכז פעילות</span>
     </button>
-    <button class="pbn-tab${_activePage === 'family' ? ' pbn-active' : ''}" data-tab="family">
-      <span class="pbn-icon">👨‍👩‍👧</span>
-      <span class="pbn-label">ניהול משפחה</span>
+    <button class="pbn-tab${_activePage === 'stats' ? ' pbn-active' : ''}" data-tab="stats">
+      <span class="pbn-icon">📊</span>
+      <span class="pbn-label">נתונים</span>
     </button>
   `;
   document.body.appendChild(nav);
@@ -63,12 +63,8 @@ function _onTab(tab) {
     if (_activePage !== 'activity') _navigate('points.html');
     return;
   }
-  if (tab === 'family') {
-    if (_activePage === 'home') {
-      window.showScreen?.('screen-manage-family');
-    } else {
-      _navigate('parent.html?screen=manage-family');
-    }
+  if (tab === 'stats') {
+    if (_activePage !== 'stats') _navigate('stats.html');
   }
 }
 

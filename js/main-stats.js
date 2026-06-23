@@ -35,7 +35,7 @@ document.getElementById('btn-back-stats')?.addEventListener('click', () => {
   const familyId = currentFamilyId;
   hideLoading();
   showScreen('screen-stats');
-  initParentNav(null, null);
+  initParentNav('stats', null);
   initStatsPeriodChips(familyId);
   await loadAndRenderStats(familyId);
 })();

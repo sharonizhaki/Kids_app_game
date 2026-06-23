@@ -172,7 +172,7 @@ export async function openSideMenu({ auth, onAction, isPrimary = true, activityC
     </div>
     <div class="side-item" data-action="stats">
       <div class="side-icon" style="background:linear-gradient(135deg,#E0E7FF,#C7D2FE);">📊</div>
-      <span class="side-item-text">סטטיסטיקות</span>
+      <span class="side-item-text">נתונים</span>
     </div>
     ${notifStatus === 'granted'
       ? `<div class="side-item" data-action="notifications" style="cursor:default;opacity:0.8;">
