@@ -670,6 +670,9 @@ async function submitManualPoints(familyId, childId, amount, isAdd, reason) {
     const newPts = Math.max(0, (st.pts || 0) + delta);
     await updateDoc(stateRef, { pts: newPts });
 
+    const childRef = doc(db, 'families', familyId, 'children', childId);
+    await updateDoc(childRef, { pts: newPts });
+
     const manualTitle = isAdd
       ? `ההורים הוסיפו לך ${amount} ⭐`
       : `ההורים הפחיתו לך ${amount} ⭐`;
