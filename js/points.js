@@ -15,6 +15,7 @@ let allPrizeRequests   = [];
 let allRejectedItems   = [];
 let allCancelledTasks  = [];
 let _unifiedItems      = [];
+let allManualPtsEvents = [];
 let mpFilter    = 'all';
 let mpSubFilter = '';
 let mpTab       = 'pending';
@@ -233,6 +234,33 @@ export async function loadCancelledTasks(familyId) {
   } catch(e) { console.error('loadCancelledTasks:', e); }
 }
 
+export async function loadManualPtsHistory(familyId) {
+  allManualPtsEvents = [];
+  await loadChildren(familyId);
+  try {
+    for (const child of childrenCache) {
+      const snap = await getDocs(query(
+        collection(db, 'families', familyId, 'children', child.id, 'notifications'),
+        where('type', '==', 'manual_pts')
+      ));
+      snap.forEach(d => {
+        const data = d.data();
+        allManualPtsEvents.push({
+          _status:    'manual_pts',
+          childId:    child.id,
+          childName:  child.name  || '',
+          childEmoji: child.emoji || '👦',
+          pts:        data.pts    || 0,
+          isAdd:      data.isAdd  ?? true,
+          reason:     data.reason || '',
+          ts:         data.ts     || 0,
+        });
+      });
+    }
+    allManualPtsEvents.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  } catch(e) { console.error('loadManualPtsHistory:', e); }
+}
+
 export function initPendingListener(familyId, onUpdate) {
   return onSnapshot(collection(db, 'families', familyId, 'pendingApprovals'), async () => {
     await loadPendingApprovals(familyId);
@@ -389,6 +417,27 @@ function _renderUnifiedCardHtml(item, idx) {
       </div>`;
   }
 
+  if (item._status === 'manual_pts') {
+    const isAdd  = item.isAdd;
+    const bg     = isAdd ? '#F0FDF4' : '#FFF7ED';
+    const border = isAdd ? '#BBF7D0' : '#FED7AA';
+    const color  = isAdd ? '#166534' : '#9A3412';
+    const label  = isAdd ? `➕ ${item.pts} ⭐ הוספו` : `➖ ${item.pts} ⭐ הופחתו`;
+    return `
+      <div class="etask-wrap etask-dimmed">
+        <div class="etask-card" style="background:${bg};border:1.5px solid ${border};">
+          <span class="etask-emoji">${isAdd ? '➕' : '➖'}</span>
+          <div class="etask-info">
+            <strong style="color:${color};">${label}</strong>
+            <div class="etask-meta">
+              <span class="etask-tag child-tag">${item.childEmoji} ${item.childName}</span>
+              ${item.reason ? `<span style="font-size:0.75rem;color:#64748B;">${item.reason}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
   if (item._status === 'prize') {
     return `
       <div class="etask-wrap etask-dimmed">
@@ -520,6 +569,14 @@ export function renderMPList(familyId) {
       };
     });
   if (mpFilter === 'child' && mpSubFilter) prizes = prizes.filter(p => p.childName === mpSubFilter);
+  if (mpFilter === 'cat' || mpFilter === 'stars') prizes = [];
+
+  // --- manual pts events (all & child filter only) ---
+  let manualPts = [];
+  if (mpFilter === 'all' || mpFilter === 'child') {
+    manualPts = [...allManualPtsEvents];
+    if (mpFilter === 'child' && mpSubFilter) manualPts = manualPts.filter(e => e.childName === mpSubFilter);
+  }
 
   // --- build unified sorted list ---
   _unifiedItems = [];
@@ -527,6 +584,7 @@ export function renderMPList(familyId) {
   rejected.forEach(t  => _unifiedItems.push({ ...t, _status: 'rejected'  }));
   cancelled.forEach(t => _unifiedItems.push({ ...t, _status: 'cancelled' }));
   prizes.forEach(p    => _unifiedItems.push(p));
+  manualPts.forEach(e => _unifiedItems.push(e));
   _unifiedItems.sort((a, b) => (b.ts || 0) - (a.ts || 0));
 
   if (_unifiedItems.length === 0) {

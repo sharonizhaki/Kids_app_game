@@ -7,7 +7,7 @@ import { initParentNav } from './parent-nav.js';
 import { currentFamilyId, setCurrentFamilyId } from './auth.js';
 import {
   loadCompletedTasks, loadPendingApprovals, loadAllPrizeRequests, loadRejectedItems,
-  loadCancelledTasks,
+  loadCancelledTasks, loadManualPtsHistory,
   renderMPTabs, renderMPFilters, renderMPList, renderPendingTab, showActiveTab,
   initPendingListener, initPrizeRequestsListener,
   resetMPState, setMPState,
@@ -62,6 +62,7 @@ document.getElementById('btn-back-to-parent')?.addEventListener('click', () => {
     loadAllPrizeRequests(familyId),
     loadRejectedItems(familyId),
     loadCancelledTasks(familyId),
+    loadManualPtsHistory(familyId),
   ]);
 
   renderMPTabs(familyId);
