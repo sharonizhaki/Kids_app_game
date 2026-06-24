@@ -24,7 +24,7 @@ import {
   initNotifications, processNotificationPopups,
   renderNotificationsScreen, updateNotificationBadge,
 } from './child-notifications.js';
-import { listenForegroundMessages, scheduleTaskReminders, isPushGranted, isPushBlocked, requestPushPermission, saveChildFcmToken } from './notifications.js';
+import { listenForegroundMessages, isPushGranted, isPushBlocked, requestPushPermission, saveChildFcmToken } from './notifications.js';
 
 // -------- GREETINGS --------
 const GREETINGS_M = ['יאללה נתחיל! 💪','בוא נעשה את זה! 🚀','היום תהיה מדהים! ✨','מוכן לאסוף כוכבים? 🔥','הגיבור שלנו הגיע! 🦸‍♂️'];
@@ -422,7 +422,6 @@ async function loadChild() {
           state.tasksData.push({ id: d.id, ...data });
       });
       renderChild();
-      scheduleTaskReminders(state.tasksData);
     });
 
     // listener על prizes — לעדכן את בר המתנות בזמן אמת

@@ -62,9 +62,110 @@ async function sendPushToAllParents(title, body, data = {}) {
   }));
 }
 
+// =========== helpers לזמן ירושלים ===========
+
+function getJerusalemParts(date) {
+  const TZ = 'Asia/Jerusalem';
+  const h       = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: TZ, hour: '2-digit',   hour12: false }).format(date), 10);
+  const m       = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: TZ, minute: '2-digit', hour12: false }).format(date), 10);
+  const dateKey = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+  const [y, mo, d] = dateKey.split('-').map(Number);
+  const dayIdx  = new Date(y, mo - 1, d).getDay(); // 0=ראשון
+  return { h, m, dateKey, dayIdx };
+}
+
+function isTaskDueOnDay(task, dayIdx) {
+  const freq = task.freq || 'daily';
+  if (freq === 'specific') return (task.days || []).map(Number).includes(dayIdx);
+  return true;
+}
+
+function isTaskDoneToday(task, comp, dateKey) {
+  const c = (comp || {})[task.id];
+  if (!c) return false;
+  const freq = task.freq || 'daily';
+  if (freq === 'daily'  || freq === 'specific') return c.d === dateKey;
+  if (freq === 'once')                          return (c.count || 0) >= 1;
+  if (freq === 'weekly' || freq === '2week')    return (c.wc || 0) >= 1;
+  return false;
+}
+
 // =========================================================
 // SCHEDULED NOTIFICATIONS — Gen2
 // =========================================================
+
+// כל 15 דקות — בדיקת תזכורות משימות לילדים
+exports.taskReminderCheck = onSchedule(
+  { schedule: '*/15 * * * *', timeZone: 'Asia/Jerusalem', region: REGION },
+  async () => {
+    const now = new Date();
+    const { h, m, dateKey, dayIdx } = getJerusalemParts(now);
+
+    // חלון זמן: slot של 15 דקות מעוגל למטה
+    const slotStart = Math.floor((h * 60 + m) / 15) * 15;
+    const slotEnd   = slotStart + 15;
+
+    const familiesSnap = await db.collection('families').get();
+    if (familiesSnap.empty) return;
+
+    await Promise.all(familiesSnap.docs.map(async (familyDoc) => {
+      const familyId = familyDoc.id;
+
+      // קרא את כל המשימות עם reminder
+      const tasksSnap = await db.collection('families', familyId, 'tasks').get();
+      const dueTasks  = tasksSnap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(t => {
+          if (!t.reminder || t.hidden) return false;
+          const [rh, rm] = t.reminder.split(':').map(Number);
+          if (isNaN(rh) || isNaN(rm)) return false;
+          const reminderMins = rh * 60 + rm;
+          return reminderMins >= slotStart && reminderMins < slotEnd;
+        })
+        .filter(t => isTaskDueOnDay(t, dayIdx));
+
+      if (dueTasks.length === 0) return;
+
+      // קרא את כל הילדים
+      const childrenSnap = await db.collection('families', familyId, 'children').get();
+      if (childrenSnap.empty) return;
+
+      await Promise.all(childrenSnap.docs.map(async (childDoc) => {
+        const childId   = childDoc.id;
+        const childData = childDoc.data();
+        const tokens    = childData.fcmTokens || [];
+        if (tokens.length === 0) return;
+
+        // קרא state של הילד לבדיקת "כבר בוצע"
+        let comp = {};
+        try {
+          const stateSnap = await db.doc(`families/${familyId}/children/${childId}/state/current`).get();
+          if (stateSnap.exists) comp = stateSnap.data().comp || {};
+        } catch (_) {}
+
+        // משימות שמוקצות לילד זה, הרלוונטיות היום, ועוד לא בוצעו
+        const pending = dueTasks.filter(t =>
+          (t.assignedChildren || []).includes(childId) &&
+          !isTaskDoneToday(t, comp, dateKey)
+        );
+        if (pending.length === 0) return;
+
+        // שלח push אחד עם כל המשימות הממתינות
+        const title = pending.length === 1
+          ? `${pending[0].emoji || '🔔'} תזכורת: ${pending[0].task}`
+          : `🔔 ${pending.length} משימות ממתינות לך`;
+        const body = pending.length === 1
+          ? `השלם ותרוויח ${pending[0].pts || 1} ⭐`
+          : pending.map(t => `${t.emoji || '•'} ${t.task}`).join(' | ');
+
+        const stale = await sendPush(tokens, title, body, {
+          url: '/child.html', type: 'task_reminder',
+        });
+        if (stale.length > 0) await removeStaleTokens(childDoc.ref, 'fcmTokens', stale);
+      }));
+    }));
+  }
+);
 
 exports.eveningParentNotification = onSchedule(
   { schedule: '0 20 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
