@@ -323,15 +323,14 @@ async function _rejectTask(familyId, docId) {
       ),
     ];
 
-    // עדכון מערך pending בצד הילד — הסרת "ממתין" כדי שהמשימה תחזור להיות פעילה
+    // עדכון מערך pending בצד הילד — הסרה מלאה כדי שהמשימה תחזור להיות פעילה
     const stateSnap = await getDoc(stateRef);
     if (stateSnap.exists()) {
       const cs = stateSnap.data();
       if (cs.pending?.length) {
-        const updated = cs.pending.map(p =>
-          p.taskId === data.taskId && Math.abs((p.ts || 0) - (data.ts || 0)) < 10000
-            ? { ...p, status: 'rejected' }
-            : p
+        const updated = cs.pending.filter(p =>
+          !(p.taskId === data.taskId &&
+            (Math.abs((p.ts || 0) - (data.ts || 0)) < 30000 || p.status === 'pending'))
         );
         ops.push(updateDoc(stateRef, { pending: updated }));
       }

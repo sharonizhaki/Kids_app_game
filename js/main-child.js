@@ -203,7 +203,7 @@ export function renderChild() {
   _renderPrizeBar();
 
   // sub-modules
-  renderPendingSection();
+  renderPendingSection(saveState, renderChild);
   renderCategories(saveState, renderChild);
   renderHistory();
 
@@ -493,7 +493,18 @@ async function loadChild() {
             return;
           }
 
-          // עדכון סטטוס בלבד (rejected / added)
+          // דחייה — הסר מהמערך כדי שהמשימה תחזור להיות זמינה
+          if (change.type === 'modified' && data.status === 'rejected') {
+            // נסה לפי idx מדויק; fallback — לפי taskId בלבד
+            const removeIdx = idx !== -1 ? idx
+              : (cs.pending || []).findIndex(p => p.taskId === data.taskId && p.status === 'pending');
+            if (removeIdx !== -1) cs.pending.splice(removeIdx, 1);
+            saveState();
+            renderChild();
+            return;
+          }
+
+          // עדכון סטטוס בלבד (added)
           if ((change.type === 'modified' || change.type === 'added') && idx !== -1) {
             cs.pending[idx].status = data.status;
             saveState();

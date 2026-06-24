@@ -120,6 +120,7 @@ async function _submitPending(t, saveStateFn, photoUrl = '') {
   saveStateFn();
 
   if (!_db || !state.familyId || !state.childId) {
+    _markPendingFailed(cs, t.id, ts, saveStateFn);
     showToast('⚠️ תקלת חיבור — רענן ושלח שוב');
     return;
   }
@@ -151,18 +152,26 @@ async function _submitPending(t, saveStateFn, photoUrl = '') {
       }
     );
   } catch (e) {
-    console.error('pendingApprovals write error:', e);
-    showToast('⚠️ שגיאה בשליחה — נסה שוב');
+    console.error('pendingApprovals write error:', e?.code, e?.message, e);
+    _markPendingFailed(cs, t.id, ts, saveStateFn);
+  }
+}
+
+function _markPendingFailed(cs, taskId, ts, saveStateFn) {
+  const idx = (cs.pending || []).findIndex(p => p.taskId === taskId && p.ts === ts);
+  if (idx !== -1) {
+    cs.pending[idx].status = 'failed';
+    saveStateFn();
   }
 }
 
 // -------- RENDER PENDING SECTION --------
-export function renderPendingSection() {
+export function renderPendingSection(saveStateFn, renderChildFn) {
   const section = document.getElementById('pending-section');
   if (!section) return;
 
   const pending = (state.childState?.pending || []);
-  const active  = pending.filter(p => p.status === 'pending');
+  const active  = pending.filter(p => p.status === 'pending' || p.status === 'approved' || p.status === 'failed');
 
   if (active.length === 0) { section.style.display = 'none'; return; }
   section.style.display = 'block';
@@ -170,17 +179,72 @@ export function renderPendingSection() {
   const list = document.getElementById('pending-list');
   if (!list) return;
 
-  list.innerHTML = active.map(p => `
-    <div class="pending-item">
-      <span class="pending-emoji">${p.emoji || '⭐'}</span>
-      <div class="pending-info">
-        <strong>${p.task}</strong>
-        <span>${p.day} ${p.time}</span>
-      </div>
-      <span class="pending-badge ${p.status === 'approved' ? 'pending-approved' : 'pending-waiting'}">
-        ${p.status === 'approved' ? '✅ אושר!' : '⏳ ממתין'}
-      </span>
-    </div>`).join('');
+  list.innerHTML = active.map(p => {
+    if (p.status === 'failed') {
+      return `
+        <div class="pending-item" style="border:2px solid #FCA5A5;background:#FFF1F1;">
+          <span class="pending-emoji">${p.emoji || '⭐'}</span>
+          <div class="pending-info">
+            <strong>${p.task}</strong>
+            <span style="color:#EF4444;font-size:0.75rem;">❌ לא נשלח לאישור</span>
+          </div>
+          <button onclick="window._retryPending('${p.taskId}',${p.ts})"
+            style="background:#EF4444;color:white;border:none;border-radius:10px;padding:6px 10px;font-size:0.78rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;">
+            שלח שוב
+          </button>
+        </div>`;
+    }
+    return `
+      <div class="pending-item">
+        <span class="pending-emoji">${p.emoji || '⭐'}</span>
+        <div class="pending-info">
+          <strong>${p.task}</strong>
+          <span>${p.day} ${p.time}</span>
+        </div>
+        <span class="pending-badge ${p.status === 'approved' ? 'pending-approved' : 'pending-waiting'}">
+          ${p.status === 'approved' ? '✅ אושר!' : '⏳ ממתין'}
+        </span>
+      </div>`;
+  }).join('');
+
+  if (saveStateFn && renderChildFn) {
+    window._retryPending = (taskId, ts) => _retryPending(taskId, ts, saveStateFn, renderChildFn);
+  }
+}
+
+async function _retryPending(taskId, ts, saveStateFn, renderChildFn) {
+  const cs  = state.childState;
+  const idx = (cs?.pending || []).findIndex(p => p.taskId === taskId && p.ts === ts);
+  if (idx === -1 || !_db || !state.familyId || !state.childId) return;
+
+  const p = cs.pending[idx];
+  cs.pending[idx].status = 'pending';
+  saveStateFn();
+  renderChildFn();
+
+  try {
+    await addDoc(
+      collection(_db, 'families', state.familyId, 'pendingApprovals'),
+      {
+        taskId:     p.taskId,
+        task:       p.task,
+        emoji:      p.emoji  || '⭐',
+        pts:        p.pts    || 0,
+        time: p.time, day: p.day, ts: p.ts,
+        childId:    state.childId,
+        childName:  state.childData?.name  || '',
+        childEmoji: state.childData?.emoji || '👦',
+        status:     'pending',
+        createdAt:  serverTimestamp(),
+        ...(p.photoUrl ? { photoUrl: p.photoUrl } : {}),
+      }
+    );
+  } catch (e) {
+    console.error('retry pendingApprovals error:', e?.code, e?.message, e);
+    _markPendingFailed(cs, taskId, ts, saveStateFn);
+    renderChildFn();
+    showToast(`❌ שגיאה: ${e?.code || 'שגיאת רשת'}`);
+  }
 }
 
 // -------- CATEGORY COLORS (dynamic palette) --------
