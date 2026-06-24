@@ -97,7 +97,7 @@ export function openChildProfile() {
     childData.gender === 'female' ? '👧 נקבה' : '👦 זכר';
 
   const colorEl = document.getElementById('profile-color-display');
-  colorEl.innerHTML = childData.color ? SPLAT_SVG(childData.color, 118) : SPLAT_SVG('#94A3B8', 118, true);
+  colorEl.innerHTML = childData.color ? SPLAT_SVG(childData.color, 90) : SPLAT_SVG('#94A3B8', 90, true);
   colorEl.style.background = 'transparent';
   colorEl.style.border = 'none';
   colorEl.onclick = () => showProfileColorModal();
