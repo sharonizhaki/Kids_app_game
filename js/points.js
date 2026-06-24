@@ -14,6 +14,7 @@ let allPendingApprovals = [];
 let allPrizeRequests   = [];
 let allRejectedItems   = [];
 let allCancelledTasks  = [];
+let _unifiedItems      = [];
 let mpFilter    = 'all';
 let mpSubFilter = '';
 let mpTab       = 'pending';
@@ -349,6 +350,93 @@ export function renderPendingTab(familyId) {
 
 }
 
+// =========== HISTORY HELPERS ===========
+function _tsToDateKey(ts) {
+  if (!ts) return '1970-01-01';
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function _dateKeyToLabel(dateKey) {
+  if (dateKey === '1970-01-01') return 'לא ידוע';
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const names = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  return `${names[date.getDay()]} ${d}.${m}`;
+}
+function _renderUnifiedCardHtml(item, idx) {
+  const emoji    = item.emoji || item.prizeEmoji || '⭐';
+  const taskName = item.task  || item.prizeName  || '';
+
+  if (item._status === 'approved') {
+    return `
+      <div class="etask-wrap" data-idx="${idx}" data-child-id="${item.childId}" data-hist-idx="${item.histIdx}">
+        <div class="etask-actions"><div class="etask-action act-delete" data-act="undo"><span>↩️</span>בטל</div></div>
+        <div class="etask-card">
+          <span class="etask-emoji">${emoji}</span>
+          <div class="etask-info">
+            <strong>${taskName}</strong>
+            <div class="etask-meta">
+              <span class="etask-tag child-tag">${item.childEmoji} ${item.childName}</span>
+              ${item.cat ? `<span class="etask-tag cat-tag">${item.cat}</span>` : ''}
+              <span class="etask-tag freq-tag">${item.day} ${item.time}</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <span class="etask-stars">${'⭐'.repeat(Math.min(item.pts||0,5))}</span>
+            ${item.photoUrl ? `<button class="btn-hist-photo" data-idx="${idx}" style="background:#EDE9FE;border:none;border-radius:8px;width:28px;height:28px;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">📷</button>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  if (item._status === 'prize') {
+    return `
+      <div class="etask-wrap etask-dimmed">
+        <div class="etask-card" style="background:#FFFBEB;border:1.5px solid #FDE68A;">
+          <span class="etask-emoji">${item.prizeEmoji || '🎁'}</span>
+          <div class="etask-info">
+            <strong>${item.prizeName}</strong>
+            <div class="etask-meta">
+              <span style="background:#FEF3C7;color:#92400E;border-radius:6px;padding:1px 7px;font-size:0.68rem;font-weight:900;">🎁 מומש</span>
+              <span class="etask-tag child-tag">${item.childEmoji} ${item.childName}</span>
+              <span style="font-size:0.75rem;color:#64748B;">⭐ ${item.pts}</span>
+            </div>
+          </div>
+          <button class="btn-prize-reverse-unified" data-idx="${idx}"
+            style="background:#FEF3C7;color:#92400E;border:1.5px solid #FDE68A;border-radius:10px;padding:6px 10px;font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;">
+            ↩️ בטל
+          </button>
+        </div>
+      </div>`;
+  }
+
+  const badge = item._status === 'rejected'
+    ? `<span style="background:#FEE2E2;color:#B91C1C;border-radius:6px;padding:1px 7px;font-size:0.68rem;font-weight:900;">❌ לא אושר</span>`
+    : `<span style="background:#FEF3C7;color:#92400E;border-radius:6px;padding:1px 7px;font-size:0.68rem;font-weight:900;">↩️ בוטל</span>`;
+  const photoBtn = item.photoUrl
+    ? `<button class="btn-hist-photo-rej" data-idx="${idx}" style="background:#EDE9FE;border:none;border-radius:8px;width:28px;height:28px;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📷</button>`
+    : '';
+  return `
+    <div class="etask-wrap etask-dimmed">
+      <div class="etask-card" style="opacity:0.5;">
+        <span class="etask-emoji">${emoji}</span>
+        <div class="etask-info">
+          <strong>${taskName}</strong>
+          <div class="etask-meta">
+            ${badge}
+            <span class="etask-tag child-tag">${item.childEmoji} ${item.childName}</span>
+            <span class="etask-stars" style="font-size:0.8rem;">${'⭐'.repeat(Math.min(item.pts||0,5))}</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          ${photoBtn}
+          <button class="btn-retroapprove" data-idx="${idx}"
+            style="background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;border:none;border-radius:10px;padding:7px 10px;font-size:0.73rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;">אשר</button>
+        </div>
+      </div>
+    </div>`;
+}
+
 // =========== TAB: היסטוריה ===========
 export function renderMPFilters() {
   document.querySelectorAll('#mp-filter .filter-chip').forEach(f => {
@@ -377,13 +465,6 @@ function renderMPSubFilter() {
     options = cats.map(c => ({ key: c, label: c }));
   } else if (mpFilter === 'stars') {
     options = [1,2,3,4,5].map(n => ({ key: String(n), label: '⭐'.repeat(n) }));
-  } else if (mpFilter === 'day') {
-    options = [
-      { key: 'ראשון', label: "א'" }, { key: 'שני', label: "ב'" },
-      { key: 'שלישי', label: "ג'" }, { key: 'רביעי', label: "ד'" },
-      { key: 'חמישי', label: "ה'" }, { key: 'שישי', label: "ו'" },
-      { key: 'שבת', label: "ש'" },
-    ];
   }
   sub.style.display = 'flex';
   sub.innerHTML = options.map(o =>
@@ -401,174 +482,122 @@ export function renderMPList(familyId) {
   if (familyId) _familyId = familyId;
   const list = document.getElementById('mp-list');
   if (!list) return;
-  let tasks = [...allCompletedTasks];
-  if (mpFilter === 'child'  && mpSubFilter) tasks = tasks.filter(t => t.childName === mpSubFilter);
-  if (mpFilter === 'cat'    && mpSubFilter) tasks = tasks.filter(t => (t.cat || '📋 ללא') === mpSubFilter);
-  if (mpFilter === 'stars'  && mpSubFilter) tasks = tasks.filter(t => t.pts === parseInt(mpSubFilter));
-  if (mpFilter === 'day'    && mpSubFilter) tasks = tasks.filter(t => t.day === mpSubFilter);
-  if (tasks.length === 0) {
-    list.innerHTML = allRejectedItems.length === 0
-      ? '<div class="empty-state">אין משימות שבוצעו</div>'
-      : '';
+
+  // --- approved tasks (filtered) ---
+  let approved = [...allCompletedTasks];
+  if (mpFilter === 'child' && mpSubFilter) approved = approved.filter(t => t.childName === mpSubFilter);
+  if (mpFilter === 'cat'   && mpSubFilter) approved = approved.filter(t => (t.cat || '📋 ללא') === mpSubFilter);
+  if (mpFilter === 'stars' && mpSubFilter) approved = approved.filter(t => t.pts === parseInt(mpSubFilter));
+
+  // --- rejected / cancelled (filter by child & stars when active) ---
+  let rejected  = [...allRejectedItems];
+  let cancelled = [...allCancelledTasks];
+  if (mpFilter === 'child' && mpSubFilter) {
+    rejected  = rejected.filter(t => t.childName === mpSubFilter);
+    cancelled = cancelled.filter(t => t.childName === mpSubFilter);
   }
-  if (tasks.length > 0) list.innerHTML = tasks.map((t, i) => `
-    <div class="etask-wrap" data-idx="${i}" data-child-id="${t.childId}" data-hist-idx="${t.histIdx}">
-      <div class="etask-actions"><div class="etask-action act-delete" data-act="undo"><span>↩️</span>בטל</div></div>
-      <div class="etask-card">
-        <span class="etask-emoji">${t.emoji}</span>
-        <div class="etask-info">
-          <strong>${t.task}</strong>
-          <div class="etask-meta">
-            <span class="etask-tag child-tag">${t.childEmoji} ${t.childName}</span>
-            ${t.cat ? `<span class="etask-tag cat-tag">${t.cat}</span>` : ''}
-            <span class="etask-tag freq-tag">${t.day} ${t.time}</span>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-          <span class="etask-stars">${'⭐'.repeat(Math.min(t.pts||0,5))}</span>
-          ${t.photoUrl ? `<button class="btn-hist-photo" data-idx="${i}" style="background:#EDE9FE;border:none;border-radius:8px;width:28px;height:28px;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">📷</button>` : ''}
-        </div>
-      </div>
-    </div>`).join('');
-  attachMPSwipeHandlers(list, familyId || _familyId);
+  if (mpFilter === 'stars' && mpSubFilter) {
+    rejected  = rejected.filter(t => t.pts === parseInt(mpSubFilter));
+    cancelled = cancelled.filter(t => t.pts === parseInt(mpSubFilter));
+  }
+
+  // --- approved prizes ---
+  let prizes = allPrizeRequests
+    .filter(r => r.status === 'approved')
+    .slice(0, 10)
+    .map(r => {
+      const child = childrenCache.find(c => c.id === r.childId);
+      const ts = r.requestedAt?.toMillis ? r.requestedAt.toMillis() : (r.requestedAt || 0);
+      return {
+        _status: 'prize', _prizeObj: r,
+        prizeEmoji: r.prizeEmoji || '🎁',
+        prizeName:  r.prizeName || r.name || '',
+        pts:        r.pts || r.cost || 0,
+        childId:    r.childId,
+        childName:  r.childName || child?.name || '',
+        childEmoji: child?.emoji || '👦',
+        ts,
+      };
+    });
+  if (mpFilter === 'child' && mpSubFilter) prizes = prizes.filter(p => p.childName === mpSubFilter);
+
+  // --- build unified sorted list ---
+  _unifiedItems = [];
+  approved.forEach(t  => _unifiedItems.push({ ...t, _status: 'approved'  }));
+  rejected.forEach(t  => _unifiedItems.push({ ...t, _status: 'rejected'  }));
+  cancelled.forEach(t => _unifiedItems.push({ ...t, _status: 'cancelled' }));
+  prizes.forEach(p    => _unifiedItems.push(p));
+  _unifiedItems.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+
+  if (_unifiedItems.length === 0) {
+    list.innerHTML = '<div class="empty-state">אין משימות שבוצעו</div>';
+    return;
+  }
+
+  // --- group by date ---
+  const groups = new Map();
+  _unifiedItems.forEach((item, idx) => {
+    const dk = _tsToDateKey(item.ts);
+    if (!groups.has(dk)) groups.set(dk, []);
+    groups.get(dk).push({ item, idx });
+  });
+  const sortedDates = [...groups.keys()].sort().reverse();
+
+  let html = '';
+  sortedDates.forEach(dk => {
+    html += `<div class="mp-date-sep">${_dateKeyToLabel(dk)}</div>`;
+    groups.get(dk).forEach(({ item, idx }) => html += _renderUnifiedCardHtml(item, idx));
+  });
+  list.innerHTML = html;
+
+  // swipe on approved cards only
+  attachMPSwipeHandlers(list, familyId);
+
+  // photo buttons (approved)
   list.querySelectorAll('.btn-hist-photo').forEach(btn => {
     const idx = parseInt(btn.dataset.idx);
-    btn.onclick = (e) => { e.stopPropagation(); showPhotoLightbox(tasks[idx].photoUrl); };
+    btn.onclick = (e) => { e.stopPropagation(); showPhotoLightbox(_unifiedItems[idx].photoUrl); };
   });
 
-  // קטע "לא אושרו"
-  if (allRejectedItems.length > 0) {
-    const sec = document.createElement('div');
-    sec.style.marginTop = tasks.length > 0 ? '20px' : '0';
-    sec.innerHTML = `
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:0.82rem;font-weight:800;color:#64748B;">
-        <span>❌</span><span>לא אושרו</span>
-        <span style="font-size:0.7rem;color:#94A3B8;font-weight:600;">(אפשר לאשר בדיעבד)</span>
-      </div>`;
-    allRejectedItems.forEach(item => {
-      const card = document.createElement('div');
-      card.style.cssText = 'background:#FEF2F2;border:1.5px solid #FECACA;border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;';
-      if (item.type === 'rejected_task') {
-        card.innerHTML = `
-          <span style="font-size:1.6rem;">${item.emoji}</span>
-          <div style="flex:1;min-width:0;">
-            <div style="font-weight:800;font-size:0.88rem;color:#0F172A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.task}</div>
-            <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;">
-              <span style="background:#FEE2E2;color:#B91C1C;border-radius:6px;padding:1px 7px;font-size:0.68rem;font-weight:900;">❌ לא אושר</span>
-              <span style="font-size:0.75rem;color:#64748B;">${item.childEmoji} ${item.childName}</span>
-              <span style="font-size:0.75rem;color:#64748B;">${'⭐'.repeat(Math.min(item.pts||0,5)) || '⭐'}</span>
-            </div>
-          </div>
-          ${item.photoUrl ? `<button class="btn-rej-photo" style="background:#EDE9FE;border:none;border-radius:8px;width:30px;height:30px;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">📷</button>` : ''}
-          <button class="btn-restore-task" style="background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;border:none;border-radius:10px;padding:7px 10px;font-size:0.73rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;">✅ אשר</button>`;
-        card.querySelector('.btn-restore-task').onclick = () => _restoreRejectedTask(familyId || _familyId, item);
-        if (item.photoUrl) card.querySelector('.btn-rej-photo').onclick = () => showPhotoLightbox(item.photoUrl);
+  // retroapprove buttons (rejected / cancelled)
+  list.querySelectorAll('.btn-retroapprove').forEach(btn => {
+    const idx  = parseInt(btn.dataset.idx);
+    const item = _unifiedItems[idx];
+    btn.onclick = () => {
+      if (item._status === 'rejected') {
+        if (item.type === 'rejected_task') _restoreRejectedTask(familyId || _familyId, item);
+        else _restoreRejectedPrize(familyId || _familyId, item);
       } else {
-        card.innerHTML = `
-          <span style="font-size:1.6rem;">${item.prizeEmoji}</span>
-          <div style="flex:1;min-width:0;">
-            <div style="font-weight:800;font-size:0.88rem;color:#0F172A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.prizeName}</div>
-            <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;">
-              <span style="background:#FEE2E2;color:#B91C1C;border-radius:6px;padding:1px 7px;font-size:0.68rem;font-weight:900;">❌ לא אושר</span>
-              <span style="font-size:0.75rem;color:#64748B;">${item.childEmoji} ${item.childName}</span>
-              <span style="font-size:0.75rem;color:#64748B;">⭐ ${item.pts}</span>
-            </div>
-          </div>
-          <button class="btn-restore-prize" style="background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;border:none;border-radius:10px;padding:7px 10px;font-size:0.73rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;">✅ אשר</button>`;
-        card.querySelector('.btn-restore-prize').onclick = () => _restoreRejectedPrize(familyId || _familyId, item);
+        _reApproveTask(familyId || _familyId, item);
       }
-      sec.appendChild(card);
-    });
-    list.appendChild(sec);
-  }
+    };
+  });
 
-  // קטע "בוטלו"
-  if (allCancelledTasks.length > 0) {
-    const sec = document.createElement('div');
-    sec.style.marginTop = '20px';
-    sec.innerHTML = `
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:0.82rem;font-weight:800;color:#64748B;">
-        <span>↩️</span><span>בוטלו</span>
-        <span style="font-size:0.7rem;color:#94A3B8;font-weight:600;">(אפשר לאשר בדיעבד)</span>
-      </div>`;
-    allCancelledTasks.forEach(item => {
-      const isDailyType = item.freq === 'daily' || item.freq === 'specific';
-      const card = document.createElement('div');
-      card.style.cssText = 'background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;';
-      card.innerHTML = `
-        <span style="font-size:1.6rem;">${item.emoji}</span>
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:800;font-size:0.88rem;color:#0F172A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.task}</div>
-          <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;">
-            <span style="background:#FEF3C7;color:#92400E;border-radius:6px;padding:1px 7px;font-size:0.68rem;font-weight:900;">↩️ בוטל</span>
-            <span style="font-size:0.75rem;color:#64748B;">${item.childEmoji} ${item.childName}</span>
-            <span style="font-size:0.75rem;color:#64748B;">${'⭐'.repeat(Math.min(item.pts||0,5)) || '⭐'}</span>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <button class="btn-reapprove" style="background:linear-gradient(135deg,#7C3AED,#5B21B6);color:white;border:none;border-radius:10px;padding:6px 10px;font-size:0.73rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;">✅ אשר בכ"ז</button>
-          ${!isDailyType ? `<button class="btn-permcancel" style="background:#FEE2E2;color:#B91C1C;border:none;border-radius:10px;padding:6px 10px;font-size:0.73rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;">🗑 בטל סופית</button>` : ''}
-        </div>`;
-      card.querySelector('.btn-reapprove').onclick = () => _reApproveTask(familyId || _familyId, item);
-      if (!isDailyType) card.querySelector('.btn-permcancel').onclick = () => _permanentlyCancelTask(familyId || _familyId, item);
-      sec.appendChild(card);
-    });
-    list.appendChild(sec);
-  }
+  // photo buttons (rejected)
+  list.querySelectorAll('.btn-hist-photo-rej').forEach(btn => {
+    const idx = parseInt(btn.dataset.idx);
+    btn.onclick = (e) => { e.stopPropagation(); showPhotoLightbox(_unifiedItems[idx].photoUrl); };
+  });
 
-  // קטע "פרסים שמומשו"
-  const approvedPrizes = allPrizeRequests
-    .filter(r => r.status === 'approved')
-    .sort((a, b) => (b.requestedAt?.toMillis?.() || b.requestedAt || 0) - (a.requestedAt?.toMillis?.() || a.requestedAt || 0))
-    .slice(0, 10);
-  if (approvedPrizes.length > 0) {
-    const sec = document.createElement('div');
-    sec.style.marginTop = '20px';
-    sec.innerHTML = `
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:0.82rem;font-weight:800;color:#64748B;">
-        <span>🎁</span><span>פרסים שמומשו</span>
-        <span style="font-size:0.7rem;color:#94A3B8;font-weight:600;">(אפשר לבטל)</span>
-      </div>`;
-    approvedPrizes.forEach(r => {
-      const child = childrenCache.find(c => c.id === r.childId);
-      const childDisplay = child ? `${child.emoji || '👦'} ${child.name}` : r.childName || 'ילד';
-      const dateStr = r.requestedAt?.toDate
-        ? r.requestedAt.toDate().toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' })
-        : r.requestedAt
-          ? new Date(r.requestedAt).toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' })
-          : '';
-      const card = document.createElement('div');
-      card.style.cssText = 'background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:16px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;';
-      card.innerHTML = `
-        <span style="font-size:1.6rem;">${r.prizeEmoji || '🎁'}</span>
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:800;font-size:0.9rem;color:#0F172A;margin-bottom:2px;">${r.prizeName || r.name || ''}</div>
-          <div style="font-size:0.75rem;color:#92400E;">${childDisplay} · ⭐ ${r.pts || r.cost || 0} · ${dateStr}</div>
-        </div>
-        <button class="btn-prize-reverse"
-          style="background:#FEF3C7;color:#92400E;border:1.5px solid #FDE68A;border-radius:10px;padding:6px 10px;
-                 font-size:0.75rem;font-weight:800;font-family:'Heebo',sans-serif;cursor:pointer;white-space:nowrap;">
-          ↩️ בטל
-        </button>`;
-      card.querySelector('.btn-prize-reverse').onclick = () => {
-        showConfirm({
-          icon: r.prizeEmoji || '🎁',
-          title: `לבטל: ${r.prizeName || r.name}?`,
-          message: `${child?.name || ''} יקבל בחזרה ${r.pts || r.cost || 0} ⭐`,
-          confirmText: '↩️ בטל מימוש',
-          confirmColor: 'linear-gradient(135deg,#7C3AED,#5B21B6)',
-          onConfirm: async () => {
-            await reversePrizeRequest(familyId || _familyId, r.id);
-            await loadAllPrizeRequests(familyId || _familyId);
-            renderMPTabs(familyId || _familyId);
-            renderMPList(familyId || _familyId);
-          }
-        });
-      };
-      sec.appendChild(card);
+  // prize reverse buttons
+  list.querySelectorAll('.btn-prize-reverse-unified').forEach(btn => {
+    const idx   = parseInt(btn.dataset.idx);
+    const item  = _unifiedItems[idx];
+    const child = childrenCache.find(c => c.id === item.childId);
+    btn.onclick = () => showConfirm({
+      icon:         item.prizeEmoji,
+      title:        `לבטל: ${item.prizeName}?`,
+      message:      `${child?.name || item.childName} יקבל בחזרה ${item.pts} ⭐`,
+      confirmText:  '↩️ בטל מימוש',
+      confirmColor: 'linear-gradient(135deg,#7C3AED,#5B21B6)',
+      onConfirm: async () => {
+        await reversePrizeRequest(familyId || _familyId, item._prizeObj.id);
+        await loadAllPrizeRequests(familyId || _familyId);
+        renderMPTabs(familyId || _familyId);
+        renderMPList(familyId || _familyId);
+      }
     });
-    list.appendChild(sec);
-  }
+  });
 }
 
 // =========== TAB: ניקוד ידני ===========
@@ -785,7 +814,7 @@ async function _doResolve(p, status, familyId) {
 
 // =========== SWIPE ===========
 function attachMPSwipeHandlers(list, familyId) {
-  list.querySelectorAll('.etask-wrap').forEach(wrap => {
+  list.querySelectorAll('.etask-wrap:not(.etask-dimmed)').forEach(wrap => {
     const card = wrap.querySelector('.etask-card');
     const childId = wrap.dataset.childId;
     const histIdx = parseInt(wrap.dataset.histIdx);

@@ -255,6 +255,7 @@ body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);min-h
 
 .etask-list{max-width:420px;width:100%;}
 .etask-wrap{position:relative;margin-bottom:10px;border-radius:16px;}
+.mp-date-sep{font-size:0.78rem;font-weight:900;color:#94A3B8;padding:10px 2px 4px;letter-spacing:0.02em;}
 /* swipe-actions: kept for history/points screens */
 .etask-actions{position:absolute;top:0;bottom:0;left:0;display:flex;align-items:stretch;z-index:1;direction:ltr;}
 .etask-action{display:flex;align-items:center;justify-content:center;width:70px;font-size:0.8rem;font-weight:700;color:white;cursor:pointer;flex-direction:column;gap:2px;}
