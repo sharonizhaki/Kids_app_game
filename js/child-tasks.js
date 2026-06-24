@@ -119,38 +119,40 @@ async function _submitPending(t, saveStateFn, photoUrl = '') {
   });
   saveStateFn();
 
-  if (_db && state.familyId && state.childId) {
-    try {
-      let storedPhotoUrl = '';
-      if (photoUrl && storage) {
-        try {
-          const photoRef = ref(storage, `pendingPhotos/${state.familyId}/${ts}.jpg`);
-          await uploadString(photoRef, photoUrl, 'data_url');
-          storedPhotoUrl = await getDownloadURL(photoRef);
-        } catch (uploadErr) {
-          console.warn('photo upload failed, continuing without photo:', uploadErr);
-        }
+  if (!_db || !state.familyId || !state.childId) {
+    showToast('⚠️ תקלת חיבור — רענן ושלח שוב');
+    return;
+  }
+  try {
+    let storedPhotoUrl = '';
+    if (photoUrl && storage) {
+      try {
+        const photoRef = ref(storage, `pendingPhotos/${state.familyId}/${ts}.jpg`);
+        await uploadString(photoRef, photoUrl, 'data_url');
+        storedPhotoUrl = await getDownloadURL(photoRef);
+      } catch (uploadErr) {
+        console.warn('photo upload failed, continuing without photo:', uploadErr);
       }
-      await addDoc(
-        collection(_db, 'families', state.familyId, 'pendingApprovals'),
-        {
-          taskId:     t.id,
-          task:       t.task,
-          emoji:      t.emojis?.split?.(' ')?.[0] || t.emoji || '⭐',
-          pts:        t.pts,
-          time, day, ts,
-          childId:    state.childId,
-          childName:  state.childData?.name  || '',
-          childEmoji: state.childData?.emoji || '👦',
-          status:     'pending',
-          createdAt:  serverTimestamp(),
-          ...(storedPhotoUrl ? { photoUrl: storedPhotoUrl } : {}),
-        }
-      );
-    } catch (e) {
-      console.error('pendingApprovals write error:', e);
-      showToast('שגיאה בשליחה — נסה שוב ⚠️');
     }
+    await addDoc(
+      collection(_db, 'families', state.familyId, 'pendingApprovals'),
+      {
+        taskId:     t.id,
+        task:       t.task,
+        emoji:      t.emojis?.split?.(' ')?.[0] || t.emoji || '⭐',
+        pts:        t.pts,
+        time, day, ts,
+        childId:    state.childId,
+        childName:  state.childData?.name  || '',
+        childEmoji: state.childData?.emoji || '👦',
+        status:     'pending',
+        createdAt:  serverTimestamp(),
+        ...(storedPhotoUrl ? { photoUrl: storedPhotoUrl } : {}),
+      }
+    );
+  } catch (e) {
+    console.error('pendingApprovals write error:', e);
+    showToast('⚠️ שגיאה בשליחה — נסה שוב');
   }
 }
 
