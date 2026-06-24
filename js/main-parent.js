@@ -1,6 +1,6 @@
 import { auth, db } from './firebase.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { onSnapshot, doc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { onSnapshot, doc, collection, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 import { showScreen, showToast, showLoading, hideLoading, openSideMenu, closeSideMenu, showConfirm } from './ui.js';
 import { cropAndCompressPhoto } from './ui.js';
@@ -67,22 +67,27 @@ function _setActivityBadge(count) {
 
 let _activityUnsubs = [];
 let _activityHistMap = {};
+let _pendingTaskCount  = 0;
+let _pendingPrizeCount = 0;
 let _currentActivityCount = 0;
 
 function initActivityBadgeListeners(familyId) {
   _activityUnsubs.forEach(u => u());
   _activityUnsubs = [];
   _activityHistMap = {};
+  _pendingTaskCount  = 0;
+  _pendingPrizeCount = 0;
 
   function recompute() {
     const since = _getLastSeen(familyId);
-    let total = 0;
+    let newHist = 0;
     for (const hist of Object.values(_activityHistMap)) {
-      total += hist.filter(h => (h.ts || 0) > since).length;
+      newHist += hist.filter(h => (h.ts || 0) > since).length;
     }
-    _setActivityBadge(total);
+    _setActivityBadge(newHist + _pendingTaskCount + _pendingPrizeCount);
   }
 
+  // hist per child
   for (const child of childrenCache) {
     const stateRef = doc(db, 'families', familyId, 'children', child.id, 'state', 'current');
     const u = onSnapshot(stateRef, snap => {
@@ -91,6 +96,22 @@ function initActivityBadgeListeners(familyId) {
     }, () => {});
     _activityUnsubs.push(u);
   }
+
+  // pending task approvals
+  const taskUnsub = onSnapshot(
+    query(collection(db, 'families', familyId, 'pendingApprovals'), where('status', '==', 'pending')),
+    snap => { _pendingTaskCount = snap.size; recompute(); },
+    () => {}
+  );
+  _activityUnsubs.push(taskUnsub);
+
+  // pending prize requests
+  const prizeUnsub = onSnapshot(
+    query(collection(db, 'families', familyId, 'prizeRequests'), where('status', '==', 'pending')),
+    snap => { _pendingPrizeCount = snap.size; recompute(); },
+    () => {}
+  );
+  _activityUnsubs.push(prizeUnsub);
 }
 
 window.goToActivityCenter = function() {

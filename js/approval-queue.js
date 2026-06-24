@@ -52,30 +52,37 @@ export function destroyApprovalQueue() {
 
 // =========== RENDER ===========
 function _renderQueue() {
+  _renderTasksBanner();
+  _renderPrizesQueue();
+}
+
+function _renderTasksBanner() {
+  const banner = document.getElementById('pending-tasks-banner');
+  if (!banner) return;
+  const count = _taskItems.length;
+  if (count === 0) { banner.style.display = 'none'; return; }
+  banner.style.display = 'block';
+  const label = document.getElementById('pending-tasks-banner-text');
+  if (label) label.textContent = count === 1
+    ? 'משימה אחת ממתינה לאישורך'
+    : `${count} משימות ממתינות לאישורך`;
+}
+
+function _renderPrizesQueue() {
   const section = document.getElementById('approval-queue');
   if (!section) return;
 
-  const all = [..._taskItems, ..._prizeItems].sort((a, b) => {
-    const ta = a.createdAt?.seconds || (a.ts ? a.ts / 1000 : 0);
-    const tb = b.createdAt?.seconds || (b.ts ? b.ts / 1000 : 0);
-    return ta - tb;
-  });
-
-  if (all.length === 0) {
-    section.style.display = 'none';
-    return;
-  }
+  if (_prizeItems.length === 0) { section.style.display = 'none'; return; }
 
   section.style.display = 'block';
-  section.closest('.screen')?.scrollTo({ top: 0, behavior: 'smooth' });
 
   const badge = document.getElementById('approval-count');
-  if (badge) badge.textContent = all.length;
+  if (badge) badge.textContent = _prizeItems.length;
 
   const list = document.getElementById('approval-list');
   if (!list) return;
 
-  list.innerHTML = all.map(item => _buildCard(item)).join('');
+  list.innerHTML = _prizeItems.map(item => _buildCard(item)).join('');
 
   list.querySelectorAll('.aq-btn-approve').forEach(btn =>
     btn.addEventListener('click', () => _handleApprove(btn.dataset.id, btn.dataset.type))
