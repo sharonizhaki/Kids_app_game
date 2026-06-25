@@ -11,6 +11,12 @@ import {
   DECLINE_REASONS, startPrizeTour, startManagePrizesTour,
   setPrizeEmoji, setPrizePts, setPrizeChildren, resetPrizeState, setPrizeRepeat
 } from './prizes.js';
+import { animatePlaceholder } from './placeholder-anim.js';
+
+const PRIZE_NAME_PHRASES = [
+  'ערב קולנוע', 'ביקור בפארק', 'ארוחה מיוחדת', 'משחק לבחירתי',
+  'שעת מסכים נוספת', 'בחירת פעילות משפחתית', '20 שקלים לקנייה בקיוסק',
+];
 
 function getFamilyId() { return currentFamilyId; }
 window.showScreen = showScreen;
@@ -922,4 +928,7 @@ export async function initPrizesPage(familyId) {
     // ברירת מחדל: הוספת פרס
     await openAddPrize(familyId);
   }
+
+  const prizeNameInput = document.getElementById('prize-name-input');
+  if (prizeNameInput) animatePlaceholder(prizeNameInput, PRIZE_NAME_PHRASES);
 }

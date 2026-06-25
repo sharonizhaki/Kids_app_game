@@ -7,6 +7,11 @@ import { showToast, showLoading, hideLoading, showConfirm } from './ui.js';
 import { childrenCache, loadChildren } from './family.js';
 import { FREQ_LABELS } from './tasks.js';
 import { loadPrizeRequests, approvePrizeRequest, declinePrizeRequest, reversePrizeRequest } from './prizes.js';
+import { animatePlaceholder } from './placeholder-anim.js';
+
+const MANUAL_REASON_PHRASES = [
+  'עזרה ספונטנית בבישול', 'יום הולדת', 'התנהגות יפה', 'עזרה לאח/אחות',
+];
 
 // =========== STATE ===========
 let allCompletedTasks  = [];
@@ -746,7 +751,7 @@ export function renderManualTab(familyId) {
 
         <div style="font-size:0.82rem;font-weight:800;color:#64748B;margin-bottom:4px;">📝 סיבה (לא חובה)</div>
         <textarea id="manual-reason" rows="2"
-          placeholder="לדוגמה: עזרה ספונטנית בבישול"
+          placeholder="לדוגמה: עזרה ספונטנית בבישול או סתם מאהבה"
           style="width:100%;border:2px solid var(--border);border-radius:12px;padding:8px 12px;
                  font-size:0.85rem;font-family:'Heebo',sans-serif;resize:none;box-sizing:border-box;
                  outline:none;color:#0F172A;background:#F8FAFC;direction:rtl;"></textarea>
@@ -770,6 +775,9 @@ export function renderManualTab(familyId) {
       const reason = container.querySelector('#manual-reason')?.value?.trim() || '';
       submitManualPoints(familyId, selChildId, manualAmt, isAdding, reason);
     };
+
+    const reasonEl = container.querySelector('#manual-reason');
+    if (reasonEl) animatePlaceholder(reasonEl, MANUAL_REASON_PHRASES);
   }
 
   draw();

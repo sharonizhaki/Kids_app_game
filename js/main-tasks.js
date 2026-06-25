@@ -12,6 +12,12 @@ import {
   openEditTask, saveEditedTask, toggleHideTask, deleteTask,
   initSuggestions, startTaskTour, createQuickTasks, startEditTasksTour
 } from './tasks.js';
+import { animatePlaceholder } from './placeholder-anim.js';
+
+const TASK_NAME_PHRASES = [
+  'צחצוח שיניים', 'סידור חדר', 'שיעורי בית', 'לקפל כביסה',
+  'ניגון על פסנתר', 'פעילות גופנית', 'לעזור בבישול', 'טיפול בחיית המחמד',
+];
 
 // =========== GUARD ===========
 async function checkAuth() {
@@ -178,6 +184,9 @@ function showQuickTasksConfirm(catName) {
   });
 
   initSuggestions();
+
+  const taskNameInput = document.getElementById('task-name-input');
+  if (taskNameInput) animatePlaceholder(taskNameInput, TASK_NAME_PHRASES);
 })();
 
 // =========== SAVE TASK ===========
