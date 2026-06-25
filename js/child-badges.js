@@ -12,7 +12,7 @@ const _tasks  = (n, r) => ({ id: `tasks_${n}`,   cat: 'tasks',  n, reward: r,  l
 const _stars  = n      => ({ id: `stars_${n}`,   cat: 'stars',  n, reward: Math.round(n/2), label: `אסוף ${n} ⭐`, reached: cs => (cs.totalPtsEarned  || 0) >= n });
 
 // רצף עד 50 ימים (⭐1 כל יום)
-const STREAK_DAYS = Array.from({ length: 50 }, (_, i) => _streak(i + 1));
+const STREAK_DAYS = Array.from({ length: 49 }, (_, i) => _streak(i + 1));
 
 // משימות: 1, ואז 5,10,15,...100 (⭐1 עד ⭐21)
 const TASK_MILESTONES = [
