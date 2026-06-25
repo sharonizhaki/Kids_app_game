@@ -532,7 +532,9 @@ async function loadChild() {
           }
 
           // ביטול על ידי הורה — נקה comp כדי שהמשימה תהיה זמינה שוב
-          if (change.type === 'added' && data.status === 'cancelled') {
+          // בדוק שזה ביטול טרי (לא מסמך היסטורי מה-initial snapshot)
+          if (change.type === 'added' && data.status === 'cancelled' &&
+              Date.now() - (data.cancelledAt || 0) < 30_000) {
             const taskKey = data.taskId || '';
             if (taskKey && cs.comp?.[taskKey]) {
               const c = cs.comp[taskKey];
