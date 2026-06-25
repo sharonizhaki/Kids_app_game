@@ -543,6 +543,10 @@ async function loadChild() {
             }
             // הסר גם מ-pending אם שם
             if (idx !== -1) cs.pending.splice(idx, 1);
+            // הסר מההיסטוריה הנראית לילד
+            if (cs.hist) cs.hist = cs.hist.filter(
+              h => !(h.taskId === data.taskId && Math.abs((h.ts||0) - (data.ts||0)) < 5000)
+            );
             cs.pts = Math.max(0, (cs.pts || 0) - (data.pts || 0));
             saveState();
             renderChild();

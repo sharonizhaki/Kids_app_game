@@ -2,14 +2,9 @@
 // לוגיקת משימות: isDone, completeTask (עם pending), render קטגוריות, היסטוריה, modals.
 
 import {
-  collection, addDoc, updateDoc, serverTimestamp,
+  collection, addDoc, serverTimestamp,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import {
-  ref, uploadString, getDownloadURL,
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
-
 import { state }                                    from './child-state.js';
-import { storage }                                   from './firebase.js';
 import { starsText, makeModal, closeModals, showToast } from './child-ui.js';
 
 // -------- CONSTANTS --------
@@ -125,8 +120,7 @@ async function _submitPending(t, saveStateFn, photoUrl = '') {
     return;
   }
   try {
-    // שלב 1 — addDoc מיידי (בלי תמונה) → ההורה מקבל התראה מיד
-    const docRef = await addDoc(
+    await addDoc(
       collection(_db, 'families', state.familyId, 'pendingApprovals'),
       {
         taskId:     t.id,
@@ -139,20 +133,10 @@ async function _submitPending(t, saveStateFn, photoUrl = '') {
         childEmoji: state.childData?.emoji || '👦',
         status:     'pending',
         createdAt:  serverTimestamp(),
+        ...(photoUrl ? { photoUrl } : {}),
       }
     );
 
-    // שלב 2 — העלאת תמונה ברקע, ואז updateDoc
-    if (photoUrl && storage && docRef) {
-      try {
-        const photoRef    = ref(storage, `pendingPhotos/${state.familyId}/${ts}.jpg`);
-        await uploadString(photoRef, photoUrl, 'data_url');
-        const storedUrl   = await getDownloadURL(photoRef);
-        await updateDoc(docRef, { photoUrl: storedUrl });
-      } catch (uploadErr) {
-        console.warn('photo upload failed (doc already created):', uploadErr?.code, uploadErr?.message);
-      }
-    }
   } catch (e) {
     console.error('pendingApprovals write error:', e?.code, e?.message, e);
     _markPendingFailed(cs, t.id, ts, saveStateFn);
