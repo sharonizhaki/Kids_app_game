@@ -381,6 +381,20 @@ async function handleQuickPrizes(triggerEl, category) {
   if (_urlParams.get('screen') === 'manage-family') {
     setTimeout(() => document.getElementById('btn-manage-family')?.click(), 150);
   }
+  if (_urlParams.get('screen') === 'pending') {
+    setTimeout(() => {
+      const el = document.getElementById('pending-tasks-banner') || document.getElementById('approval-queue');
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 900);
+  }
+  navigator.serviceWorker?.addEventListener('message', e => {
+    if (e.data?.type === 'NOTIFICATION_CLICK' && e.data?.notifType === 'pending_task') {
+      setTimeout(() => {
+        const el = document.getElementById('pending-tasks-banner') || document.getElementById('approval-queue');
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 400);
+    }
+  });
   const childrenReady = renderDashboardChildren(currentFamilyId); // skeleton מיידי, טוען ברקע
   refreshQuickTasksBanner();
   refreshQuickPrizesBanner();

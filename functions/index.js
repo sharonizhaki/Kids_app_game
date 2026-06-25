@@ -225,6 +225,29 @@ exports.eveningChildNotification = onSchedule(
   }
 );
 
+exports.eveningHistoryNotification = onSchedule(
+  { schedule: '0 20 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
+  async () => {
+    const familiesSnap = await db.collection('families').get();
+    if (familiesSnap.empty) return;
+    await Promise.all(familiesSnap.docs.map(async (familyDoc) => {
+      const childrenSnap = await familyDoc.ref.collection('children').get();
+      if (childrenSnap.empty) return;
+      await Promise.all(childrenSnap.docs.map(async (childDoc) => {
+        const tokens = childDoc.data().fcmTokens || [];
+        if (tokens.length === 0) return;
+        const stale = await sendPush(
+          tokens,
+          '🌙 כל הכבוד להיום!',
+          'בוא נראה מה השגת היום',
+          { url: '/child.html?screen=history', type: 'evening_history' }
+        );
+        if (stale.length > 0) await removeStaleTokens(childDoc.ref, 'fcmTokens', stale);
+      }));
+    }));
+  }
+);
+
 // =========================================================
 // FIRESTORE TRIGGERS — Gen2
 // =========================================================
@@ -248,7 +271,7 @@ exports.fsApprovalCreated = onDocumentCreated(
       tokens,
       `${data.emoji || '✅'} ${data.childName || 'הילד'} סיים משימה!`,
       `"${data.task || 'משימה'}" ממתינה לאישורך`,
-      { url: '/parent.html', type: 'pending_task' }
+      { url: '/parent.html?screen=pending', type: 'pending_task' }
     );
     if (stale.length > 0) await removeStaleTokens(familyRef, 'fcmTokens', stale);
   }

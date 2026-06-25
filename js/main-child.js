@@ -422,6 +422,21 @@ async function loadChild() {
     renderChild();
     show('screen-child');
 
+    // deep-link מלחיצה על התראה (cold start)
+    const _urlP = new URLSearchParams(window.location.search);
+    if (_urlP.get('screen') === 'history') {
+      setTimeout(() => {
+        document.querySelector('.history-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 700);
+    }
+
+    // deep-link כשהאפליקציה כבר פתוחה (hot start — postMessage מה-SW)
+    navigator.serviceWorker?.addEventListener('message', e => {
+      if (e.data?.type === 'NOTIFICATION_CLICK' && e.data?.notifType === 'evening_history') {
+        document.querySelector('.history-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+
     // הצג פופאפים על התראות שלא נקראו (אחרי שהממשק נטען)
     setTimeout(() => processNotificationPopups(), 600);
 

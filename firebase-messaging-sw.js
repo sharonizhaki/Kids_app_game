@@ -80,12 +80,16 @@ function _scheduleAll(reminders) {
 // לחיצה על ההתראה — פותח את האפליקציה
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const url = event.notification.data?.url || '/child.html';
+  const data      = event.notification.data || {};
+  const url       = data.url || '/child.html';
+  const notifType = data.type || '';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
       for (const client of list) {
-        if (client.url.includes(self.location.origin) && 'focus' in client)
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.postMessage({ type: 'NOTIFICATION_CLICK', notifType });
           return client.focus();
+        }
       }
       if (clients.openWindow) return clients.openWindow(url);
     })
