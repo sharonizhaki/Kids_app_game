@@ -4,7 +4,7 @@ import {
   collection, serverTimestamp, Timestamp, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { showScreen, showToast, showLoading, hideLoading } from './ui.js';
-import { generateCode } from './auth.js';
+import { generateCode, currentFamilyId } from './auth.js';
 
 // =========== CONSTANTS ===========
 export const CHILD_EMOJIS = ["🦁","🐱","🦄","🐶","🐸","🦊","🐼","🦋","🌟","🎈","🐯","🐰","🦜","🐻","🎀","🚀","⚽","🎸","🌈","🧸","🐬","🦕","🐝","🍀"];
@@ -50,7 +50,8 @@ export function renderFamily(familyId) {
       const isWaiting = c.status === 'waiting';
       const color = c.color || CHILD_COLORS[ci % CHILD_COLORS.length];
       return `
-        <div class="child-card" onclick="${isWaiting ? `showChildInviteModal('${c.id}')` : `location.href='points.html?childName=${encodeURIComponent(c.name)}'`}" style="box-shadow:0 2px 10px rgba(0,0,0,0.07),inset -4px 0 0 ${color},inset 0 -3px 0 ${color}70;">
+        <div class="child-card" onclick="${isWaiting ? `showChildInviteModal('${c.id}')` : `location.href='points.html?childName=${encodeURIComponent(c.name)}'`}" style="position:relative;box-shadow:0 2px 10px rgba(0,0,0,0.07),inset -4px 0 0 ${color},inset 0 -3px 0 ${color}70;">
+          ${!isWaiting ? `<button onclick="event.stopPropagation();showActiveChildModal('${c.id}')" style="position:absolute;top:6px;left:6px;background:rgba(255,255,255,0.9);border:none;border-radius:50%;width:28px;height:28px;font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.15);">✏️</button>` : ''}
           <div class="cc-photo">${photoHTML}</div>
           <div class="cc-name">${c.name}</div>
           <div class="cc-gender">${genderEmoji} ${c.gender === 'male' ? 'זכר' : 'נקבה'}</div>
@@ -212,6 +213,89 @@ export async function verifyChildCode(code) {
   } catch(e) {
     console.error(e);
     return { error: 'שגיאה, נסה שוב' };
+  }
+}
+
+// =========== ACTIVE CHILD MODAL ===========
+export function showActiveChildModal(childId) {
+  const child = childrenCache.find(c => c.id === childId);
+  if (!child) return;
+  const isFem = child.gender === 'female';
+
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  const sh = document.createElement('div'); sh.className = 'modal-sheet';
+  sh.innerHTML = `<div class="modal-handle"></div>
+    <div class="modal-header"><h2>${child.emoji || (isFem ? '👧' : '👦')} ${child.name}</h2><button class="modal-close">✕</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;padding-bottom:8px;">
+      <button id="acm-edit" class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;">✏️ עריכת פרופיל</button>
+      <button id="acm-code" class="btn btn-primary btn-sm" style="width:100%;justify-content:center;">🔑 שלח קוד כניסה חדש</button>
+    </div>`;
+
+  sh.querySelector('.modal-close').onclick = () => ov.remove();
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+
+  sh.querySelector('#acm-edit').onclick = () => { ov.remove(); window.openEditChild(childId); };
+  sh.querySelector('#acm-code').onclick = async () => {
+    ov.remove();
+    await generateNewInviteCode(childId);
+  };
+
+  ov.appendChild(sh);
+  document.body.appendChild(ov);
+}
+window.showActiveChildModal = showActiveChildModal;
+
+async function generateNewInviteCode(childId) {
+  const child = childrenCache.find(c => c.id === childId);
+  if (!child) return;
+  const familyId = currentFamilyId;
+  if (!familyId) { showToast('שגיאה: לא נמצא מזהה משפחה'); return; }
+
+  showLoading('יוצר קוד...');
+  try {
+    // מחק קוד ישן
+    if (child.inviteCode) {
+      try { await deleteDoc(doc(db, 'inviteCodes', child.inviteCode)); } catch(e) {}
+    }
+    // צור קוד חדש
+    const newCode = generateCode();
+    await setDoc(doc(db, 'inviteCodes', newCode), {
+      familyId,
+      childId,
+      createdAt: Timestamp.now(),
+      used: false
+    });
+    await updateDoc(doc(db, 'families', familyId, 'children', childId), {
+      inviteCode: newCode,
+      codeCreatedAt: Timestamp.now(),
+      codeAttempts: 0
+    });
+    // עדכן cache
+    const cached = childrenCache.find(c => c.id === childId);
+    if (cached) cached.inviteCode = newCode;
+
+    hideLoading();
+    // הצג קוד חדש + שיתוף
+    const isFem = child.gender === 'female';
+    const ov2 = document.createElement('div'); ov2.className = 'modal-overlay';
+    const sh2 = document.createElement('div'); sh2.className = 'modal-sheet';
+    sh2.innerHTML = `<div class="modal-handle"></div>
+      <div class="modal-header"><h2>🔑 קוד כניסה חדש</h2><button class="modal-close">✕</button></div>
+      <div class="modal-body">
+        <p style="font-size:0.88rem;color:var(--muted);text-align:center;margin-bottom:12px;">הקוד תקף ל-24 שעות</p>
+        <div class="invite-code-display">${newCode}</div>
+        <div style="margin-top:16px;">
+          <button class="btn btn-primary btn-sm" id="new-code-share" style="width:100%;justify-content:center;">📤 שתף קוד עם ${isFem ? 'הילדה' : 'הילד'}</button>
+        </div>
+      </div>`;
+    sh2.querySelector('.modal-close').onclick = () => ov2.remove();
+    ov2.onclick = e => { if (e.target === ov2) ov2.remove(); };
+    sh2.querySelector('#new-code-share').onclick = () => shareCode(newCode, child.name, child.gender);
+    ov2.appendChild(sh2); document.body.appendChild(ov2);
+  } catch(e) {
+    hideLoading();
+    showToast('שגיאה ביצירת קוד');
+    console.error(e);
   }
 }
 
