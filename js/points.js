@@ -950,13 +950,21 @@ async function undoTask(familyId, childId, histIdx) {
       const st = stateSnap.data();
       const histItem = st.hist?.[histIdx];
       if (histItem) {
-        // הפחת כוכבים והסר מהיסטוריה — אבל השאר comp כמו שהוא
-        // כדי שהילד יראה את המשימה כ"בוצעה" ולא יוכל לשלוח שוב
         const newPts  = Math.max(0, (st.pts || 0) - (histItem.pts || 0));
         const newHist = st.hist.filter((_, i) => i !== histIdx);
-        // עדכון ממוקד של שדות hist ו-pts בלבד — כך Firestore cache מתעדכן
-        // לפני ש-addDoc שלמטה יפעיל את ה-onSnapshot
-        await updateDoc(stateRef, { hist: newHist, pts: newPts });
+
+        // נקה comp[taskId] כדי שהמשימה תהיה זמינה שוב לילד
+        const newComp = { ...(st.comp || {}) };
+        const taskKey = histItem.taskId || '';
+        if (taskKey && newComp[taskKey]) {
+          const c = newComp[taskKey];
+          c.wc = (c.wc || 1) - 1;
+          if (c.wc <= 0) delete newComp[taskKey];
+          else newComp[taskKey] = c;
+        }
+
+        // עדכון ממוקד — Firestore cache מתעדכן לפני ש-addDoc יפעיל onSnapshot
+        await updateDoc(stateRef, { hist: newHist, pts: newPts, comp: newComp });
 
         // מצא את המשימה כדי לקבל freq
         let taskFreq = 'daily';
