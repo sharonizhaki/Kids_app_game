@@ -335,6 +335,16 @@ async function loadChild() {
       // ⬇ לא מאפסים monthlyPts — הוא מצטבר לנצח
       // רק מעבירים את השבועי למצטבר בסוף שבוע
       let changed = false;
+
+      // תיקון פריטים תקועים: pending ישן מעל 60 שניות → failed → כפתור "שלח שוב"
+      const now = Date.now();
+      cs.pending.forEach(p => {
+        if (p.status === 'pending' && (now - (p.ts || 0)) > 60_000) {
+          p.status = 'failed';
+          changed = true;
+        }
+      });
+
       if (cs.wk !== weekKey()) {
         cs.monthlyPts = (cs.monthlyPts || 0) + (cs.pts || 0);
         cs.pts = 0; cs.comp = {}; cs.wk = weekKey(); changed = true;
