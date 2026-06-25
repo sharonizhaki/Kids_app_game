@@ -966,6 +966,23 @@ async function undoTask(familyId, childId, histIdx) {
         // עדכון ממוקד — Firestore cache מתעדכן לפני ש-addDoc יפעיל onSnapshot
         await updateDoc(stateRef, { hist: newHist, pts: newPts, comp: newComp });
 
+        // סמן את ה-pendingApproval המקורי (approved) כ-cancelled — מניעת כפל בהיסטוריה
+        try {
+          const appSnap = await getDocs(query(
+            collection(db, 'families', familyId, 'pendingApprovals'),
+            where('childId',  '==', childId),
+            where('status',   '==', 'approved'),
+            where('taskId',   '==', histItem.taskId || ''),
+          ));
+          for (const d of appSnap.docs) {
+            const diff = Math.abs((d.data().ts || 0) - (histItem.ts || 0));
+            if (diff < 5000) {
+              await updateDoc(d.ref, { status: 'cancelled_by_parent' });
+              break;
+            }
+          }
+        } catch(e) {}
+
         // מצא את המשימה כדי לקבל freq
         let taskFreq = 'daily';
         let taskDocId = histItem.taskId || '';

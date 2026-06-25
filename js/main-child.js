@@ -531,6 +531,22 @@ async function loadChild() {
             return;
           }
 
+          // ביטול על ידי הורה — נקה comp כדי שהמשימה תהיה זמינה שוב
+          if (change.type === 'added' && data.status === 'cancelled') {
+            const taskKey = data.taskId || '';
+            if (taskKey && cs.comp?.[taskKey]) {
+              const c = cs.comp[taskKey];
+              c.wc = Math.max(0, (c.wc || 1) - 1);
+              if (c.wc <= 0) delete cs.comp[taskKey];
+            }
+            // הסר גם מ-pending אם שם
+            if (idx !== -1) cs.pending.splice(idx, 1);
+            cs.pts = Math.max(0, (cs.pts || 0) - (data.pts || 0));
+            saveState();
+            renderChild();
+            return;
+          }
+
           // עדכון סטטוס בלבד (added)
           if ((change.type === 'modified' || change.type === 'added') && idx !== -1) {
             cs.pending[idx].status = data.status;
