@@ -2,7 +2,7 @@
 // לוגיקת משימות: isDone, completeTask (עם pending), render קטגוריות, היסטוריה, modals.
 
 import {
-  collection, addDoc, serverTimestamp,
+  collection, addDoc, updateDoc, serverTimestamp,
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import {
   ref, uploadString, getDownloadURL,
@@ -125,17 +125,8 @@ async function _submitPending(t, saveStateFn, photoUrl = '') {
     return;
   }
   try {
-    let storedPhotoUrl = '';
-    if (photoUrl && storage) {
-      try {
-        const photoRef = ref(storage, `pendingPhotos/${state.familyId}/${ts}.jpg`);
-        await uploadString(photoRef, photoUrl, 'data_url');
-        storedPhotoUrl = await getDownloadURL(photoRef);
-      } catch (uploadErr) {
-        console.warn('photo upload failed, continuing without photo:', uploadErr);
-      }
-    }
-    await addDoc(
+    // שלב 1 — addDoc מיידי (בלי תמונה) → ההורה מקבל התראה מיד
+    const docRef = await addDoc(
       collection(_db, 'families', state.familyId, 'pendingApprovals'),
       {
         taskId:     t.id,
@@ -148,9 +139,20 @@ async function _submitPending(t, saveStateFn, photoUrl = '') {
         childEmoji: state.childData?.emoji || '👦',
         status:     'pending',
         createdAt:  serverTimestamp(),
-        ...(storedPhotoUrl ? { photoUrl: storedPhotoUrl } : {}),
       }
     );
+
+    // שלב 2 — העלאת תמונה ברקע, ואז updateDoc
+    if (photoUrl && storage && docRef) {
+      try {
+        const photoRef    = ref(storage, `pendingPhotos/${state.familyId}/${ts}.jpg`);
+        await uploadString(photoRef, photoUrl, 'data_url');
+        const storedUrl   = await getDownloadURL(photoRef);
+        await updateDoc(docRef, { photoUrl: storedUrl });
+      } catch (uploadErr) {
+        console.warn('photo upload failed (doc already created):', uploadErr?.code, uploadErr?.message);
+      }
+    }
   } catch (e) {
     console.error('pendingApprovals write error:', e?.code, e?.message, e);
     _markPendingFailed(cs, t.id, ts, saveStateFn);
