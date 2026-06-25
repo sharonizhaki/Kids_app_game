@@ -668,8 +668,8 @@ function _histDayLabel(ts) {
   const yest  = new Date(now); yest.setDate(now.getDate() - 1);
   const yestKey  = _histDayKey(yest.getTime());
   const itemKey  = _histDayKey(ts);
-  if (itemKey === todayKey) return 'פעילויות היום';
-  if (itemKey === yestKey)  return 'פעילויות אתמול';
+  if (itemKey === todayKey) return 'היום';
+  if (itemKey === yestKey)  return 'אתמול';
   const names = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
   return names[d.getDay()];
 }

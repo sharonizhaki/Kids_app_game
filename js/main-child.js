@@ -180,7 +180,7 @@ export function renderChild() {
   }
   const greetings = childData.gender === 'female' ? GREETINGS_F : GREETINGS_M;
   const gtEl = document.getElementById('greeting-text');
-  if (gtEl) gtEl.textContent = `שלום ${childData.name}! ${greetings[Math.floor(Math.random()*greetings.length)]}`;
+  if (gtEl) gtEl.textContent = greetings[Math.floor(Math.random()*greetings.length)];
 
   const gsEl = document.getElementById('greeting-sub');
   if (gsEl) gsEl.textContent = todayDone > 0
