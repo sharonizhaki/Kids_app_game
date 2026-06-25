@@ -273,7 +273,11 @@ export async function loadManualPtsHistory(familyId) {
 
 export function initPendingListener(familyId, onUpdate) {
   return onSnapshot(collection(db, 'families', familyId, 'pendingApprovals'), async () => {
-    await loadPendingApprovals(familyId);
+    await Promise.all([
+      loadPendingApprovals(familyId),
+      loadCompletedTasks(familyId),
+      loadCancelledTasks(familyId),
+    ]);
     onUpdate();
   });
 }
