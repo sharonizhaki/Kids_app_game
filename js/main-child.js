@@ -117,7 +117,7 @@ function _renderPrizeBar() {
 
   emojiEl.textContent  = prize.emoji || '🎁';
   nameEl.textContent   = prize.name || prize.title || '';
-  remainEl.textContent = remain > 0 ? `עוד ${remain} ⭐` : '✅ הגעת!';
+  remainEl.textContent = remain > 0 ? `עוד ${remain} ⭐` : 'הגעת ליעד - אפשר לבקש מההורים דרך פרסים 🎁';
   fillEl.style.background = `linear-gradient(90deg, ${color}, ${lightenColor(color)})`;
   fillEl.style.width   = pct + '%';
   labelEl.textContent  = `${totalPts} / ${cost} ⭐`;
@@ -375,7 +375,7 @@ async function loadChild() {
         .filter(p => p.active !== false)
         .filter(p => !p.hidden)
         .filter(p => !p.assignedChildren || p.assignedChildren.length === 0 || p.assignedChildren.includes(state.childId))
-        .sort((a, b) => (a.cost || 0) - (b.cost || 0));
+        .sort((a, b) => (a.pts || 0) - (b.pts || 0));
       setPrizesForBar(prizes);
     } catch (e) { setPrizesForBar([]); }
 
@@ -458,7 +458,7 @@ async function loadChild() {
         .filter(p => p.active !== false)
         .filter(p => !p.hidden)
         .filter(p => !p.assignedChildren || p.assignedChildren.length === 0 || p.assignedChildren.includes(state.childId))
-        .sort((a, b) => (a.cost || 0) - (b.cost || 0));
+        .sort((a, b) => (a.pts || 0) - (b.pts || 0));
       setPrizesForBar(prizes);
     });
 
