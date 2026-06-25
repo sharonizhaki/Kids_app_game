@@ -347,7 +347,7 @@ function showCatModal(cat, saveStateFn, renderChildFn) {
   header.querySelector('.task-modal-close').onclick = () => ov.remove();
 
   const body = document.createElement('div');
-  body.style.cssText = 'overflow-y:auto;max-height:65vh;';
+  body.style.cssText = 'overflow-y:auto;max-height:65vh;display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:#F5F3FF;';
 
   tasks.forEach(t => {
     const done    = isDone(t);
@@ -359,16 +359,16 @@ function showCatModal(cat, saveStateFn, renderChildFn) {
     // תוכן שורה
     const freqCls = FREQ_CLS[t.freq] || '';
     row.innerHTML = `
-      <span class="task-row-emoji">${t.emoji || '⭐'}</span>
-      <div class="task-row-info">
-        <strong>${t.task}</strong>
-        ${t.desc ? `<span class="task-row-note">📝 ${t.desc}</span>` : ''}
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px;">
-          <span class="freq-tag ${freqCls}">${FREQ_LABEL[t.freq] || ''}</span>
-          ${t.pts ? `<span style="font-size:0.72rem;font-weight:800;color:#F59E0B;background:#FFFBEB;border:1px solid #FDE68A;border-radius:20px;padding:1px 7px;">⭐ ${t.pts}</span>` : ''}
-        </div>
+      <div class="task-row-name-row">
+        <span class="task-row-emoji">${t.emoji || '⭐'}</span>
+        <strong style="flex:1;font-size:0.95rem;font-weight:800;color:#1E293B;">${t.task}</strong>
       </div>
-      <div class="task-row-actions"></div>`;
+      ${t.desc ? `<span class="task-row-note">📝 ${t.desc}</span>` : ''}
+      <div class="task-row-tags-row">
+        <span class="freq-tag ${freqCls}">${FREQ_LABEL[t.freq] || ''}</span>
+        ${t.pts ? `<span style="font-size:0.7rem;font-weight:800;color:#F59E0B;background:#FFFBEB;border:1px solid #FDE68A;border-radius:20px;padding:2px 7px;">⭐ ${t.pts}</span>` : ''}
+        <div class="task-row-actions"></div>
+      </div>`;
 
     const actions = row.querySelector('.task-row-actions');
 

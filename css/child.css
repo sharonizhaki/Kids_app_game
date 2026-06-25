@@ -282,24 +282,29 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 }
 
 .task-row-item {
-  padding: 14px 18px;
-  display: flex; align-items: flex-start; gap: 10px;
-  border-bottom: 1px solid #F1F5F9;
+  padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 0;
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #EDE9FE;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
 }
-.task-row-item:last-child { border-bottom: none; }
-.task-row-emoji { font-size: 1.6rem; flex-shrink: 0; }
+.task-row-name-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+}
+.task-row-emoji { font-size: 1.5rem; flex-shrink: 0; }
 .task-row-info  { flex: 1; min-width: 0; }
-.task-row-info strong { display: block; font-size: 0.93rem; font-weight: 700; }
+.task-row-info strong { display: block; font-size: 0.95rem; font-weight: 800; color: #1E293B; }
 .task-row-freq  { font-size: 0.7rem; padding: 2px 7px; border-radius: 6px; font-weight: 600; margin-top: 3px; display: inline-block; }
-.task-row-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.task-row-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-right: auto; }
 
 /* כפתור ביצוע ✅ */
 .task-btn-done {
   background: linear-gradient(135deg, #10B981, #059669);
-  color: white; border: none; border-radius: 22px;
-  padding: 9px 16px; font-size: 0.88rem; font-weight: 800;
+  color: white; border: none; border-radius: 20px;
+  padding: 5px 14px; font-size: 0.78rem; font-weight: 800;
   cursor: pointer; font-family: 'Heebo', sans-serif;
-  box-shadow: 0 3px 10px rgba(16,185,129,0.3);
+  box-shadow: 0 2px 8px rgba(16,185,129,0.3);
   transition: transform 0.1s;
   white-space: nowrap;
 }
@@ -308,8 +313,8 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 /* כפתור צילום 📸 */
 .task-btn-photo {
   background: #fff7ed; color: #c2410c;
-  border: 1.5px solid #fed7aa; border-radius: 22px;
-  padding: 9px 13px; font-size: 0.85rem; font-weight: 800;
+  border: 1.5px solid #fed7aa; border-radius: 20px;
+  padding: 5px 10px; font-size: 0.78rem; font-weight: 800;
   cursor: pointer; font-family: 'Heebo', sans-serif;
   transition: transform 0.1s, background 0.15s;
   white-space: nowrap;
@@ -319,10 +324,10 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 /* כפתור צילום חובה (requireApproval) */
 .task-btn-photo-required {
   background: linear-gradient(135deg, #7C3AED, #6D28D9);
-  color: white; border: none; border-radius: 22px;
-  padding: 9px 16px; font-size: 0.82rem; font-weight: 800;
+  color: white; border: none; border-radius: 20px;
+  padding: 5px 14px; font-size: 0.78rem; font-weight: 800;
   cursor: pointer; font-family: 'Heebo', sans-serif;
-  box-shadow: 0 3px 12px rgba(124,58,237,0.4);
+  box-shadow: 0 2px 10px rgba(124,58,237,0.35);
   transition: transform 0.1s, box-shadow 0.15s;
   white-space: nowrap;
   display: flex; flex-direction: column; align-items: center; gap: 1px;
@@ -333,16 +338,20 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
   letter-spacing: 0.3px;
 }
 .task-btn-photo-required:active { transform: scale(0.95); box-shadow: 0 1px 6px rgba(124,58,237,0.3); }
+
 .task-row-note {
-  display: block; font-size: 0.72rem; color: #64748B;
-  margin-top: 3px; line-height: 1.4;
-  background: #F8FAFC; border-radius: 6px;
-  padding: 3px 7px; border-right: 2px solid #C4B5FD;
+  display: block; font-size: 0.82rem; color: #64748B;
+  margin-bottom: 6px; line-height: 1.4;
+  padding-right: 34px;
+}
+
+.task-row-tags-row {
+  display: flex; align-items: center; gap: 6px; padding-right: 34px;
 }
 
 /* סטטוסים בשורת משימה */
 .task-row-done    { opacity: 0.4; pointer-events: none; }
-.task-row-pending { background: #FFFBEB; }
+.task-row-pending { border-color: #FDE68A; background: #FFFBEB; }
 
 /* ===== HISTORY ===== */
 .history-section    { max-width: 480px; margin: 0 auto; }
