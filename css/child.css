@@ -783,12 +783,13 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 #profile-color-display {
   display: flex;
   align-items: center; justify-content: center;
-  width: 110px; height: 110px;
+  width: 95px; height: 95px;
   border-radius: 50%;
   background: transparent !important;
   border: none; cursor: pointer;
   transition: transform 0.18s;
   margin: 0 auto 4px;
+  overflow: visible;
 }
 #profile-color-display:hover { transform: scale(1.12); }
 
