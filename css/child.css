@@ -480,8 +480,8 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 .ach-streak-sq.locked     { background: #F1F5F9; color: #CBD5E1; }
 .ach-streak-sq.collectable{ background: var(--child-color); color: #fff; cursor: pointer; box-shadow: 0 3px 10px color-mix(in srgb, var(--child-color) 45%, transparent); animation: achPulse 1.6s infinite; }
 .ach-streak-sq.collected  { background: color-mix(in srgb, var(--child-color) 60%, #fff); color: #fff; }
-.ach-sq-day  { font-size: 0.48rem; font-weight: 800; line-height: 1; }
-.ach-sq-star { font-size: 0.7rem; line-height: 1; }
+.ach-sq-day  { font-size: 0.46rem; font-weight: 800; line-height: 1; }
+.ach-sq-get  { font-size: 0.6rem !important; padding: 2px 1px !important; border-radius: 5px !important; }
 
 /* tasks / stars grid */
 .ach-grid       { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }

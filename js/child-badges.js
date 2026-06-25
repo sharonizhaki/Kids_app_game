@@ -137,7 +137,7 @@ function _renderStreak(el, streak, col) {
     const isReach = streak >= def.n;
     const sq = document.createElement('div');
     sq.className = `ach-streak-sq ${isCol ? 'collected' : isReach ? 'collectable' : 'locked'}`;
-    sq.innerHTML = `<div class="ach-sq-day">${def.n}</div><div class="ach-sq-star">${isCol ? '✓' : '⭐'}</div>`;
+    sq.innerHTML = `<div class="ach-sq-day">יום ${def.n}</div><div class="ach-card-get ach-sq-get">${isCol ? '✓' : '⭐'}</div>`;
     if (isReach && !isCol) sq.addEventListener('click', () => collectAchievement(def.id));
     grid.appendChild(sq);
   });
