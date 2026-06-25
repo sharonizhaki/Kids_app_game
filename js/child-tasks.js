@@ -677,7 +677,7 @@ function _histDayLabel(ts) {
 export function renderHistory() {
   const hl = document.getElementById('user-hist');
   if (!hl) return;
-  const items = (state.childState?.hist || []).slice(0, 20);
+  const items = [...(state.childState?.hist || [])].sort((a,b) => (b.ts||0)-(a.ts||0)).slice(0, 20);
   if (!items.length) {
     hl.innerHTML = '<div class="empty-state">עדיין לא ביצעת משימות</div>';
     return;
