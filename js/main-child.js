@@ -337,13 +337,17 @@ async function loadChild() {
       let changed = false;
 
       // תיקון פריטים תקועים: pending ישן מעל 60 שניות → failed → כפתור "שלח שוב"
+      // ניקוי פריטים שאושרו (approved) אך נתקעו לפני הוספת ה-setTimeout
       const now = Date.now();
-      cs.pending.forEach(p => {
+      const beforeLen = cs.pending.length;
+      cs.pending = cs.pending.filter(p => {
+        if (p.status === 'approved') return false;
         if (p.status === 'pending' && (now - (p.ts || 0)) > 60_000) {
           p.status = 'failed';
-          changed = true;
         }
+        return true;
       });
+      if (cs.pending.length !== beforeLen) changed = true;
 
       if (cs.wk !== weekKey()) {
         cs.monthlyPts = (cs.monthlyPts || 0) + (cs.pts || 0);
