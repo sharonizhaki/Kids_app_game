@@ -97,7 +97,7 @@ export function openChildProfile() {
     childData.gender === 'female' ? '👧 נקבה' : '👦 זכר';
 
   const colorEl = document.getElementById('profile-color-display');
-  colorEl.innerHTML = childData.color ? SPLAT_SVG(childData.color, 120) : SPLAT_SVG('#94A3B8', 120, true);
+  colorEl.innerHTML = childData.color ? SPLAT_SVG(childData.color, 135) : SPLAT_SVG('#94A3B8', 135, true);
   colorEl.style.background = 'transparent';
   colorEl.style.border = 'none';
   colorEl.onclick = () => showProfileColorModal();
@@ -288,7 +288,7 @@ function showProfileColorModal() {
     if (!tempColor) { ov.remove(); return; }
     profileColor = tempColor;
     const colorEl = document.getElementById('profile-color-display');
-    colorEl.innerHTML = SPLAT_SVG(profileColor, 120);
+    colorEl.innerHTML = SPLAT_SVG(profileColor, 135);
     colorEl.style.background = 'transparent'; colorEl.style.border = 'none';
     ov.remove();
   };
