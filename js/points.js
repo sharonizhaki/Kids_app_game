@@ -232,6 +232,7 @@ export async function loadCancelledTasks(familyId) {
         time:       data.time    || '',
         day:        data.day     || '',
         ts:         data.cancelledAt || data.ts || 0,
+        taskTs:     data.ts      || 0,
       });
     });
     allCancelledTasks.sort((a, b) => (b.ts || 0) - (a.ts || 0));
@@ -596,6 +597,15 @@ export function renderMPList(familyId) {
     if (mpFilter === 'child' && mpSubFilter) manualPts = manualPts.filter(e => e.childName === mpSubFilter);
   }
 
+  // --- הגנה מפני כפילות: הסר מ-approved כל פריט שיש לו מקביל ב-cancelled ---
+  // (race condition: onSnapshot מפעיל לפני שה-updateDoc של hist מתפשט)
+  // taskTs = הזמן המקורי של ביצוע המשימה (data.ts ב-pendingApprovals),
+  // שמתאים ל-ts ב-allCompletedTasks (שמגיע מ-hist[].ts)
+  const cancelledKeys = new Set(
+    cancelled.map(t => `${t.childId}|${t.task}|${t.taskTs}`)
+  );
+  approved = approved.filter(t => !cancelledKeys.has(`${t.childId}|${t.task}|${t.ts}`));
+
   // --- build unified sorted list ---
   _unifiedItems = [];
   approved.forEach(t  => _unifiedItems.push({ ...t, _status: 'approved'  }));
@@ -942,9 +952,11 @@ async function undoTask(familyId, childId, histIdx) {
       if (histItem) {
         // הפחת כוכבים והסר מהיסטוריה — אבל השאר comp כמו שהוא
         // כדי שהילד יראה את המשימה כ"בוצעה" ולא יוכל לשלוח שוב
-        st.pts = Math.max(0, (st.pts || 0) - (histItem.pts || 0));
-        st.hist.splice(histIdx, 1);
-        await updateDoc(stateRef, st);
+        const newPts  = Math.max(0, (st.pts || 0) - (histItem.pts || 0));
+        const newHist = st.hist.filter((_, i) => i !== histIdx);
+        // עדכון ממוקד של שדות hist ו-pts בלבד — כך Firestore cache מתעדכן
+        // לפני ש-addDoc שלמטה יפעיל את ה-onSnapshot
+        await updateDoc(stateRef, { hist: newHist, pts: newPts });
 
         // מצא את המשימה כדי לקבל freq
         let taskFreq = 'daily';
