@@ -348,13 +348,14 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 .history-section    { max-width: 480px; margin: 0 auto; }
 .history-section h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 10px; }
 .history-list { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
-.hi-item            { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid #F1F5F9; }
+.hi-day-sep         { font-size: 0.72rem; font-weight: 800; color: #94A3B8; padding: 8px 14px 4px; letter-spacing: 0.03em; }
+.hi-item            { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-bottom: 1px solid #F1F5F9; }
 .hi-item:last-child { border-bottom: none; }
-.hi-emoji           { font-size: 1.3rem; }
+.hi-emoji           { font-size: 1.15rem; }
 .hi-info            { flex: 1; }
-.hi-info strong     { display: block; font-weight: 600; font-size: 0.9rem; }
-.hi-info span       { color: var(--muted); font-size: 0.78rem; }
-.hi-pts             { font-weight: 700; color: #10B981; }
+.hi-info strong     { display: block; font-weight: 700; font-size: 0.84rem; }
+.hi-info span       { color: var(--muted); font-size: 0.73rem; }
+.hi-pts             { font-weight: 700; color: #10B981; font-size: 0.85rem; }
 
 /* ===== BOTTOM NAV ===== */
 .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h); background: var(--card); border-top: 1.5px solid #DDD6FE; display: flex; align-items: stretch; box-shadow: 0 -4px 20px rgba(124,58,237,0.10); z-index: 500; padding-bottom: env(safe-area-inset-bottom); }

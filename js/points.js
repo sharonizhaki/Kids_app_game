@@ -73,7 +73,11 @@ export function showActiveTab(familyId) {
   if (el) el.style.display = 'block';
 
   if (mpTab === 'pending')  renderPendingTab(familyId);
-  if (mpTab === 'history')  { renderMPFilters(); renderMPList(familyId); }
+  if (mpTab === 'history')  {
+    _histLastSeen = _getHistLastSeen(familyId || _familyId);
+    _markHistSeen(familyId || _familyId);
+    renderMPFilters(); renderMPList(familyId);
+  }
   if (mpTab === 'manual')   renderManualTab(familyId);
 }
 
@@ -378,6 +382,16 @@ export function renderPendingTab(familyId) {
 
 }
 
+// =========== HISTORY LAST-SEEN ===========
+let _histLastSeen = 0;
+function _histSeenKey(fid) { return `activityLastSeen_${fid}`; }
+function _getHistLastSeen(fid) {
+  try { return parseInt(localStorage.getItem(_histSeenKey(fid)) || '0', 10); } catch(e) { return 0; }
+}
+function _markHistSeen(fid) {
+  try { localStorage.setItem(_histSeenKey(fid), String(Date.now())); } catch(e) {}
+}
+
 // =========== HISTORY HELPERS ===========
 function _tsToDateKey(ts) {
   if (!ts) return '1970-01-01';
@@ -395,9 +409,13 @@ function _renderUnifiedCardHtml(item, idx) {
   const emoji    = item.emoji || item.prizeEmoji || '⭐';
   const taskName = item.task  || item.prizeName  || '';
 
+  const isNew = _histLastSeen > 0 && (item.ts || 0) > _histLastSeen;
+  const newDot = isNew ? `<span style="position:absolute;top:10px;left:10px;width:9px;height:9px;background:#EF4444;border-radius:50%;border:2px solid white;"></span>` : '';
+
   if (item._status === 'approved') {
     return `
-      <div class="etask-wrap" data-idx="${idx}" data-child-id="${item.childId}" data-hist-idx="${item.histIdx}">
+      <div class="etask-wrap" data-idx="${idx}" data-child-id="${item.childId}" data-hist-idx="${item.histIdx}" style="position:relative;">
+        ${newDot}
         <div class="etask-actions"><div class="etask-action act-delete" data-act="undo"><span>↩️</span>בטל</div></div>
         <div class="etask-card">
           <span class="etask-emoji">${emoji}</span>

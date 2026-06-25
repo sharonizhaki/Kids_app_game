@@ -115,7 +115,6 @@ function initActivityBadgeListeners(familyId) {
 }
 
 window.goToActivityCenter = function() {
-  _markActivitySeen(currentFamilyId);
   _setActivityBadge(0);
   window.location.href = 'points.html?tab=history';
 };

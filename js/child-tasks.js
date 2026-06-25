@@ -655,19 +655,50 @@ function _compressPhoto(file) {
 }
 
 // -------- RENDER HISTORY --------
+function _histDayKey(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+function _histDayLabel(ts) {
+  if (!ts) return '';
+  const d    = new Date(ts);
+  const now  = new Date();
+  const todayKey = _histDayKey(Date.now());
+  const yest  = new Date(now); yest.setDate(now.getDate() - 1);
+  const yestKey  = _histDayKey(yest.getTime());
+  const itemKey  = _histDayKey(ts);
+  if (itemKey === todayKey) return 'פעילויות היום';
+  if (itemKey === yestKey)  return 'פעילויות אתמול';
+  const names = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  return names[d.getDay()];
+}
+
 export function renderHistory() {
   const hl = document.getElementById('user-hist');
   if (!hl) return;
-  const items = (state.childState?.hist || []).slice(0, 10);
-  hl.innerHTML = items.length
-    ? items.map(h => `
-        <div class="hi-item">
-          <span class="hi-emoji">${h.emoji || '⭐'}</span>
-          <div class="hi-info">
-            <strong>${h.task}</strong>
-            <span>${h.day} ${h.time}</span>
-          </div>
-          <span class="hi-pts">${starsText(h.pts)}</span>
-        </div>`).join('')
-    : '<div class="empty-state">עדיין לא ביצעת משימות</div>';
+  const items = (state.childState?.hist || []).slice(0, 20);
+  if (!items.length) {
+    hl.innerHTML = '<div class="empty-state">עדיין לא ביצעת משימות</div>';
+    return;
+  }
+  let html = '';
+  let lastKey = null;
+  items.forEach(h => {
+    const dk = _histDayKey(h.ts);
+    if (dk !== lastKey) {
+      lastKey = dk;
+      html += `<div class="hi-day-sep">${_histDayLabel(h.ts)}</div>`;
+    }
+    html += `
+      <div class="hi-item">
+        <span class="hi-emoji">${h.emoji || '⭐'}</span>
+        <div class="hi-info">
+          <strong>${h.task}</strong>
+          <span>${h.day} ${h.time}</span>
+        </div>
+        <span class="hi-pts">${starsText(h.pts)}</span>
+      </div>`;
+  });
+  hl.innerHTML = html;
 }
