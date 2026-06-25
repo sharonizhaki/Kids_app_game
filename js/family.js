@@ -425,7 +425,7 @@ export async function renderDashboardChildren(familyId) {
                     overflow:hidden;text-overflow:ellipsis;width:100%;">${child.name}</div>
         <div style="display:flex;justify-content:space-between;width:100%;font-size:0.72rem;font-weight:700;margin-top:4px;direction:rtl;">
           <span style="color:#F59E0B;">⭐ ${weekly} השבוע</span>
-          <span style="color:#7C3AED;">💰 ${pts}</span>
+          <span style="color:#7C3AED;">⭐ ${pts} סה"כ</span>
         </div>
         ${progressBar}
         ${prizeBadge}
