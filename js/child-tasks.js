@@ -694,8 +694,8 @@ export function renderHistory() {
       <div class="hi-item">
         <span class="hi-emoji">${h.emoji || '⭐'}</span>
         <div class="hi-info">
-          <strong>${h.task}</strong>
-          <span>${h.day} ${h.time}</span>
+          <strong>${h.task || h.taskName || '—'}</strong>
+          <span>${h.day || ''} ${h.time || ''}</span>
         </div>
         <span class="hi-pts">${starsText(h.pts)}</span>
       </div>`;
