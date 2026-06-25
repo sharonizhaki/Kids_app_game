@@ -5,16 +5,25 @@ import { state }     from './child-state.js';
 import { showToast } from './child-ui.js';
 
 // -------- ACHIEVEMENT DEFINITIONS --------
-const _streak = n      => ({ id: `streak_${n}`,  cat: 'streak', n, reward: 1,              label: `יום ${n}`,     reached: cs => _curStreak(cs) >= n });
-const _tasks  = (n, r) => ({ id: `tasks_${n}`,   cat: 'tasks',  n, reward: r,              label: `${n} משימות`, reached: cs => (cs.totalTasksDone || 0) >= n });
-const _stars  = n      => ({ id: `stars_${n}`,   cat: 'stars',  n, reward: Math.round(n/2), label: `${n} ⭐`,      reached: cs => (cs.totalPtsEarned  || 0) >= n });
+const _taskLabel = n => n === 1 ? 'בצע משימה 1' : `בצע ${n} משימות`;
 
-export const ACHIEVEMENT_DEFS = [
-  ...[1,2,3,4,5,6,7,8,9,10].map(_streak),
-  _tasks(1,1), _tasks(5,2), _tasks(10,3), _tasks(15,4), _tasks(20,5),
-  _tasks(25,6), _tasks(30,7), _tasks(35,8), _tasks(40,9), _tasks(45,10), _tasks(50,11),
-  _stars(10), _stars(20), _stars(50), _stars(100), _stars(200), _stars(500),
+const _streak = n      => ({ id: `streak_${n}`,  cat: 'streak', n, reward: 1,               reached: cs => _curStreak(cs) >= n });
+const _tasks  = (n, r) => ({ id: `tasks_${n}`,   cat: 'tasks',  n, reward: r,  label: _taskLabel(n), reached: cs => (cs.totalTasksDone || 0) >= n });
+const _stars  = n      => ({ id: `stars_${n}`,   cat: 'stars',  n, reward: Math.round(n/2), label: `אסוף ${n} ⭐`, reached: cs => (cs.totalPtsEarned  || 0) >= n });
+
+// רצף עד 50 ימים (⭐1 כל יום)
+const STREAK_DAYS = Array.from({ length: 50 }, (_, i) => _streak(i + 1));
+
+// משימות: 1, ואז 5,10,15,...100 (⭐1 עד ⭐21)
+const TASK_MILESTONES = [
+  _tasks(1,  1),
+  ...[5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100].map((n,i) => _tasks(n, i+2)),
 ];
+
+// כוכבים: 10,20,50,100,200,500 (פרס = סף÷2)
+const STAR_MILESTONES = [10,20,50,100,200,500].map(_stars);
+
+export const ACHIEVEMENT_DEFS = [...STREAK_DAYS, ...TASK_MILESTONES, ...STAR_MILESTONES];
 
 // -------- COMPUTE STREAK --------
 function _curStreak(cs) {
@@ -71,7 +80,7 @@ export function collectAchievement(id) {
   cs.pts = (cs.pts || 0) + def.reward;
   if (_saveFn)   _saveFn();
   if (_renderFn) _renderFn();
-  showToast({ message: `אספת ${def.reward} ⭐`, color: state.childData?.color });
+  showToast(`אספת ${def.reward} ⭐`);
   updateAchievementNavBadge();
   _renderScreen();
 }
@@ -123,12 +132,12 @@ function _renderStreak(el, streak, col) {
 
   const grid = document.createElement('div');
   grid.className = 'ach-streak-grid';
-  ACHIEVEMENT_DEFS.filter(a => a.cat === 'streak').forEach(def => {
+  STREAK_DAYS.forEach(def => {
     const isCol   = !!col[def.id];
     const isReach = streak >= def.n;
     const sq = document.createElement('div');
     sq.className = `ach-streak-sq ${isCol ? 'collected' : isReach ? 'collectable' : 'locked'}`;
-    sq.innerHTML = `<div class="ach-sq-day">יום ${def.n}</div><div class="ach-sq-star">${isCol ? '✓' : '⭐'}</div>`;
+    sq.innerHTML = `<div class="ach-sq-day">${def.n}</div><div class="ach-sq-star">${isCol ? '✓' : '⭐'}</div>`;
     if (isReach && !isCol) sq.addEventListener('click', () => collectAchievement(def.id));
     grid.appendChild(sq);
   });
@@ -144,8 +153,8 @@ function _renderTasks(el, cs, col) {
   el.appendChild(info);
 
   const grid = document.createElement('div');
-  grid.className = 'ach-grid';
-  ACHIEVEMENT_DEFS.filter(a => a.cat === 'tasks').forEach(def => {
+  grid.className = 'ach-grid ach-grid-4col';
+  TASK_MILESTONES.forEach(def => {
     const isCol   = !!col[def.id];
     const isReach = total >= def.n;
     grid.appendChild(_makeCard(def, isCol, isReach));
@@ -163,7 +172,7 @@ function _renderStars(el, cs, col) {
 
   const grid = document.createElement('div');
   grid.className = 'ach-grid ach-grid-2col';
-  ACHIEVEMENT_DEFS.filter(a => a.cat === 'stars').forEach(def => {
+  STAR_MILESTONES.forEach(def => {
     const isCol   = !!col[def.id];
     const isReach = total >= def.n;
     grid.appendChild(_makeCard(def, isCol, isReach));
@@ -171,12 +180,14 @@ function _renderStars(el, cs, col) {
   el.appendChild(grid);
 }
 
+// ---- card builder (tasks + stars) ----
 function _makeCard(def, isCol, isReach) {
   const div = document.createElement('div');
   div.className = `ach-card ${isCol ? 'collected' : isReach ? 'collectable' : 'locked'}`;
+  const getText = isCol ? `✓ ⭐${def.reward}` : `קבל ⭐${def.reward}`;
   div.innerHTML = `
-    <div class="ach-card-reward">${isCol ? '✓' : `⭐${def.reward}`}</div>
-    <div class="ach-card-label">${def.label}</div>`;
+    <div class="ach-card-task">${def.label}</div>
+    <div class="ach-card-get">${getText}</div>`;
   if (isReach && !isCol) div.addEventListener('click', () => collectAchievement(def.id));
   return div;
 }

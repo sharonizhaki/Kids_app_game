@@ -474,24 +474,29 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 .ach-content { padding: 12px 16px 24px; }
 .ach-counter-info { font-size: 0.82rem; color: var(--muted); font-weight: 700; text-align: center; margin-bottom: 14px; }
 
-/* streak grid — 2 rows of 5 */
-.ach-streak-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 8px; }
-.ach-streak-sq   { border-radius: 14px; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; transition: transform 0.15s; }
+/* streak grid — 10 cols × 5 rows (50 days) */
+.ach-streak-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; margin-bottom: 8px; }
+.ach-streak-sq   { border-radius: 9px; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; transition: transform 0.15s; }
 .ach-streak-sq.locked     { background: #F1F5F9; color: #CBD5E1; }
-.ach-streak-sq.collectable{ background: var(--child-color); color: #fff; cursor: pointer; box-shadow: 0 4px 14px color-mix(in srgb, var(--child-color) 45%, transparent); animation: achPulse 1.6s infinite; }
+.ach-streak-sq.collectable{ background: var(--child-color); color: #fff; cursor: pointer; box-shadow: 0 3px 10px color-mix(in srgb, var(--child-color) 45%, transparent); animation: achPulse 1.6s infinite; }
 .ach-streak-sq.collected  { background: color-mix(in srgb, var(--child-color) 60%, #fff); color: #fff; }
-.ach-sq-day  { font-size: 0.6rem; font-weight: 800; line-height: 1; }
-.ach-sq-star { font-size: 1.1rem; line-height: 1; }
+.ach-sq-day  { font-size: 0.48rem; font-weight: 800; line-height: 1; }
+.ach-sq-star { font-size: 0.7rem; line-height: 1; }
 
 /* tasks / stars grid */
-.ach-grid       { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ach-grid       { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ach-grid-4col  { grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .ach-grid-2col  { grid-template-columns: repeat(2, 1fr); }
-.ach-card { border-radius: 14px; padding: 14px 8px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: transform 0.15s; }
+
+/* card: task text on top, reward box at bottom */
+.ach-card { border-radius: 12px; padding: 10px 6px 8px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: transform 0.15s; }
 .ach-card.locked     { background: #F1F5F9; color: #94A3B8; }
 .ach-card.collectable{ background: var(--child-color); color: #fff; cursor: pointer; box-shadow: 0 4px 14px color-mix(in srgb, var(--child-color) 45%, transparent); animation: achPulse 1.6s infinite; }
 .ach-card.collected  { background: color-mix(in srgb, var(--child-color) 60%, #fff); color: #fff; }
-.ach-card-reward { font-size: 1.05rem; font-weight: 900; }
-.ach-card-label  { font-size: 0.68rem; font-weight: 700; line-height: 1.3; }
+.ach-card-task { font-size: 0.64rem; font-weight: 800; line-height: 1.3; flex: 1; display: flex; align-items: center; justify-content: center; }
+.ach-card-get  { font-size: 0.72rem; font-weight: 900; width: 100%;
+  background: rgba(255,255,255,0.25); border-radius: 7px; padding: 4px 2px; }
+.ach-card.locked .ach-card-get  { background: rgba(0,0,0,0.07); color: #64748B; }
 @keyframes achPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
 
 /* ===== MODALS ===== */
