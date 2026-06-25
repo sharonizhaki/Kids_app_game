@@ -7,17 +7,19 @@ import { showToast } from './child-ui.js';
 // -------- ACHIEVEMENT DEFINITIONS --------
 const _taskLabel = n => n === 1 ? 'בצע משימה 1' : `בצע ${n} משימות`;
 
-const _streak = n      => ({ id: `streak_${n}`,  cat: 'streak', n, reward: 1,               reached: cs => _curStreak(cs) >= n });
+const _streak = n      => ({ id: `streak_${n}`,  cat: 'streak', n, reward: 1, label: `יום ${n}`, reached: cs => _curStreak(cs) >= n });
 const _tasks  = (n, r) => ({ id: `tasks_${n}`,   cat: 'tasks',  n, reward: r,  label: _taskLabel(n), reached: cs => (cs.totalTasksDone || 0) >= n });
 const _stars  = n      => ({ id: `stars_${n}`,   cat: 'stars',  n, reward: Math.round(n/2), label: `אסוף ${n} ⭐`, reached: cs => (cs.totalPtsEarned  || 0) >= n });
 
-// רצף עד 50 ימים (⭐1 כל יום)
-const STREAK_DAYS = Array.from({ length: 49 }, (_, i) => _streak(i + 1));
+// רצף עד 100 ימים (⭐1 כל יום)
+const STREAK_DAYS = Array.from({ length: 100 }, (_, i) => _streak(i + 1));
 
-// משימות: 1, ואז 5,10,15,...100 (⭐1 עד ⭐21)
+// משימות: 1, ואז 5,10,15,...200 (⭐1 עד ⭐41)
 const TASK_MILESTONES = [
-  _tasks(1,  1),
-  ...[5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100].map((n,i) => _tasks(n, i+2)),
+  _tasks(1, 1),
+  ...[5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,
+      105,110,115,120,125,130,135,140,145,150,155,160,165,170,175,180,185,190,195,200]
+    .map((n, i) => _tasks(n, i + 2)),
 ];
 
 // כוכבים: 10,20,50,100,200,500 (פרס = סף÷2)
@@ -131,15 +133,11 @@ function _renderStreak(el, streak, col) {
   el.appendChild(info);
 
   const grid = document.createElement('div');
-  grid.className = 'ach-streak-grid';
+  grid.className = 'ach-grid ach-grid-4col';
   STREAK_DAYS.forEach(def => {
     const isCol   = !!col[def.id];
     const isReach = streak >= def.n;
-    const sq = document.createElement('div');
-    sq.className = `ach-streak-sq ${isCol ? 'collected' : isReach ? 'collectable' : 'locked'}`;
-    sq.innerHTML = `<div class="ach-sq-day">יום ${def.n}</div><div class="ach-card-get ach-sq-get">${isCol ? '✓' : '⭐'}</div>`;
-    if (isReach && !isCol) sq.addEventListener('click', () => collectAchievement(def.id));
-    grid.appendChild(sq);
+    grid.appendChild(_makeCard(def, isCol, isReach));
   });
   el.appendChild(grid);
 }

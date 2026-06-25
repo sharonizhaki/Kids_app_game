@@ -474,14 +474,6 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 .ach-content { padding: 12px 16px 24px; }
 .ach-counter-info { font-size: 0.82rem; color: var(--muted); font-weight: 700; text-align: center; margin-bottom: 14px; }
 
-/* streak grid — 7 cols × 7 rows (49 days) */
-.ach-streak-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 8px; }
-.ach-streak-sq   { border-radius: 9px; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; transition: transform 0.15s; }
-.ach-streak-sq.locked     { background: #F1F5F9; color: #CBD5E1; }
-.ach-streak-sq.collectable{ background: var(--child-color); color: #fff; cursor: pointer; box-shadow: 0 3px 10px color-mix(in srgb, var(--child-color) 45%, transparent); animation: achPulse 1.6s infinite; }
-.ach-streak-sq.collected  { background: color-mix(in srgb, var(--child-color) 60%, #fff); color: #fff; }
-.ach-sq-day  { font-size: 0.46rem; font-weight: 800; line-height: 1; }
-.ach-sq-get  { font-size: 0.6rem !important; padding: 2px 1px !important; border-radius: 5px !important; }
 
 /* tasks / stars grid */
 .ach-grid       { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }

@@ -36,7 +36,7 @@ export async function renderPrizesScreen() {
       .map(d => ({ id: d.id, ...d.data() }))
       .filter(p => p.active !== false)
       .filter(p => !p.assignedChildren || p.assignedChildren.length === 0 || p.assignedChildren.includes(state.childId))
-      .sort((a, b) => (a.cost || 0) - (b.cost || 0));
+      .sort((a, b) => (a.pts || 0) - (b.pts || 0));
   } catch (e) { prizes = []; }
 
   // טען בקשות
