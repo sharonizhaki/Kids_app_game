@@ -1,178 +1,185 @@
 // =========== child-badges.js ===========
-// הגדרות badges, בדיקת הענקה אוטומטית, render מסך הישגים.
+// מערכת הישגים: רצף ימים / כמות משימות / כמות כוכבים.
 
-import { state }          from './child-state.js';
-import { showToast }      from './child-ui.js';
+import { state }     from './child-state.js';
+import { showToast } from './child-ui.js';
 
-// -------- BADGE DEFINITIONS --------
-// condition(childState) → true אם הבadge הושג
-export const BADGE_DEFS = [
-  {
-    id:        'first_task',
-    icon:      '🌟',
-    name:      'הצעד הראשון',
-    desc:      'בצע/י את המשימה הראשונה שלך',
-    condition: cs => (cs.hist?.length || 0) >= 1,
-  },
-  {
-    id:        'week_10',
-    icon:      '🔥',
-    name:      'שבוע חזק',
-    desc:      'צבור/י 10 כוכבים בשבוע אחד',
-    condition: cs => (cs.pts || 0) >= 10,
-  },
-  {
-    id:        'week_50',
-    icon:      '💎',
-    name:      'שבוע מושלם',
-    desc:      'צבור/י 50 כוכבים בשבוע אחד',
-    condition: cs => (cs.pts || 0) >= 50,
-  },
-  {
-    id:        'streak_3',
-    icon:      '🗓️',
-    name:      '3 ימים ברצף',
-    desc:      'היה/י פעיל/ה 3 ימים ברצף',
-    condition: cs => (cs.streak || 0) >= 3,
-  },
-  {
-    id:        'streak_7',
-    icon:      '🏆',
-    name:      'שבוע שלם',
-    desc:      'היה/י פעיל/ה 7 ימים ברצף',
-    condition: cs => (cs.streak || 0) >= 7,
-  },
-  {
-    id:        'streak_14',
-    icon:      '👑',
-    name:      'אלוף/ת הרצף',
-    desc:      'היה/י פעיל/ה 14 ימים ברצף',
-    condition: cs => (cs.streak || 0) >= 14,
-  },
-  {
-    id:        'total_100',
-    icon:      '🎯',
-    name:      '100 כוכבים',
-    desc:      'צבור/י 100 כוכבים כולל',
-    condition: cs => ((cs.monthlyPts || 0) + (cs.pts || 0)) >= 100,
-  },
-  {
-    id:        'total_500',
-    icon:      '🚀',
-    name:      'סופר-כוכב',
-    desc:      'צבור/י 500 כוכבים כולל',
-    condition: cs => ((cs.monthlyPts || 0) + (cs.pts || 0)) >= 500,
-  },
-  {
-    id:        'tasks_20',
-    icon:      '📋',
-    name:      'עובד/ת קשה',
-    desc:      'בצע/י 20 משימות',
-    condition: cs => (cs.hist?.length || 0) >= 20,
-  },
-  {
-    id:        'tasks_100',
-    icon:      '🏅',
-    name:      'מאסטר משימות',
-    desc:      'בצע/י 100 משימות',
-    condition: cs => (cs.hist?.length || 0) >= 100,
-  },
+// -------- ACHIEVEMENT DEFINITIONS --------
+const _streak = n      => ({ id: `streak_${n}`,  cat: 'streak', n, reward: 1,              label: `יום ${n}`,     reached: cs => _curStreak(cs) >= n });
+const _tasks  = (n, r) => ({ id: `tasks_${n}`,   cat: 'tasks',  n, reward: r,              label: `${n} משימות`, reached: cs => (cs.totalTasksDone || 0) >= n });
+const _stars  = n      => ({ id: `stars_${n}`,   cat: 'stars',  n, reward: Math.round(n/2), label: `${n} ⭐`,      reached: cs => (cs.totalPtsEarned  || 0) >= n });
+
+export const ACHIEVEMENT_DEFS = [
+  ...[1,2,3,4,5,6,7,8,9,10].map(_streak),
+  _tasks(1,1), _tasks(5,2), _tasks(10,3), _tasks(15,4), _tasks(20,5),
+  _tasks(25,6), _tasks(30,7), _tasks(35,8), _tasks(40,9), _tasks(45,10), _tasks(50,11),
+  _stars(10), _stars(20), _stars(50), _stars(100), _stars(200), _stars(500),
 ];
 
-// -------- CHECK & GRANT NEW BADGES --------
-// מחזיר מערך של badge ids חדשים שהוענקו
-export function checkAndGrantBadges(saveStateFn) {
-  const cs      = state.childState;
-  if (!cs) return [];
-  if (!cs.badges) cs.badges = [];
-
-  const earned     = new Set(cs.badges);
-  const newlyEarned = [];
-
-  BADGE_DEFS.forEach(b => {
-    if (!earned.has(b.id) && b.condition(cs)) {
-      cs.badges.push(b.id);
-      newlyEarned.push(b);
-    }
-  });
-
-  if (newlyEarned.length > 0) {
-    saveStateFn();
-    // הצג toast על badge ראשון חדש
-    const first = newlyEarned[0];
-    setTimeout(() => {
-      showToast({
-        message: `הישג חדש! ${first.icon} ${first.name}`,
-        color: state.childData?.color,
-      });
-    }, 1200);
-  }
-
-  return newlyEarned;
-}
-
 // -------- COMPUTE STREAK --------
-// מחשב streak מ-dailyPts ומעדכן את childState.streak
-export function computeStreak() {
-  const cs = state.childState;
-  if (!cs) return 0;
-
-  const dailyPts = cs.dailyPts || {};
-  let streak     = 0;
-  const today    = new Date();
-
+function _curStreak(cs) {
+  const dailyPts = cs?.dailyPts || {};
+  let streak = 0;
+  const today = new Date();
   for (let i = 0; i < 365; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    if ((dailyPts[key] || 0) > 0) {
-      streak++;
-    } else {
-      if (i > 0) break; // היום עוד לא עשה כלום — לא שובר streak
-    }
+    if ((dailyPts[key] || 0) > 0) { streak++; }
+    else if (i > 0) break;
   }
-  cs.streak = streak;
   return streak;
 }
 
-// -------- RENDER BADGES SCREEN --------
-export function renderBadgesScreen() {
-  const cs      = state.childState;
-  const earned  = new Set(cs?.badges || []);
-  const earnedCount = earned.size;
-
-  // summary
-  const summary = document.getElementById('badges-summary');
-  if (summary) {
-    summary.innerHTML = `
-      <div class="badges-summary-count">${earnedCount} / ${BADGE_DEFS.length}</div>
-      <div class="badges-summary-label">הישגים שהושגו 🏆</div>`;
-  }
-
-  // grid
-  const grid = document.getElementById('badges-grid');
-  if (!grid) return;
-
-  // earned קודם, אחר כך נעולים
-  const sorted = [
-    ...BADGE_DEFS.filter(b =>  earned.has(b.id)),
-    ...BADGE_DEFS.filter(b => !earned.has(b.id)),
-  ];
-
-  grid.innerHTML = sorted.map(b => {
-    const isEarned = earned.has(b.id);
-    return `
-      <div class="badge-card${isEarned ? '' : ' badge-locked'}">
-        <span class="badge-icon">${b.icon}</span>
-        <span class="badge-name">${b.name}</span>
-        <span class="badge-desc">${b.desc}</span>
-        ${isEarned ? '<span class="badge-earned">✅ הושג!</span>' : ''}
-      </div>`;
-  }).join('');
-
-  // badge על nav
-  const navBadge = document.getElementById('nav-badge-badges');
-  if (navBadge) {
-    navBadge.style.display = 'none'; // מוסתר לאחר כניסה למסך
-  }
+export function computeStreak() {
+  const cs = state.childState;
+  if (!cs) return 0;
+  const s = _curStreak(cs);
+  cs.streak = s;
+  return s;
 }
+
+// -------- COLLECTABLE CHECK --------
+export function checkCollectable() {
+  const cs = state.childState;
+  if (!cs) return [];
+  const col = cs.achievementsCollected || {};
+  return ACHIEVEMENT_DEFS.filter(a => !col[a.id] && a.reached(cs));
+}
+
+// -------- NAV BADGE --------
+export function updateAchievementNavBadge() {
+  const nb = document.getElementById('nav-badge-badges');
+  if (!nb) return;
+  if (checkCollectable().length > 0) { nb.textContent = ''; nb.style.display = 'flex'; }
+  else                                { nb.style.display = 'none'; }
+}
+
+// -------- COLLECT --------
+let _saveFn   = null;
+let _renderFn = null;
+
+export function collectAchievement(id) {
+  const cs  = state.childState;
+  if (!cs) return;
+  const def = ACHIEVEMENT_DEFS.find(a => a.id === id);
+  if (!def || !def.reached(cs)) return;
+  if (!cs.achievementsCollected) cs.achievementsCollected = {};
+  if (cs.achievementsCollected[id]) return;
+
+  cs.achievementsCollected[id] = true;
+  cs.pts = (cs.pts || 0) + def.reward;
+  if (_saveFn)   _saveFn();
+  if (_renderFn) _renderFn();
+  showToast({ message: `אספת ${def.reward} ⭐`, color: state.childData?.color });
+  updateAchievementNavBadge();
+  _renderScreen();
+}
+
+// -------- RENDER --------
+let _activeTab = 'streak';
+
+export function renderBadgesScreen(saveFn, renderFn) {
+  if (saveFn)   _saveFn   = saveFn;
+  if (renderFn) _renderFn = renderFn;
+  _renderScreen();
+  const nb = document.getElementById('nav-badge-badges');
+  if (nb) nb.style.display = 'none';
+}
+
+function _renderScreen() {
+  const cs = state.childState;
+  if (!cs) return;
+  _initTabs();
+  const content = document.getElementById('ach-content');
+  if (!content) return;
+  content.innerHTML = '';
+  const col    = cs.achievementsCollected || {};
+  const streak = _curStreak(cs);
+  if      (_activeTab === 'streak') _renderStreak(content, streak, col);
+  else if (_activeTab === 'tasks')  _renderTasks(content, cs, col);
+  else                              _renderStars(content, cs, col);
+}
+
+function _initTabs() {
+  document.querySelectorAll('.ach-tab').forEach(t => {
+    if (t._ach) return;
+    t._ach = true;
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.ach-tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      _activeTab = t.dataset.tab;
+      _renderScreen();
+    });
+  });
+}
+
+// ---- streak tab ----
+function _renderStreak(el, streak, col) {
+  const info = document.createElement('div');
+  info.className = 'ach-counter-info';
+  info.textContent = `רצף נוכחי: ${streak} ימים 🔥`;
+  el.appendChild(info);
+
+  const grid = document.createElement('div');
+  grid.className = 'ach-streak-grid';
+  ACHIEVEMENT_DEFS.filter(a => a.cat === 'streak').forEach(def => {
+    const isCol   = !!col[def.id];
+    const isReach = streak >= def.n;
+    const sq = document.createElement('div');
+    sq.className = `ach-streak-sq ${isCol ? 'collected' : isReach ? 'collectable' : 'locked'}`;
+    sq.innerHTML = `<div class="ach-sq-day">יום ${def.n}</div><div class="ach-sq-star">${isCol ? '✓' : '⭐'}</div>`;
+    if (isReach && !isCol) sq.addEventListener('click', () => collectAchievement(def.id));
+    grid.appendChild(sq);
+  });
+  el.appendChild(grid);
+}
+
+// ---- tasks tab ----
+function _renderTasks(el, cs, col) {
+  const total = cs.totalTasksDone || 0;
+  const info = document.createElement('div');
+  info.className = 'ach-counter-info';
+  info.textContent = `סה"כ משימות שביצעת: ${total}`;
+  el.appendChild(info);
+
+  const grid = document.createElement('div');
+  grid.className = 'ach-grid';
+  ACHIEVEMENT_DEFS.filter(a => a.cat === 'tasks').forEach(def => {
+    const isCol   = !!col[def.id];
+    const isReach = total >= def.n;
+    grid.appendChild(_makeCard(def, isCol, isReach));
+  });
+  el.appendChild(grid);
+}
+
+// ---- stars tab ----
+function _renderStars(el, cs, col) {
+  const total = cs.totalPtsEarned || 0;
+  const info = document.createElement('div');
+  info.className = 'ach-counter-info';
+  info.textContent = `סה"כ כוכבים שהרווחת: ${total} ⭐`;
+  el.appendChild(info);
+
+  const grid = document.createElement('div');
+  grid.className = 'ach-grid ach-grid-2col';
+  ACHIEVEMENT_DEFS.filter(a => a.cat === 'stars').forEach(def => {
+    const isCol   = !!col[def.id];
+    const isReach = total >= def.n;
+    grid.appendChild(_makeCard(def, isCol, isReach));
+  });
+  el.appendChild(grid);
+}
+
+function _makeCard(def, isCol, isReach) {
+  const div = document.createElement('div');
+  div.className = `ach-card ${isCol ? 'collected' : isReach ? 'collectable' : 'locked'}`;
+  div.innerHTML = `
+    <div class="ach-card-reward">${isCol ? '✓' : `⭐${def.reward}`}</div>
+    <div class="ach-card-label">${def.label}</div>`;
+  if (isReach && !isCol) div.addEventListener('click', () => collectAchievement(def.id));
+  return div;
+}
+
+// ---- backward compat stub ----
+export function checkAndGrantBadges() { return []; }

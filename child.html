@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>המשימות שלי</title>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/child.css?v=29">
-  <link rel="stylesheet" href="css/child-onboarding.css?v=29">
+  <link rel="stylesheet" href="css/child.css?v=30">
+  <link rel="stylesheet" href="css/child-onboarding.css?v=30">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
-  <link rel="stylesheet" href="./css/bg-floaters.css?v=29">
+  <link rel="stylesheet" href="./css/bg-floaters.css?v=30">
 </head>
 <body>
 
@@ -109,12 +109,14 @@
 </div>
 
 <!-- ==================== SCREEN: BADGES ==================== -->
-<div id="screen-badges" class="screen has-nav">
-  <div class="user-header">
-    <h2>ההישגים שלי 🏆</h2>
+<div id="screen-badges" class="screen has-nav" style="padding:0;overflow-y:auto;">
+  <div class="ach-header-bar">ההישגים שלי 🏆</div>
+  <div class="ach-tabs">
+    <button class="ach-tab active" data-tab="streak">🔥 רצף</button>
+    <button class="ach-tab"        data-tab="tasks">✅ משימות</button>
+    <button class="ach-tab"        data-tab="stars">⭐ כוכבים</button>
   </div>
-  <div class="badges-summary" id="badges-summary"></div>
-  <div class="badges-grid"   id="badges-grid"></div>
+  <div id="ach-content" class="ach-content"></div>
 </div>
 
 <!-- ==================== SCREEN: NOTIFICATIONS ==================== -->
@@ -198,7 +200,7 @@
 <!-- TOAST -->
 <div class="success-toast" id="toast"></div>
 
-<script type="module" src="js/main-child.js?v=29"></script>
-<script src="./js/bg-floaters.js?v=29"></script>
+<script type="module" src="js/main-child.js?v=30"></script>
+<script src="./js/bg-floaters.js?v=30"></script>
 </body>
 </html>

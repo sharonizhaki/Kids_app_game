@@ -68,7 +68,9 @@ export function _finalizeTask(t, saveStateFn, photoUrl = '') {
   const dateKey = todayKey();
   const cs      = state.childState;
 
-  cs.pts = (cs.pts || 0) + t.pts;
+  cs.pts           = (cs.pts           || 0) + t.pts;
+  cs.totalTasksDone = (cs.totalTasksDone || 0) + 1;
+  cs.totalPtsEarned = (cs.totalPtsEarned || 0) + t.pts;
 
   const c = cs.comp?.[t.id] || { wc: 0, d: '', count: 0, lastTs: 0 };
   c.wc++; c.d = dateKey; c.count++; c.lastTs = Date.now();

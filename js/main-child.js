@@ -16,8 +16,8 @@ import {
 import { initProfile, openChildProfile }                      from './child-profile.js';
 import { initPrizes, renderPrizesScreen }                    from './child-prizes.js';
 import {
-  checkAndGrantBadges, computeStreak,
-  renderBadgesScreen,
+  computeStreak, renderBadgesScreen,
+  updateAchievementNavBadge, checkAndGrantBadges,
 } from './child-badges.js';
 import { startOnboarding }                                    from './child-onboarding.js';
 import {
@@ -55,6 +55,7 @@ function defaultState() {
     pts: 0, monthlyPts: 0, comp: {}, hist: [],
     lastActive: '', wk: weekKey(), mk: monthKey(),
     streak: 0, dailyPts: {}, badges: [], pending: [],
+    totalTasksDone: 0, totalPtsEarned: 0, achievementsCollected: {},
   };
 }
 
@@ -207,12 +208,8 @@ export function renderChild() {
   renderCategories(saveState, renderChild);
   renderHistory();
 
-  // badges
-  const newBadges = checkAndGrantBadges(saveState);
-  if (newBadges.length > 0) {
-    const nb = document.getElementById('nav-badge-badges');
-    if (nb) { nb.textContent = '!'; nb.style.display = 'flex'; }
-  }
+  // achievements nav badge
+  updateAchievementNavBadge();
 }
 
 // -------- BOTTOM NAV --------
@@ -235,9 +232,7 @@ function initNav() {
       show(btn.dataset.screen);
       if (tab === 'prizes') renderPrizesScreen();
       if (tab === 'badges') {
-        renderBadgesScreen();
-        const nb = document.getElementById('nav-badge-badges');
-        if (nb) nb.style.display = 'none';
+        renderBadgesScreen(saveState, renderChild);
       }
     };
   });
@@ -331,6 +326,9 @@ async function loadChild() {
       if (!cs.badges)   cs.badges   = [];
       if (!cs.pending)  cs.pending  = [];
       if (cs.streak === undefined) cs.streak = 0;
+      if (cs.totalTasksDone === undefined)    cs.totalTasksDone    = 0;
+      if (cs.totalPtsEarned === undefined)    cs.totalPtsEarned    = 0;
+      if (!cs.achievementsCollected)          cs.achievementsCollected = {};
 
       // ⬇ לא מאפסים monthlyPts — הוא מצטבר לנצח
       // רק מעבירים את השבועי למצטבר בסוף שבוע
@@ -496,6 +494,8 @@ async function loadChild() {
                 ts:     data.ts     || Date.now(),
               });
               if (cs.hist.length > 50) cs.hist.pop();
+              cs.totalTasksDone = (cs.totalTasksDone || 0) + 1;
+              cs.totalPtsEarned = (cs.totalPtsEarned || 0) + pts;
             }
 
             if (!cs.dailyPts) cs.dailyPts = {};
