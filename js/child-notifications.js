@@ -13,7 +13,7 @@ function _setLastSeen(){ try { localStorage.setItem(_seenKey(), String(Date.now(
 
 // טייפים שמציגים פופאפ בכניסה
 const POPUP_TYPES = new Set([
-  'task_cancelled', 'prize_approved', 'prize_declined',
+  'task_rejected', 'task_cancelled', 'prize_approved', 'prize_declined',
   'prize_reversed', 'manual_pts',
 ]);
 
