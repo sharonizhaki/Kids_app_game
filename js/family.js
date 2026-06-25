@@ -390,7 +390,7 @@ export async function renderDashboardChildren(familyId) {
         <div style="height:100%;border-radius:99px;background:${barColor};width:${pct}%;transition:width 0.6s ease;"></div>
       </div>
       <div style="font-size:0.68rem;font-weight:700;color:${barColor};margin-top:3px;">
-        ${allDone ? '✅ הכל בוצע!' : `${done}/${total} משימות`}
+        ${allDone ? '✅ הכל בוצע!' : `${done} משימות בוצעו מתוך ${total} אפשריות היום`}
       </div>`;
 
     // badge פרסים ממתינים
