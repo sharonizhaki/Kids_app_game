@@ -283,7 +283,7 @@ body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--tex
 
 .task-row-item {
   padding: 14px 18px;
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: flex-start; gap: 10px;
   border-bottom: 1px solid #F1F5F9;
 }
 .task-row-item:last-child { border-bottom: none; }

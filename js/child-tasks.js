@@ -362,11 +362,11 @@ function showCatModal(cat, saveStateFn, renderChildFn) {
       <span class="task-row-emoji">${t.emoji || '⭐'}</span>
       <div class="task-row-info">
         <strong>${t.task}</strong>
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px;">
+        ${t.desc ? `<span class="task-row-note">📝 ${t.desc}</span>` : ''}
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px;">
           <span class="freq-tag ${freqCls}">${FREQ_LABEL[t.freq] || ''}</span>
           ${t.pts ? `<span style="font-size:0.72rem;font-weight:800;color:#F59E0B;background:#FFFBEB;border:1px solid #FDE68A;border-radius:20px;padding:1px 7px;">⭐ ${t.pts}</span>` : ''}
         </div>
-        ${t.desc ? `<span class="task-row-note">📝 ${t.desc}</span>` : ''}
       </div>
       <div class="task-row-actions"></div>`;
 
