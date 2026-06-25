@@ -112,7 +112,7 @@ exports.taskReminderCheck = onSchedule(
       const familyId = familyDoc.id;
 
       // קרא את כל המשימות עם reminder
-      const tasksSnap = await db.collection('families', familyId, 'tasks').get();
+      const tasksSnap = await db.collection(`families/${familyId}/tasks`).get();
       const dueTasks  = tasksSnap.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .filter(t => {
@@ -127,7 +127,7 @@ exports.taskReminderCheck = onSchedule(
       if (dueTasks.length === 0) return;
 
       // קרא את כל הילדים
-      const childrenSnap = await db.collection('families', familyId, 'children').get();
+      const childrenSnap = await db.collection(`families/${familyId}/children`).get();
       if (childrenSnap.empty) return;
 
       await Promise.all(childrenSnap.docs.map(async (childDoc) => {
@@ -179,8 +179,31 @@ exports.eveningParentNotification = onSchedule(
 );
 
 
+exports.morningChildNotification = onSchedule(
+  { schedule: '30 7 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
+  async () => {
+    const familiesSnap = await db.collection('families').get();
+    if (familiesSnap.empty) return;
+    await Promise.all(familiesSnap.docs.map(async (familyDoc) => {
+      const childrenSnap = await familyDoc.ref.collection('children').get();
+      if (childrenSnap.empty) return;
+      await Promise.all(childrenSnap.docs.map(async (childDoc) => {
+        const tokens = childDoc.data().fcmTokens || [];
+        if (tokens.length === 0) return;
+        const stale = await sendPush(
+          tokens,
+          'בוקר טוב 🌞',
+          'מוכנים לאסוף כוכבים?',
+          { url: '/child.html', type: 'morning_child_reminder' }
+        );
+        if (stale.length > 0) await removeStaleTokens(childDoc.ref, 'fcmTokens', stale);
+      }));
+    }));
+  }
+);
+
 exports.eveningChildNotification = onSchedule(
-  { schedule: '0 19 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
+  { schedule: '0 18 * * *', timeZone: 'Asia/Jerusalem', region: REGION },
   async () => {
     const familiesSnap = await db.collection('families').get();
     if (familiesSnap.empty) return;
