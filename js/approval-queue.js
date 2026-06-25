@@ -329,8 +329,7 @@ async function _rejectTask(familyId, docId) {
       const cs = stateSnap.data();
       if (cs.pending?.length) {
         const updated = cs.pending.filter(p =>
-          !(p.taskId === data.taskId &&
-            (Math.abs((p.ts || 0) - (data.ts || 0)) < 30000 || p.status === 'pending'))
+          !(p.taskId === data.taskId && Math.abs((p.ts || 0) - (data.ts || 0)) < 60000)
         );
         ops.push(updateDoc(stateRef, { pending: updated }));
       }

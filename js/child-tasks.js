@@ -52,7 +52,7 @@ export function isDone(t) {
 // -------- IS PENDING --------
 export function isPending(t) {
   return (state.childState?.pending || []).some(
-    p => p.taskId === t.id && p.status === 'pending'
+    p => p.taskId === t.id && (p.status === 'pending' || p.status === 'failed')
   );
 }
 
@@ -425,50 +425,81 @@ function getEncourage() {
   return ENCOURAGE[Math.floor(Math.random() * ENCOURAGE.length)];
 }
 
-// -------- FLYING STAR ANIMATION --------
-function flyStarToCounter(pts) {
+// -------- CONFETTI --------
+function showConfetti() {
+  const colors = ['#7C3AED','#EC4899','#F59E0B','#10B981','#3B82F6','#EF4444','#F97316','#A855F7'];
+  const cx = window.innerWidth  / 2;
+  const cy = window.innerHeight / 2;
+  for (let i = 0; i < 30; i++) {
+    const el    = document.createElement('div');
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const size  = 7 + Math.random() * 9;
+    const round = Math.random() > 0.45;
+    const angle = Math.random() * Math.PI * 2;
+    const dist  = 90 + Math.random() * 170;
+    const tx    = Math.cos(angle) * dist;
+    const ty    = Math.sin(angle) * dist;
+    const rot   = (Math.random() - 0.5) * 720;
+    el.style.cssText = `position:fixed;left:${cx}px;top:${cy}px;width:${size}px;height:${round ? size : size * 0.55}px;background:${color};border-radius:${round ? '50%' : '3px'};pointer-events:none;z-index:5000;transform:translate(-50%,-50%);opacity:1;transition:transform 0.85s cubic-bezier(.2,1.1,.5,1),opacity 0.85s ease 0.35s;`;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.style.transform = `translate(calc(-50% + ${tx}px),calc(-50% + ${ty}px)) rotate(${rot}deg)`;
+      el.style.opacity   = '0';
+    }));
+    setTimeout(() => el.remove(), 1100);
+  }
+}
+
+// -------- FLYING STARS ANIMATION --------
+function flyStarsToCounter(pts, onEachLanding) {
   const counterEl = document.getElementById('cpc-total-val');
   if (!counterEl) return;
 
-  const targetRect = counterEl.getBoundingClientRect();
-  const targetX    = targetRect.left + targetRect.width / 2;
-  const targetY    = targetRect.top  + targetRect.height / 2;
+  const tr  = counterEl.getBoundingClientRect();
+  const tx  = tr.left + tr.width  / 2;
+  const ty  = tr.top  + tr.height / 2;
+  const cx  = window.innerWidth  / 2;
+  const cy  = window.innerHeight / 2;
+  const cnt = Math.min(pts, 6);
 
-  // נקודת מוצא — מרכז המסך (איפה שהמודאל היה)
-  const startX = window.innerWidth  / 2;
-  const startY = window.innerHeight / 2;
+  for (let i = 0; i < cnt; i++) {
+    setTimeout(() => {
+      const star = document.createElement('div');
+      star.style.cssText = `position:fixed;font-size:1.9rem;z-index:9999;pointer-events:none;left:${cx}px;top:${cy}px;transform:translate(-50%,-50%);`;
+      star.textContent = '⭐';
+      document.body.appendChild(star);
 
-  const star = document.createElement('div');
-  star.className = 'flying-star';
-  star.textContent = '⭐';
-  star.style.cssText = `
-    position: fixed;
-    left: ${startX}px;
-    top: ${startY}px;
-    font-size: 2rem;
-    z-index: 9999;
-    pointer-events: none;
-    transform: translate(-50%, -50%);
-    transition: none;
-  `;
-  document.body.appendChild(star);
+      // נקודת מוצא עם פיזור קל
+      const sx  = cx + (Math.random() - 0.5) * 50;
+      const sy  = cy + (Math.random() - 0.5) * 50;
+      // נקודת שליטה לקשת (מעל קו ישר)
+      const cpx = (sx + tx) / 2 + (Math.random() - 0.5) * 80;
+      const cpy = Math.min(sy, ty) - 70 - Math.random() * 50;
 
-  // force reflow
-  star.getBoundingClientRect();
+      const dur   = 600 + Math.random() * 80;
+      const start = performance.now();
 
-  star.style.transition = 'left 0.7s cubic-bezier(.4,0,.2,1), top 0.7s cubic-bezier(.4,0,.2,1), opacity 0.3s ease 0.5s, font-size 0.7s ease';
-  star.style.left       = `${targetX}px`;
-  star.style.top        = `${targetY}px`;
-  star.style.fontSize   = '0.8rem';
-  star.style.opacity    = '0';
-
-  setTimeout(() => {
-    star.remove();
-    // flash על מספר הכוכבים
-    counterEl.style.transition = 'transform 0.2s cubic-bezier(.34,1.5,.64,1)';
-    counterEl.style.transform  = 'scale(1.4)';
-    setTimeout(() => { counterEl.style.transform = 'scale(1)'; }, 220);
-  }, 750);
+      function step(now) {
+        const raw  = Math.min((now - start) / dur, 1);
+        const ease = raw < 0.5 ? 2 * raw * raw : -1 + (4 - 2 * raw) * raw;
+        const x    = (1-ease)*(1-ease)*sx + 2*(1-ease)*ease*cpx + ease*ease*tx;
+        const y    = (1-ease)*(1-ease)*sy + 2*(1-ease)*ease*cpy + ease*ease*ty;
+        const sc   = 1 - ease * 0.65;
+        const op   = raw > 0.75 ? 1 - (raw - 0.75) / 0.25 : 1;
+        star.style.left      = `${x}px`;
+        star.style.top       = `${y}px`;
+        star.style.transform = `translate(-50%,-50%) scale(${sc})`;
+        star.style.opacity   = op;
+        if (raw < 1) { requestAnimationFrame(step); return; }
+        star.remove();
+        counterEl.style.transition = 'transform 0.15s cubic-bezier(.34,1.9,.64,1)';
+        counterEl.style.transform  = 'scale(1.55)';
+        setTimeout(() => { counterEl.style.transform = 'scale(1)'; }, 200);
+        if (onEachLanding) onEachLanding();
+      }
+      requestAnimationFrame(step);
+    }, i * 140);
+  }
 }
 
 // -------- TASK SUCCESS POPUP --------
@@ -497,7 +528,6 @@ function showApprovalSentPopup(withPhoto) {
 export function showTaskSuccessPopup(pts) {
   const enc = getEncourage();
 
-  // הסר popup קודם אם יש
   document.querySelectorAll('.task-success-popup').forEach(el => el.remove());
 
   const popup = document.createElement('div');
@@ -505,22 +535,34 @@ export function showTaskSuccessPopup(pts) {
   popup.innerHTML = `
     <div class="tsp-icon">${enc.icon}</div>
     <div class="tsp-msg">${enc.msg}</div>
-    <div class="tsp-pts">+${pts} ⭐</div>
+    <div class="tsp-pts" id="_tsp-pts-el">+${pts} ⭐</div>
   `;
   document.body.appendChild(popup);
 
-  // אנימציה
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => { popup.classList.add('tsp-show'); });
-  });
+  requestAnimationFrame(() => requestAnimationFrame(() => popup.classList.add('tsp-show')));
+
+  // ספירת כוכבים עולה בזמן אמת
+  const counterEl = document.getElementById('cpc-total-val');
+  if (counterEl && pts > 0) {
+    const finalVal = parseInt(counterEl.textContent) || 0;
+    const startVal = Math.max(0, finalVal - pts);
+    counterEl.textContent = startVal;
+    let cur = startVal;
+    const tickInterval = Math.max(60, Math.round(750 / pts));
+    const ticker = setInterval(() => {
+      if (cur < finalVal) { cur++; counterEl.textContent = cur; }
+      else clearInterval(ticker);
+    }, tickInterval);
+  }
+
+  // קונפטי + כוכבים עפים
+  showConfetti();
+  flyStarsToCounter(pts);
 
   setTimeout(() => {
     popup.classList.remove('tsp-show');
     setTimeout(() => popup.remove(), 350);
-  }, 1800);
-
-  // כוכב עף
-  flyStarToCounter(pts);
+  }, 3200);
 }
 
 // -------- PHOTO PREVIEW MODAL --------

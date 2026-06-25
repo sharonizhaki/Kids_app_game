@@ -500,6 +500,19 @@ async function loadChild() {
             saveState();
             renderChild();
             if (pts > 0) showTaskSuccessPopup(pts);
+
+            // הסר את ה"אושר" מהתור אחרי 4 שניות
+            setTimeout(() => {
+              const rmIdx = (state.childState?.pending || []).findIndex(
+                p => p.taskId === data.taskId && p.status === 'approved'
+              );
+              if (rmIdx !== -1) {
+                state.childState.pending.splice(rmIdx, 1);
+                saveState();
+                renderChild();
+              }
+            }, 4000);
+
             return;
           }
 
